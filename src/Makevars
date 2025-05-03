@@ -1,0 +1,6 @@
+# compile-time flags
+CXXFLAGS += -g -O0
+CFLAGS   += -g -O0
+
+# link-time flags
+LDFLAGS  += -fsanitize=address -fsanitize=undefined

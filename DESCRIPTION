@@ -1,0 +1,15 @@
+Package: caugi
+Title: Causal Graph Interface 
+Version: 0.0.0.9000
+Authors@R: 
+    person("Frederik", "Fabricius-Bjerre", , "frederik@fabriciusbjerre.dk", role = c("aut", "cre"))
+Description: A tidy‐verse‐style causal graph package backed by a C++ CSR.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Imports:
+    cpp11,
+    tibble,
+    dplyr
+LinkingTo: cpp11
