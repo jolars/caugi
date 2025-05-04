@@ -4,12 +4,45 @@
 \name{caugi-package}
 \alias{caugi}
 \alias{caugi-package}
-\title{caugi: Causal Graph Interface}
+\title{caugi: A tidy interface to causal graphs}
 \description{
-A tidy‐verse‐style causal graph package backed by a C++ CSR.
+\strong{caugi} wraps a high-performance C++17 core in a pipe-friendly R API.
+It reads and writes many graph formats (edge lists, \emph{igraph}, \emph{graphNEL},
+\emph{pcalg} amats, sparse/dense matrices) and stores everything internally in a
+compact \strong{Compressed Sparse Row (CSR)} structure.  The result is
+white-board syntax with data-table speed—even for graphs with millions of
+edges.
+}
+\details{
+The package is designed for causal discovery and graphical causal
+inference.  Edge codes cover DAGs, CPDAGs and PAGs; helper functions let you
+collapse mutual edges, round-trip to \emph{igraph}, and coerce between dense and
+sparse representations without copy overhead.  Planned extensions include
+d-separation queries, adjustment-set identification, and distance measures
+such as SHD/HD.
+}
+\section{Key features}{
+
+\itemize{
+\item \emph{Readable construction} — \code{a \%-->\% b}, \code{b \%<->\% c}, \code{c \%o->\% d}, …
+\item \emph{Blazing speed} — core algorithms in modern C++ with CSR caching.
+\item \emph{Format agility} — \code{as_caugi()} methods for \strong{igraph}, \strong{graphNEL},
+\emph{pcalg} amats (\emph{CPDAG} & \emph{PAG}), sparse/dense matrices, and tidy edge
+lists.
+\item \emph{Tidy output} — \code{as_tibble()} returns a long edge list ready for
+\strong{dplyr}/\strong{tidyr} workflows.
+\item \emph{Use igraph} — \code{as_igraph()} lets you use igraph’s layouts and plotting.
+}
+}
+
+\seealso{
+\link[igraph:igraph-package]{igraph},
+\code{\link{as_caugi}()},
+\code{\link{as_igraph}()},
+\code{\link{caugi_graph}()}
 }
 \author{
-\strong{Maintainer}: Frederik Fabricius-Bjerre \email{frederik@fabriciusbjerre.dk}
-
+Frederik Fabricius-Bjerre \email{frederik@fabriciusbjerre.dk},
 }
 \keyword{internal}
+\keyword{package}

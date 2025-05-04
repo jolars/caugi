@@ -13,7 +13,7 @@ caugi_from_igraph(x, collapse = FALSE, collapse_to = "---")
 \item{x}{An \code{igraph} object.}
 
 \item{collapse}{Logical. If \code{TRUE} (default) \emph{mutual} pairs
-(\verb{A→B} \strong{and} \verb{B→A}) that are marked as symmetric
+(\verb{A-->B} \strong{and} \verb{B-->A}) that are marked as symmetric
 (\code{edge_type} \%in\% c("---","<->")) are collapsed to
 one row.  Set to \code{FALSE} to keep every edge exactly
 as it appears in the igraph.}
@@ -29,5 +29,5 @@ A \code{caugi_graph}.
 Convert an \strong{igraph} object to a \code{caugi_graph}
 }
 \seealso{
-\code{\link[igraph:igraph-package]{the igraph package}} for full details.
+\code{\link[igraph:igraph-package]{the igraph package}} for details.
 }
