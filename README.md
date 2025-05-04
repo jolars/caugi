@@ -68,17 +68,13 @@ col_ids    : int[n_edges]
 type_codes : int[n_edges]   # maps 1‑6 → {"-->", "<->", …}
 ```
 
-* **Memory footprint** ≈ 4 × (n + 1 + 2m) bytes (32‑bit ints) where (n) = nodes, (m) = edges.
-  *Example*: 1 000 000 edges & 10 000 nodes → \~8 MB.
-* **Neighbour lookup** is O( deg(v) ) — contiguous, cache‑friendly slices in `col_ids`.
-
 ## Roadmap
 
 We’re actively working on:
 
 * **d‑separation** queries (`dsep()`).
 * **Adjustment‑set identification** (`adjustment_sets()`).
-* **Graph distances** — Structural Hamming Distance (SHD), simple Hamming Distance (HD), and more.
+* **Graph distances** — Structural Hamming Distance (SHD), simple Hamming Distance (HD), Adjustmen Identification Distance (AID) and more.
 * Additional causal metrics and utilities.
 
 Want to help? Open a discussion!
