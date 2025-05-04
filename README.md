@@ -15,7 +15,7 @@
 | **Readable syntax**             | `a %-->% b`, `b %<->% c` …                                                                                                                             | Write graphs exactly as you draw them on a whiteboard.                    |
 | **Blazing speed**               | Core Compressed Sparse Row (CSR) representation and algorithms in modern C++.                                                                          | Millions of edges? No problem.                                            |
 | **Tidy output**                 | `as_tibble()` gives a tidy edge list that plugs straight into **dplyr**/**tidyr**.                                                                     | Analyse & visualise with your favourite tidy tools.                       |
-| **Round‑trip**                  | `as_igraph()` ↔︎ `as_caugi()`                                                                                                                          | Seamlessly tap into igraph’s ecosystem (layouts, plotting, communities…). |
+| **igraph interaction**                  | Use `as_igraph()` and analyse and convert back with `as_caugi()` on directed or undirected graphs.                                                                                                                         | Seamlessly tap into igraph’s ecosystem (layouts, plotting, communities…). |
 
 ## Installation
 
