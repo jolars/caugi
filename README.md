@@ -1,0 +1,126 @@
+# caugi&#x20;
+
+> **Causal Graph Interface for R** — a fast, tidyverse‑friendly toolbox for building, coercing and analysing causal graphs.
+
+---
+
+*caugi* (pronounced **“corgi”**) wraps a high‑performance C++ core in a pipe‑friendly R interface. Convert between many graph formats, compose graphs with expressive infix operators, and run algorithms on large sparse matrices — all without leaving the tidyverse.
+
+## Key features
+
+| :rocket:                        | What                                                                                                                                                   | Why it matters                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| **Flexible coercion & formats** | `as_caugi()` ingests **igraph**, **graphNEL**, *pcalg* `amat` (CPDAG *and* PAG), sparse or dense (binary/integer‑coded) matrices, and tidy edge lists. | Re‑use existing data structures; no tedious re‑encoding.                  |
+| **PAG & mixed‑graph support**   | Native edge codes for PAGs (`o->`, `o-o`, `o--`) and bidirected/undirected edges.                                                                      | Analyse outputs of discovery algorithms like FCI or RFCI out‑of‑the‑box.  |
+| **Readable syntax**             | `a %-->% b`, `b %<->% c` …                                                                                                                             | Write graphs exactly as you draw them on a whiteboard.                    |
+| **Blazing speed**               | Core Compressed Sparse Row (CSR) representation and algorithms in modern C++.                                                                          | Millions of edges? No problem.                                            |
+| **Tidy output**                 | `as_tibble()` gives a tidy edge list that plugs straight into **dplyr**/**tidyr**.                                                                     | Analyse & visualise with your favourite tidy tools.                       |
+| **Round‑trip**                  | `as_igraph()` ↔︎ `as_caugi()`                                                                                                                          | Seamlessly tap into igraph’s ecosystem (layouts, plotting, communities…). |
+
+## Installation
+
+```r
+# dev version from GitHub
+install.packages("frederikfabriciusbjerre/pak")         # if needed
+pak::pak("<ORG>/caugi")
+
+# …or wait for the first CRAN release
+# install.packages("caugi")
+```
+
+caugi needs R ≥ 4.2 and a C++17‑capable compiler. See `?caugi::caugi` for full details.
+
+## Quick start
+
+```r
+library(caugi)
+
+my_graph <- caugi_graph(
+  tibble::tibble(name = letters[1:4]),
+  a %-->% b,
+  b %<->% c,
+  d %---% a
+)
+
+print(my_graph)
+#> # A caugi_graph with 4 nodes and 3 edges
+#>   from to edge_type
+#> 1 a    b -->
+#> 2 b    c <->
+#> 3 a    d ---
+```
+
+Coercion works both ways:
+
+```r
+ig <- igraph::make_ring(5) |>
+  igraph::set_edge_attr("edge_type", value = "-->")
+
+a_caugi <- as_caugi(ig)
+```
+
+## How it works: compact CSR storage
+
+Internally, every *caugi\_graph* lives in **Compressed Sparse Row (CSR)** form:
+
+```
+row_ptr    : int[n_nodes + 1]
+col_ids    : int[n_edges]
+type_codes : int[n_edges]   # maps 1‑6 → {"-->", "<->", …}
+```
+
+* **Memory footprint** ≈ 4 × (n + 1 + 2m) bytes (32‑bit ints) where (n) = nodes, (m) = edges.
+  *Example*: 1 000 000 edges & 10 000 nodes → \~8 MB.
+* **Neighbour lookup** is O( deg(v) ) — contiguous, cache‑friendly slices in `col_ids`.
+
+This layout is a close fit to *igraph*’s internal representation, making conversions nearly cost‑free.
+
+## File structure
+
+```
+R/
+  as_caugi.R            # S3 generics & wrappers
+  caugi_graph.R         # main constructor & operators
+  coercion-helpers.R    # heavy‑lifting converters
+  convert-igraph.R      # igraph ↔︎ caugi
+  print-format.R        # print() & as_tibble()
+  collapse-edges.R      # internal utilities
+  csr-utils.R           # glue to C++ CSR
+src/
+  *.cpp                 # high‑performance core (cpp11/c++17)
+```
+
+## Roadmap
+
+We’re actively working on:
+
+* **d‑separation** queries (`dsep()`).
+* **Adjustment‑set identification** (`adjustment_sets()`).
+* **Graph distances** — Structural Hamming Distance (SHD), simple Hamming Distance (HD), and more.
+* Additional causal metrics and utilities.
+
+Want to help? Open a discussion!
+
+## Contributing
+
+Pull requests, issues and feature requests are welcome. Please open an issue before large changes.
+
+```r
+pak::pak(c("devtools", "roxygen2", "styler", "testthat"))
+
+devtools::check()
+```
+
+### Style guide
+
+* tidyverse style; run `styler::style_pkg()` before committing.
+* Each PR must pass *R‑CMD‑check*.
+
+## License
+
+MIT © 2025 caugi authors.
+
+---
+
+*“Smoking is one of the leading causes of all statistics.”* — Liza Minnelli
+
