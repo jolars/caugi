@@ -53,10 +53,9 @@ print(my_graph)
 Coercion works both ways:
 
 ```r
-ig <- igraph::make_ring(5) |>
-  igraph::set_edge_attr("edge_type", value = "-->")
+ig <- igraph::make_ring(5, directed = TRUE)
 
-a_caugi <- as_caugi(ig)
+cg <- as_caugi(ig)
 ```
 
 ## How it works: compact CSR storage
@@ -88,12 +87,6 @@ Want to help? Open a discussion!
 
 Pull requests, issues and feature requests are welcome. Please open an issue before large changes.
 
-```r
-pak::pak(c("devtools", "roxygen2", "styler", "testthat"))
-
-devtools::check()
-```
-
 ### Style guide
 
 * tidyverse style; run `styler::style_pkg()` before committing.
@@ -102,8 +95,4 @@ devtools::check()
 ## License
 
 MIT © 2025 caugi authors.
-
----
-
-*“Smoking is one of the leading causes of all statistics.”* — Liza Minnelli
 
