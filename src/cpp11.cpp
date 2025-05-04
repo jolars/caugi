@@ -5,6 +5,13 @@
 #include "cpp11/declarations.hpp"
 #include <R_ext/Visibility.h>
 
+// csr_to_amat.cpp
+SEXP caugi_create_amat_from_csr(const integers& row_ptr, const integers& col_ids, const integers& type_codes, std::string type);
+extern "C" SEXP _caugi_caugi_create_amat_from_csr(SEXP row_ptr, SEXP col_ids, SEXP type_codes, SEXP type) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(caugi_create_amat_from_csr(cpp11::as_cpp<cpp11::decay_t<const integers&>>(row_ptr), cpp11::as_cpp<cpp11::decay_t<const integers&>>(col_ids), cpp11::as_cpp<cpp11::decay_t<const integers&>>(type_codes), cpp11::as_cpp<cpp11::decay_t<std::string>>(type)));
+  END_CPP11
+}
 // from_R_csr_to_csr.cpp
 writable::list caugi_create_csr_from_csr(integers from, integers to, integers types, integers n_nodes_);
 extern "C" SEXP _caugi_caugi_create_csr_from_csr(SEXP from, SEXP to, SEXP types, SEXP n_nodes_) {
@@ -36,6 +43,7 @@ extern "C" SEXP _caugi_caugi_create_csr_from_sparse(SEXP mat_, SEXP directed) {
 
 extern "C" {
 static const R_CallMethodDef CallEntries[] = {
+    {"_caugi_caugi_create_amat_from_csr",   (DL_FUNC) &_caugi_caugi_create_amat_from_csr,   4},
     {"_caugi_caugi_create_csr_from_amat",   (DL_FUNC) &_caugi_caugi_create_csr_from_amat,   2},
     {"_caugi_caugi_create_csr_from_csr",    (DL_FUNC) &_caugi_caugi_create_csr_from_csr,    4},
     {"_caugi_caugi_create_csr_from_dense",  (DL_FUNC) &_caugi_caugi_create_csr_from_dense,  1},
