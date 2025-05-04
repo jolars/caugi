@@ -6,7 +6,21 @@
 \usage{
 reverse_bad_edges(nodes, edges)
 }
+\arguments{
+\item{nodes}{Tibble of node names (unused, kept for future extensions)}
+
+\item{edges}{Tibble with columns \code{from}, \code{to}, \code{edge_type}}
+}
+\value{
+\if{html}{\out{<div class="sourceCode">}}\preformatted{  `edges`, with offending rows fixed in-place
+}\if{html}{\out{</div>}}
+}
 \description{
-Currently not used
+Swaps the direction for “backwards” edge codes and remaps them to the
+canonical forward codes. Helper is currently not called elsewhere but kept
+for completeness.
+}
+\details{
+Currently not in use.
 }
 \keyword{internal}

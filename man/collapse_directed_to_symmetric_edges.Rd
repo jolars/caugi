@@ -2,19 +2,20 @@
 % Please edit documentation in R/collapse.R
 \name{collapse_directed_to_symmetric_edges}
 \alias{collapse_directed_to_symmetric_edges}
-\title{Collapse mutual directed edges (-->, not o->) to a single edge (--- or <->)}
+\title{Collapse mutual directed edges (-->) to a single symmetric edge (--- or <->)}
 \usage{
 collapse_directed_to_symmetric_edges(df, collapse_to = "---")
 }
 \arguments{
-\item{df}{A tibble with columns from, to, edge_type}
+\item{df}{Tibble with columns \code{from}, \code{to}, \code{edge_type}}
 
-\item{collapse_to}{The code to use for collapsed directed pairs (default "---")}
+\item{collapse_to}{Code to use for collapsed pairs (default "---")}
 }
 \value{
-A tibble with directed pairs collapsed
+\if{html}{\out{<div class="sourceCode">}}\preformatted{      Tibble with collapsed edge list
+}\if{html}{\out{</div>}}
 }
 \description{
-Collapse mutual directed edges (-->, not o->) to a single edge (--- or <->)
+Collapse mutual directed edges (-->) to a single symmetric edge (--- or <->)
 }
 \keyword{internal}

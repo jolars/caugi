@@ -1,10 +1,12 @@
 #' Convert a caugi_graph to an igraph object
 #'
 #' @param x A caugi_graph
-#' @param directed Logical; if `NULL` (the default) we auto-detect any directed edges.
 #' @param ... Passed on to igraph::graph_from_data_frame()
 #' @return An igraph object with an `edge_type` attribute on each edge.
-#' @seealso igraph::graph_from_data_frame
+#' @seealso \code{\link[igraph:igraph-package]{the igraph package}} for full details.
+#'
+#' @importFrom dplyr case_when select all_of mutate across bind_rows
+#' @importFrom rlang .data
 #' @export
 as_igraph <- function(x, ...) {
   UseMethod("as_igraph")
@@ -13,17 +15,18 @@ as_igraph <- function(x, ...) {
 #' @rdname as_igraph
 #' @export
 as_igraph.caugi_graph <- function(x, ...) {
-  # ── 1. Pull the tidy edge list -------------------------------------------------
+  # 1 ─ tidy edge list -------------------------------------------------------
   edges <- as_tibble(x, collapse = FALSE)
 
-  # ── 2. Classify every edge -----------------------------------------------------
-  pag_codes <- c("o->", "o--", "o-o") # not supported
-  directed_codes <- c("-->") # simple arrows
-  undirected_codes <- c("<->", "---") # symmetric
+  # 2 ─ classify edge types --------------------------------------------------
+  pag_codes <- c("o->", "o--", "o-o")
+  directed_codes <- "-->"
+  undirected_codes <- c("<->", "---")
 
   if (any(edges$edge_type %in% pag_codes)) {
-    stop("Conversion to igraph is not supported for PAG-type edges ",
-      "(edge_type %in% {", paste(pag_codes, collapse = ", "), "}).",
+    stop(
+      "Conversion to igraph is not supported when PAG-type edges ",
+      "are present (", paste(pag_codes, collapse = ", "), ").",
       call. = FALSE
     )
   }
@@ -34,18 +37,17 @@ as_igraph.caugi_graph <- function(x, ...) {
     TRUE ~ "unknown"
   )
 
-  # ── 3. Decide on graph directedness -------------------------------------------
+  # 3 ─ decide directedness ---------------------------------------------------
   all_directed <- all(edge_class == "directed")
   all_undirected <- all(edge_class == "undirected")
 
   build_edges <- function(edf) {
     edf |>
-      dplyr::select(from, to) |>
-      dplyr::mutate(dplyr::across(everything(), as.character))
+      dplyr::select(dplyr::all_of(c("from", "to"))) |>
+      dplyr::mutate(dplyr::across(dplyr::everything(), as.character))
   }
 
   if (all_directed) {
-    # (a) purely directed  -------------------------------------------------------
     ig <- igraph::graph_from_data_frame(
       build_edges(edges),
       vertices = x$nodes,
@@ -53,7 +55,6 @@ as_igraph.caugi_graph <- function(x, ...) {
       ...
     )
   } else if (all_undirected) {
-    # (b) purely symmetric  ------------------------------------------------------
     ig <- igraph::graph_from_data_frame(
       build_edges(edges),
       vertices = x$nodes,
@@ -64,26 +65,24 @@ as_igraph.caugi_graph <- function(x, ...) {
     undirected <- edges[edge_class == "undirected", , drop = FALSE]
     directed <- edges[edge_class == "directed", , drop = FALSE]
 
-    ## Robust duplication: no mutate(), no pronouns, no chance of chaining
+    # duplicate undirected edges in reverse orientation
     undir_dup <- undirected[, c("to", "from", "edge_type")]
     names(undir_dup)[1:2] <- c("from", "to")
 
     mixed_edges <- dplyr::bind_rows(directed, undirected, undir_dup)
 
     ig <- igraph::graph_from_data_frame(
-      mixed_edges %>% dplyr::select(from, to),
+      mixed_edges |>
+        dplyr::select(dplyr::all_of(c("from", "to"))),
       vertices = x$nodes,
       directed = TRUE,
       ...
     )
   }
 
-  # ── 4. Preserve the original caugi edge codes ---------------------------------
-  igraph::E(ig)$edge_type <- if (all_directed || all_undirected) {
-    edges$edge_type
-  } else {
-    mixed_edges$edge_type
-  }
+  # 4 ─ preserve original caugi edge codes -----------------------------------
+  igraph::E(ig)$edge_type <-
+    if (all_directed || all_undirected) edges$edge_type else mixed_edges$edge_type
 
   ig
 }

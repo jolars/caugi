@@ -151,14 +151,21 @@ print.caugi_graph <- function(x, ...) {
 # ──────────────────────────────── Helpers  ────────────────────────────────────
 #' Reverse edges that are <-- or <-o
 #'
-#' Currently not used
+#' Swaps the direction for “backwards” edge codes and remaps them to the
+#' canonical forward codes. Helper is currently not called elsewhere but kept
+#' for completeness.
 #'
+#' Currently not in use.
+#'
+#' @param nodes  Tibble of node names (unused, kept for future extensions)
+#' @param edges  Tibble with columns `from`, `to`, `edge_type`
+#' @return       `edges`, with offending rows fixed in-place
 #' @keywords internal
 reverse_bad_edges <- function(nodes, edges) {
   # map old reverse codes to canonical + swap
   rev_map <- c(
     "<--" = "-->",
-    "<-o" = "o->",
+    "<-o" = "o->"
   )
   bad <- edges$edge_type %in% names(rev_map)
   if (any(bad)) {

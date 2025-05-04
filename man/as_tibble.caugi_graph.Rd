@@ -12,6 +12,8 @@
 \item{collapse}{Logical. If \code{TRUE}, the edges are collapsed to a symmetric form.}
 
 \item{collapse_to}{Character. The string used to represent collapsed edges.}
+
+\item{...}{Additional arguments (not used).}
 }
 \description{
 Convert a \code{caugi_graph} object to a tibble.

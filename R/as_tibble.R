@@ -7,6 +7,7 @@
 #' @param x A `caugi_graph` object.
 #' @param collapse Logical. If `TRUE`, the edges are collapsed to a symmetric form.
 #' @param collapse_to Character. The string used to represent collapsed edges.
+#' @param ... Additional arguments (not used).
 #' @export
 as_tibble.caugi_graph <- function(x, collapse = FALSE, collapse_to = "---", ...) {
   df <- caugi_edges_df(x)

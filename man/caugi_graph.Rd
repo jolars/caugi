@@ -2,19 +2,21 @@
 % Please edit documentation in R/caugi_graph.R
 \name{caugi_graph}
 \alias{caugi_graph}
-\title{Create a caugi_graph (now with \verb{\%-->\%} / \verb{\%<->\%} / \verb{\%---\%} support)}
+\title{Create a \code{caugi_graph} object}
 \usage{
 caugi_graph(...)
 }
 \arguments{
 \item{...}{Either the classic \verb{nodes, edges} pair \emph{or} any number of
-\code{caugi_edge_spec} objects (built by the new infix operators)
-and/or old two-sided formulas (\code{A ~ B + C}).  A leading node
-tibble is still allowed.}
+\code{caugi_edge_spec} objects built by infix operators
+\verb{\%-->\%}, \verb{\%<->\%}, \verb{\%---\%}, \verb{\%o--\%}, \verb{\%o->\%}, or \verb{\%o-o\%}, or
+it can be specified by formulas as (A ~ B, edge_type = "-->") or
+alike.}
 }
 \value{
 A \code{caugi_graph}
 }
 \description{
-Create a caugi_graph (now with \verb{\%-->\%} / \verb{\%<->\%} / \verb{\%---\%} support)
+Create a \code{caugi_graph} object from a pair of tibbles, formulas,
+or a quite flexible infix operator syntax.
 }

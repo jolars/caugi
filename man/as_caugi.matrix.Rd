@@ -11,6 +11,8 @@ caugi_from_dense(x)
 }
 \arguments{
 \item{x}{A dense matrix with integer edge codes}
+
+\item{...}{Additional arguments (will not be passed to anything).}
 }
 \description{
 Create a \code{caugi_graph} from a dense matrix with integer edge codes.

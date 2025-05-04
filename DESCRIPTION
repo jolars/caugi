@@ -11,5 +11,18 @@ RoxygenNote: 7.3.2
 Imports:
     cpp11,
     tibble,
-    dplyr
-LinkingTo: cpp11
+    dplyr,
+    igraph,
+    Matrix,
+    rlang,
+    tidyr,
+    graph,
+    methods
+LinkingTo: 
+    cpp11,
+    Matrix
+Suggests: 
+    devtools,
+    pcalg,
+    Rgraphviz,
+    testthat

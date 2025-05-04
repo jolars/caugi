@@ -1,27 +1,21 @@
 #' @rdname as_caugi.igraph
 #' @export
 caugi_from_igraph <- function(x, collapse = FALSE, collapse_to = "---") {
-  # -- 1. Nodes --------------------------------------------------------------
-  v_names <- igraph::V(x)$name %||%
-    as.character(seq_len(igraph::vcount(x)))
+  # 1. Nodes ----------------------------------------------------------
+  v_names <- igraph::V(x)$name %||% as.character(seq_len(igraph::vcount(x)))
   nodes <- tibble::tibble(name = v_names)
 
-  # 2. Edge data frame ----------------------------------------------------
+  # 2. Edges ----------------------------------------------------------
   df_e <- igraph::as_data_frame(x, what = "edges")[, c("from", "to")]
 
   default_code <- if (igraph::is_directed(x)) "-->" else "---"
-  df_e$edge_type <- rep(default_code, nrow(df_e)) # ← length-safe
+  df_e$edge_type <- rep(default_code, nrow(df_e)) # length-safe
 
-  # 2a. Edgeless igraph → edgeless caugi_graph ----------------------------
+  # 2a. Edgeless graph -----------------------------------------------
   if (nrow(df_e) == 0L) {
     return(caugi_graph(
-      tibble::tibble(name = igraph::V(x)$name %||%
-        as.character(seq_len(igraph::vcount(x)))),
-      tibble::tibble(
-        from = character(),
-        to = character(),
-        edge_type = character()
-      )
+      tibble::tibble(name = v_names),
+      tibble::tibble(from = character(), to = character(), edge_type = character())
     ))
   }
 
@@ -31,19 +25,23 @@ caugi_from_igraph <- function(x, collapse = FALSE, collapse_to = "---") {
     stop("Unknown edge_type(s): ", paste(bad, collapse = ", "), call. = FALSE)
   }
 
-  # -- 3. Optional collapsing ------------------------------------------------
+  # 3. Optional collapsing -------------------------------------------
   if (igraph::is_directed(x) && isTRUE(collapse)) {
     df_e <- collapse_directed_to_symmetric_edges(df_e, collapse_to)
   } else if (!igraph::is_directed(x)) {
     # ensure canonical ordering for undirected igraphs
-    df_e <- df_e %>%
-      dplyr::mutate(u = pmin(from, to), v = pmax(from, to)) %>%
-      dplyr::transmute(from = u, to = v, edge_type)
+    df_e <- df_e |>
+      dplyr::mutate(
+        u = pmin(.data$from, .data$to),
+        v = pmax(.data$from, .data$to)
+      ) |>
+      dplyr::transmute(from = .data$u, to = .data$v, edge_type = .data$edge_type)
   }
 
-  # -- 4. Build caugi_graph --------------------------------------------------
+  # 4. Build caugi_graph ---------------------------------------------
   caugi_graph(nodes, df_e)
 }
+
 
 
 #' @rdname as_caugi.sparseMatrix
@@ -67,6 +65,7 @@ caugi_from_sparse <- function(x, directed) {
 #' both a `sparseMatrix`, `dgCMatrix`, or a dense matrix.
 #'
 #' @param x A binary adjacency matrix (0/1) or a sparseMatrix
+#' @param directed Logical; if `TRUE` (default) the graph is directed.
 #' @export
 caugi_from_adj_matrix <- function(x, directed = TRUE) {
   if (inherits(x, "dgCMatrix") || inherits(x, "sparseMatrix")) {
@@ -128,7 +127,7 @@ caugi_from_graphNEL <- function(x, collapse = FALSE, collapse_to = "---") {
   )
   df <- if (collapse) collapse_directed_to_symmetric_edges(raw, collapse_to) else raw
 
-  uid <- setNames(seq_along(node_names), node_names)
+  uid <- stats::setNames(seq_along(node_names), node_names)
   ord <- order(uid[df$from], uid[df$to])
   df <- df[ord, , drop = FALSE]
   caugi_graph(tibble(name = node_names), df)

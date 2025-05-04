@@ -21,8 +21,8 @@
 
 ```r
 # dev version from GitHub
-install.packages("frederikfabriciusbjerre/pak")         # if needed
-pak::pak("<ORG>/caugi")
+install.packages("pak")         # if needed
+pak::pak("frederikfabriciusbjerre/caugi")
 
 # …or wait for the first CRAN release
 # install.packages("caugi")
@@ -73,23 +73,6 @@ type_codes : int[n_edges]   # maps 1‑6 → {"-->", "<->", …}
   *Example*: 1 000 000 edges & 10 000 nodes → \~8 MB.
 * **Neighbour lookup** is O( deg(v) ) — contiguous, cache‑friendly slices in `col_ids`.
 
-This layout is a close fit to *igraph*’s internal representation, making conversions nearly cost‑free.
-
-## File structure
-
-```
-R/
-  as_caugi.R            # S3 generics & wrappers
-  caugi_graph.R         # main constructor & operators
-  coercion-helpers.R    # heavy‑lifting converters
-  convert-igraph.R      # igraph ↔︎ caugi
-  print-format.R        # print() & as_tibble()
-  collapse-edges.R      # internal utilities
-  csr-utils.R           # glue to C++ CSR
-src/
-  *.cpp                 # high‑performance core (cpp11/c++17)
-```
-
 ## Roadmap
 
 We’re actively working on:
@@ -114,7 +97,7 @@ devtools::check()
 ### Style guide
 
 * tidyverse style; run `styler::style_pkg()` before committing.
-* Each PR must pass *R‑CMD‑check*.
+* Each PR must pass `devtools::check()` with no errors, warnings, or notes.
 
 ## License
 

@@ -8,6 +8,8 @@ caugi_from_adj_matrix(x, directed = TRUE)
 }
 \arguments{
 \item{x}{A binary adjacency matrix (0/1) or a sparseMatrix}
+
+\item{directed}{Logical; if \code{TRUE} (default) the graph is directed.}
 }
 \description{
 Create a \code{caugi_graph} from a binary adjacency matrix. Can be

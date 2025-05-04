@@ -10,13 +10,15 @@
 caugi_from_igraph(x, collapse = FALSE, collapse_to = "---")
 }
 \arguments{
-\item{x}{An \code{\link{igraph}} object.}
+\item{x}{An \code{igraph} object.}
 
 \item{collapse}{Logical. If \code{TRUE} (default) \emph{mutual} pairs
 (\verb{A→B} \strong{and} \verb{B→A}) that are marked as symmetric
 (\code{edge_type} \%in\% c("---","<->")) are collapsed to
 one row.  Set to \code{FALSE} to keep every edge exactly
 as it appears in the igraph.}
+
+\item{collapse_to}{The code to use for collapsed directed pairs (default "---")}
 
 \item{...}{Not used; kept for S3 compatibility.}
 }
@@ -25,4 +27,7 @@ A \code{caugi_graph}.
 }
 \description{
 Convert an \strong{igraph} object to a \code{caugi_graph}
+}
+\seealso{
+\code{\link[igraph:igraph-package]{the igraph package}} for full details.
 }

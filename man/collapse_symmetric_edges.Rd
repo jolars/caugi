@@ -2,17 +2,17 @@
 % Please edit documentation in R/collapse.R
 \name{collapse_symmetric_edges}
 \alias{collapse_symmetric_edges}
-\title{Collapse bidirected (<->) and undirected (---) edges to single edges}
+\title{Collapse bidirected (<->) and undirected (---) duplicates}
 \usage{
 collapse_symmetric_edges(df)
 }
 \arguments{
-\item{df}{A tibble with columns from, to, edge_type}
+\item{df}{Tibble with columns \code{from}, \code{to}, \code{edge_type}}
 }
 \value{
-A tibble with symmetric edges collapsed
+Tibble with duplicates removed
 }
 \description{
-Collapse bidirected (<->) and undirected (---) edges to single edges
+Collapse bidirected (<->) and undirected (---) duplicates
 }
 \keyword{internal}

@@ -13,6 +13,8 @@ caugi_from_amat(x, amat_type = NULL)
 \item{x}{A pcalg adjacency matrix (amat).}
 
 \item{amat_type}{The type of the adjacency matrix, \code{"cpdag"} or \verb{"pag}.}
+
+\item{...}{Additional arguments (will not be passed to anything).}
 }
 \description{
 Convert a pcalg adjacency matrix to a \code{caugi_graph}.

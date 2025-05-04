@@ -15,6 +15,8 @@ caugi_from_graphNEL(x, collapse = FALSE, collapse_to = "---")
 \item{collapse}{Logical, whether to collapse directed edges to undirected}
 
 \item{collapse_to}{The code to use for collapsed directed pairs (default "---")}
+
+\item{...}{Additional arguments (will not be passed to anything).}
 }
 \description{
 Create a caugi_graph from a possibly‐mixed graphNEL

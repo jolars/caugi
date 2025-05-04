@@ -13,8 +13,6 @@ as_igraph(x, ...)
 \item{x}{A caugi_graph}
 
 \item{...}{Passed on to igraph::graph_from_data_frame()}
-
-\item{directed}{Logical; if \code{NULL} (the default) we auto-detect any directed edges.}
 }
 \value{
 An igraph object with an \code{edge_type} attribute on each edge.
@@ -23,5 +21,5 @@ An igraph object with an \code{edge_type} attribute on each edge.
 Convert a caugi_graph to an igraph object
 }
 \seealso{
-igraph::graph_from_data_frame
+\code{\link[igraph:igraph-package]{the igraph package}} for full details.
 }

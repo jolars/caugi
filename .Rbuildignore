@@ -1,3 +1,5 @@
-^sprig\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^examples($|/)
+^caugi[.]Rproj$
+^[.]Rproj[.]user$

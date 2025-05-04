@@ -2,19 +2,17 @@
 % Please edit documentation in R/collapse.R
 \name{collapse_directed_PAG_to_symmetric_PAG}
 \alias{collapse_directed_PAG_to_symmetric_PAG}
-\title{Collapse mutual directed PAG edges (o->, not -->) to a single o-o edge}
+\title{Collapse mutual directed PAG edges (o->) to a single o-o edge}
 \usage{
 collapse_directed_PAG_to_symmetric_PAG(df)
 }
 \arguments{
-\item{df}{A tibble with columns from, to, edge_type}
-
-\item{collapse_to}{The code to use for collapsed directed pairs (default "---")}
+\item{df}{Tibble with columns \code{from}, \code{to}, \code{edge_type}}
 }
 \value{
-A tibble with directed pairs collapsed
+Tibble with collapsed edge list
 }
 \description{
-Collapse mutual directed PAG edges (o->, not -->) to a single o-o edge
+Collapse mutual directed PAG edges (o->) to a single o-o edge
 }
 \keyword{internal}

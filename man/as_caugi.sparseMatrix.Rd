@@ -16,6 +16,8 @@ caugi_from_sparse(x, directed)
 \item{x}{A sparse matrix of class \code{dgCMatrix} or \code{sparseMatrix}.}
 
 \item{directed}{Logical; if \code{TRUE} (default) the graph is directed.}
+
+\item{...}{Additional arguments (will not be passed to anything).}
 }
 \description{
 Create a caugi_graph from a sparse \code{dgCMatrix} or \code{sparseMatrix}
