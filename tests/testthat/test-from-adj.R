@@ -53,7 +53,7 @@ test_that("caugi_from_adj_matrix throws error for non-adj matrix", {
 
   expect_error(
     caugi_from_adj_matrix(m),
-    "mat must be a binary adjacency matrix"
+    "x must be a binary adjacency matrix"
   )
 })
 

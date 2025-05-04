@@ -52,7 +52,7 @@ test_that("mutual symmetric edges (coded '---') collapse to one row", {
   ig <- graph_from_data_frame(df, directed = TRUE)
 
   E(ig)$edge_type <- df$edge_type # attach the codes
-  cg <- as_caugi(ig)
+  cg <- as_caugi(ig, collapse = TRUE)
 
   ed <- as_tibble(cg) %>% arrange(from, to)
   expect_equal(nrow(ed), 2) # A→B  and  B—C

@@ -41,7 +41,7 @@ test_that("as_caugi.graphNEL collapses mutual edges into undirected", {
   g_nel <- new("graphNEL", nodes = nodes, edgeL = edgeL, edgemode = "directed")
 
   # default collapse = TRUE
-  g <- as_caugi(g_nel)
+  g <- as_caugi(g_nel, collapse = TRUE)
   df <- as_tibble(g)
   expect_equal(
     df,
