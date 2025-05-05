@@ -98,21 +98,36 @@ caugi_graph <- function(...) {
     }
   }
 
-  # initialize node ids
-  uid <- setNames(seq_len(nrow(nodes)), nodes$name)
-  from_id <- uid[edges$from]
-  to_id <- uid[edges$to]
-  if (anyNA(from_id) | anyNA(to_id)) {
-    stop("from/to must match nodes$name")
+  # streamline symmetrical relations
+  undirected <- edges$edge_type %in% c("---", "<->", "o-o")
+  swap_needed <- undirected & (edges$from > edges$to)
+
+  # swap the from/to columns for undirected edges
+  if (any(swap_needed)) {
+    edges[swap_needed, c("from", "to")] <-
+      edges[swap_needed, c("to", "from")]
   }
+  # remove duplicate edges
+  edges <- dplyr::distinct(edges, from, to, edge_type, .keep_all = TRUE)
 
   # check edge types
   type_codes <- as.integer(factor(edges$edge_type, levels = edge_type_levels))
 
+
+  # initialize node ids
+  uid <- setNames(seq_len(nrow(nodes)), nodes$name)
+  from <- uid[edges$from]
+  to <- uid[edges$to]
+  if (anyNA(from) | anyNA(to)) {
+    stop("from/to must match nodes$name")
+  }
+
+
+
   # C++ call
   raw <- caugi_create_csr_from_csr(
-    as.integer(from_id),
-    as.integer(to_id),
+    as.integer(from),
+    as.integer(to),
     type_codes,
     as.integer(nrow(nodes))
   )

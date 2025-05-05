@@ -80,8 +80,8 @@ test_that("caugi_from_amat handles a simple PAG amat", {
   mat_pag[1, 3] <- 1L
   mat_pag[3, 1] <- 1L
   # B<->C: mat[2,3]=2 arrow, mat[3,2]=2 arrow
-  mat_pag[2, 3] <- 2L
   mat_pag[3, 2] <- 2L
+  mat_pag[2, 3] <- 2L
   # C o-- D: mat[3,4]=1 circle, mat[4,3]=3 tail
   mat_pag[3, 4] <- 1L
   mat_pag[4, 3] <- 3L
