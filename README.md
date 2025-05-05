@@ -1,5 +1,6 @@
 # caugi&#x20;
 <img src="man/figures/logo.svg" align="right" height="225" alt="" style="padding-left:10px;padding-top:10px;padding-bottom:10px;background-color:white;" />
+
 > **Causal Graph Interface (for R)** — a fast, tidyverse‑friendly toolbox for building, coercing and analysing causal graphs.
 
 ---
