@@ -5,7 +5,7 @@
 ---
 
 *caugi* (pronounced **“corgi”**) wraps a high‑performance C++ core in a pipe‑friendly R interface. Convert between many graph formats, compose graphs with expressive infix operators, and run algorithms on large sparse matrices — all without leaving the tidyverse.
-# caugi <img src="man/figures/logo.svg" align="right" height="139" alt="" style="padding-left:10px;background-color:white;" />
+<img src="man/figures/logo.svg" align="right" height="139" alt="" style="padding-left:10px;padding-top:10px;background-color:white;" />
 ## Key features
 
 | :rocket:                        | What                                                                                                                                                   | Why it matters                                                            |
