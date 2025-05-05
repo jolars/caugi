@@ -75,7 +75,7 @@ We’re actively working on:
 
 * **d‑separation** queries (`dsep()`).
 * **Adjustment‑set identification** (`adjustment_sets()`).
-* **Graph distances** — Structural Hamming Distance (SHD), simple Hamming Distance (HD), Adjustmen Identification Distance (AID) and more.
+* **Graph distances** — Structural Hamming Distance (SHD), simple Hamming Distance (HD), Adjustment Identification Distance (AID), and more!
 * Additional causal metrics and utilities.
 
 Want to help? Open a discussion!
