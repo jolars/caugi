@@ -1,11 +1,11 @@
 # caugi&#x20;
-
 > **Causal Graph Interface for R** — a fast, tidyverse‑friendly toolbox for building, coercing and analysing causal graphs.
+<img src="man/figures/logo.svg" align="right" height="150" alt="" style="padding-left:10px;padding-top:10px;padding-bottom:10px;background-color:white;" />
 
 ---
 
 *caugi* (pronounced **“corgi”**) wraps a high‑performance C++ core in a pipe‑friendly R interface. Convert between many graph formats, compose graphs with expressive infix operators, and run algorithms on large sparse matrices — all without leaving the tidyverse.
-<img src="man/figures/logo.svg" align="right" height="139" alt="" style="padding-left:10px;padding-top:10px;background-color:white;" />
+
 ## Key features
 
 | :rocket:                        | What                                                                                                                                                   | Why it matters                                                            |
