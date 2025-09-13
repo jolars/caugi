@@ -7,3 +7,6 @@
 
 # core dumps
 examples/vgcore.*
+src/rust/vendor
+src/Makevars
+src/Makevars.win

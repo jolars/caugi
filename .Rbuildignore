@@ -3,3 +3,9 @@
 ^examples($|/)
 ^caugi[.]Rproj$
 ^[.]Rproj[.]user$
+^.*\.Rproj$
+^src/\.cargo$
+^src/rust/vendor$
+^src/rust/target$
+^src/Makevars$
+^src/Makevars\.win$
