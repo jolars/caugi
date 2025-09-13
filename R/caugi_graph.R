@@ -136,7 +136,7 @@ caugi_graph <- function(...) {
     type_codes,
     as.integer(nrow(nodes))
   )
-  caugi_graph_from_csr(nodes$name, raw)
+  caugi_graph_from_csr(nodes$name |> sort(), raw)
 }
 
 #' @export
