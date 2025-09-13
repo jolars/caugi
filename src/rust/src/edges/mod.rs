@@ -93,29 +93,49 @@ impl EdgeRegistry {
     }
 
     /// Register built-ins. Idempotent if called multiple times.
+/// Register built-ins. Idempotent if called multiple times.
     pub fn register_builtins(&mut self) -> Result<(), RegistryError> {
-        use EdgeClass as C; use Mark as M; use Orientation as O;
+        use EdgeClass as C; use Mark as M; use Orientation as O; use QueryFlags as F;
         let mut add = |glyph: &str, left: M, right: M, ori: O, class: C, symmetric: bool, flags: QueryFlags| {
-            let spec = EdgeSpec {
-                glyph: glyph.to_string(),
-                left_mark: left,
+            let spec = EdgeSpec { 
+                glyph: glyph.to_string(), 
+                left_mark: left, 
                 right_mark: right,
-                orientation: ori,
-                class,
-                symmetric,
-                flags,
-            };
+                orientation: ori, 
+                class, 
+                symmetric, 
+                flags };
+
             let _ = self.register(spec);
         };
 
-        // Minimal flags: parents/children membership derive from class+orientation.
-        let flag = QueryFlags::TRAVERSABLE_WHEN_CONDITIONED;
-        add("-->", M::Line, M::Arrow, O::RightHead, C::Directed,   false, flag);
-        add("---", M::Line, M::Line,  O::None,      C::Undirected, true,  flag);
-        add("<->", M::Arrow,M::Arrow, O::BothHeads, C::Bidirected, true,  flag);
-        add("o-o", M::Circle,M::Circle,O::None,     C::Undirected, true,  flag);
-        add("o--", M::Circle,M::Line,  O::None,     C::Partial,    false, flag);
-        add("o->", M::Circle,M::Arrow, O::RightHead,C::Partial,    false, flag);
+        // Helpers
+        let base = F::TRAVERSABLE_WHEN_CONDITIONED;
+
+        // Directed arrow right: tail(child), head(parent)
+        add("-->", M::Line, M::Arrow, O::RightHead, C::Directed, false,
+            base | F::TAIL_CHILD | F::HEAD_PARENT);
+
+        // Undirected line-line
+        add("---", M::Line, M::Line, O::None, C::Undirected, true,
+            base | F::TAIL_UNDIR | F::HEAD_UNDIR);
+
+        // Bidirected arrows both sides -> treat as undirected for splits
+        add("<->", M::Arrow, M::Arrow, O::BothHeads, C::Bidirected, true,
+             base | F::TAIL_UNDIR | F::HEAD_UNDIR | F::LATENT_CONFOUNDING);
+
+        // Circle-circle undirected
+        add("o-o", M::Circle, M::Circle, O::None, C::Undirected, true,
+            base | F::TAIL_UNDIR | F::HEAD_UNDIR);
+
+        // Circle-line partial (no head): undirected on both sides for splits
+        add("o--", M::Circle, M::Line,  O::None, C::Partial, false,
+            base | F::TAIL_UNDIR | F::HEAD_UNDIR);
+
+        // Circle-arrow partial: tail undirected, head parent
+        add("o->", M::Circle, M::Arrow, O::RightHead, C::Partial, false,
+            base | F::TAIL_UNDIR | F::HEAD_PARENT);
+
         Ok(())
     }
 }
