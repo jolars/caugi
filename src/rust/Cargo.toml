@@ -1,0 +1,18 @@
+[package]
+name = 'caugi'
+publish = false
+version = '0.1.0'
+edition = '2024'
+rust-version = '1.85'
+
+[lib]
+crate-type = [ 'staticlib' ]
+name = 'caugi'
+
+[dependencies]
+extendr-api = '0.8.1'
+bitflags = "2.9.3"
+
+[profile.release]
+lto = true
+codegen-units = 1
