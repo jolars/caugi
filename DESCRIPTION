@@ -3,13 +3,14 @@ Title: Causal Graph Interface
 Version: 0.0.0.9000
 Authors@R: 
     person("Frederik", "Fabricius-Bjerre", , "frederik@fabriciusbjerre.dk", role = c("aut", "cre"))
-Description: A tidy‐verse‐style causal graph package backed by a C++ CSR.
+Description: A causal graph interface for R using a Rust backend.
 License: MIT + file LICENSE
 Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
+Roxygen: list(markdown = TRUE, roclets = c("caugi::cargo_test_roclet", "rd","namespace","collate"))
 RoxygenNote: 7.3.2
 Imports:
-    cpp11,
+    rextendr,
+    processx,
     tibble,
     dplyr,
     igraph,
@@ -26,3 +27,7 @@ Suggests:
     pcalg,
     Rgraphviz,
     testthat
+Config/rextendr/version: 0.4.2
+SystemRequirements: Cargo (Rust's package manager), rustc >= 1.65.0, xz
+Depends: 
+    R (>= 4.2)
