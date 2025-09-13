@@ -134,7 +134,7 @@ impl EdgeRegistry {
 
         // Circle-arrow partial: tail undirected, head parent
         add("o->", M::Circle, M::Arrow, O::RightHead, C::Partial, false,
-            base | F::TAIL_UNDIR | F::HEAD_PARENT);
+            base | F::TAIL_UNDIR | F::HEAD_UNDIR | F::TAIL_POSS_CHILD | F::HEAD_POSS_PARENT);
 
         Ok(())
     }

@@ -14,6 +14,9 @@ bitflags! {
 
         const LATENT_CONFOUNDING = 0b1000_0000;
 
+        const HEAD_POSS_PARENT = 0b0001_0000_0000;
+        const TAIL_POSS_CHILD  = 0b0010_0000_0000;
+
         // Extra semantics (e.g., d/m-sep traversal tweaks)
         const TRAVERSABLE_WHEN_CONDITIONED = 0b0100_0000;
     }
