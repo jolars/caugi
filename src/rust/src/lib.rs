@@ -4,8 +4,8 @@ use extendr_api::prelude::*;
 pub mod edges;
 pub mod graph;
 
-use edges::{EdgeRegistry, EdgeSpec, QueryFlags, parse_mark, parse_orientation, parse_class};
-use graph::{CaugiGraph};
+use edges::{EdgeRegistry, EdgeSpec, QueryFlags, parse_orientation, parse_class};
+use graph::CaugiGraph;
 use graph::builder::GraphBuilder;
 
 // helpers
@@ -49,13 +49,11 @@ fn edge_registry_len(reg: ExternalPtr<EdgeRegistry>) -> i32 {
 #[extendr] 
 fn edge_registry_register(
     mut reg: ExternalPtr<EdgeRegistry>,
-    glyph:&str, left_mark:&str, right_mark:&str,
+    glyph:&str,
     orientation:&str, class:&str, symmetric:bool, traversable_when_conditioned:bool
 ) -> i32 {
     let spec = EdgeSpec {
         glyph: glyph.to_string(),
-        left_mark: parse_mark(left_mark).unwrap_or_else(|e| throw_r_error(e)),
-        right_mark: parse_mark(right_mark).unwrap_or_else(|e| throw_r_error(e)),
         orientation: parse_orientation(orientation).unwrap_or_else(|e| throw_r_error(e)),
         class: parse_class(class).unwrap_or_else(|e| throw_r_error(e)),
         symmetric,
@@ -72,7 +70,7 @@ fn edge_registry_register(
 }
 
 #[extendr]
-fn edge_registry_code_of(reg: extendr_api::prelude::ExternalPtr<EdgeRegistry>, glyph: &str) -> i32 {
+fn edge_registry_code_of(reg: ExternalPtr<EdgeRegistry>, glyph: &str) -> i32 {
     reg.as_ref()
        .code_of(glyph)
        .map(|c| c as i32)

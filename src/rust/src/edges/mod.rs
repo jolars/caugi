@@ -7,27 +7,6 @@ mod query_flags;
 pub use query_flags::QueryFlags;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Mark {
-    Line,
-    Circle,
-    Arrow,
-    Other,
-}
-
-impl FromStr for Mark {
-    type Err = String;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "line" => Ok(Mark::Line),
-            "circle" => Ok(Mark::Circle),
-            "arrow" => Ok(Mark::Arrow),
-            "other" => Ok(Mark::Other),
-            _ => Err(format!("Unknown mark '{}'", s)),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Orientation {
     LeftHead,
     RightHead,
@@ -72,8 +51,6 @@ impl FromStr for EdgeClass {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EdgeSpec {
     pub glyph: String,
-    pub left_mark: Mark,
-    pub right_mark: Mark,
     pub orientation: Orientation,
     pub class: EdgeClass,
     pub symmetric: bool,
@@ -196,13 +173,10 @@ impl EdgeRegistry {
     /// Register built-ins. Idempotent if called multiple times.
     pub fn register_builtins(&mut self) -> Result<(), RegistryError> {
         use EdgeClass as C;
-        use Mark as M;
         use Orientation as O;
         use QueryFlags as F;
 
         let mut add = |glyph: &str,
-                       left: M,
-                       right: M,
                        ori: O,
                        class: C,
                        symmetric: bool,
@@ -210,8 +184,6 @@ impl EdgeRegistry {
          -> Result<(), RegistryError> {
             self.register(EdgeSpec {
                 glyph: glyph.to_string(),
-                left_mark: left,
-                right_mark: right,
                 orientation: ori,
                 class,
                 symmetric,
@@ -222,8 +194,6 @@ impl EdgeRegistry {
 
         add(
             "-->",
-            M::Line,
-            M::Arrow,
             O::RightHead,
             C::Directed,
             false,
@@ -231,8 +201,6 @@ impl EdgeRegistry {
         )?;
         add(
             "---",
-            M::Line,
-            M::Line,
             O::None,
             C::Undirected,
             true,
@@ -240,8 +208,6 @@ impl EdgeRegistry {
         )?;
         add(
             "<->",
-            M::Arrow,
-            M::Arrow,
             O::BothHeads,
             C::Bidirected,
             true,
@@ -252,8 +218,6 @@ impl EdgeRegistry {
         )?;
         add(
             "o-o",
-            M::Circle,
-            M::Circle,
             O::None,
             C::Undirected,
             true,
@@ -261,8 +225,6 @@ impl EdgeRegistry {
         )?;
         add(
             "o--",
-            M::Circle,
-            M::Line,
             O::None,
             C::Partial,
             false,
@@ -270,8 +232,6 @@ impl EdgeRegistry {
         )?;
         add(
             "o->",
-            M::Circle,
-            M::Arrow,
             O::RightHead,
             C::Partial,
             false,
@@ -283,10 +243,6 @@ impl EdgeRegistry {
         )?;
         Ok(())
     }
-}
-
-pub(crate) fn parse_mark(s: &str) -> Result<Mark, String> {
-    s.parse()
 }
 
 pub(crate) fn parse_orientation(s: &str) -> Result<Orientation, String> {
@@ -322,8 +278,6 @@ mod tests {
         let before = r.len();
         let spec = EdgeSpec {
             glyph: "--<".into(),
-            left_mark: Mark::Line,
-            right_mark: Mark::Arrow,
             orientation: Orientation::LeftHead,
             class: EdgeClass::Directed,
             symmetric: false,
@@ -340,8 +294,6 @@ mod tests {
         let mut r = built_reg();
         let spec = EdgeSpec {
             glyph: "o-O".into(),
-            left_mark: Mark::Circle,
-            right_mark: Mark::Other,
             orientation: Orientation::RightHead,
             class: EdgeClass::Partial,
             symmetric: false,
@@ -358,8 +310,6 @@ mod tests {
         // conflict: redefine existing glyph with different semantics
         let bad = EdgeSpec {
             glyph: "-->".into(),
-            left_mark: Mark::Line,
-            right_mark: Mark::Line,
             orientation: Orientation::None,
             class: EdgeClass::Undirected,
             symmetric: true,
@@ -371,8 +321,6 @@ mod tests {
         r.seal();
         let new = EdgeSpec {
             glyph: "x".into(),
-            left_mark: Mark::Line,
-            right_mark: Mark::Line,
             orientation: Orientation::None,
             class: EdgeClass::Undirected,
             symmetric: true,
@@ -396,9 +344,6 @@ mod tests {
 
     #[test]
     fn parse_helpers() {
-        assert_eq!(parse_mark("line").unwrap(), Mark::Line);
-        assert!(parse_mark("zzz").is_err());
-
         assert_eq!(
             parse_orientation("left_head").unwrap(),
             Orientation::LeftHead

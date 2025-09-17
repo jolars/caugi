@@ -3,14 +3,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 
 #' @title Access the global edge registry, creating it if needed.
-#'
-#' @description The global edge registry is created on first access, and
-#' built-in edge types are registered once per session.
-#' This function is called internally by `caugi_graph()`.
-#'
 #' @returns An `edge_registry` external pointer.
-#'
-#' @keywords internal
 caugi_registry <- function() {
   if (!exists("reg", envir = .caugi_env, inherits = FALSE) ||
     is.null(.caugi_env$reg)) {
@@ -22,12 +15,6 @@ caugi_registry <- function() {
 }
 
 #' @title Reset the global edge registry.
-#'
-#' @description This is mainly useful for testing purposes to clear the edge
-#' registry.
-#'
-#' @returns TRUE, invisibly.
-#'
 #' @export
 reset_caugi_registry <- function() {
   .caugi_env$reg <- NULL
@@ -38,28 +25,14 @@ reset_caugi_registry <- function() {
 
 #' @title Register a new edge type in the global registry.
 #'
-#' @description This function allows you to register a new edge type (glyph)
-#' in the global edge registry used by `caugi_graph()`.
-#'
 #' @param glyph A string representing the edge glyph (e.g., `"-->"`, `"<->"`).
-#' @param left_mark A string representing the left mark type.
-#' Possible values: "line", "circle", "arrow", "other".
-#' @param right_mark A string representing the right mark type.
-#' Possible values: "line", "circle", "arrow", "other".
-#' @param orientation A string representing the edge orientation.
-#' Possible values: "none", "right_head", "left_head", "both_heads".
-#' @param class A string representing the edge class.
-#' Possible values: "directed", "undirected", "bidirected", "partial".
-#' @param symmetric Logical; if TRUE, the edge is considered symmetric.
-#' @param traversable_when_conditioned Logical; if TRUE, the edge can be
-#' traversed, when conditioning on the nodes that it connects.
-#'
+#' @param orientation One of "none","right_head","left_head","both_heads".
+#' @param class One of "directed","undirected","bidirected","partial".
+#' @param symmetric Logical.
+#' @param traversable_when_conditioned Logical.
 #' @returns The integer code assigned to the registered edge type.
-#'
 #' @export
 register_caugi_edge <- function(glyph,
-                                left_mark,
-                                right_mark,
                                 orientation,
                                 class,
                                 symmetric = FALSE,
@@ -68,8 +41,6 @@ register_caugi_edge <- function(glyph,
   edge_registry_register(
     reg,
     glyph,
-    left_mark,
-    right_mark,
     orientation,
     class,
     symmetric,
@@ -79,11 +50,6 @@ register_caugi_edge <- function(glyph,
 }
 
 #' @title Seal the global edge registry.
-#'
-#' @description After sealing, no further edge types can be registered.
-#'
-#' @returns TRUE, invisibly.
-#'
 #' @export
 seal_caugi_registry <- function() {
   reg <- caugi_registry()
@@ -96,18 +62,13 @@ seal_caugi_registry <- function() {
 # ──────────────────────────────────────────────────────────────────────────────
 
 #' @title Built-in edge specifications
-#'
 #' @description A tibble of the built-in edge specifications.
-#'
-#' @returns A tibble with columns `glyph`, `left_mark`, `right_mark`,
-#' `orientation`, `class`, `symmetric`, and `traversable_when_conditioned`.
-#'
+#' @returns A tibble with columns `glyph`, `orientation`, `class`,
+#' `symmetric`, and `traversable_when_conditioned`.
 #' @keywords internal
 .caugi_builtin_specs <- function() {
   tibble::tibble(
     glyph = c("-->", "---", "<->", "o-o", "o--", "o->"),
-    left_mark = c("line", "line", "arrow", "circle", "circle", "circle"),
-    right_mark = c("arrow", "line", "arrow", "circle", "line", "arrow"),
     orientation = c(
       "right_head", "none", "both_heads", "none", "none", "right_head"
     ),
