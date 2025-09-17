@@ -8,7 +8,7 @@
 # Default caugi edge operators
 .caugi_defaults_edge_ops <- c(
   "%-->%", "%---%", "%<->%",
-  "%o--%", "%o->%", "%o-o%"
+  "%--o%", "%o->%", "%o-o%"
 )
 
 # Default caugi edge operator glyph map
@@ -16,7 +16,7 @@
   "%-->%" = "-->",
   "%---%" = "---",
   "%<->%" = "<->",
-  "%o--%" = "o--",
+  "%--o%" = "--o",
   "%o->%" = "o->",
   "%o-o%" = "o-o"
 )

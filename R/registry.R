@@ -68,7 +68,7 @@ seal_caugi_registry <- function() {
 #' @keywords internal
 .caugi_builtin_specs <- function() {
   tibble::tibble(
-    glyph = c("-->", "---", "<->", "o-o", "o--", "o->"),
+    glyph = c("-->", "---", "<->", "o-o", "--o", "o->"),
     orientation = c(
       "right_head", "none", "both_heads", "none", "none", "right_head"
     ),

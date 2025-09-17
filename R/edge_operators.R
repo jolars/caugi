@@ -78,8 +78,8 @@
 `%o-o%` <- function(lhs, rhs) {
   .edge_spec(substitute(lhs), substitute(rhs), "o-o")
 }
-`%o--%` <- function(lhs, rhs) {
-  .edge_spec(substitute(lhs), substitute(rhs), "o--")
+`%--o%` <- function(lhs, rhs) {
+  .edge_spec(substitute(lhs), substitute(rhs), "--o")
 }
 `%o->%` <- function(lhs, rhs) {
   .edge_spec(substitute(lhs), substitute(rhs), "o->")
