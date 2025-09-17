@@ -45,14 +45,16 @@ build.caugi_graph <- function(cg) {
   gptr <- graph_builder_build(b)
   built <- TRUE
 
+  edges <- tibble::tibble(
+    from = cg$edges$from,
+    edge = cg$edges$edge,
+    to = cg$edges$to
+  ) |> dplyr::arrange(from, to, edge)
+
   structure(
     list(
       nodes = cg$nodes,
-      edges = tibble::tibble(
-        from = cg$edges$from,
-        edge = cg$edges$edge,
-        to = cg$edges$to
-      ),
+      edges = edges,
       ptr = gptr,
       simple = cg$simple,
       built = built
