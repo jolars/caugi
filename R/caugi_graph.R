@@ -1,243 +1,138 @@
-#' @useDynLib caugi, .registration = TRUE
-#' @importFrom cpp11 cpp_register
-#' @importFrom tibble tibble as_tibble
-#' @importFrom graph nodes edges edgemode
-#' @importFrom Matrix sparseMatrix
-#' @importFrom rlang is_integerish
-NULL
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────── caugi graph API ────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
-# ─────────────────────────── Public API  ──────────────────────────────────────
-
-#' @title Create a `caugi_graph` object
+#' @title Create a `caugi_graph` from edge expressions.
 #'
-#' @description Create a `caugi_graph` object from a pair of tibbles, formulas,
-#' or a quite flexible infix operator syntax.
+#' @description Create a `caugi_graph` from a series of edge expressions using
+#' infix operators. Nodes can be specified as symbols, strings, or numbers.
 #'
+#' The following edge operators are supported by default:
+#' * `%-->%` for directed edges (A --> B)
+#' * `%---%` for undirected edges (A --- B)
+#' * `%<->%` for bidirected edges (A <-> B)
+#' * `%o->%` for PAG directed edges (A o-> B)
+#' * `%o--%` for PAG undirected edges (A o-- B)
+#' * `%o-o%` for PAG bidirected edges (A o-o B)
 #'
-#' @param ... Either the classic `nodes, edges` pair *or* any number of
-#'            \code{caugi_edge_spec} objects built by infix operators
-#'            `%-->%`, `%<->%`, `%---%`, `%o--%`, `%o->%`, or `%o-o%`, or
-#'            it can be specified by formulas as (A ~ B, edge_type = "-->") or
-#'            alike.
+#' You can register additional edge types using [register_caugi_edge()].
 #'
-#' @return A `caugi_graph`
+#' @param ... Edge expressions using the supported infix operators, or
+#' nodes given by symbols or strings. Multiple edges can be
+#' combined using `+`: `A --> B + C`, indicating an edge from `A` to both `B`
+#' and `C`. Nodes can also be grouped using `c(...)` or parentheses.
+#' @param simple Logical; if `TRUE` (default), the graph is a simple graph, and
+#' the function will throw an error if the input contains parallel edges or
+#' self-loops.
+#' @param build Logical; if `TRUE` (default), the graph will be built using the
+#' Rust backend. If `FALSE`, the graph will not be built, and the Rust backend
+#' cannot be used. The graph will build, when queries are made to the graph or
+#' if calling `build(cg)`. __Note__: Even if `build = TRUE`, if no edges or
+#' nodes are provided, the graph will not be built and the pointer will be
+#' `NULL`.
+#'
+#' @returns A `caugi_graph` object containing the nodes, edges, and a pointer
+#' to the underlying Rust graph structure.
+#'
 #' @export
-caugi_graph <- function(...) {
-  dots <- rlang::list2(...)
+caugi_graph <- function(..., simple = TRUE, build = TRUE) {
+  calls <- as.list(substitute(list(...)))[-1L]
 
-  # two-tibble path
-  if (length(dots) == 2 &&
-    is.data.frame(dots[[1]]) &&
-    "name" %in% names(dots[[1]]) &&
-    is.data.frame(dots[[2]]) &&
-    all(c("from", "to", "edge_type") %in% names(dots[[2]]))) {
-    nodes <- dots[[1]]
-    edges <- dots[[2]]
-  } else {
-    # flexible path
-    ## Peel off an optional leading node tibble
-    if (length(dots) && is.data.frame(dots[[1]]) &&
-      "name" %in% names(dots[[1]])) {
-      nodes <- dots[[1]]
-      dots <- dots[-1]
-    } else {
-      nodes <- NULL
-    }
+  # Parse calls into edges + declared nodes
+  terms <- .collect_edges_nodes(calls)
+  edges <- terms$edges
+  declared <- terms$declared
 
-    ## Every remaining piece must be *either* a formula *or* edge-spec object
-    bad <- !vapply(
-      dots, function(x) {
-        inherits(x, "caugi_edge_spec") ||
-          rlang::is_formula(x, lhs = TRUE)
-      },
-      logical(1)
-    )
-    if (any(bad)) {
-      stop("All arguments after an optional node tibble must be\n",
-        "  * a two-sided formula (A ~ B) or\n",
-        "  * an edge spec produced by %-->%, %<->%, %---%, %o--%, %o->%, or %o-o%",
-        call. = FALSE
+  # All unique nodes
+  nodes <- tibble::tibble(name = unique(c(edges$from, edges$to, declared)))
+  n <- nrow(nodes)
+  id <- setNames(seq_len(n) - 1L, nodes$name)
+
+  # Initialize caugi registry (if not already registered)
+  reg <- caugi_registry()
+
+  # Initialize graph pointer. If build = FALSE, the graph will not be built
+  # and the pointer will be NULL
+  gptr <- NULL
+
+  # Monitor if the graph has been built
+  built <- FALSE
+
+  # Build the graph using the Rust backend
+  if (build && n > 0L) {
+    b <- graph_builder_new(reg, n = n, simple = simple)
+
+    if (nrow(edges)) {
+      codes <- vapply(
+        edges$edge,
+        function(g) edge_registry_code_of(reg, g),
+        integer(1L)
+      )
+      graph_builder_add_edges(
+        b,
+        as.integer(unname(id[edges$from])),
+        as.integer(unname(id[edges$to])),
+        as.integer(codes)
       )
     }
 
-    # formulas to tibble( from, to, edge_type = "-->" )
-    parse_formula <- function(fml) {
-      lhs <- all.vars(rlang::f_lhs(fml))
-      rhs <- all.vars(rlang::f_rhs(fml))
-      if (!length(lhs) || !length(rhs)) {
-        stop("Formula ", deparse(fml), " must have names both sides.",
-          call. = FALSE
-        )
-      }
-      tidyr::crossing(from = lhs, to = rhs) |>
-        dplyr::mutate(edge_type = "-->")
-    }
-
-    edges_formula <- dplyr::bind_rows(
-      lapply(Filter(rlang::is_formula, dots), parse_formula)
-    )
-
-    # edge-spec objects are already tibbles
-    edges_ops <- dplyr::bind_rows(
-      Filter(function(x) inherits(x, "caugi_edge_spec"), dots)
-    )
-
-    edges <- dplyr::bind_rows(edges_formula, edges_ops)
-
-    # infer nodes if absent
-    if (is.null(nodes)) {
-      nodes <- tibble::tibble(name = unique(c(edges$from, edges$to)))
-    } else {
-      missing <- setdiff(unique(c(edges$from, edges$to)), nodes$name)
-      if (length(missing)) {
-        stop("Edge list refers to unknown node(s): ",
-          paste(missing, collapse = ", "),
-          call. = FALSE
-        )
-      }
-    }
+    gptr <- graph_builder_build(b)
+    built <- TRUE
   }
 
-  # streamline symmetrical relations
-  undirected <- edges$edge_type %in% c("---", "<->", "o-o")
-  swap_needed <- undirected & (edges$from > edges$to)
-
-  # swap the from/to columns for undirected edges
-  if (any(swap_needed)) {
-    edges[swap_needed, c("from", "to")] <-
-      edges[swap_needed, c("to", "from")]
-  }
-  # remove duplicate edges
-  edges <- dplyr::distinct(edges,
-    .data$from,
-    .data$to,
-    .data$edge_type,
-    .keep_all = TRUE
-  )
-
-  # check edge types
-  type_codes <- as.integer(factor(edges$edge_type, levels = edge_type_levels))
-
-
-  # initialize node ids
-  uid <- setNames(seq_len(nrow(nodes)), nodes$name)
-  from <- uid[edges$from]
-  to <- uid[edges$to]
-  if (anyNA(from) | anyNA(to)) {
-    stop("from/to must match nodes$name")
-  }
-
-
-
-  # C++ call
-  raw <- caugi_create_csr_from_csr(
-    as.integer(from),
-    as.integer(to),
-    type_codes,
-    as.integer(nrow(nodes))
-  )
-  caugi_graph_from_csr(nodes$name |> sort(), raw)
-}
-
-#' @export
-print.caugi_graph <- function(x, ...) {
-  print(as_tibble(x, ...))
-  invisible(x)
-}
-
-# ───────────────────────────── Edge operators  ────────────────────────────────
-
-#' Helper that every operator calls
-#'
-#' @keywords internal
-.build_edge_spec <- function(lhs, rhs, code) {
-  tibble::tibble(
-    from      = deparse1(lhs),
-    to        = deparse1(rhs),
-    edge_type = code
-  ) |>
-    structure(class = c("caugi_edge_spec", "tbl_df", "tbl", "data.frame"))
-}
-
-# User-facing operators
-`%-->%` <- function(lhs, rhs) .build_edge_spec(substitute(lhs), substitute(rhs), "-->")
-`%<->%` <- function(lhs, rhs) .build_edge_spec(substitute(lhs), substitute(rhs), "<->")
-`%---%` <- function(lhs, rhs) .build_edge_spec(substitute(lhs), substitute(rhs), "---")
-`%o--%` <- function(lhs, rhs) .build_edge_spec(substitute(lhs), substitute(rhs), "o--")
-`%o->%` <- function(lhs, rhs) .build_edge_spec(substitute(lhs), substitute(rhs), "o->")
-`%o-o%` <- function(lhs, rhs) .build_edge_spec(substitute(lhs), substitute(rhs), "o-o")
-
-
-# ──────────────────────────────── Helpers  ────────────────────────────────────
-#' Reverse edges that are <-- or <-o
-#'
-#' Swaps the direction for “backwards” edge codes and remaps them to the
-#' canonical forward codes. Helper is currently not called elsewhere but kept
-#' for completeness.
-#'
-#' Currently not in use.
-#'
-#' @param nodes  Tibble of node names (unused, kept for future extensions)
-#' @param edges  Tibble with columns `from`, `to`, `edge_type`
-#' @return       `edges`, with offending rows fixed in-place
-#' @keywords internal
-reverse_bad_edges <- function(nodes, edges) {
-  # map old reverse codes to canonical + swap
-  rev_map <- c(
-    "<--" = "-->",
-    "<-o" = "o->"
-  )
-  bad <- edges$edge_type %in% names(rev_map)
-  if (any(bad)) {
-    swapped <- edges[bad, ]
-    edges[bad, c("from", "to")] <- swapped[c("to", "from")]
-    edges$edge_type[bad] <- rev_map[swapped$edge_type]
-  }
-  edges
-}
-
-
-#' Internal helper: wrap a CSR list and node names into a caugi_graph
-#' @keywords internal
-caugi_graph_from_csr <- function(node_names, ptrs) {
-  stopifnot(
-    is.character(node_names),
-    is.list(ptrs),
-    length(ptrs) == 3,
-    all(c("row_ptr", "col_ids", "type_codes") %in% names(ptrs)),
-    all(sapply(ptrs, is.integer))
-  )
-  check_edge_integer(ptrs$type_codes)
   structure(
     list(
-      nodes = tibble(name = node_names),
-      csr = list(
-        row_ptr    = as.integer(ptrs$row_ptr),
-        col_ids    = as.integer(ptrs$col_ids),
-        type_codes = as.integer(ptrs$type_codes)
-      )
+      nodes = nodes,
+      edges = tibble::tibble(
+        from = edges$from,
+        edge = edges$edge,
+        to = edges$to
+      ),
+      ptr = gptr,
+      simple = simple,
+      built = built
     ),
     class = "caugi_graph"
   )
 }
 
-#' Check if edge type integer maps to edge type
-#' @keywords internal
-check_edge_integer <- function(x) {
-  if (!rlang::is_integerish(x)) {
-    stop("Edge integer must be an integer",
-      .call = FALSE
-    )
-  }
-  if (any(x < 1L | x > length(edge_type_levels))) {
-    stop("Edge integer must be between 1 and ", length(edge_type_levels),
-      .call = FALSE
-    )
-  }
-  if (anyNA(x)) {
-    stop("Edge integer must not be NA",
-      .call = FALSE
-    )
-  }
-  invisible(TRUE)
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────── Methods for caugi graphs ───────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+#' @title Length of a `caugi_graph`
+#'
+#' @description Returns the number of nodes in the graph.
+#'
+#' @param cg A `caugi_graph` object.
+#'
+#' @returns An integer representing the number of nodes.
+#' @exportS3Method caugi::length
+length.caugi_graph <- function(cg) {
+  nrow(cg$nodes)
+}
+
+#' @title Print a `caugi_graph`
+#'
+#' @exportS3Method print caugi_graph
+print.caugi_graph <- function(cg, ...) {
+  print(cg$nodes)
+  print(cg$edges)
+  invisible(cg)
+}
+
+#' @title Return union of two `caugi_graphs`
+#'
+#' @description Returns a new `caugi_graph` that is the union of two input
+#' graphs.
+#'
+#' @param cg1 A `caugi_graph` object.
+#' @param cg2 A `caugi_graph` object.
+#'
+#' @returns A new `caugi_graph` object representing the union of `cg1` and
+#' `cg2`.
+#'
+#' @exportS3Method union caugi_graph
+union.caugi_graph <- function(cg1, cg2) {
+  NULL
 }
