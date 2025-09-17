@@ -1,19 +1,73 @@
 // SPDX-License-Identifier: MIT
 //! Edge specification and registry.
 
-use std::{collections::HashMap, error::Error, fmt, result::Result};
+use std::{collections::HashMap, error::Error, fmt, result::Result, str::FromStr};
 
 mod query_flags;
 pub use query_flags::QueryFlags;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Mark { Line, Circle, Arrow, Other }
+pub enum Mark {
+    Line,
+    Circle,
+    Arrow,
+    Other,
+}
+
+impl FromStr for Mark {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "line" => Ok(Mark::Line),
+            "circle" => Ok(Mark::Circle),
+            "arrow" => Ok(Mark::Arrow),
+            "other" => Ok(Mark::Other),
+            _ => Err(format!("Unknown mark '{}'", s)),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Orientation { LeftHead, RightHead, BothHeads, None }
+pub enum Orientation {
+    LeftHead,
+    RightHead,
+    BothHeads,
+    None,
+}
+
+impl FromStr for Orientation {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "left_head" => Ok(Orientation::LeftHead),
+            "right_head" => Ok(Orientation::RightHead),
+            "both_heads" => Ok(Orientation::BothHeads),
+            "none" => Ok(Orientation::None),
+            _ => Err(format!("Unknown orientation '{}'", s)),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum EdgeClass { Directed, Undirected, Bidirected, Partial }
+pub enum EdgeClass {
+    Directed,
+    Undirected,
+    Bidirected,
+    Partial,
+}
+
+impl FromStr for EdgeClass {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "directed" => Ok(EdgeClass::Directed),
+            "undirected" => Ok(EdgeClass::Undirected),
+            "bidirected" => Ok(EdgeClass::Bidirected),
+            "partial" => Ok(EdgeClass::Partial),
+            _ => Err(format!("Unknown class '{}'", s)),
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EdgeSpec {
@@ -27,13 +81,14 @@ pub struct EdgeSpec {
 }
 
 impl EdgeSpec {
-    pub fn glyph<S: Into<String>>(mut self, g: S) -> Self { 
-        self.glyph = g.into(); 
-        self 
+    pub fn glyph<S: Into<String>>(mut self, g: S) -> Self {
+        self.glyph = g.into();
+        self
     }
 }
 
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum RegistryError {
     Sealed,
     TooManyTypes,
@@ -41,21 +96,27 @@ pub enum RegistryError {
     UnknownGlyph(String),
     InvalidCode(u8),
 }
+
 impl fmt::Display for RegistryError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use RegistryError::*;
         match self {
-            Sealed => write!(f, "edge registry is sealed"),
-            TooManyTypes => write!(f, "edge registry full (max 256)"),
-            Conflict { glyph } => write!(f, "glyph '{}' already registered with different semantics", glyph),
-            UnknownGlyph(g) => write!(f, "unknown glyph '{}'", g),
-            InvalidCode(c) => write!(f, "invalid edge code {}", c),
+            Sealed => write!(f, "Edge registry is sealed"),
+            TooManyTypes => write!(f, "Edge registry full (max 256)"),
+            Conflict { glyph } => write!(
+                f,
+                "The glyph '{}' already registered with different semantics",
+                glyph
+            ),
+            UnknownGlyph(g) => write!(f, "Unknown glyph '{}'", g),
+            InvalidCode(c) => write!(f, "Invalid edge code {}", c),
         }
     }
 }
+
 impl Error for RegistryError {}
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct EdgeRegistry {
     glyph_to_code: HashMap<String, u8>,
     code_to_spec: Vec<EdgeSpec>, // index = code
@@ -63,22 +124,49 @@ pub struct EdgeRegistry {
 }
 
 impl EdgeRegistry {
-    pub fn new() -> Self {
-        Self { glyph_to_code: HashMap::new(), code_to_spec: Vec::new(), sealed: false }
-    }
-    pub fn is_sealed(&self) -> bool { self.sealed }
-    pub fn seal(&mut self) { self.sealed = true; }
+    const MAX_TYPES: usize = 256;
 
-    pub fn len(&self) -> usize { self.code_to_spec.len() }
+    pub fn new() -> Self {
+        Self {
+            glyph_to_code: HashMap::new(),
+            code_to_spec: Vec::new(),
+            sealed: false,
+        }
+    }
+    pub fn is_sealed(&self) -> bool {
+        self.sealed
+    }
+    pub fn is_empty(&self) -> bool {
+        self.code_to_spec.is_empty()
+    }
+    pub fn seal(&mut self) {
+        self.sealed = true;
+    }
+
+    pub fn len(&self) -> usize {
+        self.code_to_spec.len()
+    }
 
     pub fn register(&mut self, spec: EdgeSpec) -> Result<u8, RegistryError> {
-        if self.sealed { return Err(RegistryError::Sealed); }
+        if self.sealed {
+            return Err(RegistryError::Sealed);
+        }
+
         if let Some(&code) = self.glyph_to_code.get(&spec.glyph) {
             let existing = &self.code_to_spec[code as usize];
-            if existing == &spec { return Ok(code); }
-            return Err(RegistryError::Conflict { glyph: spec.glyph.clone() });
+            return if existing == &spec {
+                Ok(code)
+            } else {
+                Err(RegistryError::Conflict {
+                    glyph: spec.glyph.clone(),
+                })
+            };
         }
-        if self.code_to_spec.len() == 256 { return Err(RegistryError::TooManyTypes); }
+
+        if self.code_to_spec.len() >= Self::MAX_TYPES {
+            return Err(RegistryError::TooManyTypes);
+        }
+
         let code = self.code_to_spec.len() as u8;
         self.glyph_to_code.insert(spec.glyph.clone(), code);
         self.code_to_spec.push(spec);
@@ -86,88 +174,127 @@ impl EdgeRegistry {
     }
 
     pub fn code_of(&self, glyph: &str) -> Result<u8, RegistryError> {
-        self.glyph_to_code.get(glyph).copied().ok_or_else(|| RegistryError::UnknownGlyph(glyph.into()))
+        match self.glyph_to_code.get(glyph) {
+            Some(&code) => Ok(code),
+            None => Err(RegistryError::UnknownGlyph(glyph.to_string())),
+        }
     }
+
     pub fn spec_of_code(&self, code: u8) -> Result<&EdgeSpec, RegistryError> {
-        self.code_to_spec.get(code as usize).ok_or(RegistryError::InvalidCode(code))
+        match self.code_to_spec.get(code as usize) {
+            Some(spec) => Ok(spec),
+            None => Err(RegistryError::InvalidCode(code)),
+        }
+    }
+
+    /// Convenience: fetch spec directly by glyph.
+    pub fn spec_of(&self, glyph: &str) -> Result<&EdgeSpec, RegistryError> {
+        let code = self.code_of(glyph)?;
+        self.spec_of_code(code)
     }
 
     /// Register built-ins. Idempotent if called multiple times.
-/// Register built-ins. Idempotent if called multiple times.
     pub fn register_builtins(&mut self) -> Result<(), RegistryError> {
-        use EdgeClass as C; use Mark as M; use Orientation as O; use QueryFlags as F;
-        let mut add = |glyph: &str, left: M, right: M, ori: O, class: C, symmetric: bool, flags: QueryFlags| {
-            let spec = EdgeSpec { 
-                glyph: glyph.to_string(), 
-                left_mark: left, 
-                right_mark: right,
-                orientation: ori, 
-                class, 
-                symmetric, 
-                flags };
+        use EdgeClass as C;
+        use Mark as M;
+        use Orientation as O;
+        use QueryFlags as F;
 
-            let _ = self.register(spec);
+        let mut add = |glyph: &str,
+                       left: M,
+                       right: M,
+                       ori: O,
+                       class: C,
+                       symmetric: bool,
+                       flags: F|
+         -> Result<(), RegistryError> {
+            self.register(EdgeSpec {
+                glyph: glyph.to_string(),
+                left_mark: left,
+                right_mark: right,
+                orientation: ori,
+                class,
+                symmetric,
+                flags,
+            })
+            .map(|_| ())
         };
 
-        // Helpers
-        let base = F::TRAVERSABLE_WHEN_CONDITIONED;
-
-        // Directed arrow right: tail(child), head(parent)
-        add("-->", M::Line, M::Arrow, O::RightHead, C::Directed, false,
-            base | F::TAIL_CHILD | F::HEAD_PARENT);
-
-        // Undirected line-line
-        add("---", M::Line, M::Line, O::None, C::Undirected, true,
-            base | F::TAIL_UNDIR | F::HEAD_UNDIR);
-
-        // Bidirected arrows both sides -> treat as undirected for splits
-        add("<->", M::Arrow, M::Arrow, O::BothHeads, C::Bidirected, true,
-             base | F::TAIL_UNDIR | F::HEAD_UNDIR | F::LATENT_CONFOUNDING);
-
-        // Circle-circle undirected
-        add("o-o", M::Circle, M::Circle, O::None, C::Undirected, true,
-            base | F::TAIL_UNDIR | F::HEAD_UNDIR);
-
-        // Circle-line partial (no head): undirected on both sides for splits
-        add("o--", M::Circle, M::Line,  O::None, C::Partial, false,
-            base | F::TAIL_UNDIR | F::HEAD_UNDIR);
-
-        // Circle-arrow partial: tail undirected, head parent
-        add("o->", M::Circle, M::Arrow, O::RightHead, C::Partial, false,
-            base | F::TAIL_UNDIR | F::HEAD_UNDIR | F::TAIL_POSS_CHILD | F::HEAD_POSS_PARENT);
-
+        add(
+            "-->",
+            M::Line,
+            M::Arrow,
+            O::RightHead,
+            C::Directed,
+            false,
+            F::TRAVERSABLE_WHEN_CONDITIONED | F::TAIL_CHILD | F::HEAD_PARENT,
+        )?;
+        add(
+            "---",
+            M::Line,
+            M::Line,
+            O::None,
+            C::Undirected,
+            true,
+            F::TRAVERSABLE_WHEN_CONDITIONED | F::TAIL_UNDIR | F::HEAD_UNDIR,
+        )?;
+        add(
+            "<->",
+            M::Arrow,
+            M::Arrow,
+            O::BothHeads,
+            C::Bidirected,
+            true,
+            F::TRAVERSABLE_WHEN_CONDITIONED
+                | F::TAIL_UNDIR
+                | F::HEAD_UNDIR
+                | F::LATENT_CONFOUNDING,
+        )?;
+        add(
+            "o-o",
+            M::Circle,
+            M::Circle,
+            O::None,
+            C::Undirected,
+            true,
+            F::TRAVERSABLE_WHEN_CONDITIONED | F::TAIL_UNDIR | F::HEAD_UNDIR,
+        )?;
+        add(
+            "o--",
+            M::Circle,
+            M::Line,
+            O::None,
+            C::Partial,
+            false,
+            F::TRAVERSABLE_WHEN_CONDITIONED | F::TAIL_UNDIR | F::HEAD_UNDIR,
+        )?;
+        add(
+            "o->",
+            M::Circle,
+            M::Arrow,
+            O::RightHead,
+            C::Partial,
+            false,
+            F::TRAVERSABLE_WHEN_CONDITIONED
+                | F::TAIL_UNDIR
+                | F::HEAD_UNDIR
+                | F::TAIL_POSS_CHILD
+                | F::HEAD_POSS_PARENT,
+        )?;
         Ok(())
     }
 }
 
 pub(crate) fn parse_mark(s: &str) -> Result<Mark, String> {
-    match s {
-        "line" => Ok(Mark::Line),
-        "circle" => Ok(Mark::Circle),
-        "arrow" => Ok(Mark::Arrow),
-        "other" => Ok(Mark::Other),
-        _ => Err(format!("unknown mark '{}'", s)),
-    }
+    s.parse()
 }
 
 pub(crate) fn parse_orientation(s: &str) -> Result<Orientation, String> {
-    match s {
-        "left_head" => Ok(Orientation::LeftHead),
-        "right_head" => Ok(Orientation::RightHead),
-        "both_heads" => Ok(Orientation::BothHeads),
-        "none" => Ok(Orientation::None),
-        _ => Err(format!("unknown orientation '{}'", s)),
-    }
+    s.parse()
 }
 
 pub(crate) fn parse_class(s: &str) -> Result<EdgeClass, String> {
-    match s {
-        "directed" => Ok(EdgeClass::Directed),
-        "undirected" => Ok(EdgeClass::Undirected),
-        "bidirected" => Ok(EdgeClass::Bidirected),
-        "partial" => Ok(EdgeClass::Partial),
-        _ => Err(format!("unknown class '{}'", s)),
-    }
+    s.parse()
 }
 
 #[cfg(test)]
@@ -272,7 +399,10 @@ mod tests {
         assert_eq!(parse_mark("line").unwrap(), Mark::Line);
         assert!(parse_mark("zzz").is_err());
 
-        assert_eq!(parse_orientation("left_head").unwrap(), Orientation::LeftHead);
+        assert_eq!(
+            parse_orientation("left_head").unwrap(),
+            Orientation::LeftHead
+        );
         assert!(parse_orientation("zzz").is_err());
 
         assert_eq!(parse_class("directed").unwrap(), EdgeClass::Directed);
