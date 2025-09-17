@@ -233,7 +233,7 @@ Causal discovery and effect estimation are out of scope. Focus is graph represen
   * `row_ptr: Arc<[u32]>` length `|V|+1`
   * `nbr: Arc<[u32]>` length `Σ deg(v)`
   * `deg_splits: Arc<[(u32,u32,u32)]>` or equivalently two counts if undirected can be derived
-  * `etype: Arc<[u8]>`
+  <!-- * `etype: Arc<[u8]>` -->
 * **Constraints:** simple graphs, no self-loops, unless specifically allowed by the user. The user might want to represent graph types, we might not think are valid or favorable, as it will be used for research. Conflicting encodings rejected.
 
 ### Edge types and registry

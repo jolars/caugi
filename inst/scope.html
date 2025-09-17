@@ -688,24 +688,34 @@ to trim capacity and enable cheap snapshots.</li>
 <div id="project-layout-rextendr-single-crate-start" class="section level3">
 <h3>Project layout (rextendr; single crate start)</h3>
 <pre><code>caugi/
-  R/
-  man/
+  DESCRIPTION  NAMESPACE  R/
+    zzz.R                  # .onLoad(): call rust_register_builtins()
+    operators.R            # built-in infix: %--&gt;%, %---%, %&lt;-&gt;%, %o-o%, %o--%, %o-&gt;%
+    edge_registry.R        # caugi_define_edge(), helpers
+    graph.R                # R-facing constructors, add_edge(), build(), etc.
+    extendr-wrappers.R     # auto-generated (do not edit)
   src/
+    Makevars  Makevars.win  entrypoint.c
     rust/
-      Cargo.toml
+      Cargo.toml            # [lib] crate-type = [&quot;staticlib&quot;]; extendr-api = &quot;&gt;=0.6&quot;
       src/
-        lib.rs          # extendr module exports
-        ffi.rs          # extendr wrappers
-        graph.rs        # CaugiGraph type
-        csr.rs          # CSR arrays, segmented neighborhoods
-        edges.rs        # edge registry, bitfields
-        builder.rs      # op-log → canonicalize → finalize
-        edgelist.rs     # streaming loaders
+        lib.rs              # extendr_module!; re-exports
+        ffi.rs              # #[extendr] wrappers: new_registry, register_edge, new_graph, add_edge, build, ...
+        edges/
+          mod.rs            # EdgeSpec, EdgeRegistry, flags
+          bitflags.rs
+        graph/
+          mod.rs            # CaugiGraph
+          csr.rs            # row_ptr, nbr, deg_splits (Arc&lt;[u32]&gt;, Arc&lt;[(u32,u32,u32)]&gt;)
+          builder.rs        # op-log apply → finalize
+          edgelist.rs       # streaming loaders
         queries/
-          is_dag.rs
-          is_pdag.rs
-          is_cpdag.rs
-      tests/</code></pre>
+          is_dag.rs  is_pdag.rs  is_cpdag.rs
+        util/
+          idmap.rs  errors.rs
+      tests/                # Rust unit/property tests
+  tests/testthat/           # R tests
+</code></pre>
 </div>
 <div id="tooling-ci-and-licensing" class="section level3">
 <h3>Tooling, CI, and licensing</h3>
