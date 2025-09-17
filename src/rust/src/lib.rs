@@ -46,28 +46,57 @@ fn edge_registry_len(reg: ExternalPtr<EdgeRegistry>) -> i32 {
     reg.as_ref().len() as i32 
 }
 
-#[extendr] 
+#[extendr]
 fn edge_registry_register(
     mut reg: ExternalPtr<EdgeRegistry>,
-    glyph:&str,
-    orientation:&str, class:&str, symmetric:bool, traversable_when_conditioned:bool
+    glyph: &str,
+    orientation: &str,
+    class: &str,
+    symmetric: bool,
+    flags: Vec<String>, // e.g. c("TAIL_UNDIR","HEAD_POSS_PARENT")
 ) -> i32 {
+    use QueryFlags as F;
+
+    fn parse_flags(v: &[String]) -> F {
+        let mut out = F::empty();
+        for raw in v {
+            match raw.trim().to_ascii_uppercase().as_str() {
+                "TAIL_PARENT" => out |= F::TAIL_PARENT,
+                "TAIL_CHILD" => out |= F::TAIL_CHILD,
+                "TAIL_UNDIR" => out |= F::TAIL_UNDIR,
+                "TAIL_UNKNOWN" => out |= F::TAIL_UNKNOWN,
+                "HEAD_PARENT" => out |= F::HEAD_PARENT,
+                "HEAD_CHILD" => out |= F::HEAD_CHILD,
+                "HEAD_UNDIR" => out |= F::HEAD_UNDIR,
+                "HEAD_UNKNOWN" => out |= F::HEAD_UNKNOWN,
+                "LATENT_CONFOUNDING" => out |= F::LATENT_CONFOUNDING,
+                "HEAD_POSS_CHILD" => out |= F::HEAD_POSS_CHILD,
+                "HEAD_POSS_PARENT" => out |= F::HEAD_POSS_PARENT,
+                "TAIL_POSS_PARENT" => out |= F::TAIL_POSS_PARENT,
+                "TAIL_POSS_CHILD" => out |= F::TAIL_POSS_CHILD,
+                "TRAVERSABLE_WHEN_CONDITIONED" | "TRAVERSABLE" => {
+                    out |= F::TRAVERSABLE_WHEN_CONDITIONED
+                }
+                other => throw_r_error(format!("Unknown flag '{other}'")),
+            }
+        }
+        out
+    }
+
     let spec = EdgeSpec {
         glyph: glyph.to_string(),
         orientation: parse_orientation(orientation).unwrap_or_else(|e| throw_r_error(e)),
         class: parse_class(class).unwrap_or_else(|e| throw_r_error(e)),
         symmetric,
-        flags: if traversable_when_conditioned { 
-            QueryFlags::TRAVERSABLE_WHEN_CONDITIONED 
-        } else { 
-            QueryFlags::empty() 
-        },
+        flags: parse_flags(&flags),
     };
-    match reg.as_mut().register(spec) { 
-        Ok(c)=>c as i32, 
-        Err(e)=>throw_r_error(e.to_string()) 
+    match reg.as_mut().register(spec) {
+        Ok(c) => c as i32,
+        Err(e) => throw_r_error(e.to_string()),
     }
 }
+
+
 
 #[extendr]
 fn edge_registry_code_of(reg: ExternalPtr<EdgeRegistry>, glyph: &str) -> i32 {
