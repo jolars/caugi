@@ -11,10 +11,14 @@ bitflags! {
         const HEAD_PARENT = 0b0000_1000;
         const HEAD_CHILD  = 0b0001_0000;
         const HEAD_UNDIR  = 0b0010_0000;
-
+        
+        // Does the edge indicate latent confounding?
         const LATENT_CONFOUNDING = 0b1000_0000;
 
+        // Per-side possible-role bits for queries
+        const HEAD_POSS_CHILD  = 0b0000_1000_0000;
         const HEAD_POSS_PARENT = 0b0001_0000_0000;
+        const TAIL_POSS_PARENT = 0b0000_0100_0000;
         const TAIL_POSS_CHILD  = 0b0010_0000_0000;
 
         // Extra semantics (e.g., d/m-sep traversal tweaks)
