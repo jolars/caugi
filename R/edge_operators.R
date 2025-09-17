@@ -22,6 +22,39 @@
     structure(class = c("caugi_edge_spec", "tbl_df", "tbl", "data.frame"))
 }
 
+#' @title Helper to expand the right-hand side of an edge specification
+#'
+#' @description This function expands the right-hand side of an edge
+#' specification into a character vector of target node names. It handles
+#' various forms of input, including symbols, calls with `+`, calls with `c()`,
+#' and character literals.
+#'
+#' @param expr An expression representing the target node(s).
+#'
+#' @returns A character vector of target node names.
+#'
+#' @keywords internal
+.expand_targets <- function(expr) {
+  # Handle symbols/names
+  if (is.symbol(expr)) {
+    return(deparse1(expr))
+  }
+  # Handle calls: `A %-->% B + C + D`
+  if (is.call(expr) && identical(expr[[1L]], as.name("+"))) {
+    return(c(.expand_targets(expr[[2L]]), .expand_targets(expr[[3L]])))
+  }
+  # Handle c(B, C, D)
+  if (is.call(expr) && identical(expr[[1L]], as.name("c"))) {
+    args <- as.list(expr)[-1L]
+    return(unlist(lapply(args, .expand_targets), use.names = FALSE))
+  }
+  # Character scalar literal: "B"
+  if (is.character(expr) && length(expr) == 1L) {
+    return(expr)
+  }
+  stop("Unsupported right-hand side in edge operator: ", deparse(expr), call. = FALSE)
+}
+
 #' @title Infix operators for edge specifications
 #'
 #' @description These operators are used to specify edges in `caugi_graph()`.
