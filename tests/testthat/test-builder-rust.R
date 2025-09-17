@@ -58,7 +58,7 @@ test_that("single-edge add and basic errors", {
   # Out-of-range node id should error
   expect_error(graph_builder_add_edge(b, 0L, 2L, as.integer(code_und)))
 
-  g <- graph_builder_finalize(b)
+  g <- graph_builder_build(b)
   expect_identical(undirected_of_ptr(g, 0L), as.integer(1L))
   expect_identical(undirected_of_ptr(g, 1L), as.integer(0L))
 })
