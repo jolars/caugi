@@ -39,11 +39,11 @@ pub struct CaugiGraph {
 
 /// Named counts for a row split.
 #[derive(Clone, Debug)]
-struct RowSplit { parents: u32, undirected: u32, children: u32 }
+struct RowSplit { parents: u32, undirected_unknown: u32, children: u32 }
 
 /// Named index ranges for a row inside `col_index`.
 #[derive(Clone, Debug)]
-struct RowSegments { parents: Range<usize>, undirected: Range<usize>, children: Range<usize> }
+struct RowSegments { parents: Range<usize>, undirected_unknown: Range<usize>, children: Range<usize> }
 
 
 impl CaugiGraph {
@@ -80,7 +80,7 @@ impl CaugiGraph {
     #[inline]
     fn row_split(&self, i: u32) -> RowSplit {
         let (p,u,c) = self.split_index[i as usize];
-        RowSplit { parents: p, undirected: u, children: c }
+        RowSplit { parents: p, undirected_unknown: u, children: c }
     }
 
     #[inline]
@@ -89,11 +89,11 @@ impl CaugiGraph {
         let s = range.start;
         let sp = self.row_split(i);
         let p = sp.parents as usize;
-        let u = sp.undirected as usize;
+        let u = sp.undirected_unknown as usize;
         let c = sp.children as usize;
         RowSegments {
             parents:    s .. s + p,
-            undirected: s + p .. s + p + u,
+            undirected_unknown: s + p .. s + p + u,
             children:   range.end - c .. range.end,
         }
     }
@@ -110,18 +110,18 @@ impl CaugiGraph {
         &self.col_index[seg.children]
     }
 
-    /// Undirected slice: contains undirected and partial edges for both sides.
-    pub fn adjacent_undirected_of(&self, i:u32) -> &[u32] {
+    /// Undirected and unknown slice: contains undirected and partial edges for both sides.
+    pub fn adjacent_undirected_unknown_of(&self, i:u32) -> &[u32] {
         let seg = self.row_segments(i);
-        &self.col_index[seg.undirected]
+        &self.col_index[seg.undirected_unknown]
     }
 
-    /// Possible parents = definite parents + undirected neighbors that could be parents of i.
+    /// Possible parents = definite parents + undirected or unknown neighbors that could be parents of i.
     pub fn possible_parents_of(&self, i: u32) -> Vec<u32> {
         use QueryFlags as F;
         let seg = self.row_segments(i);
         let mut out: Vec<u32> = self.col_index[seg.parents.clone()].to_vec();
-        for k in seg.undirected {
+        for k in seg.undirected_unknown {
             let spec = &self.registry.specs[self.etype[k] as usize];
             let s = self.side[k];
             // If this half-edge is at TAIL (s=0), neighbor sits at HEAD -> check HEAD_POSS_PARENT.
@@ -133,12 +133,12 @@ impl CaugiGraph {
         out
     }
 
-    /// Possible children = definite children + undirected neighbors that could be children of i.
+    /// Possible children = definite children + undirected or unknown neighbors that could be children of i.
     pub fn possible_children_of(&self, i: u32) -> Vec<u32> {
         use QueryFlags as F;
         let seg = self.row_segments(i);
         let mut out: Vec<u32> = self.col_index[seg.children.clone()].to_vec();
-        for k in seg.undirected {
+        for k in seg.undirected_unknown {
             let spec = &self.registry.specs[self.etype[k] as usize];
             let s = self.side[k];
             // If this half-edge is at TAIL (s=0), neighbor sits at HEAD -> check HEAD_POSS_CHILD.
@@ -169,7 +169,7 @@ mod tests {
 
         assert_eq!(g.parents_of(1), &[0]);
         assert_eq!(g.children_of(0), &[1]);
-        assert_eq!(g.adjacent_undirected_of(2), &[0,1]);
+        assert_eq!(g.adjacent_undirected_unknown_of(2), &[0,1]);
 
         assert_eq!(g.possible_parents_of(2), vec![0]); // o-> head-side
         assert_eq!(g.possible_children_of(0), vec![1, 2]); // o-> tail-side not a definite child

@@ -156,8 +156,8 @@ fn children_of_ptr(g: ExternalPtr<CaugiGraph>, i:i32) -> Robj {
 }
 
 #[extendr] 
-fn undirected_of_ptr(g: ExternalPtr<CaugiGraph>, i:i32) -> Robj {
-    g.as_ref().adjacent_undirected_of(i as u32).iter().map(|&x| x as i32).collect_robj()
+fn undirected_unknown_of_ptr(g: ExternalPtr<CaugiGraph>, i:i32) -> Robj {
+    g.as_ref().adjacent_undirected_unknown_of(i as u32).iter().map(|&x| x as i32).collect_robj()
 }
 
 #[extendr] 
@@ -188,7 +188,7 @@ extendr_module! {
     // queries
     fn parents_of_ptr; 
     fn children_of_ptr; 
-    fn undirected_of_ptr;
+    fn undirected_unknown_of_ptr;
     fn possible_parents_of_ptr; 
     fn possible_children_of_ptr;
 }
