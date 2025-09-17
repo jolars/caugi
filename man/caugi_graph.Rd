@@ -2,21 +2,44 @@
 % Please edit documentation in R/caugi_graph.R
 \name{caugi_graph}
 \alias{caugi_graph}
-\title{Create a \code{caugi_graph} object}
+\title{Create a \code{caugi_graph} from edge expressions.}
 \usage{
-caugi_graph(...)
+caugi_graph(..., simple = TRUE, build = TRUE)
 }
 \arguments{
-\item{...}{Either the classic \verb{nodes, edges} pair \emph{or} any number of
-\code{caugi_edge_spec} objects built by infix operators
-\verb{\%-->\%}, \verb{\%<->\%}, \verb{\%---\%}, \verb{\%o--\%}, \verb{\%o->\%}, or \verb{\%o-o\%}, or
-it can be specified by formulas as (A ~ B, edge_type = "-->") or
-alike.}
+\item{...}{Edge expressions using the supported infix operators, or
+nodes given by symbols or strings. Multiple edges can be
+combined using \code{+}: \verb{A --> B + C}, indicating an edge from \code{A} to both \code{B}
+and \code{C}. Nodes can also be grouped using \code{c(...)} or parentheses.}
+
+\item{simple}{Logical; if \code{TRUE} (default), the graph is a simple graph, and
+the function will throw an error if the input contains parallel edges or
+self-loops.}
+
+\item{build}{Logical; if \code{TRUE} (default), the graph will be built using the
+Rust backend. If \code{FALSE}, the graph will not be built, and the Rust backend
+cannot be used. The graph will build, when queries are made to the graph or
+if calling \code{build(cg)}. \strong{Note}: Even if \code{build = TRUE}, if no edges or
+nodes are provided, the graph will not be built and the pointer will be
+\code{NULL}.}
 }
 \value{
-A \code{caugi_graph}
+A \code{caugi_graph} object containing the nodes, edges, and a pointer
+to the underlying Rust graph structure.
 }
 \description{
-Create a \code{caugi_graph} object from a pair of tibbles, formulas,
-or a quite flexible infix operator syntax.
+Create a \code{caugi_graph} from a series of edge expressions using
+infix operators. Nodes can be specified as symbols, strings, or numbers.
+
+The following edge operators are supported by default:
+\itemize{
+\item \verb{\%-->\%} for directed edges (A --> B)
+\item \verb{\%---\%} for undirected edges (A --- B)
+\item \verb{\%<->\%} for bidirected edges (A <-> B)
+\item \verb{\%o->\%} for PAG directed edges (A o-> B)
+\item \verb{\%o--\%} for PAG undirected edges (A o-- B)
+\item \verb{\%o-o\%} for PAG bidirected edges (A o-o B)
+}
+
+You can register additional edge types using \code{\link[=register_caugi_edge]{register_caugi_edge()}}.
 }

@@ -4,7 +4,7 @@
 \alias{as_tibble.caugi_graph}
 \title{Convert a \code{caugi_graph} to a tibble.}
 \usage{
-\method{as_tibble}{caugi_graph}(x, collapse = FALSE, collapse_to = "---", ...)
+as_tibble.caugi_graph(x, collapse = FALSE, collapse_to = "---", ...)
 }
 \arguments{
 \item{x}{A \code{caugi_graph} object.}
