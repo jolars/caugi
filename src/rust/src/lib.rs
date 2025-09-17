@@ -89,12 +89,6 @@ fn graph_builder_new(reg: ExternalPtr<EdgeRegistry>, n: i32, simple: Rbool) -> E
     ExternalPtr::new(GraphBuilder::new(n as u32, simple.is_true(), reg.as_ref()))
 }
 
-#[extendr] fn graph_builder_add_edge(mut b: ExternalPtr<GraphBuilder>, u:i32, v:i32, etype:i32) {
-    if let Err(e) = b.as_mut().add_edge(u as u32, v as u32, etype as u8) { 
-        throw_r_error(e); 
-    }
-}
-
 #[extendr]
 fn graph_builder_add_edges(
     mut b: ExternalPtr<GraphBuilder>,
@@ -161,7 +155,6 @@ extendr_module! {
     
     // builder + graph
     fn graph_builder_new; 
-    fn graph_builder_add_edge; 
     fn graph_builder_add_edges; 
     fn graph_builder_build;
 
