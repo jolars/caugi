@@ -6,9 +6,6 @@
 \usage{
 seal_caugi_registry()
 }
-\value{
-TRUE, invisibly.
-}
 \description{
-After sealing, no further edge types can be registered.
+Seal the global edge registry.
 }

@@ -10,8 +10,5 @@ caugi_registry()
 An \code{edge_registry} external pointer.
 }
 \description{
-The global edge registry is created on first access, and
-built-in edge types are registered once per session.
-This function is called internally by \code{caugi_graph()}.
+Access the global edge registry, creating it if needed.
 }
-\keyword{internal}

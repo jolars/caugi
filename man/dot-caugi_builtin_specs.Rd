@@ -7,8 +7,8 @@
 .caugi_builtin_specs()
 }
 \value{
-A tibble with columns \code{glyph}, \code{left_mark}, \code{right_mark},
-\code{orientation}, \code{class}, \code{symmetric}, and \code{traversable_when_conditioned}.
+A tibble with columns \code{glyph}, \code{orientation}, \code{class},
+\code{symmetric}, and \code{traversable_when_conditioned}.
 }
 \description{
 A tibble of the built-in edge specifications.

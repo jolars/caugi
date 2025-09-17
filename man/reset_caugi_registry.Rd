@@ -6,10 +6,6 @@
 \usage{
 reset_caugi_registry()
 }
-\value{
-TRUE, invisibly.
-}
 \description{
-This is mainly useful for testing purposes to clear the edge
-registry.
+Reset the global edge registry.
 }
