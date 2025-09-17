@@ -120,16 +120,18 @@ impl GraphBuilder {
         Ok(())
     }
 
-    fn push_half(&mut self, from: u32, to: u32, etype: u8, side_bit: u8, spec: &EdgeSpec) {
+        fn push_half(&mut self, from: u32, to: u32, etype: u8, side_bit: u8, spec: &EdgeSpec) {
         use QueryFlags as F;
 
+        // If this-side is CHILD, neighbor is a parent -> parents bucket.
+        // If this-side is PARENT, neighbor is a child -> children bucket.
         let role = if side_bit == 0 {
-            if spec.flags.contains(F::TAIL_PARENT) { Role::Parent }
-            else if spec.flags.contains(F::TAIL_CHILD) { Role::Child }
+            if spec.flags.contains(F::TAIL_CHILD) { Role::Parent }
+            else if spec.flags.contains(F::TAIL_PARENT) { Role::Child }
             else { Role::Undirected }
         } else {
-            if spec.flags.contains(F::HEAD_PARENT) { Role::Parent }
-            else if spec.flags.contains(F::HEAD_CHILD) { Role::Child }
+            if spec.flags.contains(F::HEAD_CHILD) { Role::Parent }
+            else if spec.flags.contains(F::HEAD_PARENT) { Role::Child }
             else { Role::Undirected }
         };
 
@@ -141,7 +143,7 @@ impl GraphBuilder {
 
         bucket[from as usize].push(HalfEdge { nbr: to, etype, side: side_bit });
     }
-
+    
     /// Build a `CaugiGraph` and consume the builder.
     pub fn finalize(mut self) -> Result<CaugiGraph, String> {
         let parents = std::mem::take(&mut self.parents);
