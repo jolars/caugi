@@ -32,7 +32,9 @@ pub enum EdgeClass {
     Directed,
     Undirected,
     Bidirected,
-    Partial,
+    PartiallyDirected,
+    PartiallyUndirected,
+    Partial // for o-o
 }
 
 impl FromStr for EdgeClass {
@@ -191,20 +193,32 @@ impl EdgeRegistry {
             })
             .map(|_| ())
         };
-
+        
+        // Convention is that unless other specified, the tail is the leftmost symbol
+        // and the head is the rightmost symbol in the glyph.
+        // E.g., in "o->", tail is 'o' and head is '>'.
         add(
             "-->",
             O::RightHead,
             C::Directed,
             false,
-            F::TRAVERSABLE_WHEN_CONDITIONED | F::TAIL_CHILD | F::HEAD_PARENT,
+            F::TRAVERSABLE_WHEN_CONDITIONED 
+                | F::HEAD_CHILD // A -- > B means that B (head) is the child and A (tail) is the parent
+                | F::TAIL_PARENT,
         )?;
         add(
             "---",
             O::None,
             C::Undirected,
             true,
-            F::TRAVERSABLE_WHEN_CONDITIONED | F::TAIL_UNDIR | F::HEAD_UNDIR,
+            F::TRAVERSABLE_WHEN_CONDITIONED 
+                | F::TAIL_UNDIR 
+                | F::HEAD_UNDIR
+                | F::TAIL_POSS_CHILD
+                | F::TAIL_POSS_PARENT
+                | F::HEAD_POSS_CHILD
+                | F::HEAD_POSS_PARENT,
+
         )?;
         add(
             "<->",
@@ -219,27 +233,36 @@ impl EdgeRegistry {
         add(
             "o-o",
             O::None,
-            C::Undirected,
+            C::Partial,
             true,
-            F::TRAVERSABLE_WHEN_CONDITIONED | F::TAIL_UNDIR | F::HEAD_UNDIR,
+            F::TRAVERSABLE_WHEN_CONDITIONED 
+                | F::TAIL_UNKNOWN 
+                | F::TAIL_POSS_CHILD
+                | F::TAIL_POSS_PARENT
+                | F::HEAD_UNKNOWN
+                | F::HEAD_POSS_CHILD
+                | F::HEAD_POSS_PARENT,
         )?;
         add(
-            "o--",
-            O::None,
-            C::Partial,
+            "--o",
+            O::RightHead,
+            C::PartiallyUndirected,
             false,
-            F::TRAVERSABLE_WHEN_CONDITIONED | F::TAIL_UNDIR | F::HEAD_UNDIR,
+            F::TRAVERSABLE_WHEN_CONDITIONED 
+                | F::TAIL_PARENT 
+                | F::HEAD_UNKNOWN
+                | F::HEAD_POSS_CHILD
+                | F::HEAD_POSS_PARENT,
         )?;
         add(
             "o->",
             O::RightHead,
-            C::Partial,
+            C::PartiallyDirected,
             false,
             F::TRAVERSABLE_WHEN_CONDITIONED
-                | F::TAIL_UNDIR
-                | F::HEAD_UNDIR
-                | F::TAIL_POSS_CHILD
-                | F::HEAD_POSS_PARENT,
+                | F::TAIL_UNKNOWN
+                | F::TAIL_POSS_PARENT
+                | F::HEAD_POSS_CHILD,
         )?;
         Ok(())
     }
@@ -267,7 +290,7 @@ mod tests {
     fn builtins_present_and_len() {
         let r = built_reg();
         assert_eq!(r.len(), 6);
-        for g in ["-->", "---", "<->", "o-o", "o--", "o->"] {
+        for g in ["-->", "---", "<->", "o-o", "--o", "o->"] {
             assert!(r.code_of(g).is_ok(), "missing builtin {}", g);
         }
     }
