@@ -116,30 +116,36 @@ impl CaugiGraph {
         &self.col_index[seg.undirected]
     }
 
-    /// Possible parents = definite parents + undirected neighbors with HEAD_POSS_PARENT on head-side.
-    pub fn possible_parents_of(&self, i:u32) -> Vec<u32> {
+    /// Possible parents = definite parents + undirected neighbors that could be parents of i.
+    pub fn possible_parents_of(&self, i: u32) -> Vec<u32> {
         use QueryFlags as F;
         let seg = self.row_segments(i);
         let mut out: Vec<u32> = self.col_index[seg.parents.clone()].to_vec();
         for k in seg.undirected {
             let spec = &self.registry.specs[self.etype[k] as usize];
-            if self.side[k] == 1 && spec.flags.contains(F::HEAD_POSS_PARENT) {
-                out.push(self.col_index[k]);
-            }
+            let s = self.side[k];
+            // If this half-edge is at TAIL (s=0), neighbor sits at HEAD -> check HEAD_POSS_PARENT.
+            // If this half-edge is at HEAD (s=1), neighbor sits at TAIL -> check TAIL_POSS_PARENT.
+            let ok = (s == 0 && spec.flags.contains(F::HEAD_POSS_PARENT))
+                || (s == 1 && spec.flags.contains(F::TAIL_POSS_PARENT));
+            if ok { out.push(self.col_index[k]); }
         }
         out
     }
 
-    /// Possible children = definite children + undirected neighbors with TAIL_POSS_CHILD on tail-side.
-    pub fn possible_children_of(&self, i:u32) -> Vec<u32> {
+    /// Possible children = definite children + undirected neighbors that could be children of i.
+    pub fn possible_children_of(&self, i: u32) -> Vec<u32> {
         use QueryFlags as F;
         let seg = self.row_segments(i);
         let mut out: Vec<u32> = self.col_index[seg.children.clone()].to_vec();
         for k in seg.undirected {
             let spec = &self.registry.specs[self.etype[k] as usize];
-            if self.side[k] == 0 && spec.flags.contains(F::TAIL_POSS_CHILD) {
-                out.push(self.col_index[k]);
-            }
+            let s = self.side[k];
+            // If this half-edge is at TAIL (s=0), neighbor sits at HEAD -> check HEAD_POSS_CHILD.
+            // If this half-edge is at HEAD (s=1), neighbor sits at TAIL -> check TAIL_POSS_CHILD.
+            let ok = (s == 0 && spec.flags.contains(F::HEAD_POSS_CHILD))
+                || (s == 1 && spec.flags.contains(F::TAIL_POSS_CHILD));
+            if ok { out.push(self.col_index[k]); }
         }
         out
     }
