@@ -3,29 +3,25 @@ use bitflags::bitflags;
 
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-    pub struct QueryFlags: u16 {
-        // Tail and head is determined by edge orientation.
+    pub struct QueryFlags: u32 {
+        // definite per-side roles
+        const TAIL_PARENT   = 1 << 0;
+        const TAIL_CHILD    = 1 << 1;
+        const TAIL_UNDIR    = 1 << 2;
+        const HEAD_PARENT   = 1 << 3;
+        const HEAD_CHILD    = 1 << 4;
+        const HEAD_UNDIR    = 1 << 5;
+        const TAIL_UNKNOWN  = 1 << 6;
+        const HEAD_UNKNOWN  = 1 << 7;
 
-        // Per-side role bits for SPLIT_INDEX placement
-        const TAIL_PARENT = 0b0000_0001;
-        const TAIL_CHILD = 0b0000_0010;
-        const TAIL_UNDIR = 0b0000_0100;
-        const TAIL_UNKNOWN = 0b0100_0000; // for PAG edges
-        const HEAD_PARENT = 0b0000_1000;
-        const HEAD_CHILD = 0b0001_0000;
-        const HEAD_UNDIR = 0b0010_0000;
-        const HEAD_UNKNOWN = 0b1000_0000; // for PAG edges
-        
-        // Does the edge indicate latent confounding?
-        const LATENT_CONFOUNDING = 0b1000_0000_0000;
+        // possible per-side roles
+        const TAIL_POSS_PARENT = 1 << 8;
+        const TAIL_POSS_CHILD  = 1 << 9;
+        const HEAD_POSS_PARENT = 1 << 10;
+        const HEAD_POSS_CHILD  = 1 << 11;
 
-        // Per-side possible-role bits for queries
-        const HEAD_POSS_CHILD = 0b0000_1000_0000;
-        const HEAD_POSS_PARENT = 0b0001_0000_0000;
-        const TAIL_POSS_PARENT = 0b0000_0100_0000;
-        const TAIL_POSS_CHILD = 0b0010_0000_0000;
-
-        // Extra semantics (e.g., d/m-sep traversal tweaks)
-        const TRAVERSABLE_WHEN_CONDITIONED = 0b0100_0000_0000;
+        // extras
+        const TRAVERSABLE_WHEN_CONDITIONED = 1 << 12;
+        const LATENT_CONFOUNDING           = 1 << 13;
     }
 }
