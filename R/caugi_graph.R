@@ -43,6 +43,10 @@ caugi_graph <- function(...,
   class <- match.arg(class)
   calls <- as.list(substitute(list(...)))[-1L]
 
+  if (!simple && class != "Unknown") {
+    stop("If simple = FALSE, class must be 'Unknown'", call. = FALSE)
+  }
+
   # Parse calls into edges + declared nodes
   terms <- .collect_edges_nodes(calls)
   edges <- terms$edges
