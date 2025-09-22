@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 //! Graph algorithms.
 
-use crate::graph::CaugiGraph;
 use crate::edges::EdgeClass;
+use crate::graph::CaugiGraph;
 
 /// Returns true iff the directed part (→) of the graph is acyclic.
 /// Ignores undirected/partial/bidirected edges, so it works for DAG, PDAG, CPDAG.
@@ -22,7 +22,9 @@ pub fn directed_part_is_acyclic(core: &CaugiGraph) -> bool {
 
     // Kahn
     let mut stack: Vec<usize> = (0..n).filter(|&i| indeg[i] == 0).collect();
-    if stack.is_empty() { return false; }
+    if stack.is_empty() {
+        return false;
+    }
     let mut seen = stack.len();
 
     while let Some(u) = stack.pop() {
@@ -31,7 +33,10 @@ pub fn directed_part_is_acyclic(core: &CaugiGraph) -> bool {
             if matches!(spec.class, EdgeClass::Directed) && core.side[k] == 0 {
                 let v = core.col_index[k] as usize; // u -> v
                 indeg[v] -= 1;
-                if indeg[v] == 0 { stack.push(v); seen += 1; }
+                if indeg[v] == 0 {
+                    stack.push(v);
+                    seen += 1;
+                }
             }
         }
     }

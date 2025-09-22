@@ -319,7 +319,10 @@ mod tests {
             class: EdgeClass::Undirected,
             flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
         };
-        assert!(matches!(r.register(bad), Err(RegistryError::Conflict { .. })));
+        assert!(matches!(
+            r.register(bad),
+            Err(RegistryError::Conflict { .. })
+        ));
 
         // seal prevents any further registrations
         r.seal();

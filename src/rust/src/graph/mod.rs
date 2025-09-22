@@ -1,17 +1,20 @@
 // SPDX-License-Identifier: MIT
 //! CSR graph with registry snapshot; class wrappers live in submodules.
 
-use std::sync::Arc;
 use crate::edges::EdgeSpec;
-use std::{hash::{Hash, Hasher}, collections::hash_map::DefaultHasher};
 use std::ops::Range;
-// src/graph/pdag.rs
+use std::sync::Arc;
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+};
+
+pub mod alg;
 pub mod builder;
 pub mod dag;
 pub mod pdag;
-pub mod alg;
 pub mod view;
-pub use view::{GraphView, GraphKind, GraphApi};
+pub use view::{GraphApi, GraphKind, GraphView};
 
 #[derive(Debug, Clone)]
 pub struct RegistrySnapshot {
@@ -27,7 +30,11 @@ impl RegistrySnapshot {
             s.glyph.hash(&mut h);
             (s.class as u8).hash(&mut h);
         }
-        Self { version, checksum: h.finish(), specs }
+        Self {
+            version,
+            checksum: h.finish(),
+            specs,
+        }
     }
 }
 
@@ -42,11 +49,14 @@ pub struct CaugiGraph {
 
 impl CaugiGraph {
     pub fn from_csr(
-        row_index: Vec<u32>, col_index: Vec<u32>, etype: Vec<u8>, side: Vec<u8>,
-        registry: RegistrySnapshot
+        row_index: Vec<u32>,
+        col_index: Vec<u32>,
+        etype: Vec<u8>,
+        side: Vec<u8>,
+        registry: RegistrySnapshot,
     ) -> Result<Self, String> {
         let nnz = *row_index.last().unwrap_or(&0) as usize;
-        if col_index.len()!=nnz || etype.len()!=nnz || side.len()!=nnz {
+        if col_index.len() != nnz || etype.len() != nnz || side.len() != nnz {
             return Err("NNZ arrays length mismatch".into());
         }
         Ok(Self {
@@ -54,26 +64,35 @@ impl CaugiGraph {
             col_index: col_index.into(),
             etype: etype.into(),
             side: side.into(),
-            registry
+            registry,
         })
     }
 
-    #[inline] pub fn n(&self) -> u32 { (self.row_index.len()-1) as u32 }
-    #[inline] pub fn row_range(&self, i: u32) -> Range<usize> {
-        let i = i as usize; self.row_index[i] as usize .. self.row_index[i+1] as usize
+    #[inline]
+    pub fn n(&self) -> u32 {
+        (self.row_index.len() - 1) as u32
+    }
+    #[inline]
+    pub fn row_range(&self, i: u32) -> Range<usize> {
+        let i = i as usize;
+        self.row_index[i] as usize..self.row_index[i + 1] as usize
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::edges::{EdgeRegistry};
+    use crate::edges::EdgeRegistry;
     use crate::graph::builder::GraphBuilder;
 
     #[test]
     fn registry_snapshot_checksum_changes_with_specs() {
-        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
-        let specs: Arc<[_]> = (0..reg.len() as u8).map(|c| reg.spec_of_code(c).unwrap().clone()).collect::<Vec<_>>().into();
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let specs: Arc<[_]> = (0..reg.len() as u8)
+            .map(|c| reg.spec_of_code(c).unwrap().clone())
+            .collect::<Vec<_>>()
+            .into();
         let snap1 = RegistrySnapshot::from_specs(specs.clone(), 1);
         // Simulate different version; checksum stays same if specs equal
         let snap2 = RegistrySnapshot::from_specs(specs, 2);
@@ -83,22 +102,34 @@ mod tests {
 
     #[test]
     fn from_csr_validates_shapes_and_reports_n() {
-        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
-        let specs: Arc<[_]> = (0..reg.len() as u8).map(|c| reg.spec_of_code(c).unwrap().clone()).collect::<Vec<_>>().into();
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let specs: Arc<[_]> = (0..reg.len() as u8)
+            .map(|c| reg.spec_of_code(c).unwrap().clone())
+            .collect::<Vec<_>>()
+            .into();
         let snap = RegistrySnapshot::from_specs(specs, 1);
-        let ok = CaugiGraph::from_csr(vec![0,2], vec![1,0], vec![0,0], vec![0,1], snap.clone()).unwrap();
+        let ok = CaugiGraph::from_csr(vec![0, 2], vec![1, 0], vec![0, 0], vec![0, 1], snap.clone())
+            .unwrap();
         assert_eq!(ok.n(), 1);
-        assert!(CaugiGraph::from_csr(vec![0,2], vec![1], vec![0,0], vec![0,1], snap.clone()).is_err());
-        assert!(CaugiGraph::from_csr(vec![0,2], vec![1,0], vec![0], vec![0,1], snap.clone()).is_err());
-        assert!(CaugiGraph::from_csr(vec![0,2], vec![1,0], vec![0,0], vec![0], snap).is_err());
+        assert!(
+            CaugiGraph::from_csr(vec![0, 2], vec![1], vec![0, 0], vec![0, 1], snap.clone())
+                .is_err()
+        );
+        assert!(
+            CaugiGraph::from_csr(vec![0, 2], vec![1, 0], vec![0], vec![0, 1], snap.clone())
+                .is_err()
+        );
+        assert!(CaugiGraph::from_csr(vec![0, 2], vec![1, 0], vec![0, 0], vec![0], snap).is_err());
     }
 
     #[test]
     fn builder_to_core_roundtrip_dimensions() {
-        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
         let cdir = reg.code_of("-->").unwrap();
         let mut b = GraphBuilder::new_with_registry(3, true, &reg);
-        b.add_edge(0,1,cdir).unwrap();
+        b.add_edge(0, 1, cdir).unwrap();
         let core = b.finalize().unwrap();
         assert_eq!(core.n(), 3);
         assert_eq!(core.row_index.len(), 4);

@@ -5,49 +5,57 @@ use extendr_api::prelude::*;
 pub mod edges;
 pub mod graph;
 
-use std::sync::Arc;
-use edges::{EdgeRegistry, EdgeSpec, EdgeClass, QueryFlags, Mark};
-use graph::{CaugiGraph};
+use edges::{EdgeClass, EdgeRegistry, EdgeSpec, Mark, QueryFlags};
+use graph::CaugiGraph;
 use graph::builder::GraphBuilder;
+use graph::view::{GraphApi, GraphKind, GraphView};
 use graph::{dag::Dag, pdag::Pdag};
-use graph::view::{GraphView, GraphKind, GraphApi};
+use std::sync::Arc;
 
 // ---------- helpers ----------
 fn rint_to_u32(x: Rint, field: &str) -> u32 {
-    if x.is_na() { throw_r_error(format!("NA in `{}`", field)); }
+    if x.is_na() {
+        throw_r_error(format!("NA in `{}`", field));
+    }
     let v = x.inner();
-    if v < 0 { throw_r_error(format!("`{}` must be >= 0", field)); }
+    if v < 0 {
+        throw_r_error(format!("`{}` must be >= 0", field));
+    }
     v as u32
 }
 fn rint_to_u8(x: Rint, field: &str) -> u8 {
-    if x.is_na() { throw_r_error(format!("NA in `{}`", field)); }
+    if x.is_na() {
+        throw_r_error(format!("NA in `{}`", field));
+    }
     let v = x.inner();
-    if !(0..=255).contains(&v) { throw_r_error(format!("`{}` must be in 0..=255", field)); }
+    if !(0..=255).contains(&v) {
+        throw_r_error(format!("`{}` must be in 0..=255", field));
+    }
     v as u8
 }
 
 // ── Edge Registry  ────────────────────────────────────────────────────────────────
 
-#[extendr] 
+#[extendr]
 fn edge_registry_new() -> ExternalPtr<EdgeRegistry> {
     ExternalPtr::new(EdgeRegistry::new())
 }
 
-#[extendr] 
+#[extendr]
 fn edge_registry_register_builtins(mut reg: ExternalPtr<EdgeRegistry>) {
-    if let Err(e) = reg.as_mut().register_builtins() { 
-        throw_r_error(e.to_string()); 
+    if let Err(e) = reg.as_mut().register_builtins() {
+        throw_r_error(e.to_string());
     }
 }
 
-#[extendr] 
-fn edge_registry_seal(mut reg: ExternalPtr<EdgeRegistry>) { 
-    reg.as_mut().seal(); 
+#[extendr]
+fn edge_registry_seal(mut reg: ExternalPtr<EdgeRegistry>) {
+    reg.as_mut().seal();
 }
 
-#[extendr] 
-fn edge_registry_len(reg: ExternalPtr<EdgeRegistry>) -> i32 { 
-    reg.as_ref().len() as i32 
+#[extendr]
+fn edge_registry_len(reg: ExternalPtr<EdgeRegistry>) -> i32 {
+    reg.as_ref().len() as i32
 }
 
 #[extendr]
@@ -65,55 +73,101 @@ fn edge_registry_register(
         let mut out = F::empty();
         for raw in v {
             match raw.trim().to_ascii_uppercase().as_str() {
-                "TRAVERSABLE_WHEN_CONDITIONED" | "TRAVERSABLE" => out |= F::TRAVERSABLE_WHEN_CONDITIONED,
+                "TRAVERSABLE_WHEN_CONDITIONED" | "TRAVERSABLE" => {
+                    out |= F::TRAVERSABLE_WHEN_CONDITIONED
+                }
                 "LATENT_CONFOUNDING" => out |= F::LATENT_CONFOUNDING,
                 other => throw_r_error(format!("Unknown flag '{other}'")),
             }
-        } out
+        }
+        out
     }
-    let tail = tail_mark.parse::<Mark>().unwrap_or_else(|e| throw_r_error(e));
-    let head = head_mark.parse::<Mark>().unwrap_or_else(|e| throw_r_error(e));
-    let class = class.parse::<EdgeClass>().unwrap_or_else(|e| throw_r_error(e));
-    let spec = EdgeSpec { glyph: glyph.to_string(), tail, head, symmetric, class, flags: parse_flags(&flags) };
-    match reg.as_mut().register(spec) { Ok(c)=>c as i32, Err(e)=>throw_r_error(e.to_string()), }
+    let tail = tail_mark
+        .parse::<Mark>()
+        .unwrap_or_else(|e| throw_r_error(e));
+    let head = head_mark
+        .parse::<Mark>()
+        .unwrap_or_else(|e| throw_r_error(e));
+    let class = class
+        .parse::<EdgeClass>()
+        .unwrap_or_else(|e| throw_r_error(e));
+    let spec = EdgeSpec {
+        glyph: glyph.to_string(),
+        tail,
+        head,
+        symmetric,
+        class,
+        flags: parse_flags(&flags),
+    };
+    match reg.as_mut().register(spec) {
+        Ok(c) => c as i32,
+        Err(e) => throw_r_error(e.to_string()),
+    }
 }
 
 #[extendr]
 fn edge_registry_code_of(reg: ExternalPtr<EdgeRegistry>, glyph: &str) -> i32 {
-    reg.as_ref().code_of(glyph).map(|c| c as i32).unwrap_or_else(|e| throw_r_error(e.to_string()))
+    reg.as_ref()
+        .code_of(glyph)
+        .map(|c| c as i32)
+        .unwrap_or_else(|e| throw_r_error(e.to_string()))
 }
 
 // ---------- Core builder ----------
 #[extendr]
-fn graph_builder_new(reg: ExternalPtr<EdgeRegistry>, n: i32, simple: Rbool) -> ExternalPtr<GraphBuilder> {
-    if n < 0 { throw_r_error("n must be >= 0"); }
+fn graph_builder_new(
+    reg: ExternalPtr<EdgeRegistry>,
+    n: i32,
+    simple: Rbool,
+) -> ExternalPtr<GraphBuilder> {
+    if n < 0 {
+        throw_r_error("n must be >= 0");
+    }
     ExternalPtr::new(GraphBuilder::new(n as u32, simple.is_true(), reg.as_ref()))
 }
 #[extendr]
-fn graph_builder_add_edges(mut b: ExternalPtr<GraphBuilder>, from: Integers, to: Integers, etype: Integers) {
-    if from.len()!=to.len() || from.len()!=etype.len() { throw_r_error("vectors must have equal length"); }
+fn graph_builder_add_edges(
+    mut b: ExternalPtr<GraphBuilder>,
+    from: Integers,
+    to: Integers,
+    etype: Integers,
+) {
+    if from.len() != to.len() || from.len() != etype.len() {
+        throw_r_error("vectors must have equal length");
+    }
     for i in 0..from.len() {
-        let u=rint_to_u32(from[i],"from"); let v=rint_to_u32(to[i],"to"); let t=rint_to_u8(etype[i],"etype");
-        if let Err(e)=b.as_mut().add_edge(u,v,t){ throw_r_error(e); }
+        let u = rint_to_u32(from[i], "from");
+        let v = rint_to_u32(to[i], "to");
+        let t = rint_to_u8(etype[i], "etype");
+        if let Err(e) = b.as_mut().add_edge(u, v, t) {
+            throw_r_error(e);
+        }
     }
 }
 #[extendr]
 fn graph_builder_build(mut b: ExternalPtr<GraphBuilder>) -> ExternalPtr<CaugiGraph> {
-    let g=b.as_mut().finalize_in_place().unwrap_or_else(|e|throw_r_error(e)); ExternalPtr::new(g)
+    let g = b
+        .as_mut()
+        .finalize_in_place()
+        .unwrap_or_else(|e| throw_r_error(e));
+    ExternalPtr::new(g)
 }
 
 // ---------- Constructors for class views (return GraphView) ----------
 #[extendr]
 fn graphview_new(core: ExternalPtr<CaugiGraph>, class: &str) -> ExternalPtr<GraphView> {
-    match class.parse::<GraphKind>().unwrap_or_else(|e| throw_r_error(e)) {
+    match class
+        .parse::<GraphKind>()
+        .unwrap_or_else(|e| throw_r_error(e))
+    {
         GraphKind::Dag => {
-            let dag = Dag::new(Arc::new(core.as_ref().clone()))
-                .unwrap_or_else(|e| throw_r_error(e));
+            let dag =
+                Dag::new(Arc::new(core.as_ref().clone())).unwrap_or_else(|e| throw_r_error(e));
             ExternalPtr::new(GraphView::Dag(Arc::new(dag)))
         }
         GraphKind::Pdag => {
-            let pdag = Pdag::new(Arc::new(core.as_ref().clone()))
-                .unwrap_or_else(|e| throw_r_error(e));
+            let pdag =
+                Pdag::new(Arc::new(core.as_ref().clone())).unwrap_or_else(|e| throw_r_error(e));
             ExternalPtr::new(GraphView::Pdag(Arc::new(pdag)))
         }
         GraphKind::Unknown => ExternalPtr::new(GraphView::Raw(Arc::new(core.as_ref().clone()))),
@@ -121,25 +175,37 @@ fn graphview_new(core: ExternalPtr<CaugiGraph>, class: &str) -> ExternalPtr<Grap
 }
 
 #[extendr]
-fn graph_builder_build_view(mut b: ExternalPtr<GraphBuilder>, class: &str) -> ExternalPtr<GraphView> {
-    let core = b.as_mut().finalize_in_place().unwrap_or_else(|e| throw_r_error(e));
+fn graph_builder_build_view(
+    mut b: ExternalPtr<GraphBuilder>,
+    class: &str,
+) -> ExternalPtr<GraphView> {
+    let core = b
+        .as_mut()
+        .finalize_in_place()
+        .unwrap_or_else(|e| throw_r_error(e));
     graphview_new(ExternalPtr::new(core), class)
 }
 
 // ---------- Unified queries ----------
 #[extendr]
 fn parents_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
-    g.as_ref().parents_of(i as u32).map(|s| s.iter().map(|&x| x as i32).collect_robj())
+    g.as_ref()
+        .parents_of(i as u32)
+        .map(|s| s.iter().map(|&x| x as i32).collect_robj())
         .unwrap_or_else(|e| throw_r_error(e))
 }
 #[extendr]
 fn children_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
-    g.as_ref().children_of(i as u32).map(|s| s.iter().map(|&x| x as i32).collect_robj())
+    g.as_ref()
+        .children_of(i as u32)
+        .map(|s| s.iter().map(|&x| x as i32).collect_robj())
         .unwrap_or_else(|e| throw_r_error(e))
 }
 #[extendr]
 fn undirected_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
-    g.as_ref().undirected_of(i as u32).map(|s| s.iter().map(|&x| x as i32).collect_robj())
+    g.as_ref()
+        .undirected_of(i as u32)
+        .map(|s| s.iter().map(|&x| x as i32).collect_robj())
         .unwrap_or_else(|e| throw_r_error(e))
 }
 

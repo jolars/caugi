@@ -4,8 +4,8 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use crate::edges::{EdgeRegistry, EdgeSpec, Mark};
 use super::{CaugiGraph, RegistrySnapshot};
+use crate::edges::{EdgeRegistry, EdgeSpec, Mark};
 
 #[derive(Debug)]
 pub struct GraphBuilder {
@@ -45,10 +45,18 @@ impl GraphBuilder {
     }
 
     pub fn add_edge(&mut self, u: u32, v: u32, etype: u8) -> Result<(), String> {
-        if u >= self.n || v >= self.n { return Err("node id out of range".into()); }
-        if self.simple && u == v { return Err("self-loops not allowed in simple graphs".into()); }
+        if u >= self.n || v >= self.n {
+            return Err("node id out of range".into());
+        }
+        if self.simple && u == v {
+            return Err("self-loops not allowed in simple graphs".into());
+        }
 
-        let spec: EdgeSpec = self.specs.get(etype as usize).cloned().ok_or("invalid edge code")?;
+        let spec: EdgeSpec = self
+            .specs
+            .get(etype as usize)
+            .cloned()
+            .ok_or("invalid edge code")?;
 
         if self.simple {
             let (a, b) = if u <= v { (u, v) } else { (v, u) };
@@ -63,7 +71,9 @@ impl GraphBuilder {
         } else {
             (u, v, etype, false)
         };
-        if !self.seen.insert(key) { return Err("duplicate edge".into()); }
+        if !self.seen.insert(key) {
+            return Err("duplicate edge".into());
+        }
 
         // Push halves based on marks.
         self.push_half(u, v, etype, spec.tail); // perspective u
@@ -74,9 +84,13 @@ impl GraphBuilder {
     fn push_half(&mut self, from: u32, to: u32, etype: u8, mark_at_from: Mark) {
         let side_bit = match mark_at_from {
             Mark::Tail | Mark::Circle | Mark::Other => 0, // not an arrow at 'from'
-            Mark::Arrow => 1,                              // arrow at 'from' -> this end is HEAD
+            Mark::Arrow => 1,                             // arrow at 'from' -> this end is HEAD
         };
-        self.rows[from as usize].push(HalfEdge { nbr: to, etype, side: side_bit });
+        self.rows[from as usize].push(HalfEdge {
+            nbr: to,
+            etype,
+            side: side_bit,
+        });
     }
 
     pub fn finalize(mut self) -> Result<CaugiGraph, String> {
@@ -101,9 +115,13 @@ impl GraphBuilder {
         let n = self.n as usize;
 
         for i in 0..n {
-            rows[i].sort_unstable_by(|a,b| (a.nbr, a.etype, a.side).cmp(&(b.nbr, b.etype, b.side)));
+            rows[i]
+                .sort_unstable_by(|a, b| (a.nbr, a.etype, a.side).cmp(&(b.nbr, b.etype, b.side)));
             if self.simple {
-                if rows[i].windows(2).any(|w| w[0].nbr == w[1].nbr && w[0].etype == w[1].etype) {
+                if rows[i]
+                    .windows(2)
+                    .any(|w| w[0].nbr == w[1].nbr && w[0].etype == w[1].etype)
+                {
                     return Err(format!("parallel edge duplicate in row {}", i));
                 }
             }
@@ -112,14 +130,22 @@ impl GraphBuilder {
         let mut row_index = Vec::with_capacity(n + 1);
         row_index.push(0u32);
         let mut nnz: u32 = 0;
-        for i in 0..n { nnz += rows[i].len() as u32; row_index.push(nnz); }
+        for i in 0..n {
+            nnz += rows[i].len() as u32;
+            row_index.push(nnz);
+        }
 
-        let mut col  = vec![0u32; nnz as usize];
-        let mut ety  = vec![0u8; nnz as usize];
+        let mut col = vec![0u32; nnz as usize];
+        let mut ety = vec![0u8; nnz as usize];
         let mut side = vec![0u8; nnz as usize];
         for i in 0..n {
             let mut k = row_index[i] as usize;
-            for h in &rows[i] { col[k]=h.nbr; ety[k]=h.etype; side[k]=h.side; k+=1; }
+            for h in &rows[i] {
+                col[k] = h.nbr;
+                ety[k] = h.etype;
+                side[k] = h.side;
+                k += 1;
+            }
         }
 
         let snap = RegistrySnapshot::from_specs(self.specs.clone(), 1);
@@ -132,15 +158,19 @@ mod tests {
     use super::*;
     use crate::edges::EdgeRegistry;
 
-    fn reg() -> EdgeRegistry { let mut r=EdgeRegistry::new(); r.register_builtins().unwrap(); r }
+    fn reg() -> EdgeRegistry {
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap();
+        r
+    }
 
     #[test]
     fn add_and_finalize_basic() {
         let r = reg();
         let cdir = r.code_of("-->").unwrap();
         let mut b = GraphBuilder::new_with_registry(3, true, &r);
-        b.add_edge(0,1,cdir).unwrap();
-        b.add_edge(1,2,cdir).unwrap();
+        b.add_edge(0, 1, cdir).unwrap();
+        b.add_edge(1, 2, cdir).unwrap();
         let g = b.finalize().unwrap();
         assert_eq!(g.n(), 3);
         // row 0 has one out half-edge
@@ -158,9 +188,9 @@ mod tests {
         let r = reg();
         let cdir = r.code_of("-->").unwrap();
         let mut b = GraphBuilder::new_with_registry(2, true, &r);
-        assert!(b.add_edge(0,0,cdir).is_err()); // self-loop
-        b.add_edge(0,1,cdir).unwrap();
-        assert!(b.add_edge(0,1,cdir).is_err()); // parallel same type
+        assert!(b.add_edge(0, 0, cdir).is_err()); // self-loop
+        b.add_edge(0, 1, cdir).unwrap();
+        assert!(b.add_edge(0, 1, cdir).is_err()); // parallel same type
     }
 
     #[test]
@@ -168,8 +198,8 @@ mod tests {
         let r = reg();
         let cdir = r.code_of("-->").unwrap();
         let mut b = GraphBuilder::new_with_registry(3, false, &r);
-        b.add_edge(0,1,cdir).unwrap();
-        assert!(b.add_edge(0,1,cdir).is_err()); // exact duplicate
+        b.add_edge(0, 1, cdir).unwrap();
+        assert!(b.add_edge(0, 1, cdir).is_err()); // exact duplicate
     }
 
     #[test]
@@ -177,8 +207,8 @@ mod tests {
         let r = reg();
         let bad_code = 200;
         let mut b = GraphBuilder::new_with_registry(2, false, &r);
-        assert!(b.add_edge(0,2,bad_code).is_err()); // node out of range takes precedence
+        assert!(b.add_edge(0, 2, bad_code).is_err()); // node out of range takes precedence
         // valid nodes but bad code
-        assert!(b.add_edge(0,1,bad_code).is_err());
+        assert!(b.add_edge(0, 1, bad_code).is_err());
     }
 }
