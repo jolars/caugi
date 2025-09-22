@@ -160,12 +160,20 @@ fn graph_builder_build(mut b: ExternalPtr<GraphBuilder>) -> ExternalPtr<CaugiGra
 
 // ---------- Constructors for class views (return GraphView) ----------
 #[extendr]
-fn graphview_new(core: ExternalPtr<CaugiGraph>, class:&str)->ExternalPtr<GraphView>{
-  match class.parse::<GraphKind>().unwrap_or_else(|e|throw_r_error(e)){
-    GraphKind::Dag=>ExternalPtr::new(GraphView::Dag(Arc::new(Dag::new(Arc::new(core.as_ref().clone()))))),
-    GraphKind::Pdag=>ExternalPtr::new(GraphView::Pdag(Arc::new(Pdag::new(Arc::new(core.as_ref().clone()))))),
-    GraphKind::Unknown=>ExternalPtr::new(GraphView::Raw(Arc::new(core.as_ref().clone()))),
-  }
+fn graphview_new(core: ExternalPtr<CaugiGraph>, class: &str) -> ExternalPtr<GraphView> {
+    match class.parse::<GraphKind>().unwrap_or_else(|e| throw_r_error(e)) {
+        GraphKind::Dag => {
+            let dag = Dag::new(Arc::new(core.as_ref().clone()))
+                .unwrap_or_else(|e| throw_r_error(e));
+            ExternalPtr::new(GraphView::Dag(Arc::new(dag)))
+        }
+        GraphKind::Pdag => {
+            let pdag = Pdag::new(Arc::new(core.as_ref().clone()))
+                .unwrap_or_else(|e| throw_r_error(e));
+            ExternalPtr::new(GraphView::Pdag(Arc::new(pdag)))
+        }
+        GraphKind::Unknown => ExternalPtr::new(GraphView::Raw(Arc::new(core.as_ref().clone()))),
+    }
 }
 
 #[extendr]
@@ -191,6 +199,11 @@ fn undirected_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
         .unwrap_or_else(|e| throw_r_error(e))
 }
 
+#[extendr]
+fn is_acyclic_ptr(core: ExternalPtr<CaugiGraph>) -> bool {
+    crate::graph::alg::directed_part_is_acyclic(core.as_ref())
+}
+
 extendr_module! {
     mod caugi;
     // registry
@@ -214,4 +227,7 @@ extendr_module! {
     fn parents_of_ptr;
     fn children_of_ptr;
     fn undirected_of_ptr;
+
+    // acyclicity test
+    fn is_acyclic_ptr;
 }
