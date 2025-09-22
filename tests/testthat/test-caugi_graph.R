@@ -3,7 +3,7 @@ test_that("caugi graph generation works as expected", {
     A %-->% B,
     B %---% C,
     C %<->% D,
-    D %o--% E,
+    D %--o% E,
     E %o->% F,
     F %o-o% A
   )
@@ -15,7 +15,7 @@ test_that("caugi graph generation works as expected", {
   expect_equal(sort(cg$nodes$name), sort(LETTERS[1:6]))
   expect_equal(
     sort(cg$edges$edge),
-    sort(c("o->", "o--", "o-o", "-->", "<->", "---"))
+    sort(c("o->", "--o", "o-o", "-->", "<->", "---"))
   )
 })
 
@@ -24,7 +24,7 @@ test_that("caugi graph length is correct", {
     A %-->% B,
     B %---% C,
     C %<->% D,
-    D %o--% E,
+    D %--o% E,
     E %o->% F,
     F %o-o% A
   )
