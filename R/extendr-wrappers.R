@@ -38,5 +38,7 @@ children_of_ptr <- function(g, i) .Call(wrap__children_of_ptr, g, i)
 
 undirected_of_ptr <- function(g, i) .Call(wrap__undirected_of_ptr, g, i)
 
+is_acyclic_ptr <- function(core) .Call(wrap__is_acyclic_ptr, core)
+
 
 # nolint end
