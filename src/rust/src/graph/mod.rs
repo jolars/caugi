@@ -1,13 +1,15 @@
+// src/graph/mod.rs
 // SPDX-License-Identifier: MIT
-//! CSR graph with per-row splits and registry snapshot.
+//! CSR graph with registry snapshot; class wrappers live in submodules.
 
 use std::sync::Arc;
-use crate::edges::{EdgeSpec};
-use crate::edges::QueryFlags;
+use crate::edges::EdgeSpec;
 use std::{hash::{Hash, Hasher}, collections::hash_map::DefaultHasher};
 use std::ops::Range;
 
 pub mod builder;
+pub mod dag;
+pub mod pdag;
 
 #[derive(Debug, Clone)]
 pub struct RegistrySnapshot {
@@ -29,34 +31,18 @@ impl RegistrySnapshot {
 
 #[derive(Debug, Clone)]
 pub struct CaugiGraph {
-    pub row_index: Arc<[u32]>,                 // len n+1
-    pub col_index: Arc<[u32]>,                 // len nnz
-    pub etype: Arc<[u8]>,                      // len nnz
-    pub side: Arc<[u8]>,                       // len nnz; 0=tail, 1=head
-    pub split_index: Arc<[(u32,u32,u32)]>,     // len n; (parents, undirs, children)
+    pub row_index: Arc<[u32]>, // len n+1
+    pub col_index: Arc<[u32]>, // len nnz
+    pub etype: Arc<[u8]>,      // len nnz
+    pub side: Arc<[u8]>,       // len nnz; 0=tail-ish, 1=head-ish
     pub registry: RegistrySnapshot,
 }
 
-/// Named counts for a row split.
-#[derive(Clone, Debug)]
-struct RowSplit { parents: u32, undirected_unknown: u32, children: u32 }
-
-/// Named index ranges for a row inside `col_index`.
-#[derive(Clone, Debug)]
-struct RowSegments { parents: Range<usize>, undirected_unknown: Range<usize>, children: Range<usize> }
-
-
 impl CaugiGraph {
     pub fn from_csr(
-        row_index: Vec<u32>,
-        col_index: Vec<u32>,
-        etype: Vec<u8>,
-        side: Vec<u8>,
-        split_index: Vec<(u32,u32,u32)>,
+        row_index: Vec<u32>, col_index: Vec<u32>, etype: Vec<u8>, side: Vec<u8>,
         registry: RegistrySnapshot
     ) -> Result<Self, String> {
-        let n = split_index.len();
-        if row_index.len() != n+1 { return Err("ROW_INDEX length mismatch".into()); }
         let nnz = *row_index.last().unwrap_or(&0) as usize;
         if col_index.len()!=nnz || etype.len()!=nnz || side.len()!=nnz {
             return Err("NNZ arrays length mismatch".into());
@@ -66,112 +52,53 @@ impl CaugiGraph {
             col_index: col_index.into(),
             etype: etype.into(),
             side: side.into(),
-            split_index: split_index.into(),
             registry
         })
     }
 
-    #[inline]
-    fn row_range(&self, i: u32) -> Range<usize> {
-        let i = i as usize;
-        self.row_index[i] as usize .. self.row_index[i+1] as usize
-    }
-
-    #[inline]
-    fn row_split(&self, i: u32) -> RowSplit {
-        let (p,u,c) = self.split_index[i as usize];
-        RowSplit { parents: p, undirected_unknown: u, children: c }
-    }
-
-    #[inline]
-    fn row_segments(&self, i: u32) -> RowSegments {
-        let range = self.row_range(i);
-        let s = range.start;
-        let sp = self.row_split(i);
-        let p = sp.parents as usize;
-        let u = sp.undirected_unknown as usize;
-        let c = sp.children as usize;
-        RowSegments {
-            parents:    s .. s + p,
-            undirected_unknown: s + p .. s + p + u,
-            children:   range.end - c .. range.end,
-        }
-    }
-
-    /// Parents slice: definite parents only.
-    pub fn parents_of(&self, i:u32) -> &[u32] {
-        let seg = self.row_segments(i);
-        &self.col_index[seg.parents]
-    }
-
-    /// Children slice: definite children only.
-    pub fn children_of(&self, i:u32) -> &[u32] {
-        let seg = self.row_segments(i);
-        &self.col_index[seg.children]
-    }
-
-    /// Undirected and unknown slice: contains undirected and partial edges for both sides.
-    pub fn adjacent_undirected_unknown_of(&self, i:u32) -> &[u32] {
-        let seg = self.row_segments(i);
-        &self.col_index[seg.undirected_unknown]
-    }
-
-    /// Possible parents = definite parents + undirected or unknown neighbors that could be parents of i.
-    pub fn possible_parents_of(&self, i: u32) -> Vec<u32> {
-        use QueryFlags as F;
-        let seg = self.row_segments(i);
-        let mut out: Vec<u32> = self.col_index[seg.parents.clone()].to_vec();
-        for k in seg.undirected_unknown {
-            let spec = &self.registry.specs[self.etype[k] as usize];
-            let s = self.side[k];
-            // If this half-edge is at TAIL (s=0), neighbor sits at HEAD -> check HEAD_POSS_PARENT.
-            // If this half-edge is at HEAD (s=1), neighbor sits at TAIL -> check TAIL_POSS_PARENT.
-            let ok = (s == 0 && spec.flags.contains(F::HEAD_POSS_PARENT))
-                || (s == 1 && spec.flags.contains(F::TAIL_POSS_PARENT));
-            if ok { out.push(self.col_index[k]); }
-        }
-        out
-    }
-
-    /// Possible children = definite children + undirected or unknown neighbors that could be children of i.
-    pub fn possible_children_of(&self, i: u32) -> Vec<u32> {
-        use QueryFlags as F;
-        let seg = self.row_segments(i);
-        let mut out: Vec<u32> = self.col_index[seg.children.clone()].to_vec();
-        for k in seg.undirected_unknown {
-            let spec = &self.registry.specs[self.etype[k] as usize];
-            let s = self.side[k];
-            // If this half-edge is at TAIL (s=0), neighbor sits at HEAD -> check HEAD_POSS_CHILD.
-            // If this half-edge is at HEAD (s=1), neighbor sits at TAIL -> check TAIL_POSS_CHILD.
-            let ok = (s == 0 && spec.flags.contains(F::HEAD_POSS_CHILD))
-                || (s == 1 && spec.flags.contains(F::TAIL_POSS_CHILD));
-            if ok { out.push(self.col_index[k]); }
-        }
-        out
+    #[inline] pub fn n(&self) -> u32 { (self.row_index.len()-1) as u32 }
+    #[inline] pub fn row_range(&self, i: u32) -> Range<usize> {
+        let i = i as usize; self.row_index[i] as usize .. self.row_index[i+1] as usize
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::edges::EdgeRegistry;
+    use super::*;
+    use crate::edges::{EdgeRegistry};
+    use crate::graph::builder::GraphBuilder;
+
     #[test]
-    fn basic_slices() {
+    fn registry_snapshot_checksum_changes_with_specs() {
         let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
-        // 0 --> 1 ; 0 o-> 2 ; 1 <-> 2
-        let mut b = super::builder::GraphBuilder::new_with_registry(3, true, &reg);
+        let specs: Arc<[_]> = (0..reg.len() as u8).map(|c| reg.spec_of_code(c).unwrap().clone()).collect::<Vec<_>>().into();
+        let snap1 = RegistrySnapshot::from_specs(specs.clone(), 1);
+        // Simulate different version; checksum stays same if specs equal
+        let snap2 = RegistrySnapshot::from_specs(specs, 2);
+        assert_eq!(snap1.checksum, snap2.checksum);
+        assert_ne!(snap1.version, snap2.version);
+    }
+
+    #[test]
+    fn from_csr_validates_shapes_and_reports_n() {
+        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
+        let specs: Arc<[_]> = (0..reg.len() as u8).map(|c| reg.spec_of_code(c).unwrap().clone()).collect::<Vec<_>>().into();
+        let snap = RegistrySnapshot::from_specs(specs, 1);
+        let ok = CaugiGraph::from_csr(vec![0,2], vec![1,0], vec![0,0], vec![0,1], snap.clone()).unwrap();
+        assert_eq!(ok.n(), 1);
+        assert!(CaugiGraph::from_csr(vec![0,2], vec![1], vec![0,0], vec![0,1], snap.clone()).is_err());
+        assert!(CaugiGraph::from_csr(vec![0,2], vec![1,0], vec![0], vec![0,1], snap.clone()).is_err());
+        assert!(CaugiGraph::from_csr(vec![0,2], vec![1,0], vec![0,0], vec![0], snap).is_err());
+    }
+
+    #[test]
+    fn builder_to_core_roundtrip_dimensions() {
+        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
         let cdir = reg.code_of("-->").unwrap();
-        let coar = reg.code_of("o->").unwrap();
-        let cbi = reg.code_of("<->").unwrap();
+        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
         b.add_edge(0,1,cdir).unwrap();
-        b.add_edge(0,2,coar).unwrap();
-        b.add_edge(1,2,cbi).unwrap();
-        let g = b.finalize().unwrap();
-
-        assert_eq!(g.parents_of(1), &[0]);
-        assert_eq!(g.children_of(0), &[1]);
-        assert_eq!(g.adjacent_undirected_unknown_of(2), &[0,1]);
-
-        assert_eq!(g.possible_parents_of(2), vec![0]); // o-> head-side
-        assert_eq!(g.possible_children_of(0), vec![1, 2]); // o-> tail-side not a definite child
+        let core = b.finalize().unwrap();
+        assert_eq!(core.n(), 3);
+        assert_eq!(core.row_index.len(), 4);
     }
 }
