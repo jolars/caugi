@@ -42,7 +42,7 @@ build.caugi_graph <- function(cg) {
     )
   }
 
-  gptr <- graph_builder_build(b)
+  gptr <- graph_builder_build_view(b, cg$class)
   built <- TRUE
 
   edges <- tibble::tibble(
@@ -57,7 +57,8 @@ build.caugi_graph <- function(cg) {
       edges = edges,
       ptr = gptr,
       simple = cg$simple,
-      built = built
+      built = built,
+      class = class
     ),
     class = "caugi_graph"
   )
