@@ -53,6 +53,30 @@
   FALSE
 }
 
+#' @title Does the expression contain an edge call?
+#'
+#' @description Recursively check if the expression contains any edge call.
+#'
+#' @param expr An expression to check
+#'
+#' @returns TRUE if the expression contains an edge call, FALSE otherwise
+#'
+#' @keywords internal
+.contains_edge <- function(expr) {
+  if (.is_edge_call(expr)) {
+    return(TRUE)
+  }
+  if (is.call(expr)) {
+    fn <- as.character(expr[[1L]])
+    if (fn == "(") {
+      return(.contains_edge(expr[[2L]]))
+    }
+    if (fn == "+") {
+      return(.contains_edge(expr[[2L]]) || .contains_edge(expr[[3L]]))
+    }
+  }
+  FALSE
+}
 
 #' @title Get glyph for an operator
 #'
@@ -115,12 +139,18 @@
 #'
 #' @keywords internal
 .split_plus <- function(expr) {
-  if (is.call(expr) && identical(as.character(expr[[1L]]), "+")) {
-    c(.split_plus(expr[[2L]]), .split_plus(expr[[3L]]))
-  } else {
-    list(expr)
+  if (is.call(expr)) {
+    fn <- as.character(expr[[1L]])
+    if (fn == "+") {
+      return(c(.split_plus(expr[[2L]]), .split_plus(expr[[3L]])))
+    }
+    if (fn == "(") {
+      return(.split_plus(expr[[2L]]))
+    }
   }
+  list(expr)
 }
+
 #' @title Combine terms with '+'
 #'
 #' @description Combine a list of terms into a single left-associative '+' call.
@@ -237,28 +267,23 @@
 .collect_edges_nodes <- function(calls) {
   units <- list()
   declared <- character()
-
   for (ex in calls) {
-    if (.is_edge_call(ex) ||
-      (is.call(ex) && identical(as.character(ex[[1L]]), "+") &&
-        (.is_edge_call(ex[[2L]]) || .is_edge_call(ex[[3L]])))) {
+    if (.contains_edge(ex)) {
       units <- c(units, .parse_edge_arg(ex))
     } else if (.is_node_expr(ex)) {
       declared <- c(declared, .expand_nodes(ex))
     } else {
-      stop("Expected an edge (A %-->% B)",
+      stop("Expected an edge (A %-->% B) ",
         "or a node expression (C, D, C+D, c(C,D)); got: ",
         deparse(ex),
         call. = FALSE
       )
     }
   }
-
   edges <- if (length(units)) {
     dplyr::distinct(.edge_units_to_tibble(units))
   } else {
     tibble::tibble(from = character(), to = character(), edge = character())
   }
-
   list(edges = edges, declared = unique(declared))
 }
