@@ -53,3 +53,47 @@ test_that("empty caugi graph initialization works", {
   expect_equal(nrow(cg$edges), 0)
   expect_equal(length(cg), 0)
 })
+
+test_that("building DAG with undirected edges results in error", {
+  expect_error(
+    caugi_graph(
+      A %-->% B,
+      B %---% C,
+      class = "DAG"
+    )
+  )
+  expect_error(
+    caugi_graph(
+      A %-->% B,
+      B %o->% C,
+      class = "DAG"
+    )
+  )
+})
+
+test_that("building PDAG with bidirected edges results in error", {
+  expect_error(
+    caugi_graph(
+      A %-->% B,
+      B %<->% C,
+      class = "PDAG"
+    )
+  )
+  expect_error(
+    caugi_graph(
+      A %-->% B,
+      B %o-o% C,
+      class = "PDAG"
+    )
+  )
+})
+
+test_that("building graph with invalid class results in error", {
+  expect_error(
+    caugi_graph(
+      A %-->% B,
+      B %---% C,
+      class = "INVALID"
+    )
+  )
+})
