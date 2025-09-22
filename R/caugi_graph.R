@@ -30,12 +30,17 @@
 #' if calling `build(cg)`. __Note__: Even if `build = TRUE`, if no edges or
 #' nodes are provided, the graph will not be built and the pointer will be
 #' `NULL`.
+#' @param class Character; one of `"DAG"`, `"PDAG"`, or `"NONE"`.
 #'
 #' @returns A `caugi_graph` object containing the nodes, edges, and a pointer
 #' to the underlying Rust graph structure.
 #'
 #' @export
-caugi_graph <- function(..., simple = TRUE, build = TRUE) {
+caugi_graph <- function(...,
+                        simple = TRUE,
+                        build = TRUE,
+                        class = c("Unknown", "DAG", "PDAG")) {
+  class <- match.arg(class)
   calls <- as.list(substitute(list(...)))[-1L]
 
   # Parse calls into edges + declared nodes
@@ -55,6 +60,7 @@ caugi_graph <- function(..., simple = TRUE, build = TRUE) {
   # and the pointer will be NULL
   gptr <- NULL
 
+  # If no edges or nodes, do not build the graph
   # Monitor if the graph has been built
   built <- FALSE
 
@@ -76,7 +82,8 @@ caugi_graph <- function(..., simple = TRUE, build = TRUE) {
       )
     }
 
-    gptr <- graph_builder_build(b)
+    # build + wrap with class
+    gptr <- graph_builder_build_view(b, class)
     built <- TRUE
   }
   edges <- tibble::tibble(
@@ -91,7 +98,8 @@ caugi_graph <- function(..., simple = TRUE, build = TRUE) {
       edges = edges,
       ptr = gptr,
       simple = simple,
-      built = built
+      built = built,
+      class = class
     ),
     class = "caugi_graph"
   )

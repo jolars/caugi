@@ -4,7 +4,12 @@
 \alias{caugi_graph}
 \title{Create a \code{caugi_graph} from edge expressions.}
 \usage{
-caugi_graph(..., simple = TRUE, build = TRUE)
+caugi_graph(
+  ...,
+  simple = TRUE,
+  build = TRUE,
+  class = c("Unknown", "DAG", "PDAG")
+)
 }
 \arguments{
 \item{...}{Edge expressions using the supported infix operators, or
@@ -22,6 +27,8 @@ cannot be used. The graph will build, when queries are made to the graph or
 if calling \code{build(cg)}. \strong{Note}: Even if \code{build = TRUE}, if no edges or
 nodes are provided, the graph will not be built and the pointer will be
 \code{NULL}.}
+
+\item{class}{Character; one of \code{"DAG"}, \code{"PDAG"}, or \code{"NONE"}.}
 }
 \value{
 A \code{caugi_graph} object containing the nodes, edges, and a pointer
