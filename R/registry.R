@@ -30,7 +30,9 @@ reset_caugi_registry <- function() {
 #' @param head_mark One of "arrow", "tail", "circle", "other".
 #' @param class One of "directed","undirected","bidirected","partial".
 #' @param symmetric Logical.
-#' @param traversable_when_conditioned Logical.
+#' @param flags A character vector of flags. Currently supported:
+#' * "TRAVERSABLE_WHEN_CONDITIONED"
+#' * "LATENT_CONFOUNDING"
 #' @returns The integer code assigned to the registered edge type.
 #' @export
 register_caugi_edge <- function(glyph,
@@ -38,17 +40,14 @@ register_caugi_edge <- function(glyph,
                                 head_mark,
                                 class,
                                 symmetric = FALSE,
-                                traversable_when_conditioned = TRUE) {
-  if (class == "directed" && symmetric) {
-    stop("Directed edges cannot be symmetric")
+                                flags = c()) {
+  if (class %in% c("directed", "partially_directed", "partially_undirected") &&
+    symmetric) {
+    stop("This class cannot be symmetric")
   }
-  if (class == "undirected" && !symmetric) {
-    stop("Undirected edges must be symmetric")
+  if (class %in% c("undirected", "bidirected", "partial") && !symmetric) {
+    stop("This class must be symmetric")
   }
-  if (class == "bidirected" && !symmetric) {
-    stop("Bidirected edges must be symmetric")
-  }
-
   reg <- caugi_registry()
   edge_registry_register(
     reg,
@@ -57,7 +56,7 @@ register_caugi_edge <- function(glyph,
     head_mark,
     class,
     symmetric,
-    traversable_when_conditioned
+    flags
   )
   .register_edge(glyph)
 }
@@ -74,40 +73,16 @@ seal_caugi_registry <- function() {
 # ───────────────────────────── Registry helpers ───────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
-#' @title Built-in edge specifications
-#' @description A tibble of the built-in edge specifications.
-#' @returns A tibble with columns `glyph`, `orientation`, `class`,
-#' `symmetric`, and `traversable_when_conditioned`.
-#' @keywords internal
-.caugi_builtin_specs <- function() {
-  tibble::tibble(
-    glyph = c("-->", "---", "<->", "o-o", "--o", "o->"),
-    orientation = c(
-      "right_head", "none", "both_heads", "none", "none", "right_head"
-    ),
-    class = c(
-      "directed", "undirected", "bidirected", "undirected", "partial", "partial"
-    ),
-    symmetric = c(FALSE, TRUE, TRUE, TRUE, FALSE, FALSE),
-    traversable_when_conditioned = TRUE
-  )
-}
-
 #' @title Register a new edge operator
 #'
 #' @description Register a new edge operator for use in `caugi_graph()`.
 #'
 #' @param glyph A string representing the edge glyph (e.g., `"-->"`, `"<->"`).
-#' @param where An environment to register the operator in
-#' (default: `.GlobalEnv`).
 #'
 #' @returns The operator name (e.g., `"%-->%"`), invisibly.
 #'
 #' @keywords internal
-.register_edge <- function(glyph, where = .GlobalEnv) {
-  if (!is.environment(where)) {
-    stop("where must be an environment")
-  }
+.register_edge <- function(glyph) {
   if (!is.character(glyph) || length(glyph) != 1L) {
     stop("glyph must be a single string")
   }
@@ -119,25 +94,19 @@ seal_caugi_registry <- function() {
   }
   op <- paste0("%", glyph, "%")
 
-  # ensure the operator can call the internal .edge_spec
-  ns <- topenv(environment(.edge_spec))
-
   # check if in the global registry
   if (op %in% .edge_ops_get()) {
     stop("Operator ", op, " is already registered")
   }
 
-  f <- local({
-    g <- glyph
-    function(lhs, rhs) .edge_spec(substitute(lhs), substitute(rhs), g)
-  })
-  environment(f) <- ns
+  # update glyph map
+  m <- .glyph_map_get()
+  m[[op]] <- glyph
+  assign("glyph_map", m, envir = .caugi_env)
 
-  assign(op, f, envir = where)
-
-  .caugi_env$edge_ops <- unique(c(.edge_ops_get(), op))
-  gm <- .glyph_map_get()
-  gm[[op]] <- glyph
-  .caugi_env$glyph_map <- gm
-  invisible(op)
+  # update known operators
+  ops <- .edge_ops_get()
+  if (!(op %in% ops)) {
+    assign("edge_ops", c(ops, op), envir = .caugi_env)
+  }
 }
