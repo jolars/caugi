@@ -7,7 +7,6 @@ use crate::graph::alg::directed_part_is_acyclic;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
-#[allow(clippy::upper_case_acronyms)]
 pub struct Dag {
     core: Arc<CaugiGraph>,
     node_edge_ranges: Arc<[usize]>,
