@@ -26,22 +26,35 @@ reset_caugi_registry <- function() {
 #' @title Register a new edge type in the global registry.
 #'
 #' @param glyph A string representing the edge glyph (e.g., `"-->"`, `"<->"`).
-#' @param orientation One of "none","right_head","left_head","both_heads".
+#' @param tail_mark One of "arrow", "tail", "circle", "other".
+#' @param head_mark One of "arrow", "tail", "circle", "other".
 #' @param class One of "directed","undirected","bidirected","partial".
 #' @param symmetric Logical.
 #' @param traversable_when_conditioned Logical.
 #' @returns The integer code assigned to the registered edge type.
 #' @export
 register_caugi_edge <- function(glyph,
-                                orientation,
+                                tail_mark,
+                                head_mark,
                                 class,
                                 symmetric = FALSE,
                                 traversable_when_conditioned = TRUE) {
+  if (class == "directed" && symmetric) {
+    stop("Directed edges cannot be symmetric")
+  }
+  if (class == "undirected" && !symmetric) {
+    stop("Undirected edges must be symmetric")
+  }
+  if (class == "bidirected" && !symmetric) {
+    stop("Bidirected edges must be symmetric")
+  }
+
   reg <- caugi_registry()
   edge_registry_register(
     reg,
     glyph,
-    orientation,
+    tail_mark,
+    head_mark,
     class,
     symmetric,
     traversable_when_conditioned
