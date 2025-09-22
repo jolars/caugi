@@ -10,6 +10,7 @@ use std::ops::Range;
 pub mod builder;
 pub mod dag;
 pub mod pdag;
+pub mod alg;
 
 #[derive(Debug, Clone)]
 pub struct RegistrySnapshot {
