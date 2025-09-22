@@ -72,7 +72,7 @@ test_that("add_edges expression path works", {
     A %-->% B,
     B %---% C,
     C %<->% D,
-    D %o--% E,
+    D %--o% E,
     E %o->% F,
     F %o-o% A
   )
@@ -83,7 +83,7 @@ test_that("add_edges expression path works", {
   expect_equal(sort(cg$nodes$name), sort(LETTERS[1:6]))
   expect_equal(
     sort(cg$edges$edge),
-    sort(c("o->", "o--", "o-o", "-->", "<->", "---"))
+    sort(c("o->", "--o", "o-o", "-->", "<->", "---"))
   )
 })
 
