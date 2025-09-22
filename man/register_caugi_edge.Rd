@@ -6,7 +6,8 @@
 \usage{
 register_caugi_edge(
   glyph,
-  orientation,
+  tail_mark,
+  head_mark,
   class,
   symmetric = FALSE,
   traversable_when_conditioned = TRUE
@@ -15,7 +16,9 @@ register_caugi_edge(
 \arguments{
 \item{glyph}{A string representing the edge glyph (e.g., \code{"-->"}, \code{"<->"}).}
 
-\item{orientation}{One of "none","right_head","left_head","both_heads".}
+\item{tail_mark}{One of "arrow", "tail", "circle", "other".}
+
+\item{head_mark}{One of "arrow", "tail", "circle", "other".}
 
 \item{class}{One of "directed","undirected","bidirected","partial".}
 
