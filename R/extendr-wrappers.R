@@ -18,7 +18,7 @@ edge_registry_seal <- function(reg) invisible(.Call(wrap__edge_registry_seal, re
 
 edge_registry_len <- function(reg) .Call(wrap__edge_registry_len, reg)
 
-edge_registry_register <- function(reg, glyph, orientation, class, symmetric, traversable_when_conditioned) .Call(wrap__edge_registry_register, reg, glyph, orientation, class, symmetric, traversable_when_conditioned)
+edge_registry_register <- function(reg, glyph, tail_mark, head_mark, class, symmetric, flags) .Call(wrap__edge_registry_register, reg, glyph, tail_mark, head_mark, class, symmetric, flags)
 
 edge_registry_code_of <- function(reg, glyph) .Call(wrap__edge_registry_code_of, reg, glyph)
 
@@ -28,15 +28,15 @@ graph_builder_add_edges <- function(b, from, to, etype) invisible(.Call(wrap__gr
 
 graph_builder_build <- function(b) .Call(wrap__graph_builder_build, b)
 
+graphview_new <- function(core, class) .Call(wrap__graphview_new, core, class)
+
+graph_builder_build_view <- function(b, class) .Call(wrap__graph_builder_build_view, b, class)
+
 parents_of_ptr <- function(g, i) .Call(wrap__parents_of_ptr, g, i)
 
 children_of_ptr <- function(g, i) .Call(wrap__children_of_ptr, g, i)
 
 undirected_of_ptr <- function(g, i) .Call(wrap__undirected_of_ptr, g, i)
-
-possible_parents_of_ptr <- function(g, i) .Call(wrap__possible_parents_of_ptr, g, i)
-
-possible_children_of_ptr <- function(g, i) .Call(wrap__possible_children_of_ptr, g, i)
 
 
 # nolint end
