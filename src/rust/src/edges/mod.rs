@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-//! Edge specification and registry.
+//! Edge specification and registry with endpoint Marks.
 
 use std::{collections::HashMap, error::Error, fmt, result::Result, str::FromStr};
 
@@ -7,22 +7,22 @@ mod query_flags;
 pub use query_flags::QueryFlags;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Orientation {
-    LeftHead,
-    RightHead,
-    BothHeads,
-    None,
+pub enum Mark {
+    Arrow,
+    Tail,
+    Circle,
+    Other,
 }
 
-impl FromStr for Orientation {
+impl FromStr for Mark {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "left_head" => Ok(Orientation::LeftHead),
-            "right_head" => Ok(Orientation::RightHead),
-            "both_heads" => Ok(Orientation::BothHeads),
-            "none" => Ok(Orientation::None),
-            _ => Err(format!("Unknown orientation '{}'", s)),
+            "arrow" => Ok(Mark::Arrow),
+            "tail" => Ok(Mark::Tail),
+            "circle" => Ok(Mark::Circle),
+            "other" => Ok(Mark::Other),
+            _ => Err(format!("Unknown mark '{}'", s)),
         }
     }
 }
@@ -34,7 +34,7 @@ pub enum EdgeClass {
     Bidirected,
     PartiallyDirected,
     PartiallyUndirected,
-    Partial // for o-o
+    Partial, // for o-o
 }
 
 impl FromStr for EdgeClass {
@@ -53,9 +53,10 @@ impl FromStr for EdgeClass {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EdgeSpec {
     pub glyph: String,
-    pub orientation: Orientation,
-    pub class: EdgeClass,
+    pub tail: Mark,
+    pub head: Mark,
     pub symmetric: bool,
+    pub class: EdgeClass,
     pub flags: QueryFlags,
 }
 
@@ -175,101 +176,78 @@ impl EdgeRegistry {
     /// Register built-ins. Idempotent if called multiple times.
     pub fn register_builtins(&mut self) -> Result<(), RegistryError> {
         use EdgeClass as C;
-        use Orientation as O;
+        use Mark as M;
         use QueryFlags as F;
 
         let mut add = |glyph: &str,
-                       ori: O,
-                       class: C,
+                       tail: M,
+                       head: M,
                        symmetric: bool,
+                       class: C,
                        flags: F|
          -> Result<(), RegistryError> {
             self.register(EdgeSpec {
                 glyph: glyph.to_string(),
-                orientation: ori,
-                class,
+                tail,
+                head,
                 symmetric,
+                class,
                 flags,
             })
             .map(|_| ())
         };
-        
-        // Convention is that unless other specified, the tail is the leftmost symbol
-        // and the head is the rightmost symbol in the glyph.
-        // E.g., in "o->", tail is 'o' and head is '>'.
+
+        // Built-in mappings with retained flags
         add(
             "-->",
-            O::RightHead,
-            C::Directed,
+            M::Tail,
+            M::Arrow,
             false,
-            F::TRAVERSABLE_WHEN_CONDITIONED 
-                | F::HEAD_CHILD // A -- > B means that B (head) is the child and A (tail) is the parent
-                | F::TAIL_PARENT,
+            C::Directed,
+            F::TRAVERSABLE_WHEN_CONDITIONED,
         )?;
         add(
             "---",
-            O::None,
-            C::Undirected,
+            M::Tail,
+            M::Tail,
             true,
-            F::TRAVERSABLE_WHEN_CONDITIONED 
-                | F::TAIL_UNDIR 
-                | F::HEAD_UNDIR
-                | F::TAIL_POSS_CHILD
-                | F::TAIL_POSS_PARENT
-                | F::HEAD_POSS_CHILD
-                | F::HEAD_POSS_PARENT,
-
+            C::Undirected,
+            F::TRAVERSABLE_WHEN_CONDITIONED,
         )?;
         add(
             "<->",
-            O::BothHeads,
-            C::Bidirected,
+            M::Arrow,
+            M::Arrow,
             true,
-            F::TRAVERSABLE_WHEN_CONDITIONED
-                | F::TAIL_UNDIR
-                | F::HEAD_UNDIR
-                | F::LATENT_CONFOUNDING,
+            C::Bidirected,
+            F::TRAVERSABLE_WHEN_CONDITIONED | F::LATENT_CONFOUNDING,
         )?;
         add(
             "o-o",
-            O::None,
-            C::Partial,
+            M::Circle,
+            M::Circle,
             true,
-            F::TRAVERSABLE_WHEN_CONDITIONED 
-                | F::TAIL_UNKNOWN 
-                | F::TAIL_POSS_CHILD
-                | F::TAIL_POSS_PARENT
-                | F::HEAD_UNKNOWN
-                | F::HEAD_POSS_CHILD
-                | F::HEAD_POSS_PARENT,
+            C::Partial,
+            F::TRAVERSABLE_WHEN_CONDITIONED,
         )?;
         add(
             "--o",
-            O::RightHead,
-            C::PartiallyUndirected,
+            M::Tail,
+            M::Circle,
             false,
-            F::TRAVERSABLE_WHEN_CONDITIONED 
-                | F::TAIL_PARENT 
-                | F::HEAD_UNKNOWN
-                | F::HEAD_POSS_CHILD
-                | F::HEAD_POSS_PARENT,
+            C::PartiallyUndirected,
+            F::TRAVERSABLE_WHEN_CONDITIONED,
         )?;
         add(
             "o->",
-            O::RightHead,
-            C::PartiallyDirected,
+            M::Circle,
+            M::Arrow,
             false,
-            F::TRAVERSABLE_WHEN_CONDITIONED
-                | F::TAIL_UNKNOWN
-                | F::TAIL_POSS_PARENT
-                | F::HEAD_POSS_CHILD,
+            C::PartiallyDirected,
+            F::TRAVERSABLE_WHEN_CONDITIONED,
         )?;
         Ok(())
     }
-}
-
-pub(crate) fn parse_orientation(s: &str) -> Result<Orientation, String> {
-    s.parse()
 }
 
 pub(crate) fn parse_class(s: &str) -> Result<EdgeClass, String> {
@@ -301,9 +279,10 @@ mod tests {
         let before = r.len();
         let spec = EdgeSpec {
             glyph: "--<".into(),
-            orientation: Orientation::LeftHead,
-            class: EdgeClass::Directed,
+            tail: Mark::Tail,
+            head: Mark::Arrow,
             symmetric: false,
+            class: EdgeClass::Directed,
             flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
         };
         let code = r.register(spec.clone()).unwrap();
@@ -317,9 +296,10 @@ mod tests {
         let mut r = built_reg();
         let spec = EdgeSpec {
             glyph: "o-O".into(),
-            orientation: Orientation::RightHead,
-            class: EdgeClass::Partial,
+            tail: Mark::Circle,
+            head: Mark::Other,
             symmetric: false,
+            class: EdgeClass::Partial,
             flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
         };
         let c1 = r.register(spec.clone()).unwrap();
@@ -333,9 +313,10 @@ mod tests {
         // conflict: redefine existing glyph with different semantics
         let bad = EdgeSpec {
             glyph: "-->".into(),
-            orientation: Orientation::None,
-            class: EdgeClass::Undirected,
+            tail: Mark::Tail,
+            head: Mark::Tail,
             symmetric: true,
+            class: EdgeClass::Undirected,
             flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
         };
         assert!(matches!(r.register(bad), Err(RegistryError::Conflict { .. })));
@@ -344,9 +325,10 @@ mod tests {
         r.seal();
         let new = EdgeSpec {
             glyph: "x".into(),
-            orientation: Orientation::None,
-            class: EdgeClass::Undirected,
+            tail: Mark::Other,
+            head: Mark::Other,
             symmetric: true,
+            class: EdgeClass::Undirected,
             flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
         };
         assert!(matches!(r.register(new), Err(RegistryError::Sealed)));
@@ -367,12 +349,6 @@ mod tests {
 
     #[test]
     fn parse_helpers() {
-        assert_eq!(
-            parse_orientation("left_head").unwrap(),
-            Orientation::LeftHead
-        );
-        assert!(parse_orientation("zzz").is_err());
-
         assert_eq!(parse_class("directed").unwrap(), EdgeClass::Directed);
         assert!(parse_class("zzz").is_err());
     }
