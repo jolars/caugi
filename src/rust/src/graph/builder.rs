@@ -1,4 +1,3 @@
-// src/graph/builder.rs
 // SPDX-License-Identifier: MIT
 //! GraphBuilder: collects edges and emits class-agnostic CSR.
 

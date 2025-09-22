@@ -1,6 +1,5 @@
-// src/graph/pdag.rs
 // SPDX-License-Identifier: MIT
-//! PDAG wrapper with O(1) slice queries via packed neighborhoods.
+//! Pdag wrapper with O(1) slice queries via packed neighborhoods.
 
 use std::sync::Arc;
 use super::CaugiGraph;
@@ -8,7 +7,7 @@ use crate::edges::EdgeClass;
 use crate::graph::alg::directed_part_is_acyclic;
 
 #[derive(Debug, Clone)]
-pub struct PDAG {
+pub struct Pdag {
     core: Arc<CaugiGraph>,
     /// len = n+1
     node_edge_ranges: Arc<[usize]>,
@@ -18,7 +17,7 @@ pub struct PDAG {
     neighbourhoods: Arc<[u32]>,
 }
 
-impl PDAG {
+impl Pdag {
     pub fn new(core: Arc<CaugiGraph>) -> Result<Self, String> {
         let n = core.n() as usize;
         if !directed_part_is_acyclic(&core) {
@@ -36,7 +35,7 @@ impl PDAG {
                     EdgeClass::Undirected => { deg[i].1 += 1 }
                     // Throw error on partial/bidirected edges
                     _ => { 
-                        return Err("PDAG cannot contain partial/bidirected edges".into()); 
+                        return Err("Pdag cannot contain partial/bidirected edges".into()); 
                     }
                 }
             }
@@ -148,7 +147,7 @@ mod tests {
         b.add_edge(0,1,cdir).unwrap();
         b.add_edge(1,2,cund).unwrap();
         let core = std::sync::Arc::new(b.finalize().unwrap());
-        let g = PDAG::new(core).expect("PDAG construction failed");
+        let g = Pdag::new(core).expect("Pdag construction failed");
         assert_eq!(g.parents_of(1), vec![0]);
         assert_eq!(g.children_of(0), vec![1]);
         let mut u = g.undirected_of(1).to_vec();

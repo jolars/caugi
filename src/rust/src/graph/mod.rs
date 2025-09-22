@@ -1,4 +1,3 @@
-// src/graph/mod.rs
 // SPDX-License-Identifier: MIT
 //! CSR graph with registry snapshot; class wrappers live in submodules.
 
@@ -6,11 +5,13 @@ use std::sync::Arc;
 use crate::edges::EdgeSpec;
 use std::{hash::{Hash, Hasher}, collections::hash_map::DefaultHasher};
 use std::ops::Range;
-
+// src/graph/pdag.rs
 pub mod builder;
 pub mod dag;
 pub mod pdag;
 pub mod alg;
+pub mod view;
+pub use view::{GraphView, GraphKind, GraphApi};
 
 #[derive(Debug, Clone)]
 pub struct RegistrySnapshot {

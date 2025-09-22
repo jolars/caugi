@@ -1,5 +1,6 @@
-// src/graph/alg.rs
 // SPDX-License-Identifier: MIT
+//! Graph algorithms.
+
 use crate::graph::CaugiGraph;
 use crate::edges::EdgeClass;
 

@@ -1,4 +1,3 @@
-// src/graph/dag.rs
 // SPDX-License-Identifier: MIT
 //! DAG wrapper with O(1) slice queries via packed neighborhoods.
 
@@ -9,7 +8,7 @@ use crate::graph::alg::directed_part_is_acyclic;
 
 #[derive(Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)]
-pub struct DAG {
+pub struct Dag {
     core: Arc<CaugiGraph>,
     /// len = n+1; row i is node_edge_ranges[i]..node_edge_ranges[i+1]
     node_edge_ranges: Arc<[usize]>,
@@ -19,7 +18,7 @@ pub struct DAG {
     neighbourhoods: Arc<[u32]>,
 }
 
-impl DAG {
+impl Dag {
     pub fn new(core: Arc<CaugiGraph>) -> Result<Self, String> {
         let n = core.n() as usize;
         // Validate: all edges must be directed
@@ -27,12 +26,12 @@ impl DAG {
             for k in core.row_range(i as u32) {
                 let spec = &core.registry.specs[core.etype[k] as usize];
                 if !matches!(spec.class, EdgeClass::Directed) {
-                    return Err("DAG cannot contain non-directed edges".into());
+                    return Err("Dag cannot contain non-directed edges".into());
                 }
             }
         }
         if !directed_part_is_acyclic(&core) {
-            return Err("DAG contains a directed cycle".into());
+            return Err("Dag contains a directed cycle".into());
         }
         // First pass: count per-row (pa,ch)
         let mut deg: Vec<(u32,u32)> = vec![(0,0); n];
@@ -136,7 +135,7 @@ mod tests {
         b.add_edge(3,0,cdir).unwrap();
 
         let core = std::sync::Arc::new(b.finalize().unwrap());
-        let dag  = DAG::new(core).expect("DAG construction failed");
+        let dag  = Dag::new(core).expect("Dag construction failed");
         assert_eq!(dag.children_of(0), vec![1,2]);
         assert_eq!(dag.parents_of(0), vec![3]);
         assert_eq!(dag.parents_of(1), vec![0]);
