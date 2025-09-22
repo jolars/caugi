@@ -5,6 +5,7 @@
 use std::sync::Arc;
 use super::CaugiGraph;
 use crate::edges::EdgeClass;
+use crate::graph::alg::directed_part_is_acyclic;
 
 #[derive(Debug, Clone)]
 pub struct Dag {
@@ -18,8 +19,20 @@ pub struct Dag {
 }
 
 impl Dag {
-    pub fn new(core: Arc<CaugiGraph>) -> Self {
+    pub fn new(core: Arc<CaugiGraph>) -> Result<Self, String> {
         let n = core.n() as usize;
+        // Validate: all edges must be directed
+        for i in 0..core.n() as usize {
+            for k in core.row_range(i as u32) {
+                let spec = &core.registry.specs[core.etype[k] as usize];
+                if !matches!(spec.class, EdgeClass::Directed) {
+                    return Err("DAG cannot contain non-directed edges".into());
+                }
+            }
+        }
+        if !directed_part_is_acyclic(&core) {
+            return Err("DAG contains a directed cycle".into());
+        }
         // First pass: count per-row (pa,ch)
         let mut deg: Vec<(u32,u32)> = vec![(0,0); n];
         for i in 0..n {
@@ -74,12 +87,12 @@ impl Dag {
             neigh[mid..end].sort_unstable();
         }
 
-        Self {
+        Ok(Self {
             core,
             node_edge_ranges: node_edge_ranges.into(),
             node_deg: deg.into(),
             neighbourhoods: neigh.into(),
-        }
+        })
     }
 
     #[inline] pub fn n(&self) -> u32 { self.core.n() }
@@ -120,8 +133,9 @@ mod tests {
         b.add_edge(0,1,cdir).unwrap();
         b.add_edge(0,2,cdir).unwrap();
         b.add_edge(3,0,cdir).unwrap();
+
         let core = std::sync::Arc::new(b.finalize().unwrap());
-        let dag = Dag::new(core);
+        let dag  = Dag::new(core).expect("DAG construction failed");
         assert_eq!(dag.children_of(0), vec![1,2]);
         assert_eq!(dag.parents_of(0), vec![3]);
         assert_eq!(dag.parents_of(1), vec![0]);

@@ -5,6 +5,7 @@
 use std::sync::Arc;
 use super::CaugiGraph;
 use crate::edges::EdgeClass;
+use crate::graph::alg::directed_part_is_acyclic;
 
 #[derive(Debug, Clone)]
 pub struct Pdag {
@@ -18,8 +19,11 @@ pub struct Pdag {
 }
 
 impl Pdag {
-    pub fn new(core: Arc<CaugiGraph>) -> Self {
+    pub fn new(core: Arc<CaugiGraph>) -> Result<Self, String> {
         let n = core.n() as usize;
+        if !directed_part_is_acyclic(&core) {
+            return Err("DAG contains a directed cycle".into());
+        }
         let mut deg: Vec<(u32,u32,u32)> = vec![(0,0,0); n];
         for i in 0..n {
             let r = core.row_range(i as u32);
@@ -30,7 +34,10 @@ impl Pdag {
                         if core.side[k] == 1 { deg[i].0 += 1 } else { deg[i].2 += 1 }
                     }
                     EdgeClass::Undirected => { deg[i].1 += 1 }
-                    _ => {}
+                    // Throw error on partial/bidirected edges
+                    _ => { 
+                        return Err("PDAG cannot contain partial/bidirected edges".into()); 
+                    }
                 }
             }
         }
@@ -87,12 +94,12 @@ impl Pdag {
             neigh[um..e].sort_unstable();
         }
 
-        Self {
+        Ok(Self {
             core,
             node_edge_ranges: node_edge_ranges.into(),
             node_deg: deg.into(),
             neighbourhoods: neigh.into(),
-        }
+        })
     }
 
     #[inline] pub fn n(&self) -> u32 { self.core.n() }
@@ -141,7 +148,7 @@ mod tests {
         b.add_edge(0,1,cdir).unwrap();
         b.add_edge(1,2,cund).unwrap();
         let core = std::sync::Arc::new(b.finalize().unwrap());
-        let g = Pdag::new(core);
+        let g = Pdag::new(core).expect("PDAG construction failed");
         assert_eq!(g.parents_of(1), vec![0]);
         assert_eq!(g.children_of(0), vec![1]);
         let mut u = g.undirected_of(1).to_vec();
