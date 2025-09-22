@@ -6,25 +6,25 @@ pub mod graph;
 use edges::{EdgeRegistry, EdgeSpec, EdgeClass, QueryFlags, Mark};
 use graph::{CaugiGraph};
 use graph::builder::GraphBuilder;
-use graph::{dag::Dag, pdag::Pdag};
+use graph::{dag::DAG, pdag::PDAG};
 use std::{sync::Arc, str::FromStr};
 
 // ---------- Unified view + dispatch ----------
 #[derive(Debug, Clone, Copy)]
-enum GraphKind { Dag, Pdag, Unknown /* , Admg, Mag, Pag */ }
+enum GraphKind { DAG, PDAG, Unknown /* , Admg, Mag, Pag */ }
 
 impl FromStr for GraphKind{ type Err=String; fn from_str(s:&str)->std::result::Result<Self,String>{
     match s.to_ascii_uppercase().as_str(){ 
-        "DAG"=>Ok(Self::Dag),
-        "PDAG"|"CPDAG"=>Ok(Self::Pdag),
+        "DAG"=>Ok(Self::DAG),
+        "PDAG"|"CPDAG"=>Ok(Self::PDAG),
       ""|"UNKNOWN"|"<UNKNOWN>"=>Ok(Self::Unknown), 
       other=>Err(format!("unknown graph class '{other}'"))}}}
 
 
 #[derive(Debug, Clone)]
 enum GraphView {
-    Dag(Arc<Dag>),
-    Pdag(Arc<Pdag>),
+    DAG(Arc<DAG>),
+    PDAG(Arc<PDAG>),
     Raw(Arc<CaugiGraph>),
     // ADMG, MAG, PAG to be added
 }
@@ -39,30 +39,30 @@ trait GraphApi {
 impl GraphApi for GraphView {
     fn parents_of(&self, i: u32) -> std::result::Result<&[u32], String> {
         match self {
-            GraphView::Dag(g) => Ok(g.parents_of(i)),
-            GraphView::Pdag(g) => Ok(g.parents_of(i)),
+            GraphView::DAG(g) => Ok(g.parents_of(i)),
+            GraphView::PDAG(g) => Ok(g.parents_of(i)),
             GraphView::Raw(_)=>Err("parents_of not implemented for UNKNOWN class".into())
         }
     }
     fn children_of(&self, i: u32) -> std::result::Result<&[u32], String> {
         match self {
-            GraphView::Dag(g) => Ok(g.children_of(i)),
-            GraphView::Pdag(g) => Ok(g.children_of(i)),
+            GraphView::DAG(g) => Ok(g.children_of(i)),
+            GraphView::PDAG(g) => Ok(g.children_of(i)),
             GraphView::Raw(_)=>Err("children_of not implemented for UNKNOWN class".into())
         }
     }
     fn undirected_of(&self, i: u32) -> std::result::Result<&[u32], String> {
         match self {
-            GraphView::Dag(_) => Err("undirected_of not defined for DAG".into()),
-            GraphView::Pdag(g) => Ok(g.undirected_of(i)),
+            GraphView::DAG(_) => Err("undirected_of not defined for DAG".into()),
+            GraphView::PDAG(g) => Ok(g.undirected_of(i)),
             GraphView::Raw(_)=>Err("undirected_of not implemented for UNKNOWN class".into())
         }
     }
 
     fn n(&self) -> u32 {
         match self {
-            GraphView::Dag(g) => g.n(),
-            GraphView::Pdag(g) => g.n(),
+            GraphView::DAG(g) => g.n(),
+            GraphView::PDAG(g) => g.n(),
             GraphView::Raw(core) => core.n(), 
         }
     }
@@ -162,15 +162,15 @@ fn graph_builder_build(mut b: ExternalPtr<GraphBuilder>) -> ExternalPtr<CaugiGra
 #[extendr]
 fn graphview_new(core: ExternalPtr<CaugiGraph>, class: &str) -> ExternalPtr<GraphView> {
     match class.parse::<GraphKind>().unwrap_or_else(|e| throw_r_error(e)) {
-        GraphKind::Dag => {
-            let dag = Dag::new(Arc::new(core.as_ref().clone()))
+        GraphKind::DAG => {
+            let dag = DAG::new(Arc::new(core.as_ref().clone()))
                 .unwrap_or_else(|e| throw_r_error(e));
-            ExternalPtr::new(GraphView::Dag(Arc::new(dag)))
+            ExternalPtr::new(GraphView::DAG(Arc::new(dag)))
         }
-        GraphKind::Pdag => {
-            let pdag = Pdag::new(Arc::new(core.as_ref().clone()))
+        GraphKind::PDAG => {
+            let pdag = PDAG::new(Arc::new(core.as_ref().clone()))
                 .unwrap_or_else(|e| throw_r_error(e));
-            ExternalPtr::new(GraphView::Pdag(Arc::new(pdag)))
+            ExternalPtr::new(GraphView::PDAG(Arc::new(pdag)))
         }
         GraphKind::Unknown => ExternalPtr::new(GraphView::Raw(Arc::new(core.as_ref().clone()))),
     }

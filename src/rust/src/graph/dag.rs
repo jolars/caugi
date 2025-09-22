@@ -8,7 +8,8 @@ use crate::edges::EdgeClass;
 use crate::graph::alg::directed_part_is_acyclic;
 
 #[derive(Debug, Clone)]
-pub struct Dag {
+#[allow(clippy::upper_case_acronyms)]
+pub struct DAG {
     core: Arc<CaugiGraph>,
     /// len = n+1; row i is node_edge_ranges[i]..node_edge_ranges[i+1]
     node_edge_ranges: Arc<[usize]>,
@@ -18,7 +19,7 @@ pub struct Dag {
     neighbourhoods: Arc<[u32]>,
 }
 
-impl Dag {
+impl DAG {
     pub fn new(core: Arc<CaugiGraph>) -> Result<Self, String> {
         let n = core.n() as usize;
         // Validate: all edges must be directed
@@ -135,7 +136,7 @@ mod tests {
         b.add_edge(3,0,cdir).unwrap();
 
         let core = std::sync::Arc::new(b.finalize().unwrap());
-        let dag  = Dag::new(core).expect("DAG construction failed");
+        let dag  = DAG::new(core).expect("DAG construction failed");
         assert_eq!(dag.children_of(0), vec![1,2]);
         assert_eq!(dag.parents_of(0), vec![3]);
         assert_eq!(dag.parents_of(1), vec![0]);

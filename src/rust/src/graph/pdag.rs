@@ -8,7 +8,7 @@ use crate::edges::EdgeClass;
 use crate::graph::alg::directed_part_is_acyclic;
 
 #[derive(Debug, Clone)]
-pub struct Pdag {
+pub struct PDAG {
     core: Arc<CaugiGraph>,
     /// len = n+1
     node_edge_ranges: Arc<[usize]>,
@@ -18,7 +18,7 @@ pub struct Pdag {
     neighbourhoods: Arc<[u32]>,
 }
 
-impl Pdag {
+impl PDAG {
     pub fn new(core: Arc<CaugiGraph>) -> Result<Self, String> {
         let n = core.n() as usize;
         if !directed_part_is_acyclic(&core) {
@@ -148,7 +148,7 @@ mod tests {
         b.add_edge(0,1,cdir).unwrap();
         b.add_edge(1,2,cund).unwrap();
         let core = std::sync::Arc::new(b.finalize().unwrap());
-        let g = Pdag::new(core).expect("PDAG construction failed");
+        let g = PDAG::new(core).expect("PDAG construction failed");
         assert_eq!(g.parents_of(1), vec![0]);
         assert_eq!(g.children_of(0), vec![1]);
         let mut u = g.undirected_of(1).to_vec();
