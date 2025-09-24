@@ -1,4 +1,6 @@
-# ──────────────────────────── DSL Parser tests ────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────── DSL parser tests ───────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 test_that("local edge/glyph registries exist for tests", {
   # Minimal registries for tests
@@ -9,6 +11,10 @@ test_that("local edge/glyph registries exist for tests", {
   expect_true("%-->%" %in% .edge_ops_get())
   expect_equal(.glyph_map_get()[["%-->%"]], "-->")
 })
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────── is functions ─────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 test_that(".is_edge_call identifies edge calls", {
   edge_call <- quote(A %-->% B) # parsing only; no eval
@@ -29,6 +35,10 @@ test_that(".is_node_expr validates allowed node expressions", {
   expect_false(.is_node_expr(quote(A %-->% B)))
 })
 
+# ──────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────────── glyph of ────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
 test_that(".glyph_of returns correct glyph", {
   expect_equal(.glyph_of(as.symbol("%-->%")), "-->")
   expect_equal(.glyph_of(as.symbol("%---%")), "---")
@@ -48,6 +58,10 @@ test_that(".glyph_of returns correct glyph", {
   )
   expect_equal(.glyph_of(as.symbol("%<--%")), "<--")
 })
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ────────────────────── expand, split, parse, collect ─────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 test_that(".expand_nodes expands symbols, strings, numerics, +, c(), and ()", {
   expect_equal(.expand_nodes(quote(A)), "A")
@@ -121,7 +135,8 @@ test_that(".collect_edges_nodes gathers edges and declared nodes", {
   # Declared nodes unique
   expect_setequal(out$declared, c("E", "F", "G"))
 
-  # Edges distinct and complete cartesian from {A,B} to {C,D} plus B->C duplicate removed
+  # Edges distinct and complete cartesian from {A,B} to {C,D}
+  # plus B->C duplicate removed
   df <- out$edges
   expect_s3_class(df, "tbl_df")
   expect_true(all(c("from", "edge", "to") %in% names(df)))
