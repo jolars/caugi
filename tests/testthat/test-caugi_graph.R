@@ -69,6 +69,34 @@ test_that("building graph with invalid class results in error", {
   )
 })
 
+test_that("building graph with simple = FALSE needs class = Unknown", {
+  expect_error(
+    caugi_graph(
+      A %-->% B,
+      B %---% C,
+      class = "DAG",
+      simple = FALSE
+    )
+  )
+  expect_error(
+    caugi_graph(
+      A %-->% B,
+      B %---% C,
+      class = "PDAG",
+      simple = FALSE
+    )
+  )
+  expect_s3_class(
+    caugi_graph(
+      A %-->% B,
+      B %---% C,
+      class = "Unknown",
+      simple = FALSE
+    ),
+    "caugi_graph"
+  )
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ──────────────────────────────── DAG tests ───────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
