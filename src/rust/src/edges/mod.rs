@@ -45,6 +45,8 @@ impl FromStr for EdgeClass {
             "undirected" => Ok(EdgeClass::Undirected),
             "bidirected" => Ok(EdgeClass::Bidirected),
             "partial" => Ok(EdgeClass::Partial),
+            "partially_directed" => Ok(EdgeClass::PartiallyDirected),
+            "partially_undirected" => Ok(EdgeClass::PartiallyUndirected),
             _ => Err(format!("Unknown class '{}'", s)),
         }
     }
