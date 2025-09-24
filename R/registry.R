@@ -40,7 +40,16 @@ register_caugi_edge <- function(glyph,
                                 head_mark,
                                 class,
                                 symmetric = FALSE,
-                                flags = c()) {
+                                flags = NULL) {
+  if (!is.character(glyph) || length(glyph) != 1L) {
+    stop("glyph must be a single string")
+  }
+  if (nchar(glyph) != 3L) {
+    stop("glyph must be a non-empty string of length 3 (e.g., '-->')")
+  }
+  if (grepl("%", glyph)) {
+    stop("glyph must not contain '%'")
+  }
   if (class %in% c("directed", "partially_directed", "partially_undirected") &&
     symmetric) {
     stop("This class cannot be symmetric")
@@ -48,6 +57,11 @@ register_caugi_edge <- function(glyph,
   if (class %in% c("undirected", "bidirected", "partial") && !symmetric) {
     stop("This class must be symmetric")
   }
+  if (missing(flags) || is.null(flags)) {
+    flags <- character(0)
+  }
+  flags <- as.character(flags)
+
   reg <- caugi_registry()
   edge_registry_register(
     reg,
@@ -59,6 +73,7 @@ register_caugi_edge <- function(glyph,
     flags
   )
   .register_edge(glyph)
+  invisible(TRUE)
 }
 
 #' @title Seal the global edge registry.
@@ -83,15 +98,6 @@ seal_caugi_registry <- function() {
 #'
 #' @keywords internal
 .register_edge <- function(glyph) {
-  if (!is.character(glyph) || length(glyph) != 1L) {
-    stop("glyph must be a single string")
-  }
-  if (nchar(glyph) != 3L) {
-    stop("glyph must be a non-empty string of length 3 (e.g., '-->')")
-  }
-  if (grepl("%", glyph)) {
-    stop("glyph must not contain '%'")
-  }
   op <- paste0("%", glyph, "%")
 
   # check if in the global registry

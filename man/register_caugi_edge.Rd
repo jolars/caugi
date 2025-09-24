@@ -10,7 +10,7 @@ register_caugi_edge(
   head_mark,
   class,
   symmetric = FALSE,
-  flags = c()
+  flags = NULL
 )
 }
 \arguments{
