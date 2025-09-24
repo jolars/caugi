@@ -7,6 +7,7 @@ use super::pdag::Pdag;
 use std::str::FromStr;
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub enum GraphKind {
     Dag,
     Pdag,
@@ -16,11 +17,12 @@ pub enum GraphKind {
 impl FromStr for GraphKind {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, String> {
+        let original = s.to_string();
         match s.to_ascii_uppercase().as_str() {
             "DAG" => Ok(Self::Dag),
             "PDAG" | "CPDAG" => Ok(Self::Pdag),
             "" | "UNKNOWN" | "<UNKNOWN>" => Ok(Self::Unknown),
-            other => Err(format!("unknown graph class '{other}'")),
+            _ => Err(format!("unknown graph class '{original}'")),
         }
     }
 }
@@ -75,5 +77,79 @@ impl GraphApi for GraphView {
             GraphView::Pdag(g) => g.n(),
             GraphView::Raw(core) => core.n(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::edges::EdgeRegistry;
+    use crate::graph::builder::GraphBuilder;
+
+    #[test]
+    fn graphkind_from_str_all_paths() {
+        assert!(matches!("DAG".parse::<GraphKind>().unwrap(), GraphKind::Dag));
+        assert!(matches!("pdag".parse::<GraphKind>().unwrap(), GraphKind::Pdag));
+        assert!(matches!("CPDAG".parse::<GraphKind>().unwrap(), GraphKind::Pdag));
+        assert!(matches!("".parse::<GraphKind>().unwrap(), GraphKind::Unknown));
+        assert!(matches!("unknown".parse::<GraphKind>().unwrap(), GraphKind::Unknown));
+        assert!(matches!("<UNKNOWN>".parse::<GraphKind>().unwrap(), GraphKind::Unknown));
+        let e = "weird".parse::<GraphKind>().unwrap_err();
+        assert_eq!(e, "unknown graph class 'weird'");
+    }
+
+    #[test]
+    fn graphview_dispatch_dag_pdag_raw() {
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap();
+        let cdir = r.code_of("-->").unwrap();
+        let cund = r.code_of("---").unwrap();
+
+        // DAG core: 0->1, 0->2
+        let mut bd = GraphBuilder::new_with_registry(3, true, &r);
+        bd.add_edge(0, 1, cdir).unwrap();
+        bd.add_edge(0, 2, cdir).unwrap();
+        let dag_core = Arc::new(bd.finalize().unwrap());
+        let dag = Arc::new(Dag::new(dag_core.clone()).unwrap());
+        let v_dag = GraphView::Dag(dag);
+        assert_eq!(v_dag.n(), 3);
+        assert_eq!(v_dag.parents_of(1).unwrap(), &[0]);
+        assert_eq!(v_dag.children_of(0).unwrap(), &[1, 2]);
+        let e = v_dag.undirected_of(0).unwrap_err();
+        assert_eq!(e, "undirected_of not defined for Dag");
+
+        // PDAG core: 0->1, 1---2
+        let mut bp = GraphBuilder::new_with_registry(3, true, &r);
+        bp.add_edge(0, 1, cdir).unwrap();
+        bp.add_edge(1, 2, cund).unwrap();
+        let pdag_core = Arc::new(bp.finalize().unwrap());
+        let pdag = Arc::new(Pdag::new(pdag_core.clone()).unwrap());
+        let v_pdag = GraphView::Pdag(pdag);
+        assert_eq!(v_pdag.n(), 3);
+        assert_eq!(v_pdag.parents_of(1).unwrap(), &[0]);
+        assert_eq!(v_pdag.children_of(0).unwrap(), &[1]);
+        assert_eq!(v_pdag.undirected_of(1).unwrap(), &[2]);
+
+        // Raw view uses UNKNOWN class fallbacks
+        let v_raw = GraphView::Raw(pdag_core);
+        assert_eq!(v_raw.n(), 3);
+        let e1 = v_raw.parents_of(0).unwrap_err();
+        let e2 = v_raw.children_of(0).unwrap_err();
+        let e3 = v_raw.undirected_of(0).unwrap_err();
+        assert_eq!(e1, "parents_of not implemented for UNKNOWN class");
+        assert_eq!(e2, "children_of not implemented for UNKNOWN class");
+        assert_eq!(e3, "undirected_of not implemented for UNKNOWN class");
+    }
+   
+    #[test]
+    fn graphapi_default_methods_are_hit() {
+        struct Dummy(u32);
+        impl GraphApi for Dummy { fn n(&self) -> u32 { self.0 } }
+
+        let d = Dummy(5);
+        assert_eq!(d.n(), 5);
+        assert_eq!(d.parents_of(0).unwrap_err(), "parents_of not implemented for this class");
+        assert_eq!(d.children_of(0).unwrap_err(), "children_of not implemented for this class");
+        assert_eq!(d.undirected_of(0).unwrap_err(), "undirected_of not implemented for this class");
     }
 }
