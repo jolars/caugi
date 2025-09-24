@@ -250,10 +250,6 @@ impl EdgeRegistry {
     }
 }
 
-pub(crate) fn parse_class(s: &str) -> Result<EdgeClass, String> {
-    s.parse()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -308,7 +304,7 @@ mod tests {
     }
 
     #[test]
-    fn conflict_and_seal_behaviour() {
+    fn conflict_and_seal_behavior() {
         let mut r = built_reg();
         // conflict: redefine existing glyph with different semantics
         let bad = EdgeSpec {
@@ -348,11 +344,5 @@ mod tests {
             r.spec_of_code(250),
             Err(RegistryError::InvalidCode(_))
         ));
-    }
-
-    #[test]
-    fn parse_helpers() {
-        assert_eq!(parse_class("directed").unwrap(), EdgeClass::Directed);
-        assert!(parse_class("zzz").is_err());
     }
 }
