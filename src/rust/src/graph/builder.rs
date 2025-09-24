@@ -210,6 +210,28 @@ mod tests {
         assert!(rr1.len() >= 1);
     }
 
+        #[test]
+    fn finalize_in_place_ok() {
+        let r = reg();
+        let cdir = r.code_of("-->").unwrap();
+        let mut b = GraphBuilder::new_with_registry(2, true, &r);
+        b.add_edge(0, 1, cdir).unwrap();
+        let g = b.finalize_in_place().unwrap();
+        assert_eq!(g.n(), 2);
+    }
+
+    #[test]
+    fn finalize_in_place_parallel_duplicate_row_error() {
+        let r = reg();
+        let cdir = r.code_of("-->").unwrap();
+        let mut b = GraphBuilder::new_with_registry(2, true, &r);
+        // Manually craft duplicate entries
+        b.rows[0].push(HalfEdge { nbr: 1, etype: cdir, side: Side::Tail });
+        b.rows[0].push(HalfEdge { nbr: 1, etype: cdir, side: Side::Head }); // same nbr+etype, different side
+        let err = b.finalize_in_place().unwrap_err();
+        assert!(err.contains("parallel edge duplicate in row"));
+    }
+
     #[test]
     fn simple_graph_blocks_parallel_and_self_loop() {
         let r = reg();
