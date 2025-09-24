@@ -17,15 +17,7 @@ pub struct Dag {
 impl Dag {
     pub fn new(core: Arc<CaugiGraph>) -> Result<Self, String> {
         let n = core.n() as usize;
-        // Validate: all edges must be directed
-        for i in 0..core.n() as usize {
-            for k in core.row_range(i as u32) {
-                let spec = &core.registry.specs[core.etype[k] as usize];
-                if !matches!(spec.class, EdgeClass::Directed) {
-                    return Err("Dag cannot contain non-directed edges".into());
-                }
-            }
-        }
+
         if !directed_part_is_acyclic(&core) {
             return Err("Dag contains a directed cycle".into());
         }
@@ -35,13 +27,15 @@ impl Dag {
             let r = core.row_range(i as u32);
             for k in r.clone() {
                 let spec = &core.registry.specs[core.etype[k] as usize];
-                if !matches!(spec.class, EdgeClass::Directed) {
-                    continue;
-                }
-                if core.side[k] == 1 {
-                    deg[i].0 += 1
-                } else {
-                    deg[i].1 += 1
+                match spec.class {
+                    EdgeClass::Directed => {
+                        if core.side[k] == 1 {
+                            deg[i].0 += 1
+                        } else {
+                            deg[i].1 += 1
+                        }
+                    }
+                    _ => return Err("Dag cannot contain non-directed edges".into()),
                 }
             }
         }
