@@ -65,10 +65,6 @@ impl Dag {
         for i in 0..n {
             let r = core.row_range(i as u32);
             for k in r.clone() {
-                let spec = &core.registry.specs[core.etype[k] as usize];
-                if !matches!(spec.class, EdgeClass::Directed) {
-                    continue;
-                }
                 if core.side[k] == 1 {
                     let p = cur[i];
                     neigh[p] = core.col_index[k];
@@ -145,5 +141,34 @@ mod tests {
         assert_eq!(dag.parents_of(1), vec![0]);
         assert!(dag.children_of(1).is_empty());
         assert_eq!(dag.children_of(3), vec![0]);
+        assert_eq!(dag.n(), 4);
+    }
+
+    #[test]
+    fn dag_cycle_rejected() {
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let cdir = reg.code_of("-->").unwrap();
+        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
+        b.add_edge(0, 1, cdir).unwrap();
+        b.add_edge(1, 2, cdir).unwrap();
+        b.add_edge(2, 0, cdir).unwrap();
+        let core = std::sync::Arc::new(b.finalize().unwrap());
+        let dag = Dag::new(core);
+        assert!(dag.is_err());
+    }
+
+    #[test]
+    fn dag_non_directed_rejected() {
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let cdir = reg.code_of("-->").unwrap();
+        let cund = reg.code_of("<->").unwrap();
+        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
+        b.add_edge(0, 1, cdir).unwrap();
+        b.add_edge(1, 2, cund).unwrap();
+        let core = std::sync::Arc::new(b.finalize().unwrap());
+        let dag = Dag::new(core);
+        assert!(dag.is_err());
     }
 }

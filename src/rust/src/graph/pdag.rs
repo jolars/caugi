@@ -21,7 +21,7 @@ impl Pdag {
     pub fn new(core: Arc<CaugiGraph>) -> Result<Self, String> {
         let n = core.n() as usize;
         if !directed_part_is_acyclic(&core) {
-            return Err("DAG contains a directed cycle".into());
+            return Err("PDAG contains a directed cycle".into());
         }
         let mut deg: Vec<(u32, u32, u32)> = vec![(0, 0, 0); n];
         for i in 0..n {
@@ -90,7 +90,10 @@ impl Pdag {
                         neigh[p] = core.col_index[k];
                         ucur[i] += 1;
                     }
-                    _ => {}
+                    _ => {
+                        // Is only here to satisfy exhaustiveness. It's unreachable
+                        unreachable!("Should have errored on partial/bidirected edges earlier");
+                    }
                 }
             }
             // determinism
@@ -167,5 +170,32 @@ mod tests {
         let mut u = g.undirected_of(1).to_vec();
         u.sort_unstable();
         assert_eq!(u, vec![2]);
+        assert_eq!(g.n(), 3);
+    }
+
+    #[test]
+    fn pdag_cycle_error() {
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let cdir = reg.code_of("-->").unwrap();
+        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
+        b.add_edge(0, 1, cdir).unwrap();
+        b.add_edge(1, 2, cdir).unwrap();
+        b.add_edge(2, 0, cdir).unwrap();
+        let core = std::sync::Arc::new(b.finalize().unwrap());
+        let r = Pdag::new(core);
+        assert!(r.is_err());
+    }
+
+    #[test]
+    fn pdag_partial_edge_error() {
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let cpar = reg.code_of("o->").unwrap();
+        let mut b = GraphBuilder::new_with_registry(2, true, &reg);
+        b.add_edge(0, 1, cpar).unwrap();
+        let core = std::sync::Arc::new(b.finalize().unwrap());
+        let r = Pdag::new(core);
+        assert!(r.is_err());
     }
 }
