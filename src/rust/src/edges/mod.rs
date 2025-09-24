@@ -347,4 +347,125 @@ mod tests {
             Err(RegistryError::InvalidCode(_))
         ));
     }
+        #[test]
+    fn parse_mark_and_edgeclass_fromstr() {
+        use std::str::FromStr;
+        assert_eq!(Mark::from_str("arrow").unwrap(), Mark::Arrow);
+        assert_eq!(Mark::from_str("tail").unwrap(), Mark::Tail);
+        assert_eq!(Mark::from_str("circle").unwrap(), Mark::Circle);
+        assert_eq!(Mark::from_str("other").unwrap(), Mark::Other);
+        assert!(Mark::from_str("nope").is_err());
+
+        assert_eq!(EdgeClass::from_str("directed").unwrap(), EdgeClass::Directed);
+        assert_eq!(EdgeClass::from_str("undirected").unwrap(), EdgeClass::Undirected);
+        assert_eq!(EdgeClass::from_str("bidirected").unwrap(), EdgeClass::Bidirected);
+        assert_eq!(EdgeClass::from_str("partial").unwrap(), EdgeClass::Partial);
+        assert_eq!(EdgeClass::from_str("partially_directed").unwrap(), EdgeClass::PartiallyDirected);
+        assert_eq!(EdgeClass::from_str("partially_undirected").unwrap(), EdgeClass::PartiallyUndirected);
+        assert!(EdgeClass::from_str("???").is_err());
+    }
+
+    #[test]
+    fn spec_glyph_setter_and_convenience_lookups() {
+        let mut r = built_reg();
+        // builder-style glyph()
+        let s = EdgeSpec {
+            glyph: "".into(),
+            tail: Mark::Tail,
+            head: Mark::Arrow,
+            symmetric: false,
+            class: EdgeClass::Directed,
+            flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
+        }
+        .glyph("x->");
+        let c = r.register(s.clone()).unwrap();
+        assert_eq!(r.spec_of("x->").unwrap(), &s);
+        assert_eq!(r.spec_of_code(c).unwrap().glyph, "x->");
+    }
+
+    #[test]
+    fn idempotent_register_builtins_and_basic_introspection() {
+        let mut r = EdgeRegistry::new();
+        assert!(r.is_empty());
+        assert!(!r.is_sealed());
+        r.register_builtins().unwrap();
+        let len1 = r.len();
+        r.register_builtins().unwrap(); // idempotent
+        assert_eq!(r.len(), len1);
+        assert!(!r.is_empty());
+    }
+
+    #[test]
+    fn flags_bitops_compose() {
+        let f = QueryFlags::TRAVERSABLE_WHEN_CONDITIONED | QueryFlags::LATENT_CONFOUNDING;
+        assert!(f.contains(QueryFlags::TRAVERSABLE_WHEN_CONDITIONED));
+        assert!(f.contains(QueryFlags::LATENT_CONFOUNDING));
+    }
+
+    #[test]
+    fn display_errors_text() {
+        let e1 = RegistryError::UnknownGlyph("xx".into());
+        let e2 = RegistryError::InvalidCode(255);
+        let e3 = RegistryError::TooManyTypes;
+        let e4 = RegistryError::Sealed;
+        assert!(format!("{}", e1).contains("Unknown glyph 'xx'"));
+        assert!(format!("{}", e2).contains("Invalid edge code 255"));
+        assert!(format!("{}", e3).contains("Edge registry full"));
+        assert!(format!("{}", e4).contains("sealed"));
+    }
+
+    #[test]
+    fn too_many_types_limit_enforced() {
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap(); // 6
+        // Fill up to MAX_TYPES
+        let start = r.len();
+        for i in start..EdgeRegistry::MAX_TYPES {
+            let g = format!("g{}", i);
+            let spec = EdgeSpec {
+                glyph: g,
+                tail: Mark::Other,
+                head: Mark::Other,
+                symmetric: true,
+                class: EdgeClass::Undirected,
+                flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
+            };
+            r.register(spec).unwrap();
+        }
+        assert_eq!(r.len(), EdgeRegistry::MAX_TYPES);
+        // Next should fail
+        let overflow = EdgeSpec {
+            glyph: "overflow".into(),
+            tail: Mark::Other,
+            head: Mark::Other,
+            symmetric: true,
+            class: EdgeClass::Undirected,
+            flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
+        };
+        assert!(matches!(r.register(overflow), Err(RegistryError::TooManyTypes)));
+    }
+
+    #[test]
+    fn seal_and_is_sealed_reported() {
+        let mut r = built_reg();
+        assert!(!r.is_sealed());
+        r.seal();
+        assert!(r.is_sealed());
+    }
+
+    #[test]
+    fn conflict_display_includes_glyph_and_text() {
+        let mut r = built_reg();
+        let err = r.register(EdgeSpec {
+            glyph: "-->".into(), // existing glyph with different semantics
+            tail: Mark::Tail,
+            head: Mark::Tail,
+            symmetric: true,
+            class: EdgeClass::Undirected,
+            flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
+        }).unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("already registered with different semantics"));
+        assert!(msg.contains("'-->'"));
+    }
 }
