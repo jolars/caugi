@@ -107,3 +107,25 @@ test_that("reset_caugi_registry does not allow overwriting builtin edges", {
     "already registered"
   )
 })
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ────────────────────────── Behavior of new edges ─────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("reverse edge, <--, behaves correctly, when initalized in a cg", {
+  reset_caugi_registry()
+  register_caugi_edge("<--", "arrow", "tail", "directed", FALSE)
+  cg <- caugi_graph(A %-->% B, B %<--% C, class = "DAG")
+  expect_identical(parents_of_ptr(cg$ptr, 0L), integer())
+  expect_identical(children_of_ptr(cg$ptr, 0L), 1L)
+  expect_identical(parents_of_ptr(cg$ptr, 1L), c(0L, 2L))
+  expect_identical(children_of_ptr(cg$ptr, 1L), integer())
+  expect_identical(parents_of_ptr(cg$ptr, 2L), integer())
+  expect_identical(children_of_ptr(cg$ptr, 2L), 1L)
+})
+
+test_that("reverse edge, <--, cannot create cycles", {
+  reset_caugi_registry()
+  register_caugi_edge("<--", "arrow", "tail", "directed", FALSE)
+  expect_error(caugi_graph(A %-->% B, B %-->% C, A %<--% C, class = "DAG"))
+})
