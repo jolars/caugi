@@ -88,7 +88,19 @@
 #'
 #' @keywords internal
 .glyph_of <- function(op_sym) {
-  .glyph_map_get()[[as.character(op_sym)]]
+  if (is.null(op_sym)) {
+    return(NULL)
+  }
+  key <- as.character(op_sym)
+  m <- .glyph_map_get()
+  if (is.null(m)) {
+    return(NULL)
+  }
+  nms <- names(m)
+  if (is.null(nms) || !(key %in% nms)) {
+    return(NULL)
+  }
+  m[[key]]
 }
 
 #' @title Expand node expressions
@@ -185,7 +197,7 @@
 .parse_edge_arg <- function(expr) {
   terms <- .split_plus(expr)
 
-  is_edge <- vapply(terms, .is_edge_call, logical(1))
+  is_edge <- vapply(terms, .is_edge_call, TRUE)
   if (!any(is_edge)) {
     stop("Expected an edge expression; got: ",
       deparse(expr),
@@ -196,6 +208,7 @@
   edge_idx <- which(is_edge)
   units <- vector("list", length(edge_idx))
 
+  keep_node <- function(x) !is.null(x) && !.is_edge_call(x)
   for (k in seq_along(edge_idx)) {
     i <- edge_idx[k]
     edge_term <- terms[[i]]
@@ -203,19 +216,14 @@
     lhs <- edge_term[[2L]]
     rhs <- edge_term[[3L]]
 
-    left_idx <- if (i > 1L) seq_len(i - 1L) else integer(0)
-    right_idx <- if (i < length(terms)) {
-      seq.int(i + 1L, length(terms))
-    } else {
-      integer(0)
-    }
+    prev_idx <- if (k > 1L) edge_idx[k - 1L] else 0L
+    next_idx <- if (k < length(edge_idx)) edge_idx[k + 1L] else length(terms) + 1L
 
-    left_nodes_terms <- terms[left_idx]
-    right_nodes_terms <- terms[right_idx]
+    left_idx <- if (prev_idx + 1L <= i - 1L) seq.int(prev_idx + 1L, i - 1L) else integer(0)
+    right_idx <- if (i + 1L <= next_idx - 1L) seq.int(i + 1L, next_idx - 1L) else integer(0)
 
-    keep_node <- function(x) !is.null(x) && !.is_edge_call(x)
-    left_nodes_terms <- Filter(keep_node, left_nodes_terms)
-    right_nodes_terms <- Filter(keep_node, right_nodes_terms)
+    left_nodes_terms <- Filter(keep_node, terms[left_idx])
+    right_nodes_terms <- Filter(keep_node, terms[right_idx])
 
     if (length(left_nodes_terms)) {
       lhs <- call("+", .combine_plus(left_nodes_terms), lhs)
@@ -228,6 +236,7 @@
   }
   units
 }
+
 
 #' @title Turn edge units into a tibble of edges
 #'
