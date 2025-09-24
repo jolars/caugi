@@ -249,8 +249,6 @@ test_that(".parse_edge_arg handles multiple edge units with context", {
   expect_equal(.expand_nodes(u2$lhs), c("Y", "C"))
   expect_equal(.expand_nodes(u2$rhs), c("D", "Z"))
   expect_equal(u2$glyph, "<--")
-})
 
-# ──────────────────────────────────────────────────────────────────────────────
-# ────────────────────────────────── Checks ────────────────────────────────────
-# ──────────────────────────────────────────────────────────────────────────────
+  reset_caugi_registry()
+})

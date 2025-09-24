@@ -2,26 +2,9 @@
 # ──────────────────────────── caugi graph tests ───────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
-test_that("caugi graph generation works as expected", {
-  cg <- caugi_graph(
-    A %-->% B,
-    B %---% C,
-    C %<->% D,
-    D %--o% E,
-    E %o->% F,
-    F %o-o% A
-  )
-  expect_s3_class(cg, "caugi_graph")
-  expect_equal(nrow(cg$nodes), 6)
-  expect_equal(nrow(cg$edges), 6)
-  expect_true(all(c("from", "edge", "to") %in% names(cg$edges)))
-  expect_true(all(c("name") %in% names(cg$nodes)))
-  expect_equal(sort(cg$nodes$name), sort(LETTERS[1:6]))
-  expect_equal(
-    sort(cg$edges$edge),
-    sort(c("o->", "--o", "o-o", "-->", "<->", "---"))
-  )
-})
+# ──────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────── Length ────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 test_that("caugi graph length is correct", {
   cg <- caugi_graph(
@@ -50,6 +33,31 @@ test_that("caugi graph length is correct", {
   expect_equal(length(cg), 0)
 })
 
+# ──────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────── Initialization ────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("caugi graph generation works as expected", {
+  cg <- caugi_graph(
+    A %-->% B,
+    B %---% C,
+    C %<->% D,
+    D %--o% E,
+    E %o->% F,
+    F %o-o% A
+  )
+  expect_s3_class(cg, "caugi_graph")
+  expect_equal(nrow(cg$nodes), 6)
+  expect_equal(nrow(cg$edges), 6)
+  expect_true(all(c("from", "edge", "to") %in% names(cg$edges)))
+  expect_true(all(c("name") %in% names(cg$nodes)))
+  expect_equal(sort(cg$nodes$name), sort(LETTERS[1:6]))
+  expect_equal(
+    sort(cg$edges$edge),
+    sort(c("o->", "--o", "o-o", "-->", "<->", "---"))
+  )
+})
+
 test_that("empty caugi graph initialization works", {
   cg <- caugi_graph()
   expect_s3_class(cg, "caugi_graph")
@@ -68,6 +76,27 @@ test_that("building graph with invalid class results in error", {
     )
   )
 })
+
+test_that("building a graph with duplicates will deduplicate on initial call", {
+  cg <- caugi_graph(
+    A %-->% B,
+    A %-->% B,
+    B %---% C,
+    B %---% C,
+    class = "PDAG"
+  )
+
+  cg_equiv <- caugi_graph(
+    A %-->% B,
+    B %---% C,
+    class = "PDAG"
+  )
+  expect_equal(cg, cg_equiv)
+})
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────── Simple / non-simple ──────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 test_that("building graph with simple = FALSE needs class = Unknown", {
   expect_error(
@@ -92,6 +121,57 @@ test_that("building graph with simple = FALSE needs class = Unknown", {
       B %---% C,
       class = "Unknown",
       simple = FALSE
+    ),
+    "caugi_graph"
+  )
+})
+
+test_that("non-simple graphs allows self loops and parallel edges", {
+  expect_s3_class(
+    caugi_graph(
+      A %-->% A,
+      B %---% C,
+      class = "Unknown",
+      simple = FALSE
+    ),
+    "caugi_graph"
+  )
+  expect_s3_class(
+    caugi_graph(
+      A %-->% B,
+      A %<->% B,
+      class = "Unknown",
+      simple = FALSE
+    ),
+    "caugi_graph"
+  )
+
+  expect_s3_class(
+    caugi_graph(
+      A %-->% B,
+      A %o->% A,
+      class = "Unknown",
+      simple = FALSE
+    ),
+    "caugi_graph"
+  )
+})
+
+test_that("building graph with simple = TRUE disallows parallel edges", {
+  expect_error(
+    caugi_graph(
+      A %-->% B,
+      A %-->% B,
+      class = "Unknown",
+      simple = TRUE
+    )
+  )
+  expect_s3_class(
+    caugi_graph(
+      A %-->% B,
+      B %---% C,
+      class = "Unknown",
+      simple = TRUE
     ),
     "caugi_graph"
   )
