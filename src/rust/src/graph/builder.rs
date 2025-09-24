@@ -160,23 +160,20 @@ impl GraphBuilder {
         }
 
         let mut row_index = Vec::with_capacity(n + 1);
-        row_index.push(0u32);
-        for i in 0..n {
-            let next = row_index[i] + rows[i].len() as u32;
-            row_index.push(next);
-        }
+        row_index.push(0);
+        for row in &rows { row_index.push(row_index.last().unwrap() + row.len() as u32); }
 
         let nnz = *row_index.last().unwrap() as usize;
         let mut col = vec![0u32; nnz];
-        let mut ety = vec![0u8; nnz];
-        let mut side = vec![0u8; nnz];
+        let mut ety  = vec![0u8;  nnz];
+        let mut side = vec![0u8;  nnz];
 
-        for i in 0..n {
+        for (i, row) in rows.iter().enumerate() {
             let mut k = row_index[i] as usize;
-            for h in &rows[i] {
-                col[k] = h.nbr;
-                ety[k] = h.etype;
-                side[k] = h.side.as_u8();
+            for h in row {
+                col[k]  = h.nbr;
+                ety[k]  = h.etype;
+                side[k] = match h.side { Side::Tail => 0, Side::Head => 1 };
                 k += 1;
             }
         }
