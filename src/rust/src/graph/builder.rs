@@ -148,14 +148,10 @@ impl GraphBuilder {
     ) -> Result<CaugiGraph, String> {
         let n = self.n as usize;
 
-        for (i, row) in rows.iter_mut().enumerate() {
+        for row in &mut rows {
             row.sort_unstable(); // uses Ord on HalfEdge
-            if self.simple
-                && row
-                    .windows(2)
-                    .any(|w| w[0].nbr == w[1].nbr && w[0].etype == w[1].etype)
-            {
-                return Err(format!("parallel edge duplicate in row {}", i));
+            if self.simple && row.windows(2).any(|w| w[0].nbr == w[1].nbr && w[0].etype == w[1].etype) {
+                return Err(format!("parallel edge duplicate in row {:?}", row));
             }
         }
 
