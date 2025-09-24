@@ -129,3 +129,17 @@ test_that("reverse edge, <--, cannot create cycles", {
   register_caugi_edge("<--", "arrow", "tail", "directed", FALSE)
   expect_error(caugi_graph(A %-->% B, B %-->% C, A %<--% C, class = "DAG"))
 })
+
+test_that("new edge type, x-x, cannot create duplicate or parallel edges", {
+  reset_caugi_registry()
+  register_caugi_edge("x-x", "other", "other", "undirected", TRUE)
+
+  # duplicate edges
+  expect_error(caugi_graph(A %x-x% B, B %x-x% A, class = "Unknown"))
+
+  # self loop
+  expect_error(caugi_graph(A %x-x% A, class = "Unknown"))
+
+  # parallel edges
+  expect_error(caugi_graph(A %---% B, A %x-x% B, class = "Unknown"))
+})
