@@ -93,7 +93,8 @@ test_that("reset_caugi_registry clears ops and glyph map", {
   expect_true("%-o>%" %in% edge_ops_get())
   reset_caugi_registry()
   expect_false("%-o>%" %in% getFromNamespace(".edge_ops_get", "caugi")())
-  expect_null(getFromNamespace(".glyph_map_get", "caugi")()[["%-o>%"]])
+  m <- getFromNamespace(".glyph_map_get", "caugi")()
+  expect_false("%-o>%" %in% names(m))
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
