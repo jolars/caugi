@@ -13,7 +13,7 @@ test_that("local edge/glyph registries exist for tests", {
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
-# ─────────────────────────────── is functions ─────────────────────────────────
+# ────────────────────────────────── Checks ────────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
 test_that(".is_edge_call identifies edge calls", {
@@ -33,6 +33,16 @@ test_that(".is_node_expr validates allowed node expressions", {
   expect_true(.is_node_expr(quote(A + (B + C))))
   # Edge calls are not node expressions
   expect_false(.is_node_expr(quote(A %-->% B)))
+})
+
+test_that(".is_node_expr rejects unsupported calls", {
+  expect_false(.is_node_expr(quote(A:B)))
+  expect_false(.is_node_expr(quote(paste(A, B))))
+})
+
+test_that(".contains_edge handles parentheses and returns FALSE otherwise", {
+  expect_true(.contains_edge(quote((A %-->% B))))
+  expect_false(.contains_edge(quote(A + B)))
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -59,8 +69,36 @@ test_that(".glyph_of returns correct glyph", {
   expect_equal(.glyph_of(as.symbol("%<--%")), "<--")
 })
 
+test_that(".glyph_of returns NULL for unknown operator", {
+  expect_null(.glyph_of(TRUE))
+  expect_null(.glyph_of(NULL))
+  expect_null(.glyph_of(as.symbol("A")))
+  expect_null(.glyph_of(as.symbol("%unknown%")))
+})
+
+test_that(".glyph_of handles NULL and unnamed glyph maps in case everything goes south", {
+  old <- get0("glyph_map", .caugi_env, ifnotfound = quote(MISSING))
+  on.exit(
+    {
+      if (identical(old, quote(MISSING))) {
+        rm("glyph_map", envir = .caugi_env)
+      } else {
+        assign("glyph_map", old, envir = .caugi_env)
+      }
+    },
+    add = TRUE
+  )
+
+  assign("glyph_map", NULL, envir = .caugi_env)
+  expect_null(.glyph_of(as.symbol("%-->%")))
+
+  assign("glyph_map", c("x", "y"), envir = .caugi_env) # no names
+  expect_null(.glyph_of(as.symbol("%-->%")))
+})
+
+
 # ──────────────────────────────────────────────────────────────────────────────
-# ────────────────────── expand, split, parse, collect ─────────────────────────
+# ────────────────────────── Expand, split, collect ────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
 test_that(".expand_nodes expands symbols, strings, numerics, +, c(), and ()", {
@@ -91,6 +129,28 @@ test_that(".split_plus and .combine_plus are consistent", {
   recombined <- .combine_plus(list(quote(A), quote(B), quote(C), quote(D)))
   expect_equal(deparse1(recombined), "A + B + C + D")
 })
+
+test_that(".combine_plus covers len 0 and len 1", {
+  expect_null(.combine_plus(list()))
+  one <- .combine_plus(list(quote(A)))
+  expect_identical(deparse1(one), "A")
+})
+
+test_that(".collect_edges_nodes returns empty tibble when no units", {
+  out <- .collect_edges_nodes(list())
+  expect_s3_class(out$edges, "tbl_df")
+  expect_equal(nrow(out$edges), 0)
+  expect_named(out$edges, c("from", "to", "edge"))
+  expect_length(out$declared, 0)
+})
+
+test_that(".collect_edges_nodes errors on invalid top-level expression", {
+  expect_error(.collect_edges_nodes(list(quote(A:B))), "Expected an edge")
+})
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────────── Parse edge ──────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 test_that(".parse_edge_arg extracts context correctly", {
   # Build A + (B %-->% C) + D using calls to avoid precedence concerns
@@ -147,3 +207,50 @@ test_that(".collect_edges_nodes gathers edges and declared nodes", {
   expect_true(any(df$from == "B" & df$to == "D"))
   expect_true(all(df$edge == "-->"))
 })
+
+
+test_that(".parse_edge_arg errors when no edge present", {
+  expect_error(.parse_edge_arg(quote(A + B + C)), "Expected an edge expression")
+})
+
+test_that(".parse_edge_arg handles multiple edge units with context", {
+  reset_caugi_registry()
+  register_caugi_edge(
+    glyph = "<--",
+    tail_mark = "arrow",
+    head_mark = "tail",
+    class = "directed",
+    symmetric = FALSE,
+    flags = "TRAVERSABLE_WHEN_CONDITIONED"
+  )
+  # Build: X + (A %-->% B) + Y + (C %<--% D) + Z
+  e1 <- call("%-->%", quote(A), quote(B))
+  e2 <- call("%<--%", quote(C), quote(D))
+  expr <- call(
+    "+",
+    quote(X),
+    call(
+      "+",
+      call("+", e1, quote(Y)),
+      call("+", e2, quote(Z))
+    )
+  )
+  units <- .parse_edge_arg(expr)
+  expect_length(units, 2)
+
+  # First unit context: LHS X + A ; RHS B + Y
+  u1 <- units[[1]]
+  expect_equal(.expand_nodes(u1$lhs), c("X", "A"))
+  expect_equal(.expand_nodes(u1$rhs), c("B", "Y"))
+  expect_equal(u1$glyph, "-->")
+
+  # Second unit context: LHS Y + C ; RHS D + Z  (X consumed before first edge)
+  u2 <- units[[2]]
+  expect_equal(.expand_nodes(u2$lhs), c("Y", "C"))
+  expect_equal(.expand_nodes(u2$rhs), c("D", "Z"))
+  expect_equal(u2$glyph, "<--")
+})
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────── Checks ────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
