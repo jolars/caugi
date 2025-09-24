@@ -35,25 +35,29 @@
 #'
 #' @keywords internal
 .expand_targets <- function(expr) {
-  # Handle symbols/names
+  # unwrap parentheses: ( ... )
+  if (is.call(expr) && identical(expr[[1L]], as.name("("))) {
+    return(.expand_targets(expr[[2L]]))
+  }
   if (is.symbol(expr)) {
     return(deparse1(expr))
   }
-  # Handle calls: `A %-->% B + C + D`
   if (is.call(expr) && identical(expr[[1L]], as.name("+"))) {
     return(c(.expand_targets(expr[[2L]]), .expand_targets(expr[[3L]])))
   }
-  # Handle c(B, C, D)
   if (is.call(expr) && identical(expr[[1L]], as.name("c"))) {
     args <- as.list(expr)[-1L]
     return(unlist(lapply(args, .expand_targets), use.names = FALSE))
   }
-  # Character scalar literal: "B"
   if (is.character(expr) && length(expr) == 1L) {
     return(expr)
   }
+  if (is.numeric(expr) && length(expr) == 1L) {
+    return(as.character(expr))
+  }
   stop("Unsupported right-hand side in edge operator: ", deparse(expr), call. = FALSE)
 }
+
 
 #' @title Infix operators for edge specifications
 #'
