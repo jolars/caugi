@@ -161,7 +161,7 @@ test_that("building graph with simple = TRUE disallows parallel edges", {
   expect_error(
     caugi_graph(
       A %-->% B,
-      A %-->% B,
+      A %---% B,
       class = "Unknown",
       simple = TRUE
     )
