@@ -30,7 +30,7 @@
 #' if calling `build(cg)`. __Note__: Even if `build = TRUE`, if no edges or
 #' nodes are provided, the graph will not be built and the pointer will be
 #' `NULL`.
-#' @param class Character; one of `"DAG"`, `"PDAG"`, or `"NONE"`.
+#' @param class Character; one of `"Unknown"`, `"DAG"`, or `"PDAG"`.
 #'
 #' @returns A `caugi_graph` object containing the nodes, edges, and a pointer
 #' to the underlying Rust graph structure.

@@ -28,7 +28,7 @@ if calling \code{build(cg)}. \strong{Note}: Even if \code{build = TRUE}, if no e
 nodes are provided, the graph will not be built and the pointer will be
 \code{NULL}.}
 
-\item{class}{Character; one of \code{"DAG"}, \code{"PDAG"}, or \code{"NONE"}.}
+\item{class}{Character; one of \code{"Unknown"}, \code{"DAG"}, or \code{"PDAG"}.}
 }
 \value{
 A \code{caugi_graph} object containing the nodes, edges, and a pointer
