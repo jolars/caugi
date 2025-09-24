@@ -4,8 +4,8 @@
 use crate::edges::EdgeClass;
 use crate::graph::CaugiGraph;
 
-/// Returns true iff the directed part (→) of the graph is acyclic.
-/// Ignores undirected/partial/bidirected edges, so it works for DAG, PDAG, CPDAG.
+/// Returns true iff the directed part of the graph is acyclic.
+/// Ignores undirected/partial/bidirected edges
 pub fn directed_part_is_acyclic(core: &CaugiGraph) -> bool {
     let n = core.n() as usize;
     let mut indeg = vec![0usize; n];
@@ -42,3 +42,24 @@ pub fn directed_part_is_acyclic(core: &CaugiGraph) -> bool {
     }
     seen == n
 }
+
+#[cfg(test)]
+mod tests {
+    use super::directed_part_is_acyclic;
+    use crate::edges::EdgeRegistry;
+    use crate::graph::builder::GraphBuilder;
+
+    #[test]
+    fn empty_stack_when_every_node_has_incoming_directed() {
+        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
+        let code = reg.code_of("-->").unwrap();
+
+        let mut b = GraphBuilder::new(2, false, &reg);
+        b.add_edge(0, 1, code).unwrap();
+        b.add_edge(1, 0, code).unwrap();
+        let g = b.finalize().unwrap();
+
+        assert!(!directed_part_is_acyclic(&g));
+    }
+}
+
