@@ -12,6 +12,8 @@ test_that("caugi_registry initializes once and loads builtins", {
   r2 <- caugi_registry()
   expect_identical(r1, r2)
   expect_equal(edge_registry_len(r1), 6L)
+
+  reset_caugi_registry()
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -22,6 +24,8 @@ test_that("register_caugi_edge validates class/symmetric", {
   reset_caugi_registry()
   expect_error(register_caugi_edge("-->", "tail", "arrow", "directed", TRUE))
   expect_error(register_caugi_edge("---", "tail", "tail", "undirected", FALSE))
+
+  reset_caugi_registry()
 })
 
 test_that("register_caugi_edge registers operator and glyph map", {
@@ -35,6 +39,8 @@ test_that("register_caugi_edge registers operator and glyph map", {
   expect_true(op %in% edge_ops_get())
   expect_equal(glyph_map_get()[[op]], "--<")
   expect_gt(edge_registry_code_of(reg, "--<"), 0L)
+
+  reset_caugi_registry()
 })
 
 test_that("duplicate glyph triggers operator registration error on second call", {
@@ -44,6 +50,8 @@ test_that("duplicate glyph triggers operator registration error on second call",
     register_caugi_edge("o-<", "circle", "arrow", "directed", FALSE),
     "already registered"
   )
+
+  reset_caugi_registry()
 })
 
 test_that("flags are accepted and mapped", {
@@ -52,6 +60,8 @@ test_that("flags are accepted and mapped", {
     "--^", "tail", "arrow", "directed", FALSE,
     c("TRAVERSABLE", "LATENT_CONFOUNDING")
   ))
+
+  reset_caugi_registry()
 })
 
 
@@ -69,6 +79,8 @@ test_that("glyph validation", {
     register_caugi_edge(c("-->", "<--"), "tail", "arrow", "directed", FALSE),
     "single string"
   )
+
+  reset_caugi_registry()
 })
 
 
@@ -83,6 +95,8 @@ test_that("seal_caugi_registry prevents further registrations", {
     register_caugi_edge("x-x", "other", "other", "undirected", TRUE),
     "sealed|Sealed"
   )
+
+  reset_caugi_registry()
 })
 
 test_that("reset_caugi_registry clears ops and glyph map", {
@@ -95,6 +109,8 @@ test_that("reset_caugi_registry clears ops and glyph map", {
   expect_false("%-o>%" %in% getFromNamespace(".edge_ops_get", "caugi")())
   m <- getFromNamespace(".glyph_map_get", "caugi")()
   expect_false("%-o>%" %in% names(m))
+
+  reset_caugi_registry()
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -107,6 +123,8 @@ test_that("reset_caugi_registry does not allow overwriting builtin edges", {
     register_caugi_edge("-->", "tail", "arrow", "undirected", TRUE),
     "already registered"
   )
+
+  reset_caugi_registry()
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -123,12 +141,15 @@ test_that("reverse edge, <--, behaves correctly, when initalized in a cg", {
   expect_identical(children_of_ptr(cg$ptr, 1L), integer())
   expect_identical(parents_of_ptr(cg$ptr, 2L), integer())
   expect_identical(children_of_ptr(cg$ptr, 2L), 1L)
+
+  reset_caugi_registry()
 })
 
 test_that("reverse edge, <--, cannot create cycles", {
   reset_caugi_registry()
   register_caugi_edge("<--", "arrow", "tail", "directed", FALSE)
   expect_error(caugi_graph(A %-->% B, B %-->% C, A %<--% C, class = "DAG"))
+  reset_caugi_registry()
 })
 
 test_that("new edge type, x-x, cannot create duplicate or parallel edges", {
@@ -143,4 +164,6 @@ test_that("new edge type, x-x, cannot create duplicate or parallel edges", {
 
   # parallel edges
   expect_error(caugi_graph(A %---% B, A %x-x% B, class = "Unknown"))
+
+  reset_caugi_registry()
 })
