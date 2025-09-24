@@ -1,3 +1,11 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────── Edge operators tests ─────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────── Expand targets ────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
 test_that(".expand_targets handles symbols, +, c(), and character", {
   expect_equal(.expand_targets(quote(B)), "B")
   expect_equal(.expand_targets(quote(B + C + D)), c("B", "C", "D"))
@@ -5,6 +13,39 @@ test_that(".expand_targets handles symbols, +, c(), and character", {
   expect_equal(.expand_targets(quote(c(B + C, D))), c("B", "C", "D"))
   expect_equal(.expand_targets(1L), "1")
 })
+
+test_that(".expand_targets errors on unsupported RHS forms", {
+  expect_error(
+    .edge_spec(quote(A), quote(paste(B, C))),
+    "Unsupported right-hand side"
+  )
+  expect_error(
+    .edge_spec(quote(A), quote(1:3)),
+    "Unsupported right-hand side"
+  )
+  expect_error(
+    .edge_spec(quote(A), quote({
+      B
+    })),
+    "Unsupported right-hand side"
+  )
+  expect_error(
+    .edge_spec(quote(A), quote(B * C)),
+    "Unsupported right-hand side"
+  )
+  expect_error(
+    .edge_spec(quote(A), quote(TRUE)),
+    "Unsupported right-hand side"
+  )
+  expect_error(
+    .edge_spec(quote(A), quote(NULL)),
+    "Unsupported right-hand side"
+  )
+})
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────── Edge builder ─────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 test_that(".edge_spec builds a tibble with class 'caugi_edge_spec'", {
   sp <- .edge_spec(quote(A), quote(c(B, C)), "-->")
@@ -14,6 +55,10 @@ test_that(".edge_spec builds a tibble with class 'caugi_edge_spec'", {
   expect_equal(sp$to, c("B", "C"))
   expect_equal(sp$edge, c("-->", "-->"))
 })
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────── Infix operators ────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 test_that("infix operators emit correct glyphs and rows", {
   s1 <- A %-->% (B + C)
