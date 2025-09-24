@@ -128,13 +128,14 @@ impl GraphBuilder {
     }
 
     pub fn finalize(mut self) -> Result<CaugiGraph, String> {
-        let rows = std::mem::take(&mut self.rows);
-        let seen = std::mem::take(&mut self.seen);
-        let _pair = std::mem::take(&mut self.pair_seen);
-        self.build_from_rows(rows, seen)
+        self.take_and_build()
     }
 
     pub fn finalize_in_place(&mut self) -> Result<CaugiGraph, String> {
+        self.take_and_build()
+    }
+
+    fn take_and_build(&mut self) -> Result<CaugiGraph, String> {
         let rows = std::mem::take(&mut self.rows);
         let seen = std::mem::take(&mut self.seen);
         let _pair = std::mem::take(&mut self.pair_seen);
