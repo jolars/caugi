@@ -4,13 +4,10 @@
 \alias{.register_edge}
 \title{Register a new edge operator}
 \usage{
-.register_edge(glyph, where = .GlobalEnv)
+.register_edge(glyph)
 }
 \arguments{
 \item{glyph}{A string representing the edge glyph (e.g., \code{"-->"}, \code{"<->"}).}
-
-\item{where}{An environment to register the operator in
-(default: \code{.GlobalEnv}).}
 }
 \value{
 The operator name (e.g., \code{"\%-->\%"}), invisibly.

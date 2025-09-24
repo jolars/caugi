@@ -10,7 +10,7 @@ register_caugi_edge(
   head_mark,
   class,
   symmetric = FALSE,
-  traversable_when_conditioned = TRUE
+  flags = c()
 )
 }
 \arguments{
@@ -24,7 +24,11 @@ register_caugi_edge(
 
 \item{symmetric}{Logical.}
 
-\item{traversable_when_conditioned}{Logical.}
+\item{flags}{A character vector of flags. Currently supported:
+\itemize{
+\item "TRAVERSABLE_WHEN_CONDITIONED"
+\item "LATENT_CONFOUNDING"
+}}
 }
 \value{
 The integer code assigned to the registered edge type.
