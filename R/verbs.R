@@ -4,64 +4,57 @@
 
 #' @title Build the graph now
 #' @export
-build <- function(cg) UseMethod("build")
+build <- S7::new_generic("build", "cg")
 
 #' @title Build the graph now
 #'
 #' @description If a `caugi_graph` has been modified (nodes or edges added or
-#' removed), it is marked as _not built_, i.e `cg$built = FALSE`.
+#' removed), it is marked as _not built_, i.e `cg@built = FALSE`.
 #' This function builds the graph using the Rust backend and updates the
 #' internal pointer to the graph. If the graph is already built, it is returned.
 #'
-#' @param cg A `caugi_graph` object with `cg$built = TRUE`.
+#' @param cg A `caugi_graph` object with `cg@built = TRUE`.
 #'
+#' @name build
 #' @export
-build.caugi_graph <- function(cg) {
-  if (cg$built) {
+S7::method(build, caugi_graph) <- function(cg) {
+  s <- cg@`.state`
+  if (isTRUE(s$built)) {
     return(cg)
   }
 
-  built <- FALSE
-  n <- nrow(cg$nodes)
-  id <- setNames(seq_len(n) - 1L, cg$nodes$name)
+  n <- nrow(s$nodes)
+  id <- setNames(seq_len(n) - 1L, s$nodes$name)
 
   reg <- caugi_registry()
-  b <- graph_builder_new(reg, n = n, simple = cg$simple)
+  b <- graph_builder_new(reg, n = n, simple = cg@simple)
 
-  if (nrow(cg$edges)) {
+  if (nrow(s$edges)) {
     codes <- vapply(
-      cg$edges$edge,
-      function(g) edge_registry_code_of(reg, g),
+      s$edges$edge, function(g) edge_registry_code_of(reg, g),
       integer(1L)
     )
     graph_builder_add_edges(
       b,
-      as.integer(unname(id[cg$edges$from])),
-      as.integer(unname(id[cg$edges$to])),
+      as.integer(unname(id[s$edges$from])),
+      as.integer(unname(id[s$edges$to])),
       as.integer(codes)
     )
   }
 
-  gptr <- graph_builder_build_view(b, cg$class)
-  built <- TRUE
+  p <- graph_builder_build_view(b, s$class)
 
-  edges <- tibble::tibble(
-    from = cg$edges$from,
-    edge = cg$edges$edge,
-    to = cg$edges$to
-  ) |> dplyr::arrange(from, to, edge)
+  # normalize edge order
+  s$edges <- tibble::tibble(
+    from = s$edges$from,
+    edge = s$edges$edge,
+    to   = s$edges$to
+  ) |>
+    dplyr::arrange(from, to, edge)
 
-  structure(
-    list(
-      nodes = cg$nodes,
-      edges = edges,
-      ptr = gptr,
-      simple = cg$simple,
-      built = built,
-      class = class
-    ),
-    class = "caugi_graph"
-  )
+  s$ptr <- p
+  s$built <- TRUE
+  cg
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -208,7 +201,7 @@ subgraph <- function(cg, ...) {
   if (!nrow(nodes)) {
     stop("No nodes specified for subgraph.", call. = FALSE)
   }
-  drop <- tibble::tibble(name = setdiff(cg$nodes$name, nodes$name))
+  drop <- tibble::tibble(name = setdiff(cg@nodes$name, nodes$name))
   if (nrow(drop)) {
     cg <- .update_caugi_graph(cg, nodes = drop, action = "remove")
   }
@@ -305,7 +298,10 @@ subgraph <- function(cg, ...) {
 #'
 #' @keywords internal
 .mark_not_built <- function(cg) {
-  cg$built <- FALSE
+  # Temporarily disable S7 validation (S7 checks this attr)
+  attr(cg, ".should_validate") <- FALSE
+  on.exit(attr(cg, ".should_validate") <- NULL)
+  cg@`.state`$built <- FALSE
   cg
 }
 
@@ -320,39 +316,35 @@ subgraph <- function(cg, ...) {
 #'
 #' @returns The updated `caugi_graph` object.
 #' @keywords internal
-.update_caugi_graph <- function(cg, nodes = NULL, edges = NULL, action = c("add", "remove")) {
+.update_caugi_graph <- function(cg, nodes = NULL, edges = NULL,
+                                action = c("add", "remove")) {
   action <- match.arg(action)
+  s <- cg@`.state`
 
-  if (action == "add") {
+  if (identical(action, "add")) {
     if (!is.null(nodes)) {
-      cg$nodes <- tibble::tibble(name = unique(c(cg$nodes$name, nodes$name)))
+      s$nodes <- tibble::tibble(name = unique(c(s$nodes$name, nodes$name)))
     }
     if (!is.null(edges)) {
-      cg$nodes <- tibble::tibble(name = unique(c(
-        cg$nodes$name,
-        edges$from,
-        edges$to
-      )))
-      cg$edges <- dplyr::distinct(dplyr::bind_rows(cg$edges, edges))
+      s$nodes <- tibble::tibble(name = unique(c(s$nodes$name, edges$from, edges$to)))
+      s$edges <- dplyr::distinct(dplyr::bind_rows(s$edges, edges))
     }
   } else {
     if (!is.null(edges)) {
       keys <- intersect(c("from", "edge", "to"), names(edges))
-      if (!all(c("from", "to") %in% keys)) {
-        stop("edges must include at least `from` and `to`.")
-      }
+      if (!all(c("from", "to") %in% keys)) stop("edges must include at least `from` and `to`.", call. = FALSE)
       edges_key <- dplyr::select(edges, dplyr::all_of(keys))
-      cg$edges <- dplyr::anti_join(cg$edges, edges_key, by = keys)
+      s$edges <- dplyr::anti_join(s$edges, edges_key, by = keys)
     }
     if (!is.null(nodes)) {
       drop <- nodes$name
-      cg$nodes <- tibble::tibble(name = setdiff(cg$nodes$name, drop))
-      if (nrow(cg$edges)) {
-        cg$edges <- dplyr::filter(cg$edges, !(from %in% drop | to %in% drop))
+      s$nodes <- tibble::tibble(name = setdiff(s$nodes$name, drop))
+      if (nrow(s$edges)) {
+        s$edges <- dplyr::filter(s$edges, !(from %in% drop | to %in% drop))
       }
     }
-    cg$nodes <- tibble::tibble(name = unique(cg$nodes$name))
-    cg$edges <- dplyr::distinct(cg$edges)
+    s$nodes <- tibble::tibble(name = unique(s$nodes$name))
+    s$edges <- dplyr::distinct(s$edges)
   }
   .mark_not_built(cg)
 }
