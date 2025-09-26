@@ -172,6 +172,10 @@ mod tests {
         u.sort_unstable();
         assert_eq!(u, vec![2]);
         assert_eq!(g.n(), 3);
+
+        // get core
+        let core = g.core_ref();
+        assert_eq!(core.n(), 3);
     }
 
     #[test]

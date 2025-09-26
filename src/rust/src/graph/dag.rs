@@ -144,6 +144,10 @@ mod tests {
         assert!(dag.children_of(1).is_empty());
         assert_eq!(dag.children_of(3), vec![0]);
         assert_eq!(dag.n(), 4);
+
+        // get core
+        let core = dag.core_ref();
+        assert_eq!(core.n(), 4);
     }
 
     #[test]

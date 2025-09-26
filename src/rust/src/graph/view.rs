@@ -127,6 +127,8 @@ mod tests {
         assert_eq!(v_dag.children_of(0).unwrap(), &[1, 2]);
         let e = v_dag.undirected_of(0).unwrap_err();
         assert_eq!(e, "undirected_of not defined for Dag");
+        let v_dag_core = v_dag.core();
+        assert_eq!(v_dag_core.n(), 3);
 
         // PDAG core: 0->1, 1---2
         let mut bp = GraphBuilder::new_with_registry(3, true, &r);
@@ -139,6 +141,8 @@ mod tests {
         assert_eq!(v_pdag.parents_of(1).unwrap(), &[0]);
         assert_eq!(v_pdag.children_of(0).unwrap(), &[1]);
         assert_eq!(v_pdag.undirected_of(1).unwrap(), &[2]);
+        let v_pdag_core = v_pdag.core();
+        assert_eq!(v_pdag_core.n(), 3);
 
         // Raw view uses UNKNOWN class fallbacks
         let v_raw = GraphView::Raw(pdag_core);
@@ -149,6 +153,8 @@ mod tests {
         assert_eq!(e1, "parents_of not implemented for UNKNOWN class");
         assert_eq!(e2, "children_of not implemented for UNKNOWN class");
         assert_eq!(e3, "undirected_of not implemented for UNKNOWN class");
+        let v_raw_core = v_raw.core();
+        assert_eq!(v_raw_core.n(), 3);
     }
    
     #[test]
