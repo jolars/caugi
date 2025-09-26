@@ -128,7 +128,13 @@ caugi_graph <- S7::new_class(
           call. = FALSE
         )
       }
-    )
+    ),
+    # the fingerprint is used to detect changes in the graph structure
+    # if the graph state is modified in place (not recommended), build()
+    # should still build a new graph in the Rust backend. The fingerprint
+    # is a hash of the state (excluding the pointer). If the fingerprint
+    # changes, build() will know to rebuild the graph.
+    fingerprint = S7::new_property(S7::class_character)
   ),
   validator = function(self) {
     s <- self@`.state`
@@ -225,15 +231,24 @@ caugi_graph <- S7::new_class(
     ) |>
       dplyr::arrange(from, to, edge)
 
+    state <- .cg_state(
+      nodes = nodes,
+      edges = edges,
+      ptr = gptr,
+      built = built,
+      simple = simple,
+      class = class
+    )
     S7::new_object(
       caugi_graph,
-      `.state` = .cg_state(
-        nodes  = nodes,
-        edges  = edges,
-        ptr    = gptr,
-        built  = built,
-        simple = simple,
-        class  = class
+      `.state` = state,
+      fingerprint = digest::digest(
+        list(
+          nodes = nodes,
+          edges = edges,
+          simple = simple,
+          class = class
+        )
       )
     )
   }

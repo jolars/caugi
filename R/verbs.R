@@ -18,11 +18,20 @@ build <- S7::new_generic("build", "cg")
 #' @name build
 #' @export
 S7::method(build, caugi_graph) <- function(cg) {
-  s <- cg@`.state`
-  if (isTRUE(s$built)) {
+  current_fingerprint <- digest::digest(list(
+    nodes = cg@nodes,
+    edges = cg@edges,
+    class = cg@graph_class,
+    simple = cg@simple
+  ))
+
+  mutated <- !identical(cg@fingerprint, current_fingerprint)
+
+  if (cg@built && !mutated) {
     return(cg)
   }
 
+  s <- cg@`.state`
   n <- nrow(s$nodes)
   id <- setNames(seq_len(n) - 1L, s$nodes$name)
 
@@ -54,6 +63,13 @@ S7::method(build, caugi_graph) <- function(cg) {
 
   s$ptr <- p
   s$built <- TRUE
+
+  cg@fingerprint <- digest::digest(list(
+    nodes = s$nodes,
+    edges = s$edges,
+    class = s$class,
+    simple = s$simple
+  ))
   cg
 }
 
