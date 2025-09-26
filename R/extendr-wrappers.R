@@ -42,7 +42,7 @@ is_simple_ptr <- function(g) .Call(wrap__is_simple_ptr, g)
 
 graph_class_ptr <- function(g) .Call(wrap__graph_class_ptr, g)
 
-is_acyclic_ptr <- function(core) .Call(wrap__is_acyclic_ptr, core)
+is_acyclic_ptr <- function(g) .Call(wrap__is_acyclic_ptr, g)
 
 
 # nolint end
