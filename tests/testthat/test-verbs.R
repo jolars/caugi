@@ -1,3 +1,11 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────── Verbs tests ──────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────── Building ───────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
 test_that("build() generic dispatches", {
   expect_error(build(1), "Can't find method")
 })
@@ -17,6 +25,27 @@ test_that("build.caugi_graph builds with and without edges", {
 
   expect_identical(build(cg1), cg1) # identical if built
 })
+
+test_that("build() errors when breaking simple graph assumptions", {
+  cg <- caugi_graph()
+  cg <- add_edges(cg,
+    from = c("A", "A"),
+    edge = c("o->", "-->"),
+    to = c("B", "B")
+  )
+  expect_error(build(cg), "parallel")
+  cg <- caugi_graph()
+  cg <- add_edges(cg,
+    from = c("A", "A"),
+    edge = c("-->", "<->"),
+    to = c("B", "A")
+  )
+  expect_error(build(cg), "self-loop")
+})
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────── Edges ─────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 test_that("add_edges validates inputs and updates graph", {
   cg <- caugi_graph()
@@ -87,23 +116,6 @@ test_that("add_edges expression path works", {
   )
 })
 
-test_that("build() errors when breaking simple graph assumptions", {
-  cg <- caugi_graph()
-  cg <- add_edges(cg,
-    from = c("A", "A"),
-    edge = c("o->", "-->"),
-    to = c("B", "B")
-  )
-  expect_error(build(cg), "parallel")
-  cg <- caugi_graph()
-  cg <- add_edges(cg,
-    from = c("A", "A"),
-    edge = c("-->", "<->"),
-    to = c("B", "A")
-  )
-  expect_error(build(cg), "self-loop")
-})
-
 test_that("add_edges expression path (DSL) works (also some + notation)", {
   cg <- caugi_graph()
   cg <- add_nodes(cg, A + B)
@@ -166,6 +178,10 @@ test_that("set_edges returns cg if nothing given", {
   expect_equal(cg, cg2)
 })
 
+# ──────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────── Nodes ─────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
 test_that("add_nodes, remove_nodes cover vector and expr paths", {
   cg <- caugi_graph()
   expect_identical(add_nodes(cg), cg)
@@ -188,6 +204,10 @@ test_that("add_nodes, remove_nodes cover vector and expr paths", {
   expect_equal(cg5, cg6) # no-op if no nodes given
 })
 
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────── Subgraph ───────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
 test_that("subgraph selects nodes and errors with none", {
   cg <- caugi_graph()
   cg <- add_nodes(cg, name = c("A", "B", "C"))
@@ -202,6 +222,10 @@ test_that("subgraph selects nodes and errors with none", {
   expect_setequal(sg@nodes$name, c("A", "B"))
   expect_equal(sg@edges, tibble::tibble(from = "A", edge = "-->", to = "B"))
 })
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────── Internal getters ───────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 test_that(".get_nodes_tibble branches", {
   expect_equal(
@@ -264,6 +288,10 @@ test_that(".get_edges_tibble works with empty input", {
   expect_equal(nrow(res), 0L)
 })
 
+# ──────────────────────────────────────────────────────────────────────────────
+# ────────────────────────── Internal build marker ─────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
 test_that(".mark_not_built flips flag", {
   cg <- caugi_graph()
   cg <- add_nodes(cg, name = "A")
@@ -271,6 +299,10 @@ test_that(".mark_not_built flips flag", {
   out <- caugi:::.mark_not_built(cg)
   expect_false(out@built)
 })
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────── Internal updater ───────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 test_that(".update_caugi_graph add/remove paths and validations", {
   cg <- caugi_graph()
