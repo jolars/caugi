@@ -210,8 +210,9 @@ fn undirected_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
 }
 
 #[extendr]
-fn is_acyclic_ptr(core: ExternalPtr<CaugiGraph>) -> bool {
-    crate::graph::alg::directed_part_is_acyclic(core.as_ref())
+fn is_acyclic_ptr(g: ExternalPtr<GraphView>) -> bool {
+    let core = g.as_ref().core();
+    crate::graph::alg::directed_part_is_acyclic(core)
 }
 
 #[extendr]
