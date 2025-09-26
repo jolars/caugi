@@ -262,7 +262,7 @@ cobertura_to_covr <- function(r_xml,
     }
   }
 
-  pkg_name <- basename(norm(root))
+  pkg_name <- basename(norm(pkg))
   structure(out,
     class = c("coverage", "list"),
     package = list(package = pkg_name, path = root_n), root = root_n
