@@ -27,6 +27,16 @@ impl FromStr for GraphKind {
     }
 }
 
+impl GraphView {
+    pub fn core(&self) -> &CaugiGraph {
+        match self {
+            GraphView::Dag(d) => d.core_ref(),
+            GraphView::Pdag(p) => p.core_ref(),
+            GraphView::Raw(c) => c,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum GraphView {
     Dag(Arc<Dag>),

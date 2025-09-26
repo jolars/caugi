@@ -214,6 +214,17 @@ fn is_acyclic_ptr(core: ExternalPtr<CaugiGraph>) -> bool {
     crate::graph::alg::directed_part_is_acyclic(core.as_ref())
 }
 
+#[extendr]
+fn is_simple_ptr(g: ExternalPtr<GraphView>) -> bool {
+    g.as_ref().core().simple
+}
+
+#[extendr]
+fn graph_class_ptr(g: ExternalPtr<GraphView>) -> String {
+    use graph::view::GraphView::*;
+    match g.as_ref() { Dag(_) => "DAG", Pdag(_) => "PDAG", Raw(_) => "UNKNOWN" }.to_string()
+}
+
 extendr_module! {
     mod caugi;
     // registry
@@ -237,6 +248,8 @@ extendr_module! {
     fn parents_of_ptr;
     fn children_of_ptr;
     fn undirected_of_ptr;
+    fn is_simple_ptr;
+    fn graph_class_ptr;
 
     // acyclicity test
     fn is_acyclic_ptr;

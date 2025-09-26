@@ -176,7 +176,7 @@ impl GraphBuilder {
         }
 
         let snap = RegistrySnapshot::from_specs(self.specs.clone(), 1);
-        CaugiGraph::from_csr(row_index, col, ety, side, snap)
+        CaugiGraph::from_csr(row_index, col, ety, side, self.simple, snap)
     }
 }
 

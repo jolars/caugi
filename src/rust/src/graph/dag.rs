@@ -116,6 +116,8 @@ impl Dag {
         let e = self.node_edge_ranges[i as usize + 1];
         &self.neighbourhoods[cstart..e]
     }
+
+     pub fn core_ref(&self) -> &CaugiGraph { &self.core }
 }
 
 #[cfg(test)]

@@ -146,6 +146,7 @@ impl Pdag {
         let (_, pm, um, _) = self.bounds(i);
         &self.neighbourhoods[pm..um]
     }
+     pub fn core_ref(&self) -> &CaugiGraph { &self.core }
 }
 
 #[cfg(test)]
