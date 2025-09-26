@@ -37,36 +37,36 @@ test_that("queries work for DAGs and PDAGs", {
   # DAG EXAMPLE
   cg <- caugi_graph(A %-->% B, class = "DAG")
 
-  expect_identical(parents_of_ptr(cg$ptr, 0L), integer())
-  expect_identical(children_of_ptr(cg$ptr, 0L), 1L)
-  expect_identical(parents_of_ptr(cg$ptr, 1L), 0L)
-  expect_identical(children_of_ptr(cg$ptr, 1L), integer())
+  expect_identical(parents_of_ptr(cg@ptr, 0L), integer())
+  expect_identical(children_of_ptr(cg@ptr, 0L), 1L)
+  expect_identical(parents_of_ptr(cg@ptr, 1L), 0L)
+  expect_identical(children_of_ptr(cg@ptr, 1L), integer())
 
   cg <- add_edges(cg, B %-->% C)
   cg <- build(cg)
 
-  expect_identical(parents_of_ptr(cg$ptr, 0L), integer())
-  expect_identical(children_of_ptr(cg$ptr, 0L), 1L)
-  expect_identical(parents_of_ptr(cg$ptr, 1L), 0L)
-  expect_identical(children_of_ptr(cg$ptr, 1L), 2L)
-  expect_identical(parents_of_ptr(cg$ptr, 2L), 1L)
-  expect_identical(children_of_ptr(cg$ptr, 2L), integer())
+  expect_identical(parents_of_ptr(cg@ptr, 0L), integer())
+  expect_identical(children_of_ptr(cg@ptr, 0L), 1L)
+  expect_identical(parents_of_ptr(cg@ptr, 1L), 0L)
+  expect_identical(children_of_ptr(cg@ptr, 1L), 2L)
+  expect_identical(parents_of_ptr(cg@ptr, 2L), 1L)
+  expect_identical(children_of_ptr(cg@ptr, 2L), integer())
 
-  expect_error(undirected_of_ptr(cg$ptr, 0L))
+  expect_error(undirected_of_ptr(cg@ptr, 0L))
 
   # PDAG EXAMPLE
   cg <- caugi_graph(A %-->% B, class = "PDAG")
-  expect_identical(parents_of_ptr(cg$ptr, 0L), integer())
-  expect_identical(children_of_ptr(cg$ptr, 0L), 1L)
-  expect_identical(parents_of_ptr(cg$ptr, 1L), 0L)
-  expect_identical(children_of_ptr(cg$ptr, 1L), integer())
+  expect_identical(parents_of_ptr(cg@ptr, 0L), integer())
+  expect_identical(children_of_ptr(cg@ptr, 0L), 1L)
+  expect_identical(parents_of_ptr(cg@ptr, 1L), 0L)
+  expect_identical(children_of_ptr(cg@ptr, 1L), integer())
 
   cg <- add_edges(cg, B %---% C)
   cg <- build(cg)
 
-  expect_identical(parents_of_ptr(cg$ptr, 0L), integer())
-  expect_identical(children_of_ptr(cg$ptr, 0L), 1L)
-  expect_identical(undirected_of_ptr(cg$ptr, 1L), 2L)
+  expect_identical(parents_of_ptr(cg@ptr, 0L), integer())
+  expect_identical(children_of_ptr(cg@ptr, 0L), 1L)
+  expect_identical(undirected_of_ptr(cg@ptr, 1L), 2L)
 })
 
 test_that("edge registry seal works", {

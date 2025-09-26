@@ -1,19 +1,19 @@
 test_that("build() generic dispatches", {
-  expect_error(build(1), "no applicable method")
+  expect_error(build(1), "Can't find method")
 })
 
 test_that("build.caugi_graph builds with and without edges", {
   cg <- caugi_graph()
   cg <- add_nodes(cg, name = c("A", "B"))
   cg0 <- build(cg) # no edges
-  expect_true(cg0$built)
-  expect_false(is.null(cg0$ptr))
+  expect_true(cg0@built)
+  expect_false(is.null(cg0@ptr))
 
   cg <- add_edges(cg, from = "A", edge = "-->", to = "B")
   cg1 <- build(cg) # with edges
-  expect_true(cg1$built)
-  expect_equal(cg1$nodes$name, c("A", "B"))
-  expect_equal(cg1$edges, tibble::tibble(from = "A", edge = "-->", to = "B"))
+  expect_true(cg1@built)
+  expect_equal(cg1@nodes$name, c("A", "B"))
+  expect_equal(cg1@edges, tibble::tibble(from = "A", edge = "-->", to = "B"))
 
   expect_identical(build(cg1), cg1) # identical if built
 })
@@ -36,33 +36,33 @@ test_that("add_edges validates inputs and updates graph", {
   )
 
   cg1 <- add_edges(cg, from = "A", edge = "-->", to = "B")
-  expect_false(cg1$built)
-  expect_setequal(cg1$nodes$name, c("A", "B"))
-  expect_equal(cg1$edges, tibble::tibble(from = "A", edge = "-->", to = "B"))
+  expect_false(cg1@built)
+  expect_setequal(cg1@nodes$name, c("A", "B"))
+  expect_equal(cg1@edges, tibble::tibble(from = "A", edge = "-->", to = "B"))
 
   cg2 <- add_edges(cg1,
     from = c("A", "A"),
     edge = c("-->", "-->"),
     to = c("B", "B")
   )
-  expect_equal(nrow(cg2$edges), 1L)
+  expect_equal(nrow(cg2@edges), 1L)
 })
 
 test_that("add_edges makes built = FALSE, build(cg) makes it TRUE (back and forth)", {
   cg <- caugi_graph()
 
   cg1 <- add_edges(cg, from = "A", edge = "-->", to = "B")
-  expect_false(cg1$built)
+  expect_false(cg1@built)
 
   cg1_built <- build(cg1)
-  expect_true(cg1_built$built)
+  expect_true(cg1_built@built)
 
   cg2 <- add_edges(cg1,
     from = c("A", "A"),
     edge = c("-->", "-->"),
     to = c("B", "B")
   )
-  expect_false(cg2$built)
+  expect_false(cg2@built)
 })
 
 test_that("add_edges expression path works", {
@@ -76,13 +76,13 @@ test_that("add_edges expression path works", {
     E %o->% F,
     F %o-o% A
   )
-  expect_false(cg$built)
-  expect_setequal(cg$nodes$name, c("A", "B", "C", "D", "E", "F"))
-  expect_equal(nrow(cg$edges), 6L)
-  expect_true(all(c("from", "edge", "to") %in% names(cg$edges)))
-  expect_equal(sort(cg$nodes$name), sort(LETTERS[1:6]))
+  expect_false(cg@built)
+  expect_setequal(cg@nodes$name, c("A", "B", "C", "D", "E", "F"))
+  expect_equal(nrow(cg@edges), 6L)
+  expect_true(all(c("from", "edge", "to") %in% names(cg@edges)))
+  expect_equal(sort(cg@nodes$name), sort(LETTERS[1:6]))
   expect_equal(
-    sort(cg$edges$edge),
+    sort(cg@edges$edge),
     sort(c("o->", "--o", "o-o", "-->", "<->", "---"))
   )
 })
@@ -108,8 +108,8 @@ test_that("add_edges expression path (DSL) works (also some + notation)", {
   cg <- caugi_graph()
   cg <- add_nodes(cg, A + B)
   cg <- add_edges(cg, A %-->% B + C)
-  expect_setequal(cg$nodes$name, c("A", "B", "C"))
-  expect_equal(cg$edges, tibble::tibble(
+  expect_setequal(cg@nodes$name, c("A", "B", "C"))
+  expect_equal(cg@edges, tibble::tibble(
     from = "A",
     edge = c("-->", "-->"),
     to = c("B", "C")
@@ -130,8 +130,8 @@ test_that("remove_edges works and keeps other edges", {
   )
 
   cg1 <- remove_edges(cg, from = "A", edge = "-->", to = "B")
-  expect_false(cg1$built)
-  expect_equal(cg1$edges, tibble::tibble(from = "A", edge = "-->", to = "C"))
+  expect_false(cg1@built)
+  expect_equal(cg1@edges, tibble::tibble(from = "A", edge = "-->", to = "C"))
 })
 
 test_that("set_edges replaces any existing edges for pairs", {
@@ -142,8 +142,8 @@ test_that("set_edges replaces any existing edges for pairs", {
     to = c("B", "B")
   )
   cg1 <- set_edges(cg, from = "A", edge = "<->", to = "B")
-  expect_false(cg1$built)
-  expect_equal(cg1$edges, tibble::tibble(from = "A", edge = "<->", to = "B"))
+  expect_false(cg1@built)
+  expect_equal(cg1@edges, tibble::tibble(from = "A", edge = "<->", to = "B"))
 })
 
 test_that("set_edges errors whwn both vector and expr paths are given", {
@@ -171,17 +171,17 @@ test_that("add_nodes, remove_nodes cover vector and expr paths", {
   expect_identical(add_nodes(cg), cg)
 
   cg1 <- add_nodes(cg, name = c("A", "B"))
-  expect_false(cg1$built)
-  expect_setequal(cg1$nodes$name, c("A", "B"))
+  expect_false(cg1@built)
+  expect_setequal(cg1@nodes$name, c("A", "B"))
 
   cg2 <- add_nodes(caugi_graph(), A + B + C)
-  expect_setequal(cg2$nodes$name, c("A", "B", "C"))
+  expect_setequal(cg2@nodes$name, c("A", "B", "C"))
 
   cg3 <- add_edges(cg1, from = "A", edge = "-->", to = "B")
   cg4 <- remove_nodes(cg3, name = "A")
-  expect_false(cg4$built)
-  expect_equal(cg4$nodes$name, "B")
-  expect_equal(nrow(cg4$edges), 0L)
+  expect_false(cg4@built)
+  expect_equal(cg4@nodes$name, "B")
+  expect_equal(nrow(cg4@edges), 0L)
 
   cg5 <- add_edges(cg2, A %-->% B, B %-->% C)
   cg6 <- remove_nodes(cg5)
@@ -199,8 +199,8 @@ test_that("subgraph selects nodes and errors with none", {
   expect_error(subgraph(cg), "No nodes specified")
 
   sg <- subgraph(cg, A + B)
-  expect_setequal(sg$nodes$name, c("A", "B"))
-  expect_equal(sg$edges, tibble::tibble(from = "A", edge = "-->", to = "B"))
+  expect_setequal(sg@nodes$name, c("A", "B"))
+  expect_equal(sg@edges, tibble::tibble(from = "A", edge = "-->", to = "B"))
 })
 
 test_that(".get_nodes_tibble branches", {
@@ -267,9 +267,9 @@ test_that(".get_edges_tibble works with empty input", {
 test_that(".mark_not_built flips flag", {
   cg <- caugi_graph()
   cg <- add_nodes(cg, name = "A")
-  cg <- build.caugi_graph(cg)
+  cg <- build(cg)
   out <- caugi:::.mark_not_built(cg)
-  expect_false(out$built)
+  expect_false(out@built)
 })
 
 test_that(".update_caugi_graph add/remove paths and validations", {
@@ -280,8 +280,8 @@ test_that(".update_caugi_graph add/remove paths and validations", {
     ),
     action = "add"
   )
-  expect_false(cg1$built)
-  expect_setequal(cg1$nodes$name, c("A", "B"))
+  expect_false(cg1@built)
+  expect_setequal(cg1@nodes$name, c("A", "B"))
 
   cg2 <- caugi:::.update_caugi_graph(cg1,
     edges = dplyr::bind_rows(
@@ -290,8 +290,8 @@ test_that(".update_caugi_graph add/remove paths and validations", {
     ),
     action = "add"
   )
-  expect_equal(nrow(cg2$edges), 1L)
-  expect_setequal(cg2$nodes$name, c("A", "B"))
+  expect_equal(nrow(cg2@edges), 1L)
+  expect_setequal(cg@nodes$name, c("A", "B"))
 
   cg3 <- caugi_graph()
   cg3 <- add_nodes(cg3, name = c("A", "B", "C"))
@@ -307,7 +307,7 @@ test_that(".update_caugi_graph add/remove paths and validations", {
     ),
     action = "remove"
   )
-  expect_false(any(cg4$edges$from == "A" & cg4$edges$to == "B"))
+  expect_false(any(cg4@edges$from == "A" & cg4@edges$to == "B"))
 
   expect_error(
     caugi:::.update_caugi_graph(cg4,

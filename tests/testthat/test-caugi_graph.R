@@ -46,23 +46,23 @@ test_that("caugi graph generation works as expected", {
     E %o->% F,
     F %o-o% A
   )
-  expect_s3_class(cg, "caugi_graph")
-  expect_equal(nrow(cg$nodes), 6)
-  expect_equal(nrow(cg$edges), 6)
-  expect_true(all(c("from", "edge", "to") %in% names(cg$edges)))
-  expect_true(all(c("name") %in% names(cg$nodes)))
-  expect_equal(sort(cg$nodes$name), sort(LETTERS[1:6]))
+  expect_s7_class(cg, caugi_graph)
+  expect_equal(nrow(cg@nodes), 6)
+  expect_equal(nrow(cg@edges), 6)
+  expect_true(all(c("from", "edge", "to") %in% names(cg@edges)))
+  expect_true(all(c("name") %in% names(cg@nodes)))
+  expect_equal(sort(cg@nodes$name), sort(LETTERS[1:6]))
   expect_equal(
-    sort(cg$edges$edge),
+    sort(cg@edges$edge),
     sort(c("o->", "--o", "o-o", "-->", "<->", "---"))
   )
 })
 
 test_that("empty caugi graph initialization works", {
   cg <- caugi_graph()
-  expect_s3_class(cg, "caugi_graph")
+  expect_s7_class(cg, caugi_graph)
   expect_equal(length(cg), 0)
-  expect_equal(nrow(cg$edges), 0)
+  expect_equal(nrow(cg@edges), 0)
   expect_equal(length(cg), 0)
 })
 
@@ -115,45 +115,45 @@ test_that("building graph with simple = FALSE needs class = Unknown", {
       simple = FALSE
     )
   )
-  expect_s3_class(
+  expect_s7_class(
     caugi_graph(
       A %-->% B,
       B %---% C,
       class = "Unknown",
       simple = FALSE
     ),
-    "caugi_graph"
+    caugi_graph
   )
 })
 
 test_that("non-simple graphs allows self loops and parallel edges", {
-  expect_s3_class(
+  expect_s7_class(
     caugi_graph(
       A %-->% A,
       B %---% C,
       class = "Unknown",
       simple = FALSE
     ),
-    "caugi_graph"
+    caugi_graph
   )
-  expect_s3_class(
+  expect_s7_class(
     caugi_graph(
       A %-->% B,
       A %<->% B,
       class = "Unknown",
       simple = FALSE
     ),
-    "caugi_graph"
+    caugi_graph
   )
 
-  expect_s3_class(
+  expect_s7_class(
     caugi_graph(
       A %-->% B,
       A %o->% A,
       class = "Unknown",
       simple = FALSE
     ),
-    "caugi_graph"
+    caugi_graph
   )
 })
 
@@ -166,14 +166,14 @@ test_that("building graph with simple = TRUE disallows parallel edges", {
       simple = TRUE
     )
   )
-  expect_s3_class(
+  expect_s7_class(
     caugi_graph(
       A %-->% B,
       B %---% C,
       class = "Unknown",
       simple = TRUE
     ),
-    "caugi_graph"
+    caugi_graph
   )
 })
 
