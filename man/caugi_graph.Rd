@@ -24,15 +24,15 @@ self-loops.}
 \item{build}{Logical; if \code{TRUE} (default), the graph will be built using the
 Rust backend. If \code{FALSE}, the graph will not be built, and the Rust backend
 cannot be used. The graph will build, when queries are made to the graph or
-if calling \code{build(cg)}. \strong{Note}: Even if \code{build = TRUE}, if no edges or
+if calling \code{\link[=build]{build()}}. \strong{Note}: Even if \code{build = TRUE}, if no edges or
 nodes are provided, the graph will not be built and the pointer will be
 \code{NULL}.}
 
 \item{class}{Character; one of \code{"Unknown"}, \code{"DAG"}, or \code{"PDAG"}.}
 }
 \value{
-A \code{caugi_graph} object containing the nodes, edges, and a pointer
-to the underlying Rust graph structure.
+A \code{\link{caugi_graph}} S7 object containing the nodes, edges, and a
+pointer to the underlying Rust graph structure.
 }
 \description{
 Create a \code{caugi_graph} from a series of edge expressions using
@@ -43,9 +43,9 @@ The following edge operators are supported by default:
 \item \verb{\%-->\%} for directed edges (A --> B)
 \item \verb{\%---\%} for undirected edges (A --- B)
 \item \verb{\%<->\%} for bidirected edges (A <-> B)
-\item \verb{\%o->\%} for PAG directed edges (A o-> B)
-\item \verb{\%o--\%} for PAG undirected edges (A o-- B)
-\item \verb{\%o-o\%} for PAG bidirected edges (A o-o B)
+\item \verb{\%o->\%} for partially directed edges (A o-> B)
+\item \verb{\%o--\%} for partially undirected edges (A o-- B)
+\item \verb{\%o-o\%} for partial edges (A o-o B)
 }
 
 You can register additional edge types using \code{\link[=register_caugi_edge]{register_caugi_edge()}}.
