@@ -18,6 +18,7 @@ is_caugi <- function(x, throw_error = FALSE) {
   if (!it_is && throw_error) {
     stop("Input must be a caugi_graph", call. = FALSE)
   }
+  it_is
 }
 
 #' @title Is the `caugi` acyclic?
@@ -71,12 +72,22 @@ is_acyclic <- function(cg, force_check = FALSE) {
 #' Directed Acyclic Graph (DAG).
 #'
 #' @param cg A `caugi_graph` object.
+#' @param force_check Logical; if `TRUE`, the function will test if the graph is
+#' a DAG, if `FALSE` (default), it will look at the graph class and match
+#' it, if possible.
 #'
 #' @returns A logical value indicating whether the graph is a DAG.
 #' @export
 is_dag <- function(cg, force_check = FALSE) {
   is_caugi(cg, throw_error = TRUE)
-  # todo
+  if (identical(cg@graph_class, "DAG") && !force_check) {
+    is_it <- TRUE
+  } else {
+    # if we can't be sure from the class, we check
+    is_it <- is_acyclic(cg, force_check)
+    is_it <- is_it && is_dag_type_ptr(cg@ptr)
+  }
+  is_it
 }
 
 #' @title Is the `caugi` graph a PDAG?
@@ -85,9 +96,20 @@ is_dag <- function(cg, force_check = FALSE) {
 #' Partially Directed Acyclic Graph (PDAG).
 #'
 #' @param cg A `caugi_graph` object.
+#' @param force_check Logical; if `TRUE`, the function will test if the graph is
+#' a PDAG, if `FALSE` (default), it will look at the graph class and match
+#' it, if possible.
+#'
 #' @returns A logical value indicating whether the graph is a PDAG.
 #' @export
-is_pdag <- function(cg, test = FALSE) {
+is_pdag <- function(cg, force_check = FALSE) {
   is_caugi(cg, throw_error = TRUE)
-  # todo
+  if (identical(cg@graph_class, "PDAG") && !force_check) {
+    is_it <- TRUE
+  } else {
+    # if we can't be sure from the class, we check
+    is_it <- is_acyclic(cg, force_check)
+    is_it <- is_it && is_pdag_type_ptr(cg@ptr)
+  }
+  is_it
 }
