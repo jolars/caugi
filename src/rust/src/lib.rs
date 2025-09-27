@@ -8,8 +8,9 @@ pub mod graph;
 use edges::{EdgeClass, EdgeRegistry, EdgeSpec, Mark, QueryFlags};
 use graph::CaugiGraph;
 use graph::builder::GraphBuilder;
-use graph::view::{GraphApi, GraphKind, GraphView};
+use graph::view::{GraphApi, GraphView};
 use graph::{dag::Dag, pdag::Pdag};
+use graph::graph_type::GraphType;
 use std::sync::Arc;
 
 // ---------- helpers ----------
@@ -157,20 +158,20 @@ fn graph_builder_build(mut b: ExternalPtr<GraphBuilder>) -> ExternalPtr<CaugiGra
 #[extendr]
 fn graphview_new(core: ExternalPtr<CaugiGraph>, class: &str) -> ExternalPtr<GraphView> {
     match class
-        .parse::<GraphKind>()
+        .parse::<GraphType>()
         .unwrap_or_else(|e| throw_r_error(e))
     {
-        GraphKind::Dag => {
+        GraphType::Dag => {
             let dag =
                 Dag::new(Arc::new(core.as_ref().clone())).unwrap_or_else(|e| throw_r_error(e));
             ExternalPtr::new(GraphView::Dag(Arc::new(dag)))
         }
-        GraphKind::Pdag => {
+        GraphType::Pdag => {
             let pdag =
                 Pdag::new(Arc::new(core.as_ref().clone())).unwrap_or_else(|e| throw_r_error(e));
             ExternalPtr::new(GraphView::Pdag(Arc::new(pdag)))
         }
-        GraphKind::Unknown => ExternalPtr::new(GraphView::Raw(Arc::new(core.as_ref().clone()))),
+        GraphType::Unknown => ExternalPtr::new(GraphView::Raw(Arc::new(core.as_ref().clone()))),
     }
 }
 
@@ -210,6 +211,28 @@ fn undirected_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
 }
 
 #[extendr]
+fn is_dag_type_ptr(g: ExternalPtr<GraphView>) -> bool {
+    let core = g.as_ref().core();
+    crate::graph::alg::validate_graph_type(&crate::graph::graph_type::GraphType::Dag, core).is_ok()
+}
+
+#[extendr]
+fn is_pdag_type_ptr(g: ExternalPtr<GraphView>) -> bool {
+    let core = g.as_ref().core();
+    crate::graph::alg::validate_graph_type(&crate::graph::graph_type::GraphType::Pdag, core).is_ok()
+}
+
+#[extendr]
+fn graph_class_ptr(g: ExternalPtr<GraphView>) -> String {
+    match g.as_ref() {
+        GraphView::Dag(_) => "DAG",
+        GraphView::Pdag(_) => "PDAG",
+        GraphView::Raw(_) => "UNKNOWN",
+    }
+    .to_string()
+}
+
+#[extendr]
 fn is_acyclic_ptr(g: ExternalPtr<GraphView>) -> bool {
     let core = g.as_ref().core();
     crate::graph::alg::directed_part_is_acyclic(core)
@@ -218,12 +241,6 @@ fn is_acyclic_ptr(g: ExternalPtr<GraphView>) -> bool {
 #[extendr]
 fn is_simple_ptr(g: ExternalPtr<GraphView>) -> bool {
     g.as_ref().core().simple
-}
-
-#[extendr]
-fn graph_class_ptr(g: ExternalPtr<GraphView>) -> String {
-    use graph::view::GraphView::*;
-    match g.as_ref() { Dag(_) => "DAG", Pdag(_) => "PDAG", Raw(_) => "UNKNOWN" }.to_string()
 }
 
 extendr_module! {
@@ -254,4 +271,8 @@ extendr_module! {
 
     // acyclicity test
     fn is_acyclic_ptr;
+
+    // class tests
+    fn is_dag_type_ptr;
+    fn is_pdag_type_ptr;
 }
