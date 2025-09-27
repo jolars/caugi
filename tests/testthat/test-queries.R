@@ -184,7 +184,6 @@ test_that(".getter_output returns tibble with name column", {
 test_that(".capture_nodes_expr accepts unquoted, vectors, and expressions", {
   cg <- caugi_graph(A %-->% B, B %-->% C, C %---% D, class = "PDAG")
   env <- environment()
-  A <- "SHADOW" # ensure unquoted is not captured from env accidentally
 
   # unquoted symbol
   expr1 <- substitute(B)

@@ -189,18 +189,17 @@ neighbourhood <- neighbors
 #'
 #' @keywords internal
 .capture_nodes_expr <- function(expr, env = parent.frame()) {
-  # Bare symbol → node name (ignore env)
   if (is.symbol(expr)) {
-    return(.expand_nodes(expr))
-  }
-  # Composite node expressions ignore env
-  if (is.call(expr)) {
-    fn <- as.character(expr[[1L]])
-    if (fn %in% c("+", "c", "(")) {
+    nm <- as.character(expr)
+    if (exists(nm, envir = env, inherits = TRUE)) {
+      return(eval(expr, env))
+    } else {
       return(.expand_nodes(expr))
     }
   }
-  # Fallback: evaluate
+  if (is.call(expr) && as.character(expr[[1L]]) %in% c("+", "c", "(")) {
+    return(.expand_nodes(expr))
+  }
   eval(expr, env)
 }
 
