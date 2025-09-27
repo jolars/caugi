@@ -230,46 +230,46 @@ subgraph <- function(cg, ...) {
 # ───────────────────────────────── Convert ────────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
-#' @title Convert a `caugi_graph` to a specified graph type, if possible.
-#'
-#' @description
-#' Convert a `caugi_graph` to a specified graph type, if possible. It throws an
-#' error if the conversion is not possible. For example, a graph with undirected
-#' edges cannot be converted to a DAG.
-#'
-#' @param cg A `caugi_graph` object.
-#' @param class The target graph class. One of `"DAG"`, `"PDAG"`, `"Unknown"`.
-#'
-#' @returns The converted `caugi_graph` object.
-#' @export
-convert_graph_class <- function(cg, class) {
-  class <- match.arg(class, c("DAG", "PDAG", "Unknown"))
-
-  cg <- build(cg)
-
-  if (identical(cg@class, class)) {
-    return(cg)
-  }
-
-  s <- cg@`.state`
-
-  # Check if conversion is possible
-  if (identical(class, "DAG")) {
-    if (!is_dag(cg, force_check = TRUE)) {
-      stop("Cannot convert to DAG.", call. = FALSE)
-    }
-  } else if (identical(class, "PDAG")) {
-    # Check for undirected edges
-    if (any(s$edges$edge %in% c("---", "o-o"))) {
-      stop("Cannot convert to PDAG: graph contains undirected edges.", call. = FALSE)
-    }
-  }
-
-  # Update class and mark as not built
-  s$class <- class
-  cg <- .mark_not_built(cg)
-  cg
-}
+# #' @title Convert a `caugi_graph` to a specified graph type, if possible.
+# #'
+# #' @description
+# #' Convert a `caugi_graph` to a specified graph type, if possible. It throws an
+# #' error if the conversion is not possible. For example, a graph with undirected
+# #' edges cannot be converted to a DAG.
+# #'
+# #' @param cg A `caugi_graph` object.
+# #' @param class The target graph class. One of `"DAG"`, `"PDAG"`, `"Unknown"`.
+# #'
+# #' @returns The converted `caugi_graph` object.
+# #' @export
+# convert_graph_class <- function(cg, class) {
+#   class <- match.arg(class, c("DAG", "PDAG", "Unknown"))
+#
+#   cg <- build(cg)
+#
+#   if (identical(cg@class, class)) {
+#     return(cg)
+#   }
+#
+#   s <- cg@`.state`
+#
+#   # Check if conversion is possible
+#   if (identical(class, "DAG")) {
+#     if (!is_dag(cg, force_check = TRUE)) {
+#       stop("Cannot convert to DAG.", call. = FALSE)
+#     }
+#   } else if (identical(class, "PDAG")) {
+#     # Check for undirected edges
+#     if (any(s$edges$edge %in% c("---", "o-o"))) {
+#       stop("Cannot convert to PDAG: graph contains undirected edges.", call. = FALSE)
+#     }
+#   }
+#
+#   # Update class and mark as not built
+#   s$class <- class
+#   cg <- .mark_not_built(cg)
+#   cg
+# }
 
 # ──────────────────────────────────────────────────────────────────────────────
 # ───────────────────────────── Internal helpers ───────────────────────────────
