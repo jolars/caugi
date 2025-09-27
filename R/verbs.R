@@ -370,11 +370,13 @@ subgraph <- function(cg, ...) {
 
 #' @title Update nodes and edges of a `caugi_graph`
 #'
-#' @description Internal helper to add or remove nodes/edges and mark graph as not built.
+#' @description Internal helper to add or remove nodes/edges and mark graph as
+#' not built.
 #'
 #' @param cg A `caugi_graph` object.
 #' @param nodes A tibble with column `name` for node names to add/remove.
-#' @param edges A tibble with columns `from`, `edge`, `to` for edges to add/remove.
+#' @param edges A tibble with columns `from`, `edge`, `to` for edges to
+#' add/remove.
 #' @param action One of `"add"` or `"remove"`.
 #'
 #' @returns The updated `caugi_graph` object.
@@ -389,13 +391,21 @@ subgraph <- function(cg, ...) {
       s$nodes <- tibble::tibble(name = unique(c(s$nodes$name, nodes$name)))
     }
     if (!is.null(edges)) {
-      s$nodes <- tibble::tibble(name = unique(c(s$nodes$name, edges$from, edges$to)))
+      s$nodes <- tibble::tibble(name = unique(c(
+        s$nodes$name,
+        edges$from,
+        edges$to
+      )))
       s$edges <- dplyr::distinct(dplyr::bind_rows(s$edges, edges))
     }
   } else {
     if (!is.null(edges)) {
       keys <- intersect(c("from", "edge", "to"), names(edges))
-      if (!all(c("from", "to") %in% keys)) stop("edges must include at least `from` and `to`.", call. = FALSE)
+      if (!all(c("from", "to") %in% keys)) {
+        stop("edges must include at least `from` and `to`.",
+          call. = FALSE
+        )
+      }
       edges_key <- dplyr::select(edges, dplyr::all_of(keys))
       s$edges <- dplyr::anti_join(s$edges, edges_key, by = keys)
     }

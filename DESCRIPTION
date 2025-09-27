@@ -24,10 +24,13 @@ LinkingTo:
     Matrix
 Suggests: 
     devtools,
+    knitr,
     pcalg,
     Rgraphviz,
+    rmarkdown,
     testthat
 Config/rextendr/version: 0.4.2
 SystemRequirements: Cargo (Rust's package manager), rustc >= 1.65.0, xz
 Depends: 
     R (>= 4.2)
+VignetteBuilder: knitr

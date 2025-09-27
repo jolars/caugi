@@ -1,0 +1,205 @@
+---
+title: "Get Starteded with `caugi`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{my-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+
+```{r}
+# dev version from GitHub
+install.packages("pak")         # if needed
+pak::pak("frederikfabriciusbjerre/caugi")
+
+# ... or wait for the first CRAN release
+# install.packages("caugi")
+```
+
+
+## What is `caugi`?
+
+`caugi` (pronounced "corgi") stands for **Causal Graph Interface**.
+
+`caugi` is a small R interface to a fast Rust backend for causal graphs. You define graphs with readable infix operators, query relations, and keep R code nice and tidy, while Rust handles performance.
+
+## Why `caugi`?
+
+Causal graphs are easy to draw and aid us in understanding causal mechanisms by visual representation. In R, representing them can feel clunky. We usually resort to adjacency matrices, edge lists, or packages like `igraph` or `graph`. 
+
+These packages are great and each have their strengths, but they are not built for _causal_ graphs, which often have special edge types and properties. 
+
+In the same way, adjacency matrices can be hard to read, especially since different standards exists for representing different types of causal relationships. For example, it is not even standardized, if `A[i,j] == 1` represents `i --> j` or `j --> i`, or how to represent a PAG edge such as `o->`.
+
+For people working in causal inference and causal discovery, this can lead to clunky, hacky code that is hard to read and maintain. `caugi` aims to fix this with a well thought, readable syntax, which mimics how we draw graphs in hand. 
+
+When makeshift solutions are used to represent causal graphs, it leads to not only bugs, but confusion and wasted time. With `caugi` we aim to make causal graphs safe to work with, so you do not accidentally create invalid graphs, and so you can focus on the causal problems at hand, not on the representation.
+
+So why `caugi`? `caugi` makes it easy to define, query, and modify causal graphs in R with a clean syntax and fast performance. 
+
+## The basic object: `caugi_graph`
+
+Create graphs from edge expressions and optional nodes. The graph can be **simple** (no parallel edges or self‑loops) and can carry a **class** label: `"Unknown"`, `"DAG"`, or `"PDAG"`. We plan on supporting several other causal graph types in future releases.
+
+```{r}
+# a tiny DAG
+cg <- caugi_graph(
+  A %-->% B + C,
+  B %-->% D,
+  C %-->% D,
+  class = "DAG",   # optional, guarantees acyclicity by construction
+  simple = TRUE,    # default
+  build  = TRUE     # build now; otherwise built lazily on first query
+)
+```
+
+### Supported edge operators
+
+* `%-->%` directed 
+* `%---%` undirected
+* `%<->%` bidirected
+* `%o->%` partially directed
+* `%o--%` partially undirected
+* `%o-o%` partial
+
+You can register more types with `register_caugi_edge()`.
+
+### (Lazy) building and the Rust backend
+
+`caugi` graphs are represented in a compact Compressed Sparse Row (CSR) format in Rust. `caugi` works with a front loading philosophy. Since the `caugi` graph is stored in a CSR format, mutations of the graph is computationally expensive compared to other graph storage systems, _but_ it allows for very fast querying. Additionally to the storage format of the graph itself, `caugi` also stores additional information about node relations in such a way that it allows for $\mathcal{O}(1)$ look-up time for many relational queries, such as `nb(cg, A)` or `ch(cg, B)`. 
+
+To accommodate for the cost of mutations, `caugi` graphs are built lazily. This means that when you mutate the graph, for example by adding edges to it, the graph edits are stored in R, but not in Rust. When you then need to query the graphs, the graph will rebuild itself in Rust, and the query will be executed on the newly built graph. You can also use the `build(cg)` function to force building the graph in Rust at any time.
+
+## Nodes, grouping, and `+`
+
+Use `+` to fan out from one side, and `c(...)` or parentheses to group.
+
+```{r}
+caugi_graph(
+  X %-->% Y + Z,           # X → Y and X → Z
+  c(Y, Z) %-->% W,         # Y → W and Z → W
+  (A + B) %---% (C + D)    # all undirected pairs across groups
+)
+```
+
+Unconnected symbols also declare nodes:
+
+```{r}
+caugi_graph(A, B, C)  # declares three isolated nodes
+```
+
+
+## Queries
+
+### Relations
+
+You can query relations like parents, children, and neighbors. Here you can both use symbols, characters, or indices. 
+
+```{r}
+cg <- caugi_graph(
+  A %-->% B + C,
+  B %-->% D,
+  C %-->% D,
+  E %---% F,
+  class = "PDAG"
+)
+pa(cg, D)
+ch(cg, 3)
+nb(cg, c(B, C))
+```
+
+### Properties
+
+You can check graph properties with the following functions.
+
+```{r}
+is_acyclic(cg)
+is_dag(cg)                  
+is_pdag(cg)
+```
+
+## Modifying graphs
+
+You can add, remove, or set edges and nodes. Changes are applied on the next query or when you call `build()`. We both provide a non-standard evaluation interface with infix operators:
+
+```{r}
+cg <- caugi_graph(
+  A %-->% B + C,
+  B %-->% D,
+)
+
+# add edges via expressions or vectors
+cg <- add_edges(cg, E %-->% F)
+```
+
+or you can use standard evaluation:
+
+```{r}
+cg <- add_edges(cg, 
+                from = c("D", "G"), 
+                edge = c("-->", "o->"), 
+                to = c("E", "H")
+                )
+```
+
+
+
+## Errors and safety
+
+* Unknown nodes trigger clear errors.
+* For `simple = TRUE`, parallel edges or self‑loops are rejected.
+* Internal R–Rust consistency is validated when built.
+
+## Reproducible walkthrough
+
+```r
+library(caugi)
+
+cg <- caugi_graph(
+  A %-->% B + C,
+  B %-->% D,
+  C %-->% D,
+  E %---% F,
+  class = "DAG"
+)
+
+# basic facts
+length(cg)
+print(cg)
+pa(cg, D)
+ch(cg, B + C)
+nb(cg, E)
+
+# mutate
+cg <- add_edges(cg, D %-->% G)
+cg <- set_edges(cg, E %<->% F)
+cg <- remove_nodes(cg, C)
+
+# force build and check
+cg <- build(cg)
+is_dag(cg, force_check = TRUE)
+
+# subgraph
+sub <- subgraph(cg, A + B + D + G)
+print(sub)
+```
+
+## Next steps
+
+* Register custom edges with `register_caugi_edge()`.
+* Use higher‑level algorithms as they land in future releases.
+
+Session info for reproducibility:
+
+```r
+sessionInfo()
+```
