@@ -52,7 +52,10 @@ pub struct CaugiGraph {
 
 impl CaugiGraph {
     pub fn from_csr(
-        row_index: Vec<u32>, col_index: Vec<u32>, etype: Vec<u8>, side: Vec<u8>,
+        row_index: Vec<u32>,
+        col_index: Vec<u32>,
+        etype: Vec<u8>,
+        side: Vec<u8>,
         simple: bool,
         registry: RegistrySnapshot,
     ) -> Result<Self, String> {
@@ -60,8 +63,14 @@ impl CaugiGraph {
         if col_index.len() != nnz || etype.len() != nnz || side.len() != nnz {
             return Err("NNZ arrays length mismatch".into());
         }
-        Ok(Self { row_index: row_index.into(), col_index: col_index.into(),
-                  etype: etype.into(), side: side.into(), registry, simple })
+        Ok(Self {
+            row_index: row_index.into(),
+            col_index: col_index.into(),
+            etype: etype.into(),
+            side: side.into(),
+            registry,
+            simple,
+        })
     }
 
     #[inline]
@@ -98,7 +107,7 @@ mod tests {
 
     #[test]
     fn from_csr_validates_shapes_and_reports_n() {
-        let simple : bool = true;
+        let simple: bool = true;
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
         let specs: Arc<[_]> = (0..reg.len() as u8)
@@ -106,18 +115,42 @@ mod tests {
             .collect::<Vec<_>>()
             .into();
         let snap = RegistrySnapshot::from_specs(specs, 1);
-        let ok = CaugiGraph::from_csr(vec![0, 2], vec![1, 0], vec![0, 0], vec![0, 1], simple, snap.clone())
-            .unwrap();
+        let ok = CaugiGraph::from_csr(
+            vec![0, 2],
+            vec![1, 0],
+            vec![0, 0],
+            vec![0, 1],
+            simple,
+            snap.clone(),
+        )
+        .unwrap();
         assert_eq!(ok.n(), 1);
         assert!(
-            CaugiGraph::from_csr(vec![0, 2], vec![1], vec![0, 0], vec![0, 1], simple, snap.clone())
-                .is_err()
+            CaugiGraph::from_csr(
+                vec![0, 2],
+                vec![1],
+                vec![0, 0],
+                vec![0, 1],
+                simple,
+                snap.clone()
+            )
+            .is_err()
         );
         assert!(
-            CaugiGraph::from_csr(vec![0, 2], vec![1, 0], vec![0], vec![0, 1], simple, snap.clone())
+            CaugiGraph::from_csr(
+                vec![0, 2],
+                vec![1, 0],
+                vec![0],
+                vec![0, 1],
+                simple,
+                snap.clone()
+            )
+            .is_err()
+        );
+        assert!(
+            CaugiGraph::from_csr(vec![0, 2], vec![1, 0], vec![0, 0], vec![0], simple, snap)
                 .is_err()
         );
-        assert!(CaugiGraph::from_csr(vec![0, 2], vec![1, 0], vec![0, 0], vec![0], simple, snap).is_err());
     }
 
     #[test]

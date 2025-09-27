@@ -8,9 +8,9 @@ pub mod graph;
 use edges::{EdgeClass, EdgeRegistry, EdgeSpec, Mark, QueryFlags};
 use graph::CaugiGraph;
 use graph::builder::GraphBuilder;
+use graph::graph_type::GraphType;
 use graph::view::{GraphApi, GraphView};
 use graph::{dag::Dag, pdag::Pdag};
-use graph::graph_type::GraphType;
 use std::sync::Arc;
 
 // ---------- helpers ----------

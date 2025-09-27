@@ -51,8 +51,7 @@ struct HalfEdge {
 
 impl Ord for HalfEdge {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        (self.nbr, self.etype, self.side.as_u8())
-            .cmp(&(other.nbr, other.etype, other.side.as_u8()))
+        (self.nbr, self.etype, self.side.as_u8()).cmp(&(other.nbr, other.etype, other.side.as_u8()))
     }
 }
 impl PartialOrd for HalfEdge {
@@ -151,26 +150,35 @@ impl GraphBuilder {
 
         for row in &mut rows {
             row.sort_unstable(); // uses Ord on HalfEdge
-            if self.simple && row.windows(2).any(|w| w[0].nbr == w[1].nbr && w[0].etype == w[1].etype) {
+            if self.simple
+                && row
+                    .windows(2)
+                    .any(|w| w[0].nbr == w[1].nbr && w[0].etype == w[1].etype)
+            {
                 return Err(format!("parallel edge duplicate in row {:?}", row));
             }
         }
 
         let mut row_index = Vec::with_capacity(n + 1);
         row_index.push(0);
-        for row in &rows { row_index.push(row_index.last().unwrap() + row.len() as u32); }
+        for row in &rows {
+            row_index.push(row_index.last().unwrap() + row.len() as u32);
+        }
 
         let nnz = *row_index.last().unwrap() as usize;
         let mut col = vec![0u32; nnz];
-        let mut ety  = vec![0u8;  nnz];
-        let mut side = vec![0u8;  nnz];
+        let mut ety = vec![0u8; nnz];
+        let mut side = vec![0u8; nnz];
 
         for (i, row) in rows.iter().enumerate() {
             let mut k = row_index[i] as usize;
             for h in row {
-                col[k]  = h.nbr;
-                ety[k]  = h.etype;
-                side[k] = match h.side { Side::Tail => 0, Side::Head => 1 }; // todo: change to use Side::Tail and Side::Head instead of magic numbers
+                col[k] = h.nbr;
+                ety[k] = h.etype;
+                side[k] = match h.side {
+                    Side::Tail => 0,
+                    Side::Head => 1,
+                }; // todo: change to use Side::Tail and Side::Head instead of magic numbers
                 k += 1;
             }
         }
@@ -210,7 +218,7 @@ mod tests {
         assert!(rr1.len() >= 1);
     }
 
-        #[test]
+    #[test]
     fn finalize_in_place_ok() {
         let r = reg();
         let cdir = r.code_of("-->").unwrap();
@@ -226,8 +234,16 @@ mod tests {
         let cdir = r.code_of("-->").unwrap();
         let mut b = GraphBuilder::new_with_registry(2, true, &r);
         // Manually craft duplicate entries
-        b.rows[0].push(HalfEdge { nbr: 1, etype: cdir, side: Side::Tail });
-        b.rows[0].push(HalfEdge { nbr: 1, etype: cdir, side: Side::Head }); // same nbr+etype, different side
+        b.rows[0].push(HalfEdge {
+            nbr: 1,
+            etype: cdir,
+            side: Side::Tail,
+        });
+        b.rows[0].push(HalfEdge {
+            nbr: 1,
+            etype: cdir,
+            side: Side::Head,
+        }); // same nbr+etype, different side
         let err = b.finalize_in_place().unwrap_err();
         assert!(err.contains("parallel edge duplicate in row"));
     }

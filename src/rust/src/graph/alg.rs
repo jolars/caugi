@@ -50,7 +50,10 @@ pub fn check_edge_classes(graph_type: &GraphType, core: &CaugiGraph) -> Result<(
         for k in core.row_range(i) {
             let cls = core.registry.specs[core.etype[k] as usize].class;
             if !allowed.iter().any(|&a| a == cls) {
-                return Err(format!("Graph of type {} cannot contain edges of type {:?}", name, cls));
+                return Err(format!(
+                    "Graph of type {} cannot contain edges of type {:?}",
+                    name, cls
+                ));
             }
         }
     }
@@ -65,7 +68,10 @@ pub fn validate_graph_type(graph_type: &GraphType, core: &CaugiGraph) -> Result<
     // Check acyclicity if required
     if require_acyclic {
         if !directed_part_is_acyclic(core) {
-            return Err(format!("Graph of type {} cannot contain directed cycle", name));
+            return Err(format!(
+                "Graph of type {} cannot contain directed cycle",
+                name
+            ));
         }
     }
     Ok(())
@@ -73,14 +79,15 @@ pub fn validate_graph_type(graph_type: &GraphType, core: &CaugiGraph) -> Result<
 
 #[cfg(test)]
 mod tests {
-    use super::{directed_part_is_acyclic, check_edge_classes, validate_graph_type};
+    use super::{check_edge_classes, directed_part_is_acyclic, validate_graph_type};
     use crate::edges::EdgeRegistry;
     use crate::graph::builder::GraphBuilder;
     use crate::graph::graph_type::GraphType;
 
     #[test]
     fn empty_stack_when_every_node_has_incoming_directed() {
-        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
         let code = reg.code_of("-->").unwrap();
 
         let mut b = GraphBuilder::new(2, false, &reg);
@@ -93,10 +100,11 @@ mod tests {
 
     #[test]
     fn directed_part_is_acyclic_ignores_undirected_and_bidirected() {
-        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
         let dir = reg.code_of("-->").unwrap();
         let und = reg.code_of("---").unwrap();
-        let bi  = reg.code_of("<->").unwrap();
+        let bi = reg.code_of("<->").unwrap();
 
         // Directed part is a DAG: 0 -> 1 -> 2
         let mut b = GraphBuilder::new(3, false, &reg);
@@ -112,10 +120,11 @@ mod tests {
 
     #[test]
     fn check_edge_classes_dag_rejects_undirected_and_bidirected_and_partial() {
-        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
         let dir = reg.code_of("-->").unwrap();
         let und = reg.code_of("---").unwrap();
-        let bi  = reg.code_of("<->").unwrap();
+        let bi = reg.code_of("<->").unwrap();
         let par = reg.code_of("o->").unwrap();
 
         // Valid DAG: OK
@@ -145,10 +154,11 @@ mod tests {
 
     #[test]
     fn check_edge_classes_pdag_allows_directed_and_undirected_but_rejects_bidirected_and_partial() {
-        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
         let dir = reg.code_of("-->").unwrap();
         let und = reg.code_of("---").unwrap();
-        let bi  = reg.code_of("<->").unwrap();
+        let bi = reg.code_of("<->").unwrap();
         let par = reg.code_of("o->").unwrap();
 
         // Directed + undirected: OK
@@ -173,7 +183,8 @@ mod tests {
 
     #[test]
     fn validate_graph_type_dag_catches_directed_cycle() {
-        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
         let dir = reg.code_of("-->").unwrap();
 
         let mut b = GraphBuilder::new(3, false, &reg);
@@ -188,7 +199,8 @@ mod tests {
 
     #[test]
     fn validate_graph_type_dag_ok_when_acyclic() {
-        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
         let dir = reg.code_of("-->").unwrap();
 
         let mut b = GraphBuilder::new(3, false, &reg);
@@ -199,4 +211,3 @@ mod tests {
         assert!(validate_graph_type(&GraphType::Dag, &g).is_ok());
     }
 }
-

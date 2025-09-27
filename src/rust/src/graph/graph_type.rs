@@ -1,5 +1,5 @@
-use std::str::FromStr;
 use crate::edges::EdgeClass;
+use std::str::FromStr;
 
 #[derive(Debug)]
 pub enum GraphType {
@@ -37,15 +37,33 @@ impl GraphType {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn graph_type_from_str_all_paths() {
-        assert!(matches!("DAG".parse::<GraphType>().unwrap(), GraphType::Dag));
-        assert!(matches!("pdag".parse::<GraphType>().unwrap(), GraphType::Pdag));
-        assert!(matches!("CPDAG".parse::<GraphType>().unwrap(), GraphType::Pdag));
-        assert!(matches!("".parse::<GraphType>().unwrap(), GraphType::Unknown));
-        assert!(matches!("unknown".parse::<GraphType>().unwrap(), GraphType::Unknown));
-        assert!(matches!("<UNKNOWN>".parse::<GraphType>().unwrap(), GraphType::Unknown));
+        assert!(matches!(
+            "DAG".parse::<GraphType>().unwrap(),
+            GraphType::Dag
+        ));
+        assert!(matches!(
+            "pdag".parse::<GraphType>().unwrap(),
+            GraphType::Pdag
+        ));
+        assert!(matches!(
+            "CPDAG".parse::<GraphType>().unwrap(),
+            GraphType::Pdag
+        ));
+        assert!(matches!(
+            "".parse::<GraphType>().unwrap(),
+            GraphType::Unknown
+        ));
+        assert!(matches!(
+            "unknown".parse::<GraphType>().unwrap(),
+            GraphType::Unknown
+        ));
+        assert!(matches!(
+            "<UNKNOWN>".parse::<GraphType>().unwrap(),
+            GraphType::Unknown
+        ));
         let e = "weird".parse::<GraphType>().unwrap_err();
         assert_eq!(e, "unknown graph class 'weird'");
     }

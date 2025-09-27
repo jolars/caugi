@@ -347,7 +347,7 @@ mod tests {
             Err(RegistryError::InvalidCode(_))
         ));
     }
-        #[test]
+    #[test]
     fn parse_mark_and_edgeclass_fromstr() {
         use std::str::FromStr;
         assert_eq!(Mark::from_str("arrow").unwrap(), Mark::Arrow);
@@ -356,12 +356,27 @@ mod tests {
         assert_eq!(Mark::from_str("other").unwrap(), Mark::Other);
         assert!(Mark::from_str("nope").is_err());
 
-        assert_eq!(EdgeClass::from_str("directed").unwrap(), EdgeClass::Directed);
-        assert_eq!(EdgeClass::from_str("undirected").unwrap(), EdgeClass::Undirected);
-        assert_eq!(EdgeClass::from_str("bidirected").unwrap(), EdgeClass::Bidirected);
+        assert_eq!(
+            EdgeClass::from_str("directed").unwrap(),
+            EdgeClass::Directed
+        );
+        assert_eq!(
+            EdgeClass::from_str("undirected").unwrap(),
+            EdgeClass::Undirected
+        );
+        assert_eq!(
+            EdgeClass::from_str("bidirected").unwrap(),
+            EdgeClass::Bidirected
+        );
         assert_eq!(EdgeClass::from_str("partial").unwrap(), EdgeClass::Partial);
-        assert_eq!(EdgeClass::from_str("partially_directed").unwrap(), EdgeClass::PartiallyDirected);
-        assert_eq!(EdgeClass::from_str("partially_undirected").unwrap(), EdgeClass::PartiallyUndirected);
+        assert_eq!(
+            EdgeClass::from_str("partially_directed").unwrap(),
+            EdgeClass::PartiallyDirected
+        );
+        assert_eq!(
+            EdgeClass::from_str("partially_undirected").unwrap(),
+            EdgeClass::PartiallyUndirected
+        );
         assert!(EdgeClass::from_str("???").is_err());
     }
 
@@ -442,7 +457,10 @@ mod tests {
             class: EdgeClass::Undirected,
             flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
         };
-        assert!(matches!(r.register(overflow), Err(RegistryError::TooManyTypes)));
+        assert!(matches!(
+            r.register(overflow),
+            Err(RegistryError::TooManyTypes)
+        ));
     }
 
     #[test]
@@ -456,14 +474,16 @@ mod tests {
     #[test]
     fn conflict_display_includes_glyph_and_text() {
         let mut r = built_reg();
-        let err = r.register(EdgeSpec {
-            glyph: "-->".into(), // existing glyph with different semantics
-            tail: Mark::Tail,
-            head: Mark::Tail,
-            symmetric: true,
-            class: EdgeClass::Undirected,
-            flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
-        }).unwrap_err();
+        let err = r
+            .register(EdgeSpec {
+                glyph: "-->".into(), // existing glyph with different semantics
+                tail: Mark::Tail,
+                head: Mark::Tail,
+                symmetric: true,
+                class: EdgeClass::Undirected,
+                flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
+            })
+            .unwrap_err();
         let msg = err.to_string();
         assert!(msg.contains("already registered with different semantics"));
         assert!(msg.contains("'-->'"));
