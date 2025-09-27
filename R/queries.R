@@ -80,12 +80,12 @@ is_acyclic <- function(cg, force_check = FALSE) {
 #' @export
 is_dag <- function(cg, force_check = FALSE) {
   is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
   if (identical(cg@graph_class, "DAG") && !force_check) {
     is_it <- TRUE
   } else {
     # if we can't be sure from the class, we check
-    is_it <- is_acyclic(cg, force_check)
-    is_it <- is_it && is_dag_type_ptr(cg@ptr)
+    is_it <- is_dag_type_ptr(cg@ptr)
   }
   is_it
 }
@@ -104,12 +104,12 @@ is_dag <- function(cg, force_check = FALSE) {
 #' @export
 is_pdag <- function(cg, force_check = FALSE) {
   is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
   if (identical(cg@graph_class, "PDAG") && !force_check) {
     is_it <- TRUE
   } else {
     # if we can't be sure from the class, we check
-    is_it <- is_acyclic(cg, force_check)
-    is_it <- is_it && is_pdag_type_ptr(cg@ptr)
+    is_it <- is_pdag_type_ptr(cg@ptr)
   }
   is_it
 }
