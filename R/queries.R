@@ -189,11 +189,19 @@ neighbourhood <- neighbors
 #'
 #' @keywords internal
 .capture_nodes_expr <- function(expr, env = parent.frame()) {
-  if (.is_node_expr(expr)) {
-    .expand_nodes(expr)
-  } else {
-    eval(expr, env)
+  # Bare symbol → node name (ignore env)
+  if (is.symbol(expr)) {
+    return(.expand_nodes(expr))
   }
+  # Composite node expressions ignore env
+  if (is.call(expr)) {
+    fn <- as.character(expr[[1L]])
+    if (fn %in% c("+", "c", "(")) {
+      return(.expand_nodes(expr))
+    }
+  }
+  # Fallback: evaluate
+  eval(expr, env)
 }
 
 #' @title Resolve node names or indices to zero-based indices
