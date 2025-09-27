@@ -244,10 +244,10 @@ caugi_graph <- S7::new_class(
       `.state` = state,
       fingerprint = digest::digest(
         list(
-          nodes = nodes,
-          edges = edges,
-          simple = simple,
-          class = class
+          nodes = state$nodes,
+          edges = state$edges,
+          simple = state$simple,
+          class = state$class
         )
       )
     )
