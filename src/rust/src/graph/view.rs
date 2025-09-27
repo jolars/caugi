@@ -34,6 +34,7 @@ pub trait GraphApi {
     fn undirected_of(&self, _i: u32) -> Result<&[u32], String> {
         Err("undirected_of not implemented for this class".into())
     }
+    fn neighbors_of(&self, _i: u32) -> Result<&[u32], String> { Err("neighbors_of not implemented for this class".into()) }
     fn n(&self) -> u32;
 }
 
@@ -58,6 +59,13 @@ impl GraphApi for GraphView {
             GraphView::Pdag(g) => Ok(g.undirected_of(i)),
             GraphView::Raw(_) => Err("undirected_of not implemented for UNKNOWN class".into()),
         }
+    }
+    fn neighbors_of(&self, i: u32) -> Result<&[u32], String> { 
+        match self {
+            GraphView::Dag(g) => Ok(g.neighbors_of(i)),
+            GraphView::Pdag(g) => Ok(g.neighbors_of(i)),
+            GraphView::Raw(_) => Err("neighbors_of not implemented for UNKNOWN class".into()),
+        } 
     }
 
     fn n(&self) -> u32 {
