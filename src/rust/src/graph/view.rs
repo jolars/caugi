@@ -4,28 +4,7 @@
 use super::CaugiGraph;
 use super::dag::Dag;
 use super::pdag::Pdag;
-use std::str::FromStr;
 use std::sync::Arc;
-
-#[derive(Debug)]
-pub enum GraphKind {
-    Dag,
-    Pdag,
-    Unknown,
-} // ADMG, MAG, PAG to be added
-
-impl FromStr for GraphKind {
-    type Err = String;
-    fn from_str(s: &str) -> Result<Self, String> {
-        let original = s.to_string();
-        match s.to_ascii_uppercase().as_str() {
-            "DAG" => Ok(Self::Dag),
-            "PDAG" | "CPDAG" => Ok(Self::Pdag),
-            "" | "UNKNOWN" | "<UNKNOWN>" => Ok(Self::Unknown),
-            _ => Err(format!("unknown graph class '{original}'")),
-        }
-    }
-}
 
 impl GraphView {
     pub fn core(&self) -> &CaugiGraph {
@@ -95,18 +74,6 @@ mod tests {
     use super::*;
     use crate::edges::EdgeRegistry;
     use crate::graph::builder::GraphBuilder;
-
-    #[test]
-    fn graphkind_from_str_all_paths() {
-        assert!(matches!("DAG".parse::<GraphKind>().unwrap(), GraphKind::Dag));
-        assert!(matches!("pdag".parse::<GraphKind>().unwrap(), GraphKind::Pdag));
-        assert!(matches!("CPDAG".parse::<GraphKind>().unwrap(), GraphKind::Pdag));
-        assert!(matches!("".parse::<GraphKind>().unwrap(), GraphKind::Unknown));
-        assert!(matches!("unknown".parse::<GraphKind>().unwrap(), GraphKind::Unknown));
-        assert!(matches!("<UNKNOWN>".parse::<GraphKind>().unwrap(), GraphKind::Unknown));
-        let e = "weird".parse::<GraphKind>().unwrap_err();
-        assert_eq!(e, "unknown graph class 'weird'");
-    }
 
     #[test]
     fn graphview_dispatch_dag_pdag_raw() {
