@@ -44,5 +44,9 @@ graph_class_ptr <- function(g) .Call(wrap__graph_class_ptr, g)
 
 is_acyclic_ptr <- function(g) .Call(wrap__is_acyclic_ptr, g)
 
+is_dag_type_ptr <- function(g) .Call(wrap__is_dag_type_ptr, g)
+
+is_pdag_type_ptr <- function(g) .Call(wrap__is_pdag_type_ptr, g)
+
 
 # nolint end
