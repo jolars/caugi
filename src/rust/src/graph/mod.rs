@@ -14,7 +14,9 @@ pub mod builder;
 pub mod dag;
 pub mod pdag;
 pub mod view;
-pub use view::{GraphApi, GraphKind, GraphView};
+pub use view::{GraphApi, GraphView};
+pub mod graph_type;
+pub use graph_type::GraphType;
 
 #[derive(Debug, Clone)]
 pub struct RegistrySnapshot {
