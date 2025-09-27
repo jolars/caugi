@@ -8,6 +8,10 @@ is_dag(cg, force_check = FALSE)
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}
+
+\item{force_check}{Logical; if \code{TRUE}, the function will test if the graph is
+a DAG, if \code{FALSE} (default), it will look at the graph class and match
+it, if possible.}
 }
 \value{
 A logical value indicating whether the graph is a DAG.
