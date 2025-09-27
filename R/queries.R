@@ -2,6 +2,10 @@
 # ───────────────────────────────── Queries ────────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
+# ──────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────── Checks ────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
 #' @title Is it a `caugi` graph?
 #'
 #' @description Checks if the given object is a `caugi_graph`.
@@ -112,4 +116,127 @@ is_pdag <- function(cg, force_check = FALSE) {
     is_it <- is_pdag_type_ptr(cg@ptr)
   }
   is_it
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────── Getters ────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+#' @title Get parents of nodes in a `caugi_graph`
+#'
+#' @param cg A `caugi_graph` object.
+#' @param nodes A vector of node names or indices, a (vector of) unquoted
+#' node name(s), or an expression combining these with `+` and `c()`.
+#'
+#' @export
+parents <- function(cg, nodes) {
+  expr <- substitute(nodes)
+  .relations(cg, .capture_nodes_expr(expr, parent.frame()), parents_of_ptr)
+}
+
+#' @title Get children of nodes in a `caugi_graph`
+#'
+#' @param cg A `caugi_graph` object.
+#' @param nodes A vector of node names or indices, a (vector of) unquoted
+#' node name(s), or an expression combining these with `+` and `c()`.
+#'
+#' @export
+children <- function(cg, nodes) {
+  expr <- substitute(nodes)
+  .relations(cg, .capture_nodes_expr(expr, parent.frame()), children_of_ptr)
+}
+
+#' @rdname parents
+pa <- parents
+
+#' @rdname children
+ch <- children
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────── Getter helpers ────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+#' @title Capture nodes expression
+#'
+#' @description Capture and evaluate an expression representing nodes.
+#'
+#' @param expr An expression representing the target node(s).
+#' @param env The environment in which to evaluate the expression.
+#'
+#' @returns A character vector of target node names.
+#'
+#' @keywords internal
+.capture_nodes_expr <- function(expr, env = parent.frame()) {
+  if (.is_node_expr(expr)) {
+    .expand_nodes(expr)
+  } else {
+    eval(expr, env)
+  }
+}
+
+#' @title Resolve node names or indices to zero-based indices
+#'
+#' @description Convert node names or one-based indices to zero-based indices.
+#'
+#' @param cg A `caugi_graph` object.
+#' @param nodes A vector of node names or one-based indices.
+#'
+#' @returns An integer vector of zero-based node indices.
+#'
+#' @keywords internal
+.resolve_idx <- function(cg, nodes) {
+  if (is.numeric(nodes)) {
+    ix <- as.integer(nodes)
+    if (any(ix < 1L)) stop("Indices must be >= 1", call. = FALSE)
+    return(ix - 1L)
+  }
+  nm <- cg@nodes$name
+  if (is.null(nm)) stop("Node names unavailable on this graph.", call. = FALSE)
+  m <- match(as.character(nodes), nm)
+  if (anyNA(m)) {
+    bad <- nodes[is.na(m)]
+    stop("Unknown node(s): ", paste(bad, collapse = ", "), call. = FALSE)
+  }
+  m - 1L
+}
+
+#' @title Output object of getter queries
+#'
+#' @description Helper to format the output of getter queries.
+#'
+#' @param cg A `caugi_graph` object.
+#' @param idx0 A vector of zero-based node indices.
+#'
+#' @returns A tibble with a `name` column.
+#'
+#' @keywords internal
+.getter_output <- function(cg, idx0) {
+  id <- as.integer(idx0) + 1L
+  nm <- cg@nodes$name
+  tibble::tibble(name = if (is.null(nm)) as.character(id) else nm[id])
+}
+
+#' @title Get relations of nodes in a `caugi_graph`
+#'
+#' @description Helper to get relations (parents, children, etc.) of nodes.
+#'
+#' @param cg A `caugi_graph` object.
+#' @param nodes A vector of node names or indices, a (vector of) unquoted
+#' node name(s), or an expression combining these with `+` and `c()`.
+#' @param getter A function that takes a pointer to the graph and a zero-based
+#' node index, and returns a vector of zero-based indices of related nodes.
+#'
+#' @returns A tibble with a `name` column.
+#'
+#' @keywords internal
+.relations <- function(cg, nodes, getter) {
+  is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
+  idx0 <- .resolve_idx(cg, nodes)
+  rows <- lapply(idx0, function(i0) .getter_output(cg, getter(cg@ptr, i0)))
+  if (length(rows) == 1L) {
+    rows[[1]]
+  } else {
+    do.call(rbind, rows)
+  }
 }
