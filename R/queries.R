@@ -134,6 +134,9 @@ parents <- function(cg, nodes) {
   .relations(cg, .capture_nodes_expr(expr, parent.frame()), parents_of_ptr)
 }
 
+#' @rdname parents
+pa <- parents
+
 #' @title Get children of nodes in a `caugi_graph`
 #'
 #' @param cg A `caugi_graph` object.
@@ -146,11 +149,30 @@ children <- function(cg, nodes) {
   .relations(cg, .capture_nodes_expr(expr, parent.frame()), children_of_ptr)
 }
 
-#' @rdname parents
-pa <- parents
-
 #' @rdname children
 ch <- children
+
+#' @title Get neighbors of nodes in a `caugi_graph`
+#'
+#' @param cg A `caugi_graph` object.
+#' @param nodes A vector of node names or indices, a (vector of) unquoted
+#' node name(s), or an expression combining these with `+` and `c()`.
+#'
+#' @export
+neighbors <- function(cg, nodes) {
+  expr <- substitute(nodes)
+  .relations(cg, .capture_nodes_expr(expr, parent.frame()), neighbors_of_ptr)
+}
+
+#' @rdname neighbors
+neighbours <- neighbors
+#' @rdname neighbors
+nb <- neighbors
+#' @rdname neighbors
+neighborhood <- neighbors
+#' @rdname neighbors
+neighbourhood <- neighbors
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # ────────────────────────────── Getter helpers ────────────────────────────────
