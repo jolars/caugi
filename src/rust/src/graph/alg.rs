@@ -3,6 +3,7 @@
 
 use crate::edges::EdgeClass;
 use crate::graph::CaugiGraph;
+use crate::graph::graph_type::GraphType;
 
 /// Returns true iff the directed part of the graph is acyclic.
 /// Ignores undirected/partial/bidirected edges
@@ -41,6 +42,33 @@ pub fn directed_part_is_acyclic(core: &CaugiGraph) -> bool {
         }
     }
     seen == n
+}
+
+pub fn check_edge_classes(graph_type: &GraphType, core: &CaugiGraph) -> Result<(), String> {
+    let (name, allowed, _) = graph_type.spec();
+    for i in 0..core.n() {
+        for k in core.row_range(i) {
+            let cls = core.registry.specs[core.etype[k] as usize].class;
+            if !allowed.iter().any(|&a| a == cls) {
+                return Err(format!("Graph of type {} cannot contain edges of type {:?}", name, cls));
+            }
+        }
+    }
+    Ok(())
+}
+
+pub fn validate_graph_type(graph_type: &GraphType, core: &CaugiGraph) -> Result<(), String> {
+    let (name, _, require_acyclic) = graph_type.spec();
+    // Check edge classes
+    check_edge_classes(&graph_type, core)?;
+
+    // Check acyclicity if required
+    if require_acyclic {
+        if !directed_part_is_acyclic(core) {
+            return Err(format!("Graph of type {} cannot contain directed cycle", name));
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]
