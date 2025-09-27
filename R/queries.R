@@ -220,7 +220,10 @@ neighbourhood <- neighbors
     return(ix - 1L)
   }
   nm <- cg@nodes$name
-  if (is.null(nm)) stop("Node names unavailable on this graph.", call. = FALSE)
+  # extra precaution
+  if (is.null(nm)) {
+    stop("Node names unavailable on this graph.", call. = FALSE) # nocov
+  }
   m <- match(as.character(nodes), nm)
   if (anyNA(m)) {
     bad <- nodes[is.na(m)]
