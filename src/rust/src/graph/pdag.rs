@@ -146,7 +146,7 @@ impl Pdag {
         let (_, pm, um, _) = self.bounds(i);
         &self.neighbourhoods[pm..um]
     }
-    
+
     #[inline]
     pub fn neighbors_of(&self, i: u32) -> &[u32] {
         let i = i as usize;
@@ -155,7 +155,9 @@ impl Pdag {
         &self.neighbourhoods[s..e]
     }
 
-    pub fn core_ref(&self) -> &CaugiGraph { &self.core }
+    pub fn core_ref(&self) -> &CaugiGraph {
+        &self.core
+    }
 }
 
 #[cfg(test)]
@@ -165,7 +167,7 @@ mod tests {
     use crate::graph::builder::GraphBuilder;
 
     #[test]
-    fn pdag_parent_child_undirected() {
+    fn pdag_relations() {
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
         let cdir = reg.code_of("-->").unwrap();
@@ -181,6 +183,9 @@ mod tests {
         u.sort_unstable();
         assert_eq!(u, vec![2]);
         assert_eq!(g.n(), 3);
+        assert_eq!(g.neighbors_of(0), vec![1]);
+        assert_eq!(g.neighbors_of(1), vec![0, 2]);
+        assert_eq!(g.neighbors_of(2), vec![1]);
 
         // get core
         let core = g.core_ref();

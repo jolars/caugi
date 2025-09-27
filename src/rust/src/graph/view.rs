@@ -34,7 +34,9 @@ pub trait GraphApi {
     fn undirected_of(&self, _i: u32) -> Result<&[u32], String> {
         Err("undirected_of not implemented for this class".into())
     }
-    fn neighbors_of(&self, _i: u32) -> Result<&[u32], String> { Err("neighbors_of not implemented for this class".into()) }
+    fn neighbors_of(&self, _i: u32) -> Result<&[u32], String> {
+        Err("neighbors_of not implemented for this class".into())
+    }
     fn n(&self) -> u32;
 }
 
@@ -60,12 +62,12 @@ impl GraphApi for GraphView {
             GraphView::Raw(_) => Err("undirected_of not implemented for UNKNOWN class".into()),
         }
     }
-    fn neighbors_of(&self, i: u32) -> Result<&[u32], String> { 
+    fn neighbors_of(&self, i: u32) -> Result<&[u32], String> {
         match self {
             GraphView::Dag(g) => Ok(g.neighbors_of(i)),
             GraphView::Pdag(g) => Ok(g.neighbors_of(i)),
             GraphView::Raw(_) => Err("neighbors_of not implemented for UNKNOWN class".into()),
-        } 
+        }
     }
 
     fn n(&self) -> u32 {
@@ -100,6 +102,7 @@ mod tests {
         assert_eq!(v_dag.n(), 3);
         assert_eq!(v_dag.parents_of(1).unwrap(), &[0]);
         assert_eq!(v_dag.children_of(0).unwrap(), &[1, 2]);
+        assert_eq!(v_dag.neighbors_of(0).unwrap(), &[1, 2]);
         let e = v_dag.undirected_of(0).unwrap_err();
         assert_eq!(e, "undirected_of not defined for Dag");
         let v_dag_core = v_dag.core();
@@ -116,6 +119,7 @@ mod tests {
         assert_eq!(v_pdag.parents_of(1).unwrap(), &[0]);
         assert_eq!(v_pdag.children_of(0).unwrap(), &[1]);
         assert_eq!(v_pdag.undirected_of(1).unwrap(), &[2]);
+        assert_eq!(v_pdag.neighbors_of(1).unwrap(), &[0, 2]);
         let v_pdag_core = v_pdag.core();
         assert_eq!(v_pdag_core.n(), 3);
 
@@ -128,19 +132,41 @@ mod tests {
         assert_eq!(e1, "parents_of not implemented for UNKNOWN class");
         assert_eq!(e2, "children_of not implemented for UNKNOWN class");
         assert_eq!(e3, "undirected_of not implemented for UNKNOWN class");
+        assert_eq!(
+            v_raw.neighbors_of(0).unwrap_err(),
+            "neighbors_of not implemented for UNKNOWN class"
+        );
+
         let v_raw_core = v_raw.core();
         assert_eq!(v_raw_core.n(), 3);
     }
-   
+
     #[test]
     fn graphapi_default_methods_are_hit() {
         struct Dummy(u32);
-        impl GraphApi for Dummy { fn n(&self) -> u32 { self.0 } }
+        impl GraphApi for Dummy {
+            fn n(&self) -> u32 {
+                self.0
+            }
+        }
 
         let d = Dummy(5);
         assert_eq!(d.n(), 5);
-        assert_eq!(d.parents_of(0).unwrap_err(), "parents_of not implemented for this class");
-        assert_eq!(d.children_of(0).unwrap_err(), "children_of not implemented for this class");
-        assert_eq!(d.undirected_of(0).unwrap_err(), "undirected_of not implemented for this class");
+        assert_eq!(
+            d.parents_of(0).unwrap_err(),
+            "parents_of not implemented for this class"
+        );
+        assert_eq!(
+            d.children_of(0).unwrap_err(),
+            "children_of not implemented for this class"
+        );
+        assert_eq!(
+            d.undirected_of(0).unwrap_err(),
+            "undirected_of not implemented for this class"
+        );
+        assert_eq!(
+            d.neighbors_of(0).unwrap_err(),
+            "neighbors_of not implemented for this class"
+        );
     }
 }

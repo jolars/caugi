@@ -116,7 +116,7 @@ impl Dag {
         let e = self.node_edge_ranges[i as usize + 1];
         &self.neighbourhoods[cstart..e]
     }
-    
+
     #[inline]
     pub fn neighbors_of(&self, i: u32) -> &[u32] {
         let i = i as usize;
@@ -125,7 +125,9 @@ impl Dag {
         &self.neighbourhoods[s..e]
     }
 
-     pub fn core_ref(&self) -> &CaugiGraph { &self.core }
+    pub fn core_ref(&self) -> &CaugiGraph {
+        &self.core
+    }
 }
 
 #[cfg(test)]
@@ -135,7 +137,7 @@ mod tests {
     use crate::graph::builder::GraphBuilder;
 
     #[test]
-    fn dag_parents_children() {
+    fn dag_relations() {
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
         let cdir = reg.code_of("-->").unwrap();
@@ -151,6 +153,10 @@ mod tests {
         assert_eq!(dag.parents_of(1), vec![0]);
         assert!(dag.children_of(1).is_empty());
         assert_eq!(dag.children_of(3), vec![0]);
+        assert_eq!(dag.neighbors_of(0), vec![3, 1, 2]);
+        assert_eq!(dag.neighbors_of(1), vec![0]);
+        assert_eq!(dag.neighbors_of(2), vec![0]);
+        assert_eq!(dag.neighbors_of(3), vec![0]);
         assert_eq!(dag.n(), 4);
 
         // get core
