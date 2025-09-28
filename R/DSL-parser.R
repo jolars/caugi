@@ -112,8 +112,12 @@
 #' @returns A character vector of node names.
 #'
 #' @keywords internal
-.expand_nodes <- function(expr) {
+.expand_nodes <- function(expr, env = parent.frame()) {
   if (is.symbol(expr)) {
+    val <- tryCatch(eval(expr, env), error = function(e) NULL)
+    if (is.character(val) || is.numeric(val)) {
+      return(as.character(val))
+    }
     return(deparse1(expr))
   }
   if (is.character(expr) && length(expr) == 1L) {
@@ -122,21 +126,18 @@
   if (is.numeric(expr) && length(expr) == 1L) {
     return(as.character(expr))
   }
-
   if (is.call(expr)) {
     fn <- as.character(expr[[1L]])
     if (fn == "(") {
-      return(.expand_nodes(expr[[2L]]))
+      return(.expand_nodes(expr[[2L]], env))
     }
     if (fn == "+") {
-      return(c(.expand_nodes(expr[[2L]]), .expand_nodes(expr[[3L]])))
+      return(c(.expand_nodes(expr[[2L]], env), .expand_nodes(expr[[3L]], env)))
     }
     if (fn == "c") {
-      args <- as.list(expr)[-1L]
-      return(unlist(lapply(args, .expand_nodes), use.names = FALSE))
+      return(unlist(lapply(as.list(expr)[-1L], .expand_nodes, env = env), use.names = FALSE))
     }
   }
-
   stop("Unsupported node expression: ", deparse1(expr), call. = FALSE)
 }
 
