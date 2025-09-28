@@ -5,15 +5,17 @@
 \alias{ch}
 \title{Get children of nodes in a \code{caugi_graph}}
 \usage{
-children(cg, nodes)
+children(cg, nodes = NULL, index = NULL)
 
-ch(cg, nodes)
+ch(cg, nodes = NULL, index = NULL)
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}
 
-\item{nodes}{A vector of node names or indices, a (vector of) unquoted
-node name(s), or an expression combining these with \code{+} and \code{c()}.}
+\item{nodes}{A vector of node names, a vector of unquoted
+node names, or an expression combining these with \code{+} and \code{c()}.}
+
+\item{index}{A vector of node indexes.}
 }
 \description{
 Get children of nodes in a \code{caugi_graph}

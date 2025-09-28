@@ -8,21 +8,23 @@
 \alias{neighbourhood}
 \title{Get neighbors of nodes in a \code{caugi_graph}}
 \usage{
-neighbors(cg, nodes)
+neighbors(cg, nodes = NULL, index = NULL)
 
-neighbours(cg, nodes)
+neighbours(cg, nodes = NULL, index = NULL)
 
-nb(cg, nodes)
+nb(cg, nodes = NULL, index = NULL)
 
-neighborhood(cg, nodes)
+neighborhood(cg, nodes = NULL, index = NULL)
 
-neighbourhood(cg, nodes)
+neighbourhood(cg, nodes = NULL, index = NULL)
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}
 
-\item{nodes}{A vector of node names or indices, a (vector of) unquoted
-node name(s), or an expression combining these with \code{+} and \code{c()}.}
+\item{nodes}{A vector of node names, a vector of unquoted
+node names, or an expression combining these with \code{+} and \code{c()}.}
+
+\item{index}{A vector of node indexes.}
 }
 \description{
 Get neighbors of nodes in a \code{caugi_graph}

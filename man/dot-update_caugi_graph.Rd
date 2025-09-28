@@ -16,7 +16,8 @@
 
 \item{nodes}{A tibble with column \code{name} for node names to add/remove.}
 
-\item{edges}{A tibble with columns \code{from}, \code{edge}, \code{to} for edges to add/remove.}
+\item{edges}{A tibble with columns \code{from}, \code{edge}, \code{to} for edges to
+add/remove.}
 
 \item{action}{One of \code{"add"} or \code{"remove"}.}
 }
@@ -24,6 +25,7 @@
 The updated \code{caugi_graph} object.
 }
 \description{
-Internal helper to add or remove nodes/edges and mark graph as not built.
+Internal helper to add or remove nodes/edges and mark graph as
+not built.
 }
 \keyword{internal}

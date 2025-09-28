@@ -4,7 +4,7 @@
 \alias{.expand_nodes}
 \title{Expand node expressions}
 \usage{
-.expand_nodes(expr)
+.expand_nodes(expr, env = parent.frame())
 }
 \arguments{
 \item{expr}{An expression representing nodes.}

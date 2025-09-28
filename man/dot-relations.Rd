@@ -4,13 +4,14 @@
 \alias{.relations}
 \title{Get relations of nodes in a \code{caugi_graph}}
 \usage{
-.relations(cg, nodes, getter)
+.relations(cg, nodes_expr, index, getter)
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}
 
-\item{nodes}{A vector of node names or indices, a (vector of) unquoted
-node name(s), or an expression combining these with \code{+} and \code{c()}.}
+\item{nodes_expr}{A node expression from .expand_nodes.}
+
+\item{index}{A vector of node indices.}
 
 \item{getter}{A function that takes a pointer to the graph and a zero-based
 node index, and returns a vector of zero-based indices of related nodes.}
