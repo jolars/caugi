@@ -95,8 +95,9 @@ test_that("parents returns expected nodes for names, indices, and expr", {
   cg <- caugi_graph(A %-->% B, B %-->% C, A %---% D, D %-->% B, class = "PDAG")
   # by name
   expect_identical(sort(parents(cg, "B")$name), c("A", "D"))
-  # by index
-  expect_identical(parents(cg, 2)$name, c("A", "D"))
+  # by unquoted expression
+  expect_identical(parents(cg, B)$name, c("A", "D"))
+
   # by unquoted expression
   expect_identical(sort(parents(cg, A + B)$name), c("A", "D"))
   # vector of names
@@ -109,7 +110,7 @@ test_that("children returns expected nodes", {
   expect_identical(children(cg, "A")$name, "B")
   expect_identical(sort(children(cg, c("B", "D"))$name), c("C", "E"))
   # indices
-  expect_identical(children(cg, 1)$name, "B")
+  expect_identical(children(cg, index = 1)$name, "B")
 })
 
 test_that("neighbors returns undirected and directed adjacency", {
@@ -118,6 +119,23 @@ test_that("neighbors returns undirected and directed adjacency", {
   expect_identical(sort(neighbors(cg, "B")$name), c("A", "C", "D"))
   # C has neighbors B and E
   expect_identical(sort(neighbors(cg, "C")$name), c("B", "E"))
+})
+
+test_that("queries match with nodes and indexes", {
+  cg <- caugi_graph(A %-->% B, B %-->% C, B %---% D, C %---% E, class = "PDAG")
+  expect_identical(ch(cg, A), ch(cg, index = 1))
+  expect_identical(pa(cg, B), pa(cg, index = 2))
+  expect_identical(nb(cg, C), nb(cg, index = 3))
+})
+
+test_that("queries fail with bad input", {
+  cg <- caugi_graph(A %-->% B, B %-->% C, B %---% D, C %---% E, class = "PDAG")
+  expect_error(ch(cg, A, index = 1), "Supply either `nodes` or `index`")
+  expect_error(ch(cg), "Supply one of `nodes` or `index`")
+  expect_error(pa(cg, A, index = 1), "Supply either `nodes` or `index`")
+  expect_error(pa(cg), "Supply one of `nodes` or `index`")
+  expect_error(nb(cg, A, index = 1), "Supply either `nodes` or `index`")
+  expect_error(nb(cg), "Supply one of `nodes` or `index`")
 })
 
 test_that("getter queries handle missing relations and duplicates", {
@@ -134,7 +152,8 @@ test_that("getter queries handle missing relations and duplicates", {
 test_that("getter queries error on bad nodes or indices", {
   cg <- caugi_graph(A %-->% B, B %-->% C, class = "DAG")
   expect_error(parents(cg, "Z"), "Unknown node")
-  expect_error(children(cg, 0), ">= 1")
+  expect_error(children(cg, index = 0), "out of bounds")
+  expect_error(children(cg, index = 100), "out of bounds")
 })
 
 test_that("aliases pa/ch/nb/nbhd/neighbours route correctly", {
@@ -164,11 +183,12 @@ test_that(".resolve_idx maps names and 1-based indices to 0-based", {
   # names
   expect_identical(caugi:::.resolve_idx(cg, c("A", "C")), c(0L, 2L))
   # numeric 1-based
-  expect_identical(caugi:::.resolve_idx(cg, c(1, 3)), c(0L, 2L))
+  expect_identical(caugi:::.resolve_idx_from_index(cg, c(1, 3)), c(0L, 2L))
   # mixed numeric as integer
-  expect_identical(caugi:::.resolve_idx(cg, 2L), 1L)
+  expect_identical(caugi:::.resolve_idx_from_index(cg, 2L), 1L)
   # bad index
-  expect_error(caugi:::.resolve_idx(cg, 0), ">= 1")
+  expect_error(caugi:::.resolve_idx_from_index(cg, 0), "out of bounds")
+  expect_error(caugi:::.resolve_idx_from_index(cg, "A"), "must be numeric")
   # unknown names
   expect_error(caugi:::.resolve_idx(cg, c("A", "Z")), "Unknown node\\(s\\)")
 })
@@ -179,30 +199,6 @@ test_that(".getter_output returns tibble with name column", {
   expect_s3_class(out, "tbl_df")
   expect_named(out, "name")
   expect_identical(out$name, c("A", "C"))
-})
-
-test_that(".capture_nodes_expr accepts unquoted, vectors, and expressions", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %---% D, class = "PDAG")
-  env <- environment()
-
-  # unquoted symbol
-  expr1 <- substitute(B)
-  got1 <- caugi:::.capture_nodes_expr(expr1, env)
-  expect_identical(got1, "B")
-
-  # plus expression
-  expr2 <- substitute(A + C)
-  got2 <- caugi:::.capture_nodes_expr(expr2, env)
-  expect_identical(sort(got2), c("A", "C"))
-
-  # c() expression
-  expr3 <- substitute(c(A, D))
-  got3 <- caugi:::.capture_nodes_expr(expr3, env)
-  expect_identical(sort(got3), c("A", "D"))
-
-  # direct value passthrough
-  got4 <- caugi:::.capture_nodes_expr(quote(letters[1:2]), env)
-  expect_identical(got4, c("a", "b"))
 })
 
 test_that(".relations builds, resolves, and binds rows when multiple", {
@@ -217,10 +213,25 @@ test_that(".relations builds, resolves, and binds rows when multiple", {
     match(res$name, cg@nodes$name) - 1L
   }
 
-  out_single <- caugi:::.relations(cg, "B", parent_getter)
+  out_single <- caugi:::.relations(cg, "B", NULL, parent_getter)
   expect_identical(out_single$name, "A")
 
-  out_multi <- caugi:::.relations(cg, c("B", "C"), parent_getter)
+  out_multi <- caugi:::.relations(cg, c("B", "C"), NULL, parent_getter)
   expect_s3_class(out_multi, "tbl_df")
   expect_true(nrow(out_multi) >= 1L)
+})
+
+test_that(".relations fails with bad input", {
+  cg <- caugi_graph(A %-->% B, B %-->% C, class = "DAG")
+
+  parent_getter <- function(ptr, i0) {
+    nm <- cg@nodes$name[i0 + 1L]
+    res <- parents(cg, nm)
+    match(res$name, cg@nodes$name) - 1L
+  }
+
+  expect_error(caugi:::.relations(cg, NULL, NULL, parent_getter), "Supply one of `nodes` or `index`")
+  expect_error(caugi:::.relations(cg, "A", 1L, parent_getter), "Supply either `nodes` or `index`")
+  expect_error(caugi:::.relations(cg, "Z", NULL, parent_getter), "Unknown node\\(s\\)")
+  expect_error(caugi:::.relations(cg, NULL, 0L, parent_getter), "out of bounds")
 })
