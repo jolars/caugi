@@ -1,8 +1,8 @@
 ---
-title: "Get Starteded with `caugi`"
+title: "Introduction to `caugi`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{my-vignette}
+  %\VignetteIndexEntry{Introduction_to_caugi}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -16,15 +16,27 @@ knitr::opts_chunk$set(
 
 
 
-```{r}
+```{r, eval=FALSE}
 # dev version from GitHub
-install.packages("pak")         # if needed
+install.packages("pak", 
+                 repos = 
+                   sprintf(
+                     "https://r-lib.github.io/p/pak/stable/%s/%s/%s", 
+                     .Platform$pkgType, 
+                     R.Version()$os, 
+                     R.Version()$arch
+                           )
+                 )
 pak::pak("frederikfabriciusbjerre/caugi")
 
 # ... or wait for the first CRAN release
 # install.packages("caugi")
 ```
 
+```{r}
+# load the package
+library(caugi)
+```
 
 ## What is `caugi`?
 
@@ -113,7 +125,7 @@ cg <- caugi_graph(
   class = "PDAG"
 )
 pa(cg, D)
-ch(cg, 3)
+ch(cg, index = 3)
 nb(cg, c(B, C))
 ```
 
@@ -134,10 +146,8 @@ You can add, remove, or set edges and nodes. Changes are applied on the next que
 ```{r}
 cg <- caugi_graph(
   A %-->% B + C,
-  B %-->% D,
+  B %-->% D
 )
-
-# add edges via expressions or vectors
 cg <- add_edges(cg, E %-->% F)
 ```
 
@@ -153,53 +163,12 @@ cg <- add_edges(cg,
 
 
 
-## Errors and safety
+## Safety
 
-* Unknown nodes trigger clear errors.
-* For `simple = TRUE`, parallel edges or self‑loops are rejected.
-* Internal R–Rust consistency is validated when built.
 
-## Reproducible walkthrough
 
-```r
-library(caugi)
+## Session info
 
-cg <- caugi_graph(
-  A %-->% B + C,
-  B %-->% D,
-  C %-->% D,
-  E %---% F,
-  class = "DAG"
-)
-
-# basic facts
-length(cg)
-print(cg)
-pa(cg, D)
-ch(cg, B + C)
-nb(cg, E)
-
-# mutate
-cg <- add_edges(cg, D %-->% G)
-cg <- set_edges(cg, E %<->% F)
-cg <- remove_nodes(cg, C)
-
-# force build and check
-cg <- build(cg)
-is_dag(cg, force_check = TRUE)
-
-# subgraph
-sub <- subgraph(cg, A + B + D + G)
-print(sub)
-```
-
-## Next steps
-
-* Register custom edges with `register_caugi_edge()`.
-* Use higher‑level algorithms as they land in future releases.
-
-Session info for reproducibility:
-
-```r
+```{r}
 sessionInfo()
 ```
