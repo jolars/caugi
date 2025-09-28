@@ -252,3 +252,17 @@ test_that("building PDAG with bidirected edges results in error", {
     cg |> add_edge(B %o->% C) |> build()
   )
 })
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────── Errors ────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("caugi_graph errors with trailing commas", {
+  expect_error(
+    caugi_graph(
+      A %-->% B,
+      B %---% C,
+    ),
+    "Argument 3 is missing"
+  )
+})
