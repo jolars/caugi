@@ -152,6 +152,7 @@ parents <- function(cg, nodes = NULL, index = NULL) {
 }
 
 #' @rdname parents
+#' @export
 pa <- parents
 
 #' @title Get children of nodes in a `caugi_graph`
@@ -180,6 +181,7 @@ children <- function(cg, nodes = NULL, index = NULL) {
 }
 
 #' @rdname children
+#' @export
 ch <- children
 
 #' @title Get neighbors of nodes in a `caugi_graph`
@@ -208,12 +210,16 @@ neighbors <- function(cg, nodes = NULL, index = NULL) {
 }
 
 #' @rdname neighbors
+#' @export
 neighbours <- neighbors
 #' @rdname neighbors
+#' @export
 nb <- neighbors
 #' @rdname neighbors
+#' @export
 neighborhood <- neighbors
 #' @rdname neighbors
+#' @export
 neighbourhood <- neighbors
 
 

@@ -277,7 +277,12 @@
 .collect_edges_nodes <- function(calls) {
   units <- list()
   declared <- character()
+  i <- 0
   for (ex in calls) {
+    i <- i + 1L
+    if (missing(ex)) {
+      stop("Argument ", i, " is missing in `caugi_graph`.", call. = FALSE)
+    }
     if (.contains_edge(ex)) {
       units <- c(units, .parse_edge_arg(ex))
     } else if (.is_node_expr(ex)) {
