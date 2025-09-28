@@ -2,7 +2,7 @@
 title: "Introduction to `caugi`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Introduction_to_caugi}
+  %\VignetteIndexEntry{Introduction to caugi}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -60,7 +60,9 @@ So why `caugi`? `caugi` makes it easy to define, query, and modify causal graphs
 
 ## The basic object: `caugi_graph`
 
-Create graphs from edge expressions and optional nodes. The graph can be **simple** (no parallel edges or self‑loops) and can carry a **class** label: `"Unknown"`, `"DAG"`, or `"PDAG"`. We plan on supporting several other causal graph types in future releases.
+A `caugi_graph` is the bread and butter of `caugi`. It is easy to create, query, and modify. 
+
+You can create simple graphs as well as a large number of predefined graph classes. Currently, we only support `"Unknown"`, `"DAG"`, or `"PDAG"`. We plan on supporting several other causal graph types in future releases, such as `"PAG"`, `"CPDAG"`, `"MAG"`, `"SWIG"`, and `"ADMG"`.
 
 ```{r}
 # a tiny DAG
@@ -74,7 +76,7 @@ cg <- caugi_graph(
 )
 ```
 
-### Supported edge operators
+### Edge operators
 
 * `%-->%` directed 
 * `%---%` undirected
@@ -83,7 +85,22 @@ cg <- caugi_graph(
 * `%o--%` partially undirected
 * `%o-o%` partial
 
-You can register more types with `register_caugi_edge()`.
+You can register more types with `register_caugi_edge()`, if you find that you need a more expressive set of edges. For example, if you want to represent a directed edge in the reverse direction, you can do so like this:
+
+```{r}
+register_caugi_edge(
+  glyph = "<--",
+  tail_mark = "arrow",
+  head_mark = "tail",
+  class = "directed",
+  symmetric = FALSE,
+  flags = c("TRAVERSABLE_WHEN_CONDITIONED")
+)
+
+caugi_graph(A %-->% B, B %<--% C, class = "PDAG")
+```
+
+We expect this feature to be needing further polishing in future releases, and we would love your input if you use this feature!
 
 ### (Lazy) building and the Rust backend
 
@@ -91,7 +108,7 @@ You can register more types with `register_caugi_edge()`.
 
 To accommodate for the cost of mutations, `caugi` graphs are built lazily. This means that when you mutate the graph, for example by adding edges to it, the graph edits are stored in R, but not in Rust. When you then need to query the graphs, the graph will rebuild itself in Rust, and the query will be executed on the newly built graph. You can also use the `build(cg)` function to force building the graph in Rust at any time.
 
-## Nodes, grouping, and `+`
+### Nodes, grouping, and `+`
 
 Use `+` to fan out from one side, and `c(...)` or parentheses to group.
 
@@ -161,11 +178,24 @@ cg <- add_edges(cg,
                 )
 ```
 
+Besides `add_edges`, you can also use `remove_edges()`, `set_edges()`, `add_nodes()`, `remove_nodes()`, `set_nodes()`, and `subgraph()`.
 
+## S7 and Safety
 
-## Safety
+`caugi` utilizes the S7 object system to ensure mutation safety. This means that it is meant to be hard for you to mutate the graphs without using the provided functions. This is to ensure that the graphs are always valid, and that you do not accidentally create situations where queries are invalid or the graph itself is invalid. 
 
+The S7 object system is not widely used yet, but we found that the S3 object system was too lenient, and it was hard for us to ensure that graphs and queries were always valid. We found that S4 was too heavy and cumbersome to work with. 
 
+## Future work
+
+We plan on adding the following features to `caugi` in the future:
+
+* Graph classes: PAG, CPDAG, MAG, SWIG, ADMG,
+* Adjustment sets,
+* Structural Hamming Distance,
+* Adjustment Identification Distance,
+* d- and m-separation queries,
+* ...and much more! 
 
 ## Session info
 
