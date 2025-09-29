@@ -273,6 +273,63 @@ neighborhood <- neighbors
 #' @export
 neighbourhood <- neighbors
 
+#' @title Get ancestors of nodes in a `caugi_graph`
+#'
+#' @param cg A `caugi_graph` object.
+#' @param nodes A vector of node names, a vector of unquoted
+#' node names, or an expression combining these with `+` and `c()`.
+#' @param index A vector of node indexes.
+#'
+#' @export
+ancestors <- function(cg, nodes = NULL, index = NULL) {
+  nodes_supplied <- !missing(nodes)
+  index_supplied <- !missing(index) && !is.null(index)
+  if (nodes_supplied && index_supplied) {
+    stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
+  }
+  if (index_supplied) {
+    return(.relations(cg, NULL, index, ancestors_of_ptr))
+  }
+  if (!nodes_supplied) {
+    stop("Supply one of `nodes` or `index`.", call. = FALSE)
+  }
+  expr <- substitute(nodes)
+  env <- parent.frame()
+  .relations(cg, .expand_nodes(expr, env), NULL, ancestors_of_ptr)
+}
+
+#' @rdname ancestors
+#' @export
+an <- ancestors
+
+#' @title Get descendants of nodes in a `caugi_graph`
+#'
+#' @param cg A `caugi_graph` object.
+#' @param nodes A vector of node names, a vector of unquoted
+#' node names, or an expression combining these with `+` and `c()`.
+#' @param index A vector of node indexes.
+#'
+#' @export
+descendants <- function(cg, nodes = NULL, index = NULL) {
+  nodes_supplied <- !missing(nodes)
+  index_supplied <- !missing(index) && !is.null(index)
+  if (nodes_supplied && index_supplied) {
+    stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
+  }
+  if (index_supplied) {
+    return(.relations(cg, NULL, index, descendants_of_ptr))
+  }
+  if (!nodes_supplied) {
+    stop("Supply one of `nodes` or `index`.", call. = FALSE)
+  }
+  expr <- substitute(nodes)
+  env <- parent.frame()
+  .relations(cg, .expand_nodes(expr, env), NULL, descendants_of_ptr)
+}
+
+#' @rdname descendants
+#' @export
+de <- descendants
 
 # ──────────────────────────────────────────────────────────────────────────────
 # ────────────────────────────── Getter helpers ────────────────────────────────
