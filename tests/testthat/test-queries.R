@@ -221,6 +221,50 @@ test_that("an and de works", {
   expect_equal(nrow(de(cg, "A")), 0L)
 })
 
+test_that("markov_blanket works on DAGs (parents, children, spouses)", {
+  cg <- caugi_graph(
+    A %-->% B + C,
+    D %-->% B,
+    B %-->% E,
+    F %-->% E,
+    class = "DAG"
+  )
+
+  mb_A <- markov_blanket(cg, "A")
+  expect_setequal(mb_A$name, c("B", "C", "D"))
+
+  mb_B <- markov_blanket(cg, "B")
+  expect_setequal(mb_B$name, c("A", "D", "E", "F"))
+
+  # unquoted and vector inputs
+  mb_AC <- markov_blanket(cg, A + C)
+  expect_setequal(mb_AC$name, c("A", "B", "C", "D"))
+
+  # index input
+  mb_idx <- markov_blanket(cg, index = 1)
+  expect_setequal(mb_idx$name, c("B", "C", "D"))
+})
+
+test_that("markov_blanket includes undirected neighbors in PDAGs", {
+  cg <- caugi_graph(
+    A %-->% B,
+    B %---% C,
+    D %-->% B,
+    class = "PDAG"
+  )
+  mb_B <- markov_blanket(cg, B)
+  expect_setequal(mb_B$name, c("A", "C", "D"))
+})
+
+test_that("markov_blanket argument validation", {
+  cg <- caugi_graph(A %-->% B)
+  expect_error(markov_blanket(cg), "Supply one of `nodes` or `index`")
+  expect_error(
+    markov_blanket(cg, nodes = "A", index = 1),
+    "either `nodes` or `index`, not both"
+  )
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ────────────────────────────── Getter helpers ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
