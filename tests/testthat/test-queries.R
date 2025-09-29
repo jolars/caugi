@@ -136,6 +136,12 @@ test_that("queries fail with bad input", {
   expect_error(pa(cg), "Supply one of `nodes` or `index`")
   expect_error(nb(cg, A, index = 1), "Supply either `nodes` or `index`")
   expect_error(nb(cg), "Supply one of `nodes` or `index`")
+  expect_error(an(cg, "Z"), "Unknown node")
+  expect_error(an(cg, A, index = 1), "Supply either `nodes` or `index`")
+  expect_error(an(cg), "Supply one of `nodes` or `index`")
+  expect_error(de(cg, index = 0), "out of bounds")
+  expect_error(de(cg, A, index = 1), "Supply either `nodes` or `index`")
+  expect_error(de(cg), "Supply one of `nodes` or `index`")
 })
 
 test_that("getter queries handle missing relations and duplicates", {
@@ -194,6 +200,25 @@ test_that("nodes and edges getters work", {
 
   expect_equal(nrow(nodes(cg)), 0L)
   expect_equal(nrow(edges(cg)), 0L)
+})
+
+test_that("an and de works", {
+  cg <- caugi_graph(A %-->% B, B %-->% C, C %---% D, class = "PDAG")
+  expect_identical(an(cg, "C")$name, c("A", "B"))
+  expect_identical(de(cg, "A")$name, c("B", "C"))
+  expect_identical(sort(an(cg, c("C", "D"))$name), c("A", "B"))
+  expect_identical(sort(de(cg, c("A", "D"))$name), c("B", "C"))
+
+  # test index
+  expect_identical(an(cg, index = 3)$name, c("A", "B"))
+  expect_identical(de(cg, index = 1)$name, c("B", "C"))
+  expect_identical(sort(an(cg, index = c(3, 4))$name), c("A", "B"))
+  expect_identical(sort(de(cg, index = c(1, 4))$name), c("B", "C"))
+
+  cg <- caugi_graph(A, B, class = "DAG")
+
+  expect_equal(nrow(an(cg, "A")), 0L)
+  expect_equal(nrow(de(cg, "A")), 0L)
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
