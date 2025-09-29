@@ -122,6 +122,44 @@ is_pdag <- function(cg, force_check = FALSE) {
 # ───────────────────────────────── Getters ────────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
+#' @title Get nodes or edges of a `caugi_graph`
+#'
+#' @description
+#' Get nodes or edges of a `caugi_graph`.
+#'
+#' @param cg A `caugi_graph` object.
+#'
+#' @returns __nodes__: A tibble with a `name` column.
+#' __edges__: A tibble with `from`, `edge`, and `to` columns.
+#'
+#' @rdname nodes_and_edges
+#' @export
+nodes <- function(cg) {
+  is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
+  cg@nodes
+}
+
+#' @rdname nodes_and_edges
+#' @export
+vertices <- nodes
+
+#' @rdname nodes_and_edges
+#' @export
+V <- nodes # igraph notation
+
+#' @rdname nodes_and_edges
+#' @export
+edges <- function(cg) {
+  is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
+  cg@edges
+}
+
+#' @rdname nodes_and_edges
+#' @export
+E <- edges # igraph notation
+
 #' @title Get parents of nodes in a `caugi_graph`
 #'
 #' @description
