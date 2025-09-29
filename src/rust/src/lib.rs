@@ -242,6 +242,15 @@ fn markov_blanket_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
         .unwrap_or_else(|e| throw_r_error(e))
 }
 
+#[extendr]
+fn exogenous_nodes_of_ptr(g: ExternalPtr<GraphView>, undirected_as_parents: Rbool) -> Robj {
+    let undirected_as_parents = undirected_as_parents.is_true();
+    g.as_ref()
+        .exogenous_nodes(undirected_as_parents)
+        .map(|s| s.iter().map(|&x| x as i32).collect_robj())
+        .unwrap_or_else(|e| throw_r_error(e))
+}
+
 // ---------- Is queries ----------
 #[extendr]
 fn is_dag_type_ptr(g: ExternalPtr<GraphView>) -> bool {
@@ -303,6 +312,7 @@ extendr_module! {
     fn ancestors_of_ptr;
     fn descendants_of_ptr;
     fn markov_blanket_of_ptr;
+    fn exogenous_nodes_of_ptr;
 
     // graph properties
     fn is_simple_ptr;

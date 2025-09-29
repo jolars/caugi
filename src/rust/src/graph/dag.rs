@@ -177,6 +177,12 @@ impl Dag {
         mb.dedup();
         mb
     }
+    #[inline]
+    pub fn exogenous_nodes(&self) -> Vec<u32> {
+        (0..self.n())
+            .filter(|&i| self.parents_of(i).is_empty())
+            .collect()
+    }
 
     pub fn core_ref(&self) -> &CaugiGraph {
         &self.core
@@ -274,5 +280,18 @@ mod tests {
         let core = std::sync::Arc::new(b.finalize().unwrap());
         let dag = Dag::new(core);
         assert!(dag.is_err());
+    }
+
+    #[test]
+    fn dag_exogenous() {
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap();
+        let d = r.code_of("-->").unwrap();
+        // 0->1, 0->2; node 3 isolated => exogenous {0,3}
+        let mut b = GraphBuilder::new_with_registry(4, true, &r);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(0, 2, d).unwrap();
+        let g = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+        assert_eq!(g.exogenous_nodes(), vec![0, 3]);
     }
 }

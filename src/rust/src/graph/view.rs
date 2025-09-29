@@ -46,6 +46,9 @@ pub trait GraphApi {
     fn markov_blanket_of(&self, _i: u32) -> Result<Vec<u32>, String> {
         Err("markov_blanket_of not implemented for this class".into())
     }
+    fn exogenous_nodes(&self, _undirected_as_parents: bool) -> Result<Vec<u32>, String> {
+        Err("exogenous_nodes not implemented for this class".into())
+    }
     fn n(&self) -> u32;
 }
 
@@ -97,6 +100,13 @@ impl GraphApi for GraphView {
             GraphView::Dag(g) => Ok(g.markov_blanket_of(i)),
             GraphView::Pdag(g) => Ok(g.markov_blanket_of(i)),
             GraphView::Raw(_) => Err("markov_blanket_of not implemented for UNKNOWN class".into()),
+        }
+    }
+    fn exogenous_nodes(&self, undirected_as_parents: bool) -> Result<Vec<u32>, String> {
+        match self {
+            GraphView::Dag(g) => Ok(g.exogenous_nodes()),
+            GraphView::Pdag(g) => Ok(g.exogenous_nodes(undirected_as_parents)),
+            GraphView::Raw(_) => Err("exogenous_nodes not implemented for UNKNOWN class".into()),
         }
     }
 
@@ -229,5 +239,31 @@ mod tests {
         let dag = Arc::new(Dag::new(Arc::new(b.finalize().unwrap())).unwrap());
         let v = GraphView::Dag(dag);
         assert_eq!(v.markov_blanket_of(0).unwrap(), vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn exogenous_nodes_dag_pdag() {
+        use crate::{edges::EdgeRegistry, graph::builder::GraphBuilder};
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap();
+        let d = r.code_of("-->").unwrap();
+        let u = r.code_of("---").unwrap();
+
+        // DAG: 0->1, 0->2  => exogenous {0,3}
+        let mut b = GraphBuilder::new_with_registry(4, true, &r);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(0, 2, d).unwrap();
+        let v = GraphView::Dag(Arc::new(Dag::new(Arc::new(b.finalize().unwrap())).unwrap()));
+        assert_eq!(v.exogenous_nodes(false).unwrap(), vec![0, 3]);
+
+        // PDAG: 0->1, 1--2 => exogenous {0,2,3} if undirected ignored; {0,3} if counted
+        let mut b = GraphBuilder::new_with_registry(4, true, &r);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(1, 2, u).unwrap();
+        let v = GraphView::Pdag(Arc::new(
+            Pdag::new(Arc::new(b.finalize().unwrap())).unwrap(),
+        ));
+        assert_eq!(v.exogenous_nodes(false).unwrap(), vec![0, 2, 3]);
+        assert_eq!(v.exogenous_nodes(true).unwrap(), vec![0, 3]);
     }
 }
