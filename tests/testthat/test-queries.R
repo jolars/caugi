@@ -174,6 +174,28 @@ test_that("public getters trigger lazy build", {
   expect_true(cg@built)
 })
 
+test_that("nodes and edges getters work", {
+  cg <- caugi_graph(A %-->% B, B %-->% C, class = "PDAG")
+  nodes_out <- cg@nodes
+  edges_out <- cg@edges
+
+  expect_identical(nodes_out, nodes(cg))
+  expect_identical(edges_out, edges(cg))
+
+  expect_identical(nodes_out, vertices(cg))
+  expect_identical(nodes_out, V(cg))
+
+  expect_identical(edges_out, E(cg))
+
+  expect_equal(nrow(nodes(cg)), 3L)
+  expect_equal(nrow(edges(cg)), 2L)
+
+  cg <- caugi_graph()
+
+  expect_equal(nrow(nodes(cg)), 0L)
+  expect_equal(nrow(edges(cg)), 0L)
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ────────────────────────────── Getter helpers ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
