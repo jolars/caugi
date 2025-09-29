@@ -11,3 +11,6 @@
 ^src/Makevars\.win$
 ^doc$
 ^Meta$
+^flake\.lock$
+^flake\.nix$
+^\.envrc$
