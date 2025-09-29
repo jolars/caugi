@@ -265,6 +265,25 @@ test_that("markov_blanket argument validation", {
   )
 })
 
+test_that("exogenous works", {
+  cg <- caugi_graph(
+    A %-->% B + C,
+    D %-->% B,
+    B %-->% E,
+    F %-->% E,
+    class = "DAG"
+  )
+
+  exo <- exogenous(cg)
+  expect_identical(sort(exo$name), c("A", "D", "F"))
+
+  cg <- caugi_graph(A %---% B, C %-->% A, class = "PDAG")
+  exo <- exogenous(cg)
+  expect_setequal(exo$name, c("B", "C"))
+
+  expect_error(exogenous("not a graph"), "is not a caugi_graph")
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ────────────────────────────── Getter helpers ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
