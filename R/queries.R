@@ -360,6 +360,28 @@ markov_blanket <- function(cg, nodes = NULL, index = NULL) {
 #' @export
 mb <- markov_blanket
 
+#' @title Get all exogenous nodes in a `caugi_graph`
+#'
+#' @description Get all exogenous nodes (nodes with no parents) in a
+#' `caugi_graph`.
+#'
+#' @param cg A `caugi_graph` object.
+#' @param undirected_as_parents Logical; if `TRUE`, undirected edges are treated
+#' as (possible) parents, if `FALSE` (default), undirected edges are ignored.
+#'
+#' @returns A tibble with a `name` column.
+#' @export
+exogenous <- function(cg, undirected_as_parents = FALSE) {
+  is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
+  idx0 <- exogenous_nodes_of_ptr(cg@ptr, undirected_as_parents)
+  .getter_output(cg, idx0)
+}
+
+#' @rdname exogenous
+#' @export
+exo <- exogenous
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ────────────────────────────── Getter helpers ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
