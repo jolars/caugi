@@ -18,6 +18,9 @@ build <- S7::new_generic("build", "cg")
 #' @name build
 #' @export
 S7::method(build, caugi_graph) <- function(cg) {
+  if (is_empty_caugi(cg)) {
+    return(cg)
+  }
   s <- cg@`.state`
 
   current_fingerprint <- digest::digest(list(
