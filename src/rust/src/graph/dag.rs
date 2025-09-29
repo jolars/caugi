@@ -133,7 +133,9 @@ impl Dag {
         let mut stack: Vec<u32> = self.parents_of(i).to_vec();
         while let Some(u) = stack.pop() {
             let ui = u as usize;
-            if seen[ui] { continue; }
+            if seen[ui] {
+                continue;
+            }
             seen[ui] = true;
             out.push(u);
             stack.extend_from_slice(self.parents_of(u));
@@ -149,13 +151,31 @@ impl Dag {
         let mut stack: Vec<u32> = self.children_of(i).to_vec();
         while let Some(u) = stack.pop() {
             let ui = u as usize;
-            if seen[ui] { continue; }
+            if seen[ui] {
+                continue;
+            }
             seen[ui] = true;
             out.push(u);
             stack.extend_from_slice(self.children_of(u));
         }
         out.sort_unstable();
         out
+    }
+    #[inline]
+    pub fn markov_blanket_of(&self, i: u32) -> Vec<u32> {
+        let mut mb: Vec<u32> = Vec::new();
+        mb.extend_from_slice(self.parents_of(i));
+        mb.extend_from_slice(self.children_of(i));
+        for &c in self.children_of(i) {
+            for &p in self.parents_of(c) {
+                if p != i {
+                    mb.push(p);
+                }
+            }
+        }
+        mb.sort_unstable();
+        mb.dedup();
+        mb
     }
 
     pub fn core_ref(&self) -> &CaugiGraph {
@@ -198,17 +218,34 @@ mod tests {
     }
 
     #[test]
-    fn dag_anc_desc() {
+    fn dag_an_de() {
         // 3 -> 0 -> {1,2}
-        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
         let c = reg.code_of("-->").unwrap();
         let mut b = GraphBuilder::new_with_registry(4, true, &reg);
-        b.add_edge(3,0,c).unwrap(); b.add_edge(0,1,c).unwrap(); b.add_edge(0,2,c).unwrap();
+        b.add_edge(3, 0, c).unwrap();
+        b.add_edge(0, 1, c).unwrap();
+        b.add_edge(0, 2, c).unwrap();
         let g = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
         assert_eq!(g.ancestors_of(0), vec![3]);
-        assert_eq!(g.descendants_of(0), vec![1,2]);
-        assert_eq!(g.ancestors_of(2), vec![0,3]);
-        assert_eq!(g.descendants_of(3), vec![0,1,2]);
+        assert_eq!(g.descendants_of(0), vec![1, 2]);
+        assert_eq!(g.ancestors_of(2), vec![0, 3]);
+        assert_eq!(g.descendants_of(3), vec![0, 1, 2]);
+    }
+
+    #[test]
+    fn dag_mb() {
+        // 2 -> 1 <- 0 -> 3
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap();
+        let d = r.code_of("-->").unwrap();
+        let mut b = GraphBuilder::new_with_registry(4, true, &r);
+        b.add_edge(2, 1, d).unwrap();
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(0, 3, d).unwrap();
+        let g = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+        assert_eq!(g.markov_blanket_of(0), vec![1, 2, 3]); // pa(0)=∅, ch(0)={1,3}, spouses via 1={2}
     }
 
     #[test]

@@ -163,7 +163,9 @@ impl Pdag {
         let mut stack: Vec<u32> = self.parents_of(i).to_vec();
         while let Some(u) = stack.pop() {
             let ui = u as usize;
-            if seen[ui] { continue; }
+            if seen[ui] {
+                continue;
+            }
             seen[ui] = true;
             out.push(u);
             stack.extend_from_slice(self.parents_of(u));
@@ -179,13 +181,34 @@ impl Pdag {
         let mut stack: Vec<u32> = self.children_of(i).to_vec();
         while let Some(u) = stack.pop() {
             let ui = u as usize;
-            if seen[ui] { continue; }
+            if seen[ui] {
+                continue;
+            }
             seen[ui] = true;
             out.push(u);
             stack.extend_from_slice(self.children_of(u));
         }
         out.sort_unstable();
         out
+    }
+    #[inline]
+    pub fn markov_blanket_of(&self, i: u32) -> Vec<u32> {
+        let mut mb: Vec<u32> = Vec::new();
+        // DAG part
+        mb.extend_from_slice(self.parents_of(i));
+        mb.extend_from_slice(self.children_of(i));
+        for &c in self.children_of(i) {
+            for &p in self.parents_of(c) {
+                if p != i {
+                    mb.push(p);
+                }
+            }
+        }
+        // undirected neighbors belong to the blanket in (C)PDAGs
+        mb.extend_from_slice(self.undirected_of(i));
+        mb.sort_unstable();
+        mb.dedup();
+        mb
     }
 
     pub fn core_ref(&self) -> &CaugiGraph {
@@ -238,14 +261,17 @@ mod tests {
         let r = Pdag::new(core);
         assert!(r.is_err());
     }
-    
+
     #[test]
-    fn pdag_anc_desc_directed_only() {
+    fn pdag_an_de_directed_only() {
         // 0 -> 1 -- 2
-        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
-        let cdir = reg.code_of("-->").unwrap(); let cund = reg.code_of("---").unwrap();
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let cdir = reg.code_of("-->").unwrap();
+        let cund = reg.code_of("---").unwrap();
         let mut b = GraphBuilder::new_with_registry(3, true, &reg);
-        b.add_edge(0,1,cdir).unwrap(); b.add_edge(1,2,cund).unwrap();
+        b.add_edge(0, 1, cdir).unwrap();
+        b.add_edge(1, 2, cund).unwrap();
         let g = Pdag::new(Arc::new(b.finalize().unwrap())).unwrap();
         assert_eq!(g.ancestors_of(1), vec![0]);
         assert_eq!(g.descendants_of(0), vec![1]);
@@ -253,6 +279,21 @@ mod tests {
         assert!(g.descendants_of(2).is_empty());
     }
 
+    #[test]
+    fn pdag_mb() {
+        // 0 -> 1 -- 2, and 1 <- 3
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap();
+        let d = r.code_of("-->").unwrap();
+        let u = r.code_of("---").unwrap();
+        let mut b = GraphBuilder::new_with_registry(4, true, &r);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(1, 2, u).unwrap();
+        b.add_edge(3, 1, d).unwrap();
+        let g = Pdag::new(Arc::new(b.finalize().unwrap())).unwrap();
+        assert_eq!(g.markov_blanket_of(1), vec![0, 2, 3]); // parents {0,3}, undirected {2}
+        assert_eq!(g.markov_blanket_of(0), vec![1, 3]); // child {1}, co-parent via 1 {3}
+    }
     #[test]
     fn pdag_partial_edge_error() {
         let mut reg = EdgeRegistry::new();

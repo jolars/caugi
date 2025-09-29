@@ -37,11 +37,14 @@ pub trait GraphApi {
     fn neighbors_of(&self, _i: u32) -> Result<&[u32], String> {
         Err("neighbors_of not implemented for this class".into())
     }
-    fn ancestors_of(&self, _i: u32) -> Result<Vec<u32>, String> { 
-        Err("ancestors_of not implemented for this class".into()) 
+    fn ancestors_of(&self, _i: u32) -> Result<Vec<u32>, String> {
+        Err("ancestors_of not implemented for this class".into())
     }
-    fn descendants_of(&self, _i: u32) -> Result<Vec<u32>, String> { 
-        Err("descendants_of not implemented for this class".into()) 
+    fn descendants_of(&self, _i: u32) -> Result<Vec<u32>, String> {
+        Err("descendants_of not implemented for this class".into())
+    }
+    fn markov_blanket_of(&self, _i: u32) -> Result<Vec<u32>, String> {
+        Err("markov_blanket_of not implemented for this class".into())
     }
     fn n(&self) -> u32;
 }
@@ -75,19 +78,26 @@ impl GraphApi for GraphView {
             GraphView::Raw(_) => Err("neighbors_of not implemented for UNKNOWN class".into()),
         }
     }
-    fn ancestors_of(&self, i: u32) -> Result<Vec<u32>, String> { 
+    fn ancestors_of(&self, i: u32) -> Result<Vec<u32>, String> {
         match self {
             GraphView::Dag(g) => Ok(g.ancestors_of(i)),
             GraphView::Pdag(g) => Ok(g.ancestors_of(i)),
             GraphView::Raw(_) => Err("ancestors_of not implemented for UNKNOWN class".into()),
-        } 
+        }
     }
-    fn descendants_of(&self, i: u32) -> Result<Vec<u32>, String> { 
+    fn descendants_of(&self, i: u32) -> Result<Vec<u32>, String> {
         match self {
             GraphView::Dag(g) => Ok(g.descendants_of(i)),
             GraphView::Pdag(g) => Ok(g.descendants_of(i)),
             GraphView::Raw(_) => Err("descendants_of not implemented for UNKNOWN class".into()),
-        } 
+        }
+    }
+    fn markov_blanket_of(&self, i: u32) -> Result<Vec<u32>, String> {
+        match self {
+            GraphView::Dag(g) => Ok(g.markov_blanket_of(i)),
+            GraphView::Pdag(g) => Ok(g.markov_blanket_of(i)),
+            GraphView::Raw(_) => Err("markov_blanket_of not implemented for UNKNOWN class".into()),
+        }
     }
 
     fn n(&self) -> u32 {
@@ -134,7 +144,7 @@ mod tests {
         let mut bp = GraphBuilder::new_with_registry(4, true, &r);
         bp.add_edge(0, 1, cdir).unwrap();
         bp.add_edge(1, 2, cund).unwrap();
-        bp.add_edge(1, 3, cdir).unwrap(); 
+        bp.add_edge(1, 3, cdir).unwrap();
         let pdag_core = Arc::new(bp.finalize().unwrap());
         let pdag = Arc::new(Pdag::new(pdag_core.clone()).unwrap());
         let v_pdag = GraphView::Pdag(pdag);
@@ -193,5 +203,31 @@ mod tests {
             d.neighbors_of(0).unwrap_err(),
             "neighbors_of not implemented for this class"
         );
+        assert_eq!(
+            d.ancestors_of(0).unwrap_err(),
+            "ancestors_of not implemented for this class"
+        );
+        assert_eq!(
+            d.descendants_of(0).unwrap_err(),
+            "descendants_of not implemented for this class"
+        );
+        assert_eq!(
+            d.markov_blanket_of(0).unwrap_err(),
+            "markov_blanket_of not implemented for this class"
+        );
+    }
+
+    #[test]
+    fn graphview_mb_dispatch() {
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap();
+        let d = r.code_of("-->").unwrap();
+        let mut b = GraphBuilder::new_with_registry(4, true, &r);
+        b.add_edge(2, 1, d).unwrap();
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(0, 3, d).unwrap();
+        let dag = Arc::new(Dag::new(Arc::new(b.finalize().unwrap())).unwrap());
+        let v = GraphView::Dag(dag);
+        assert_eq!(v.markov_blanket_of(0).unwrap(), vec![1, 2, 3]);
     }
 }
