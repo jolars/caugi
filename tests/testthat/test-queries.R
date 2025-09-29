@@ -274,14 +274,23 @@ test_that("exogenous works", {
     class = "DAG"
   )
 
-  exo <- exogenous(cg)
-  expect_identical(sort(exo$name), c("A", "D", "F"))
+  e <- exogenous(cg)
+  expect_identical(sort(e$name), c("A", "D", "F"))
 
   cg <- caugi_graph(A %---% B, C %-->% A, class = "PDAG")
-  exo <- exogenous(cg)
-  expect_setequal(exo$name, c("B", "C"))
+  e <- exogenous(cg)
+  expect_setequal(e$name, c("B", "C"))
 
   expect_error(exogenous("not a graph"), "is not a caugi_graph")
+})
+
+test_that("exogenous works on PDAGs", {
+  cg <- caugi_graph(A %---% B, C %-->% D, class = "PDAG")
+  e <- exo(cg)
+  expect_setequal(e$name, c("A", "B", "C"))
+
+  e <- exo(cg, undirected_as_parents = TRUE)
+  expect_setequal(e$name, c("C"))
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
