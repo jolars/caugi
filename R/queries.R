@@ -25,6 +25,19 @@ is_caugi <- function(x, throw_error = FALSE) {
   it_is
 }
 
+#' @title Is the `caugi` graph empty?
+#'
+#' @description Checks if the given `caugi` graph is empty (has no nodes).
+#'
+#' @param cg A `caugi_graph` object.
+#'
+#' @returns A logical value indicating whether the graph is empty.
+#' @export
+is_empty_caugi <- function(cg) {
+  is_caugi(cg, throw_error = TRUE)
+  nrow(cg@nodes) == 0L
+}
+
 #' @title Is the `caugi` acyclic?
 #'
 #' @description Checks if the given `caugi` graph is acyclic.
