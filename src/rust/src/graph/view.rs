@@ -37,6 +37,12 @@ pub trait GraphApi {
     fn neighbors_of(&self, _i: u32) -> Result<&[u32], String> {
         Err("neighbors_of not implemented for this class".into())
     }
+    fn ancestors_of(&self, _i: u32) -> Result<Vec<u32>, String> { 
+        Err("ancestors_of not implemented for this class".into()) 
+    }
+    fn descendants_of(&self, _i: u32) -> Result<Vec<u32>, String> { 
+        Err("descendants_of not implemented for this class".into()) 
+    }
     fn n(&self) -> u32;
 }
 
@@ -68,6 +74,20 @@ impl GraphApi for GraphView {
             GraphView::Pdag(g) => Ok(g.neighbors_of(i)),
             GraphView::Raw(_) => Err("neighbors_of not implemented for UNKNOWN class".into()),
         }
+    }
+    fn ancestors_of(&self, i: u32) -> Result<Vec<u32>, String> { 
+        match self {
+            GraphView::Dag(g) => Ok(g.ancestors_of(i)),
+            GraphView::Pdag(g) => Ok(g.ancestors_of(i)),
+            GraphView::Raw(_) => Err("ancestors_of not implemented for UNKNOWN class".into()),
+        } 
+    }
+    fn descendants_of(&self, i: u32) -> Result<Vec<u32>, String> { 
+        match self {
+            GraphView::Dag(g) => Ok(g.descendants_of(i)),
+            GraphView::Pdag(g) => Ok(g.descendants_of(i)),
+            GraphView::Raw(_) => Err("descendants_of not implemented for UNKNOWN class".into()),
+        } 
     }
 
     fn n(&self) -> u32 {
@@ -103,29 +123,34 @@ mod tests {
         assert_eq!(v_dag.parents_of(1).unwrap(), &[0]);
         assert_eq!(v_dag.children_of(0).unwrap(), &[1, 2]);
         assert_eq!(v_dag.neighbors_of(0).unwrap(), &[1, 2]);
+        assert_eq!(v_dag.descendants_of(0).unwrap(), vec![1, 2]);
+        assert_eq!(v_dag.ancestors_of(2).unwrap(), vec![0]);
         let e = v_dag.undirected_of(0).unwrap_err();
         assert_eq!(e, "undirected_of not defined for Dag");
         let v_dag_core = v_dag.core();
         assert_eq!(v_dag_core.n(), 3);
 
         // PDAG core: 0->1, 1---2
-        let mut bp = GraphBuilder::new_with_registry(3, true, &r);
+        let mut bp = GraphBuilder::new_with_registry(4, true, &r);
         bp.add_edge(0, 1, cdir).unwrap();
         bp.add_edge(1, 2, cund).unwrap();
+        bp.add_edge(1, 3, cdir).unwrap(); 
         let pdag_core = Arc::new(bp.finalize().unwrap());
         let pdag = Arc::new(Pdag::new(pdag_core.clone()).unwrap());
         let v_pdag = GraphView::Pdag(pdag);
-        assert_eq!(v_pdag.n(), 3);
+        assert_eq!(v_pdag.n(), 4);
         assert_eq!(v_pdag.parents_of(1).unwrap(), &[0]);
         assert_eq!(v_pdag.children_of(0).unwrap(), &[1]);
         assert_eq!(v_pdag.undirected_of(1).unwrap(), &[2]);
-        assert_eq!(v_pdag.neighbors_of(1).unwrap(), &[0, 2]);
+        assert_eq!(v_pdag.neighbors_of(1).unwrap(), &[0, 2, 3]);
+        assert_eq!(v_pdag.descendants_of(0).unwrap(), vec![1, 3]);
+        assert_eq!(v_pdag.ancestors_of(3).unwrap(), vec![0, 1]);
         let v_pdag_core = v_pdag.core();
-        assert_eq!(v_pdag_core.n(), 3);
+        assert_eq!(v_pdag_core.n(), 4);
 
         // Raw view uses UNKNOWN class fallbacks
         let v_raw = GraphView::Raw(pdag_core);
-        assert_eq!(v_raw.n(), 3);
+        assert_eq!(v_raw.n(), 4);
         let e1 = v_raw.parents_of(0).unwrap_err();
         let e2 = v_raw.children_of(0).unwrap_err();
         let e3 = v_raw.undirected_of(0).unwrap_err();
@@ -138,7 +163,7 @@ mod tests {
         );
 
         let v_raw_core = v_raw.core();
-        assert_eq!(v_raw_core.n(), 3);
+        assert_eq!(v_raw_core.n(), 4);
     }
 
     #[test]

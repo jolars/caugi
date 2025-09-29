@@ -219,6 +219,22 @@ fn neighbors_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
 }
 
 #[extendr]
+fn ancestors_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
+    g.as_ref()
+        .ancestors_of(i as u32)
+        .map(|s| s.iter().map(|x| *x as i32).collect_robj())
+        .unwrap_or_else(|e| throw_r_error(e))
+}
+
+#[extendr]
+fn descendants_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
+    g.as_ref()
+        .descendants_of(i as u32)
+        .map(|s| s.iter().map(|x| *x as i32).collect_robj())
+        .unwrap_or_else(|e| throw_r_error(e))
+}
+
+#[extendr]
 fn is_dag_type_ptr(g: ExternalPtr<GraphView>) -> bool {
     let core = g.as_ref().core();
     crate::graph::alg::validate_graph_type(&crate::graph::graph_type::GraphType::Dag, core).is_ok()
@@ -275,6 +291,8 @@ extendr_module! {
     fn children_of_ptr;
     fn undirected_of_ptr;
     fn neighbors_of_ptr;
+    fn ancestors_of_ptr;
+    fn descendants_of_ptr;
 
     // graph properties
     fn is_simple_ptr;

@@ -125,6 +125,39 @@ impl Dag {
         &self.neighbourhoods[s..e]
     }
 
+    #[inline]
+    pub fn ancestors_of(&self, i: u32) -> Vec<u32> {
+        let n = self.n() as usize;
+        let mut seen = vec![false; n];
+        let mut out = Vec::new();
+        let mut stack: Vec<u32> = self.parents_of(i).to_vec();
+        while let Some(u) = stack.pop() {
+            let ui = u as usize;
+            if seen[ui] { continue; }
+            seen[ui] = true;
+            out.push(u);
+            stack.extend_from_slice(self.parents_of(u));
+        }
+        out.sort_unstable();
+        out
+    }
+    #[inline]
+    pub fn descendants_of(&self, i: u32) -> Vec<u32> {
+        let n = self.n() as usize;
+        let mut seen = vec![false; n];
+        let mut out = Vec::new();
+        let mut stack: Vec<u32> = self.children_of(i).to_vec();
+        while let Some(u) = stack.pop() {
+            let ui = u as usize;
+            if seen[ui] { continue; }
+            seen[ui] = true;
+            out.push(u);
+            stack.extend_from_slice(self.children_of(u));
+        }
+        out.sort_unstable();
+        out
+    }
+
     pub fn core_ref(&self) -> &CaugiGraph {
         &self.core
     }
@@ -162,6 +195,20 @@ mod tests {
         // get core
         let core = dag.core_ref();
         assert_eq!(core.n(), 4);
+    }
+
+    #[test]
+    fn dag_anc_desc() {
+        // 3 -> 0 -> {1,2}
+        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
+        let c = reg.code_of("-->").unwrap();
+        let mut b = GraphBuilder::new_with_registry(4, true, &reg);
+        b.add_edge(3,0,c).unwrap(); b.add_edge(0,1,c).unwrap(); b.add_edge(0,2,c).unwrap();
+        let g = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+        assert_eq!(g.ancestors_of(0), vec![3]);
+        assert_eq!(g.descendants_of(0), vec![1,2]);
+        assert_eq!(g.ancestors_of(2), vec![0,3]);
+        assert_eq!(g.descendants_of(3), vec![0,1,2]);
     }
 
     #[test]

@@ -155,6 +155,39 @@ impl Pdag {
         &self.neighbourhoods[s..e]
     }
 
+    #[inline]
+    pub fn ancestors_of(&self, i: u32) -> Vec<u32> {
+        let n = self.n() as usize;
+        let mut seen = vec![false; n];
+        let mut out = Vec::new();
+        let mut stack: Vec<u32> = self.parents_of(i).to_vec();
+        while let Some(u) = stack.pop() {
+            let ui = u as usize;
+            if seen[ui] { continue; }
+            seen[ui] = true;
+            out.push(u);
+            stack.extend_from_slice(self.parents_of(u));
+        }
+        out.sort_unstable();
+        out
+    }
+    #[inline]
+    pub fn descendants_of(&self, i: u32) -> Vec<u32> {
+        let n = self.n() as usize;
+        let mut seen = vec![false; n];
+        let mut out = Vec::new();
+        let mut stack: Vec<u32> = self.children_of(i).to_vec();
+        while let Some(u) = stack.pop() {
+            let ui = u as usize;
+            if seen[ui] { continue; }
+            seen[ui] = true;
+            out.push(u);
+            stack.extend_from_slice(self.children_of(u));
+        }
+        out.sort_unstable();
+        out
+    }
+
     pub fn core_ref(&self) -> &CaugiGraph {
         &self.core
     }
@@ -204,6 +237,20 @@ mod tests {
         let core = std::sync::Arc::new(b.finalize().unwrap());
         let r = Pdag::new(core);
         assert!(r.is_err());
+    }
+    
+    #[test]
+    fn pdag_anc_desc_directed_only() {
+        // 0 -> 1 -- 2
+        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
+        let cdir = reg.code_of("-->").unwrap(); let cund = reg.code_of("---").unwrap();
+        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
+        b.add_edge(0,1,cdir).unwrap(); b.add_edge(1,2,cund).unwrap();
+        let g = Pdag::new(Arc::new(b.finalize().unwrap())).unwrap();
+        assert_eq!(g.ancestors_of(1), vec![0]);
+        assert_eq!(g.descendants_of(0), vec![1]);
+        assert!(g.ancestors_of(2).is_empty());
+        assert!(g.descendants_of(2).is_empty());
     }
 
     #[test]
