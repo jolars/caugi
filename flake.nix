@@ -20,7 +20,6 @@
             pkgs.bashInteractive
             (pkgs.rWrapper.override {
               packages = with pkgs.rPackages; [
-                cpp11
                 decor
                 devtools
                 dplyr
