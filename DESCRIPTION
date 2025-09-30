@@ -16,6 +16,7 @@ Imports:
     igraph,
     Matrix,
     rlang,
+    S7,
     tidyr,
     graph,
     methods
