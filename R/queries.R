@@ -38,6 +38,33 @@ is_empty_caugi <- function(cg) {
   nrow(cg@nodes) == 0L
 }
 
+#' @title Same nodes?
+#'
+#' @description Check if two `caugi_graph` objects have the same nodes.
+#'
+#' @param cg1 A `caugi_graph` object.
+#' @param cg2 A `caugi_graph` object.
+#'
+#' @returns A logical indicating if the two graphs have the same nodes.
+#' @export
+same_nodes <- function(cg1, cg2, throw_error = FALSE) {
+  is_caugi(cg1, throw_error)
+  is_caugi(cg2, throw_error)
+  if (!identical(sort(cg1@nodes$name), sort(cg2@nodes$name))) {
+    differing_nodes <- setdiff(
+      union(cg1@nodes$name, cg2@nodes$name),
+      intersect(cg1@nodes$name, cg2@nodes$name)
+    )
+
+    stop(
+      "Graphs must have the same nodes.\n",
+      "Differing nodes are: [", paste(differing_nodes, collapse = ", "),
+      "]."
+    )
+  }
+  TRUE
+}
+
 #' @title Is the `caugi` acyclic?
 #'
 #' @description Checks if the given `caugi` graph is acyclic.
