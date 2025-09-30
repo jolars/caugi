@@ -11,6 +11,8 @@ use graph::builder::GraphBuilder;
 use graph::graph_type::GraphType;
 use graph::view::{GraphApi, GraphView};
 use graph::{dag::Dag, pdag::Pdag};
+use graph::metrics::shd_with_perm;
+use std::collections::HashMap;
 use std::sync::Arc;
 
 // ---------- helpers ----------
@@ -285,6 +287,37 @@ fn is_simple_ptr(g: ExternalPtr<GraphView>) -> bool {
     g.as_ref().core().simple
 }
 
+// ---------- Metrics ----------
+#[extendr]
+fn shd_of_ptrs(
+    g1: ExternalPtr<GraphView>, names1: Strings,
+    g2: ExternalPtr<GraphView>, names2: Strings
+) -> Robj {
+    let core1 = g1.as_ref().core();
+    let core2 = g2.as_ref().core();
+    if core1.n() != core2.n() { throw_r_error("graph size mismatch"); }
+    if names1.len() as u32 != core1.n() || names2.len() as u32 != core2.n() {
+        throw_r_error("names length must match number of nodes");
+    }
+    let mut idx2: HashMap<String, u32> = HashMap::with_capacity(names2.len());
+    for (i, s) in names2.iter().enumerate() {
+        let k = s.as_str().to_string();
+        if idx2.insert(k, i as u32).is_some() {
+            throw_r_error("duplicate node name in names2");
+        }
+    }
+    let mut perm = Vec::with_capacity(names1.len());
+    for s in names1.iter() {
+        let key = s.as_str();
+        let j = *idx2.get(key).unwrap_or_else(|| {
+            throw_r_error(format!("name '{key}' present in names1 but not in names2"))
+        });
+        perm.push(j);
+    }
+    let (norm, count) = shd_with_perm(core1, core2, &perm);
+    list!(normalized = norm, count = count as i32).into_robj()
+}
+
 extendr_module! {
     mod caugi;
     // registry
@@ -324,4 +357,7 @@ extendr_module! {
     // class tests
     fn is_dag_type_ptr;
     fn is_pdag_type_ptr;
+
+    // metrics
+    fn shd_of_ptrs;
 }

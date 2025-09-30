@@ -17,6 +17,7 @@ pub mod view;
 pub use view::{GraphApi, GraphView};
 pub mod graph_type;
 pub use graph_type::GraphType;
+pub mod metrics;
 
 #[derive(Debug, Clone)]
 pub struct RegistrySnapshot {
