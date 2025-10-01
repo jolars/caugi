@@ -14,10 +14,17 @@ build <- S7::new_generic("build", "cg")
 #' internal pointer to the graph. If the graph is already built, it is returned.
 #'
 #' @param cg A `caugi_graph` object with `cg@built = TRUE`.
+#' @param ... Not used.
 #'
 #' @name build
 #' @export
-S7::method(build, caugi_graph) <- function(cg) {
+S7::method(build, caugi_graph) <- function(cg, ...) {
+  # if ... is non-empty, throw error
+  if (length(list(...)) > 0L) {
+    stop("`build()` does not take any arguments other than `cg`.",
+      call. = FALSE
+    )
+  }
   if (is_empty_caugi(cg)) {
     return(cg)
   }
