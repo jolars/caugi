@@ -20,9 +20,6 @@ Imports:
     tidyr,
     graph,
     methods
-LinkingTo: 
-    cpp11,
-    Matrix
 Suggests: 
     devtools,
     knitr,

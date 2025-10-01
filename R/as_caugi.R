@@ -20,13 +20,13 @@ as_caugi <- function(x, ...) {
 #' @param ... Additional arguments (will not be passed to anything).
 #' @export
 as_caugi.graphNEL <- function(x, collapse = FALSE, collapse_to = "---", ...) {
-  caugi_from_graphNEL(x, collapse = collapse, collapse_to = collapse_to)
+  NULL
 }
 
 #' @rdname as_caugi.sparseMatrix
 #' @export
 as_caugi.dgCMatrix <- function(x, directed = TRUE, ...) {
-  caugi_from_sparse(x, directed)
+  NULL
 }
 
 #' @title Create a caugi_graph from a sparse `dgCMatrix` or `sparseMatrix`
@@ -36,7 +36,7 @@ as_caugi.dgCMatrix <- function(x, directed = TRUE, ...) {
 #' @param ... Additional arguments (will not be passed to anything).
 #' @export
 as_caugi.sparseMatrix <- function(x, directed = TRUE, ...) {
-  caugi_from_sparse(x, directed)
+  NULL
 }
 
 #' @title Create a caugi_graph from an integer-coded dense matrix
@@ -55,7 +55,7 @@ as_caugi.sparseMatrix <- function(x, directed = TRUE, ...) {
 #' @param ... Additional arguments (will not be passed to anything).
 #' @export
 as_caugi.matrix <- function(x, ...) {
-  caugi_from_dense(x)
+  NULL
 }
 
 #' @title Convert a pcalg amat to a `caugi_graph`
@@ -69,7 +69,7 @@ as_caugi.matrix <- function(x, ...) {
 #' @param ... Additional arguments (will not be passed to anything).
 #' @export
 as_caugi.amat <- function(x, amat_type = NULL, ...) {
-  caugi_from_amat(x, amat_type)
+  NULL
 }
 
 #' @title Convert a data frame to a `caugi_graph`
@@ -80,16 +80,7 @@ as_caugi.amat <- function(x, amat_type = NULL, ...) {
 #' @param ... Additional arguments (will not be passed to anything).
 #' @export
 as_caugi.data.frame <- function(x, ...) {
-  if (all(c("from", "to", "edge_type") %in% names(x))) {
-    nodes <- tibble(name = unique(c(as.character(x$from), as.character(x$to))))
-    caugi_graph(nodes, tibble(
-      from = as.character(x$from),
-      to = as.character(x$to),
-      edge_type = as.character(x$edge_type)
-    ))
-  } else {
-    stop("Cannot convert data.frame to caugi_graph: missing from/to/edge_type columns")
-  }
+  NULL
 }
 
 #' @title Default method for `as_caugi`
@@ -117,5 +108,5 @@ as_caugi.default <- function(x, ...) {
 #' @return A `caugi_graph`.
 #' @export
 as_caugi.igraph <- function(x, collapse = FALSE, collapse_to = "---", ...) {
-  caugi_from_igraph(x, collapse = collapse, collapse_to)
+  NULL
 }
