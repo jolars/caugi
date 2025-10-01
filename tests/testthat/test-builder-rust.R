@@ -31,6 +31,7 @@ test_that("graph builder works for directed edge in reverse direction", {
 
   expect_identical(parents_of_ptr(gptr, 0L), 1L)
   expect_identical(children_of_ptr(gptr, 1L), 0L)
+  reset_caugi_registry()
 })
 
 test_that("queries work for DAGs and PDAGs", {

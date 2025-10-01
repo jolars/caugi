@@ -4,12 +4,13 @@
 
 test_that("local edge/glyph registries exist for tests", {
   # Minimal registries for tests
-  .edge_ops_get <<- function() c("%-->%", "%<--%")
-  .glyph_map_get <<- function() list("%-->%" = "-->", "%<--%" = "<--")
+  .edge_ops_get <- function() c("%-->%", "%<--%")
+  .glyph_map_get <- function() list("%-->%" = "-->", "%<--%" = "<--")
 
   expect_type(.edge_ops_get(), "character")
   expect_true("%-->%" %in% .edge_ops_get())
   expect_equal(.glyph_map_get()[["%-->%"]], "-->")
+  reset_caugi_registry()
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -50,6 +51,7 @@ test_that(".contains_edge handles parentheses and returns FALSE otherwise", {
 # ──────────────────────────────────────────────────────────────────────────────
 
 test_that(".glyph_of returns correct glyph", {
+  reset_caugi_registry()
   expect_equal(.glyph_of(as.symbol("%-->%")), "-->")
   expect_equal(.glyph_of(as.symbol("%---%")), "---")
   expect_equal(.glyph_of(as.symbol("%<->%")), "<->")
@@ -67,6 +69,7 @@ test_that(".glyph_of returns correct glyph", {
     flags = "TRAVERSABLE_WHEN_CONDITIONED"
   )
   expect_equal(.glyph_of(as.symbol("%<--%")), "<--")
+  reset_caugi_registry()
 })
 
 test_that(".glyph_of returns NULL for unknown operator", {
