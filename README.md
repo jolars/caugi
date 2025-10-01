@@ -6,6 +6,14 @@
 ---
 
 *caugi* (pronounced **“corgi”**) wraps a high‑performance C++ core in a pipe‑friendly R interface. Convert between many graph formats, compose graphs with expressive infix operators, and run algorithms on large sparse matrices — all without leaving the tidyverse.
+ 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
+<!-- badges: start -->
+[![Codecov test coverage](https://codecov.io/gh/frederikfabriciusbjerre/caugi/graph/badge.svg)](https://app.codecov.io/gh/frederikfabriciusbjerre/caugi)
+<!-- badges: end -->
 
 ## Key features
 

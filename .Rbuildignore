@@ -11,3 +11,4 @@
 ^src/Makevars\.win$
 ^doc$
 ^Meta$
+^\.github$
