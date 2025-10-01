@@ -44,6 +44,8 @@ is_empty_caugi <- function(cg) {
 #'
 #' @param cg1 A `caugi_graph` object.
 #' @param cg2 A `caugi_graph` object.
+#' @param throw_error Logical; if `TRUE`, throws an error if the graphs do not
+#' have the same nodes.
 #'
 #' @returns A logical indicating if the two graphs have the same nodes.
 #' @export
