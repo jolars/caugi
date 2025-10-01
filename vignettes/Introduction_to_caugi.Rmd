@@ -18,15 +18,15 @@ knitr::opts_chunk$set(
 
 ```{r, eval=FALSE}
 # dev version from GitHub
-install.packages("pak", 
-                 repos = 
-                   sprintf(
-                     "https://r-lib.github.io/p/pak/stable/%s/%s/%s", 
-                     .Platform$pkgType, 
-                     R.Version()$os, 
-                     R.Version()$arch
-                           )
-                 )
+install.packages("pak",
+  repos =
+    sprintf(
+      "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+      .Platform$pkgType,
+      R.Version()$os,
+      R.Version()$arch
+    )
+)
 pak::pak("frederikfabriciusbjerre/caugi")
 
 # ... or wait for the first CRAN release
@@ -70,9 +70,9 @@ cg <- caugi_graph(
   A %-->% B + C,
   B %-->% D,
   C %-->% D,
-  class = "DAG",   # optional, guarantees acyclicity by construction
-  simple = TRUE,    # default
-  build  = TRUE     # build now; otherwise built lazily on first query
+  class = "DAG", # optional, guarantees acyclicity by construction
+  simple = TRUE, # default
+  build = TRUE # build now; otherwise built lazily on first query
 )
 ```
 
@@ -117,16 +117,16 @@ Use `+` to fan out from one side, and `c(...)` or parentheses to group.
 
 ```{r}
 caugi_graph(
-  X %-->% Y + Z,           # X → Y and X → Z
-  c(Y, Z) %-->% W,         # Y → W and Z → W
-  (A + B) %---% (C + D)    # all undirected pairs across groups
+  X %-->% Y + Z, # X → Y and X → Z
+  c(Y, Z) %-->% W, # Y → W and Z → W
+  (A + B) %---% (C + D) # all undirected pairs across groups
 )
 ```
 
 Unconnected symbols also declare nodes:
 
 ```{r}
-caugi_graph(A, B, C)  # declares three isolated nodes
+caugi_graph(A, B, C) # declares three isolated nodes
 ```
 
 
@@ -155,7 +155,7 @@ You can check graph properties with the following functions.
 
 ```{r}
 is_acyclic(cg)
-is_dag(cg)                  
+is_dag(cg)
 is_pdag(cg)
 ```
 
@@ -174,11 +174,11 @@ cg <- add_edges(cg, E %-->% F)
 or you can use standard evaluation:
 
 ```{r}
-cg <- add_edges(cg, 
-                from = c("D", "G"), 
-                edge = c("-->", "o->"), 
-                to = c("E", "H")
-                )
+cg <- add_edges(cg,
+  from = c("D", "G"),
+  edge = c("-->", "o->"),
+  to = c("E", "H")
+)
 ```
 
 Besides `add_edges`, you can also use `remove_edges()`, `set_edges()`, `add_nodes()`, `remove_nodes()`, `set_nodes()`, and `subgraph()`.
