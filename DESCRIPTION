@@ -6,24 +6,21 @@ Authors@R:
 Description: A causal graph interface for R using a Rust backend.
 License: MIT + file LICENSE
 Encoding: UTF-8
-Roxygen: list(markdown = TRUE, roclets = c("caugi::cargo_test_roclet", "rd","namespace","collate"))
+Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Imports:
-    rextendr,
+    digest,
     processx,
     tibble,
     dplyr,
     igraph,
-    Matrix,
     rlang,
-    S7,
-    tidyr,
-    graph,
-    methods
+    S7
 Suggests: 
     devtools,
     knitr,
     pcalg,
+    rextendr,
     Rgraphviz,
     rmarkdown,
     testthat

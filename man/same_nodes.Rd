@@ -10,6 +10,9 @@ same_nodes(cg1, cg2, throw_error = FALSE)
 \item{cg1}{A \code{caugi_graph} object.}
 
 \item{cg2}{A \code{caugi_graph} object.}
+
+\item{throw_error}{Logical; if \code{TRUE}, throws an error if the graphs do not
+have the same nodes.}
 }
 \value{
 A logical indicating if the two graphs have the same nodes.

@@ -8,6 +8,8 @@ build(cg, ...)
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object with \code{cg@built = TRUE}.}
+
+\item{...}{Not used.}
 }
 \description{
 If a \code{caugi_graph} has been modified (nodes or edges added or

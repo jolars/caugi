@@ -4,7 +4,7 @@
 \alias{print}
 \title{Print a \code{caugi_graph}}
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{x}{A \code{caugi_graph} object.}
 
 \item{...}{Not used.}
 }
