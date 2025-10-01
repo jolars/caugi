@@ -281,7 +281,7 @@ test_that("exogenous works", {
   e <- exogenous(cg)
   expect_setequal(e$name, c("B", "C"))
 
-  expect_error(exogenous("not a graph"), "is not a caugi_graph")
+  expect_error(exogenous("not a graph"), "Input must be a caugi_graph")
 })
 
 test_that("exogenous works on PDAGs", {
