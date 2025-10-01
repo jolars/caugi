@@ -17,12 +17,12 @@ S7::method(length, caugi_graph) <- function(x) {
 
 #' Print a `caugi_graph`
 #'
-#' @param cg A `caugi_graph` object.
+#' @param x A `caugi_graph` object.
 #' @param ... Not used.
 #'
 #' @name print
 #' @export
-S7::method(print, caugi_graph) <- function(cg, ...) {
+S7::method(print, caugi_graph) <- function(x, ...) {
   print(cg@nodes)
   print(cg@edges)
   invisible(cg)
