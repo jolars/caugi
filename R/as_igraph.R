@@ -16,7 +16,8 @@ as_igraph <- function(x, ...) {
 #' @export
 as_igraph.caugi_graph <- function(x, ...) {
   # 1 ─ tidy edge list -------------------------------------------------------
-  edges <- as_tibble(x, collapse = FALSE)
+  # edges <- as_tibble(x, collapse = FALSE)
+  edges <- x@edges
 
   # 2 ─ classify edge types --------------------------------------------------
   pag_codes <- c("o->", "o--", "o-o")
