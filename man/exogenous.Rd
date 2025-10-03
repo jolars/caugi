@@ -2,12 +2,9 @@
 % Please edit documentation in R/queries.R
 \name{exogenous}
 \alias{exogenous}
-\alias{exo}
 \title{Get all exogenous nodes in a \code{caugi_graph}}
 \usage{
 exogenous(cg, undirected_as_parents = FALSE)
-
-exo(cg, undirected_as_parents = FALSE)
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}

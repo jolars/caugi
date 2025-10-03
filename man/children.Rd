@@ -2,12 +2,9 @@
 % Please edit documentation in R/queries.R
 \name{children}
 \alias{children}
-\alias{ch}
 \title{Get children of nodes in a \code{caugi_graph}}
 \usage{
 children(cg, nodes = NULL, index = NULL)
-
-ch(cg, nodes = NULL, index = NULL)
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}

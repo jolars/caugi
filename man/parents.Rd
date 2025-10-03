@@ -2,12 +2,9 @@
 % Please edit documentation in R/queries.R
 \name{parents}
 \alias{parents}
-\alias{pa}
 \title{Get parents of nodes in a \code{caugi_graph}}
 \usage{
 parents(cg, nodes = NULL, index = NULL)
-
-pa(cg, nodes = NULL, index = NULL)
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}

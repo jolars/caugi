@@ -3,20 +3,11 @@
 \name{neighbors}
 \alias{neighbors}
 \alias{neighbours}
-\alias{nb}
-\alias{neighborhood}
-\alias{neighbourhood}
 \title{Get neighbors of nodes in a \code{caugi_graph}}
 \usage{
 neighbors(cg, nodes = NULL, index = NULL)
 
 neighbours(cg, nodes = NULL, index = NULL)
-
-nb(cg, nodes = NULL, index = NULL)
-
-neighborhood(cg, nodes = NULL, index = NULL)
-
-neighbourhood(cg, nodes = NULL, index = NULL)
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}

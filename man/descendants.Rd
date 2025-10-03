@@ -2,12 +2,9 @@
 % Please edit documentation in R/queries.R
 \name{descendants}
 \alias{descendants}
-\alias{de}
 \title{Get descendants of nodes in a \code{caugi_graph}}
 \usage{
 descendants(cg, nodes = NULL, index = NULL)
-
-de(cg, nodes = NULL, index = NULL)
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}

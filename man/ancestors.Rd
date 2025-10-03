@@ -2,12 +2,9 @@
 % Please edit documentation in R/queries.R
 \name{ancestors}
 \alias{ancestors}
-\alias{an}
 \title{Get ancestors of nodes in a \code{caugi_graph}}
 \usage{
 ancestors(cg, nodes = NULL, index = NULL)
-
-an(cg, nodes = NULL, index = NULL)
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}

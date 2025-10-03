@@ -2,12 +2,9 @@
 % Please edit documentation in R/queries.R
 \name{markov_blanket}
 \alias{markov_blanket}
-\alias{mb}
 \title{Get Markov blanket of nodes in a \code{caugi_graph}}
 \usage{
 markov_blanket(cg, nodes = NULL, index = NULL)
-
-mb(cg, nodes = NULL, index = NULL)
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}
