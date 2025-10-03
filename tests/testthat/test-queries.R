@@ -123,25 +123,25 @@ test_that("neighbors returns undirected and directed adjacency", {
 
 test_that("queries match with nodes and indexes", {
   cg <- caugi_graph(A %-->% B, B %-->% C, B %---% D, C %---% E, class = "PDAG")
-  expect_identical(ch(cg, A), ch(cg, index = 1))
-  expect_identical(pa(cg, B), pa(cg, index = 2))
-  expect_identical(nb(cg, C), nb(cg, index = 3))
+  expect_identical(children(cg, A), children(cg, index = 1))
+  expect_identical(parents(cg, B), parents(cg, index = 2))
+  expect_identical(neighbors(cg, C), neighbors(cg, index = 3))
 })
 
 test_that("queries fail with bad input", {
   cg <- caugi_graph(A %-->% B, B %-->% C, B %---% D, C %---% E, class = "PDAG")
-  expect_error(ch(cg, A, index = 1), "Supply either `nodes` or `index`")
-  expect_error(ch(cg), "Supply one of `nodes` or `index`")
-  expect_error(pa(cg, A, index = 1), "Supply either `nodes` or `index`")
-  expect_error(pa(cg), "Supply one of `nodes` or `index`")
-  expect_error(nb(cg, A, index = 1), "Supply either `nodes` or `index`")
-  expect_error(nb(cg), "Supply one of `nodes` or `index`")
-  expect_error(an(cg, "Z"), "Unknown node")
-  expect_error(an(cg, A, index = 1), "Supply either `nodes` or `index`")
-  expect_error(an(cg), "Supply one of `nodes` or `index`")
-  expect_error(de(cg, index = 0), "out of bounds")
-  expect_error(de(cg, A, index = 1), "Supply either `nodes` or `index`")
-  expect_error(de(cg), "Supply one of `nodes` or `index`")
+  expect_error(children(cg, A, index = 1), "Supply either `nodes` or `index`")
+  expect_error(children(cg), "Supply one of `nodes` or `index`")
+  expect_error(parents(cg, A, index = 1), "Supply either `nodes` or `index`")
+  expect_error(parents(cg), "Supply one of `nodes` or `index`")
+  expect_error(neighbors(cg, A, index = 1), "Supply either `nodes` or `index`")
+  expect_error(neighbors(cg), "Supply one of `nodes` or `index`")
+  expect_error(ancestors(cg, "Z"), "Unknown node")
+  expect_error(ancestors(cg, A, index = 1), "Supply either `nodes` or `index`")
+  expect_error(ancestors(cg), "Supply one of `nodes` or `index`")
+  expect_error(descendants(cg, index = 0), "out of bounds")
+  expect_error(descendants(cg, A, index = 1), "Supply either `nodes` or `index`")
+  expect_error(descendants(cg), "Supply one of `nodes` or `index`")
 })
 
 test_that("getter queries handle missing relations and duplicates", {
@@ -162,14 +162,9 @@ test_that("getter queries error on bad nodes or indices", {
   expect_error(children(cg, index = 100), "out of bounds")
 })
 
-test_that("aliases pa/ch/nb/nbhd/neighbours route correctly", {
+test_that("aliases route correctly", {
   cg <- caugi_graph(A %-->% B, B %---% C, class = "PDAG")
-  expect_identical(pa(cg, "B")$name, parents(cg, "B")$name)
-  expect_identical(ch(cg, "A")$name, children(cg, "A")$name)
-  expect_identical(nb(cg, "B")$name, neighbors(cg, "B")$name)
   expect_identical(neighbours(cg, "B")$name, neighbors(cg, "B")$name)
-  expect_identical(neighborhood(cg, "B")$name, neighbors(cg, "B")$name)
-  expect_identical(neighbourhood(cg, "B")$name, neighbors(cg, "B")$name)
 })
 
 test_that("public getters trigger lazy build", {
@@ -204,21 +199,21 @@ test_that("nodes and edges getters work", {
 
 test_that("an and de works", {
   cg <- caugi_graph(A %-->% B, B %-->% C, C %---% D, class = "PDAG")
-  expect_identical(an(cg, "C")$name, c("A", "B"))
-  expect_identical(de(cg, "A")$name, c("B", "C"))
-  expect_identical(sort(an(cg, c("C", "D"))$name), c("A", "B"))
-  expect_identical(sort(de(cg, c("A", "D"))$name), c("B", "C"))
+  expect_identical(ancestors(cg, "C")$name, c("A", "B"))
+  expect_identical(descendants(cg, "A")$name, c("B", "C"))
+  expect_identical(sort(ancestors(cg, c("C", "D"))$name), c("A", "B"))
+  expect_identical(sort(descendants(cg, c("A", "D"))$name), c("B", "C"))
 
   # test index
-  expect_identical(an(cg, index = 3)$name, c("A", "B"))
-  expect_identical(de(cg, index = 1)$name, c("B", "C"))
-  expect_identical(sort(an(cg, index = c(3, 4))$name), c("A", "B"))
-  expect_identical(sort(de(cg, index = c(1, 4))$name), c("B", "C"))
+  expect_identical(ancestors(cg, index = 3)$name, c("A", "B"))
+  expect_identical(descendants(cg, index = 1)$name, c("B", "C"))
+  expect_identical(sort(ancestors(cg, index = c(3, 4))$name), c("A", "B"))
+  expect_identical(sort(descendants(cg, index = c(1, 4))$name), c("B", "C"))
 
   cg <- caugi_graph(A, B, class = "DAG")
 
-  expect_equal(nrow(an(cg, "A")), 0L)
-  expect_equal(nrow(de(cg, "A")), 0L)
+  expect_equal(nrow(ancestors(cg, "A")), 0L)
+  expect_equal(nrow(descendants(cg, "A")), 0L)
 })
 
 test_that("markov_blanket works on DAGs (parents, children, spouses)", {
@@ -286,10 +281,10 @@ test_that("exogenous works", {
 
 test_that("exogenous works on PDAGs", {
   cg <- caugi_graph(A %---% B, C %-->% D, class = "PDAG")
-  e <- exo(cg)
+  e <- exogenous(cg)
   expect_setequal(e$name, c("A", "B", "C"))
 
-  e <- exo(cg, undirected_as_parents = TRUE)
+  e <- exogenous(cg, undirected_as_parents = TRUE)
   expect_setequal(e$name, c("C"))
 })
 
@@ -346,7 +341,7 @@ test_that(".relations fails with bad input", {
   parent_getter <- function(ptr, i0) {
     nm <- cg@nodes$name[i0 + 1L]
     res <- parents(cg, nm)
-    match(res$name, cg@nodes$name) - 1L
+    matchildren(res$name, cg@nodes$name) - 1L
   }
 
   expect_error(caugi:::.relations(cg, NULL, NULL, parent_getter), "Supply one of `nodes` or `index`")
