@@ -25,3 +25,23 @@ shd <- function(cg1, cg2, normalized = FALSE) {
   out <- if (normalized) out_lst$normalized else out_lst$count
   out
 }
+
+#' @title Hamming Distance
+#'
+#' @description Compute the Hamming Distance between two graphs.
+#'
+#' @param cg1 A `caugi_graph` object.
+#' @param cg2 A `caugi_graph` object.
+#' @param normalized Logical; if `TRUE`, returns the normalized Hamming
+#' Distance.
+#'
+#' @returns An integer representing the Hamming Distance between the two graphs.
+#' @export
+hd <- function(cg1, cg2, normalized = FALSE) {
+  is_caugi(cg1, throw_error = TRUE)
+  is_caugi(cg2, throw_error = TRUE)
+  same_nodes(cg1, cg2, throw_error = TRUE)
+  out_lst <- hd_of_ptrs(cg1@ptr, cg2@ptr)
+  out <- if (normalized) out_lst$normalized else out_lst$count
+  out
+}

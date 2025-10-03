@@ -9,9 +9,9 @@ use edges::{EdgeClass, EdgeRegistry, EdgeSpec, Mark, QueryFlags};
 use graph::CaugiGraph;
 use graph::builder::GraphBuilder;
 use graph::graph_type::GraphType;
+use graph::metrics::{hd, shd_with_perm};
 use graph::view::{GraphApi, GraphView};
 use graph::{dag::Dag, pdag::Pdag};
-use graph::metrics::shd_with_perm;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -290,12 +290,16 @@ fn is_simple_ptr(g: ExternalPtr<GraphView>) -> bool {
 // ---------- Metrics ----------
 #[extendr]
 fn shd_of_ptrs(
-    g1: ExternalPtr<GraphView>, names1: Strings,
-    g2: ExternalPtr<GraphView>, names2: Strings
+    g1: ExternalPtr<GraphView>,
+    names1: Strings,
+    g2: ExternalPtr<GraphView>,
+    names2: Strings,
 ) -> Robj {
     let core1 = g1.as_ref().core();
     let core2 = g2.as_ref().core();
-    if core1.n() != core2.n() { throw_r_error("graph size mismatch"); }
+    if core1.n() != core2.n() {
+        throw_r_error("graph size mismatch");
+    }
     if names1.len() as u32 != core1.n() || names2.len() as u32 != core2.n() {
         throw_r_error("names length must match number of nodes");
     }
@@ -315,6 +319,12 @@ fn shd_of_ptrs(
         perm.push(j);
     }
     let (norm, count) = shd_with_perm(core1, core2, &perm);
+    list!(normalized = norm, count = count as i32).into_robj()
+}
+
+#[extendr]
+fn hd_of_ptrs(g1: ExternalPtr<GraphView>, g2: ExternalPtr<GraphView>) -> Robj {
+    let (norm, count) = hd(g1.as_ref().core(), g2.as_ref().core());
     list!(normalized = norm, count = count as i32).into_robj()
 }
 
@@ -360,4 +370,5 @@ extendr_module! {
 
     // metrics
     fn shd_of_ptrs;
+    fn hd_of_ptrs;
 }
