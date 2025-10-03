@@ -29,3 +29,4 @@ SystemRequirements: Cargo (Rust's package manager), rustc >= 1.65.0, xz
 Depends: 
     R (>= 4.2)
 VignetteBuilder: knitr
+URL: https://frederikfabriciusbjerre.github.io/caugi/

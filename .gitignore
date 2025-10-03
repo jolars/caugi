@@ -26,3 +26,4 @@ inst/doc
 /man/roclet_process.roclet_cargo_test.Rd
 /man/run_cargo_test.Rd
 /man/rust_r_covr.Rd
+docs
