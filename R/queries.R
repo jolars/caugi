@@ -231,10 +231,6 @@ parents <- function(cg, nodes = NULL, index = NULL) {
   .relations(cg, .expand_nodes(expr, env), NULL, parents_of_ptr)
 }
 
-#' @rdname parents
-#' @export
-pa <- parents
-
 #' @title Get children of nodes in a `caugi_graph`
 #'
 #' @param cg A `caugi_graph` object.
@@ -259,10 +255,6 @@ children <- function(cg, nodes = NULL, index = NULL) {
   env <- parent.frame()
   .relations(cg, .expand_nodes(expr, env), NULL, children_of_ptr)
 }
-
-#' @rdname children
-#' @export
-ch <- children
 
 #' @title Get neighbors of nodes in a `caugi_graph`
 #'
@@ -292,15 +284,6 @@ neighbors <- function(cg, nodes = NULL, index = NULL) {
 #' @rdname neighbors
 #' @export
 neighbours <- neighbors
-#' @rdname neighbors
-#' @export
-nb <- neighbors
-#' @rdname neighbors
-#' @export
-neighborhood <- neighbors
-#' @rdname neighbors
-#' @export
-neighbourhood <- neighbors
 
 #' @title Get ancestors of nodes in a `caugi_graph`
 #'
@@ -327,10 +310,6 @@ ancestors <- function(cg, nodes = NULL, index = NULL) {
   .relations(cg, .expand_nodes(expr, env), NULL, ancestors_of_ptr)
 }
 
-#' @rdname ancestors
-#' @export
-an <- ancestors
-
 #' @title Get descendants of nodes in a `caugi_graph`
 #'
 #' @param cg A `caugi_graph` object.
@@ -355,11 +334,6 @@ descendants <- function(cg, nodes = NULL, index = NULL) {
   env <- parent.frame()
   .relations(cg, .expand_nodes(expr, env), NULL, descendants_of_ptr)
 }
-
-#' @rdname descendants
-#' @export
-de <- descendants
-
 #' @title Get Markov blanket of nodes in a `caugi_graph`
 #'
 #' @param cg A `caugi_graph` object.
@@ -385,10 +359,6 @@ markov_blanket <- function(cg, nodes = NULL, index = NULL) {
   .relations(cg, .expand_nodes(expr, env), NULL, markov_blanket_of_ptr)
 }
 
-#' @rdname markov_blanket
-#' @export
-mb <- markov_blanket
-
 #' @title Get all exogenous nodes in a `caugi_graph`
 #'
 #' @description Get all exogenous nodes (nodes with no parents) in a
@@ -406,10 +376,6 @@ exogenous <- function(cg, undirected_as_parents = FALSE) {
   idx0 <- exogenous_nodes_of_ptr(cg@ptr, undirected_as_parents)
   .getter_output(cg, idx0)
 }
-
-#' @rdname exogenous
-#' @export
-exo <- exogenous
 
 # ──────────────────────────────────────────────────────────────────────────────
 # ────────────────────────────── Getter helpers ────────────────────────────────
