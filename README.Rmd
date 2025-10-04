@@ -1,0 +1,73 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# caugi
+
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/frederikfabriciusbjerre/caugi/graph/badge.svg)](https://app.codecov.io/gh/frederikfabriciusbjerre/caugi)
+<!-- badges: end -->
+
+> **Causal Graph Interface (for R)** — a fast, tidy toolbox for building, coercing and analysing causal graphs.
+
+*caugi* (pronounced **“corgi”**) wraps a high‑performance Rust core in a pipe‑friendly R interface. Convert between many graph formats, compose graphs with expressive infix operators, and run algorithms on large graphs. *caugi* aims to be the go‑to package for causal graphs in R.
+
+## Installation
+
+You can install the development version of caugi from [GitHub](https://github.com/) with:
+
+```r
+# install.packages("pak")
+pak::pak("frederikfabriciusbjerre/caugi")
+
+# ... or wait for the first CRAN release
+# install.packages("caugi")
+```
+
+## Example
+
+The `caugi` syntax is very close to how you would draw a graph on a whiteboard. Here is a tiny DAG:
+```{r example}
+library(caugi)
+
+cg <- caugi_graph(A %-->% B + C,
+  B %-->% D,
+  C %-->% D,
+  class = "DAG"
+) # optional, guarantees acyclicity by construction
+print(cg)
+```
+
+You can query it:
+
+```{r query}
+neighbors(cg, D)
+parents(cg, D)
+children(cg, A)
+ancestors(cg, D)
+descendants(cg, A)
+```
+
+## Key features
+
+| :rocket:                        | What                                                                                                                                                   | Why it matters                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| **Flexible coercion & formats** | `as_caugi()` ingests **igraph**, **graphNEL**, **pcalg** `amat` (CPDAG *and* PAG), sparse or dense (binary/integer‑coded) matrices, and tidy edge lists. | Re‑use existing data structures; no tedious re‑encoding.                  |
+| **PAG & mixed‑graph support**   | Native edge codes for PAGs (`o->`, `o-o`, `--o`) and bidirected/undirected edges.                                                                      | Analyse outputs of discovery algorithms like FCI or RFCI out‑of‑the‑box.  |
+| **Readable syntax**             | `A %-->% B`, `B %<->% C` ...                                                                                                                             | Write graphs exactly as you draw them on a whiteboard.                    |
+| **Blazing speed**               | Core implemented in Rust in a Compressed Sparse Row (CSR) representation.                                                                          | Millions of edges? No problem.                                            |
+| **Frontloading computation** | The CSR format is build to be immutable by design. You can add edges/nodes, but the graph is only rebuilt when you call `build()` or query the graph. | Avoids unnecessary recomputation; keeps your code snappy (and keeps you happy).                  |
+| **S7** | Modern S7 classes and methods. Made to be hard to break by mistake. | Future‑proof, safe, and extensible. |
+

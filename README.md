@@ -1,103 +1,110 @@
-# caugi&#x20;
-<img src="man/figures/logo.svg" align="right" height="225" alt="" style="padding-left:10px;padding-top:10px;padding-bottom:10px;background-color:white;" />
 
-> **Causal Graph Interface (for R)** — a fast, tidyverse‑friendly toolbox for building, coercing and analysing causal graphs.
+<!-- README.md is generated from README.Rmd. Please edit that file -->
 
----
+# caugi
 
-*caugi* (pronounced **“corgi”**) wraps a high‑performance C++ core in a pipe‑friendly R interface. Convert between many graph formats, compose graphs with expressive infix operators, and run algorithms on large sparse matrices — all without leaving the tidyverse.
- 
 <!-- badges: start -->
+
 [![R-CMD-check](https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/frederikfabriciusbjerre/caugi/graph/badge.svg)](https://app.codecov.io/gh/frederikfabriciusbjerre/caugi)
 <!-- badges: end -->
 
-<!-- badges: start -->
-[![Codecov test coverage](https://codecov.io/gh/frederikfabriciusbjerre/caugi/graph/badge.svg)](https://app.codecov.io/gh/frederikfabriciusbjerre/caugi)
-<!-- badges: end -->
+> **Causal Graph Interface (for R)** — a fast, tidy toolbox for
+> building, coercing and analysing causal graphs.
 
-## Key features
-
-| :rocket:                        | What                                                                                                                                                   | Why it matters                                                            |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| **Flexible coercion & formats** | `as_caugi()` ingests **igraph**, **graphNEL**, **pcalg** `amat` (CPDAG *and* PAG), sparse or dense (binary/integer‑coded) matrices, and tidy edge lists. | Re‑use existing data structures; no tedious re‑encoding.                  |
-| **PAG & mixed‑graph support**   | Native edge codes for PAGs (`o->`, `o-o`, `o--`) and bidirected/undirected edges.                                                                      | Analyse outputs of discovery algorithms like FCI or RFCI out‑of‑the‑box.  |
-| **Readable syntax**             | `a %-->% b`, `b %<->% c` …                                                                                                                             | Write graphs exactly as you draw them on a whiteboard.                    |
-| **Blazing speed**               | Core Compressed Sparse Row (CSR) representation and algorithms in modern C++.                                                                          | Millions of edges? No problem.                                            |
-| **Tidy output**                 | `as_tibble()` gives a tidy edge list that plugs straight into **dplyr**/**tidyr**.                                                                     | Analyse & visualise with your favourite tidy tools.                       |
-| **igraph interaction**                  | Use `as_igraph()` and analyse and convert back with `as_caugi()` on directed or undirected graphs.                                                                                                                         | Seamlessly tap into igraph’s ecosystem for directed or undirected graphs. |
+*caugi* (pronounced **“corgi”**) wraps a high‑performance Rust core in a
+pipe‑friendly R interface. Convert between many graph formats, compose
+graphs with expressive infix operators, and run algorithms on large
+graphs. *caugi* aims to be the go‑to package for causal graphs in R.
 
 ## Installation
 
-```r
-# dev version from GitHub
-install.packages("pak")         # if needed
+You can install the development version of caugi from
+[GitHub](https://github.com/) with:
+
+``` r
+# install.packages("pak")
 pak::pak("frederikfabriciusbjerre/caugi")
 
-# …or wait for the first CRAN release
+# ... or wait for the first CRAN release
 # install.packages("caugi")
 ```
 
-caugi needs R ≥ 4.2 and a C++17‑capable compiler. See `?caugi::caugi` for full details.
+## Example
 
-## Quick start
+The `caugi` syntax is very close to how you would draw a graph on a
+whiteboard. Here is a tiny DAG:
 
-```r
+``` r
 library(caugi)
 
-my_graph <- caugi_graph(
-  tibble::tibble(name = letters[1:4]),
-  a %-->% b,
-  b %<->% c,
-  d %---% a
-)
-
-print(my_graph)
-#> # A caugi_graph with 4 nodes and 3 edges
-#>   from to edge_type
-#> 1 a    b -->
-#> 2 b    c <->
-#> 3 a    d ---
+cg <- caugi_graph(A %-->% B + C,
+  B %-->% D,
+  C %-->% D,
+  class = "DAG"
+) # optional, guarantees acyclicity by construction
+print(cg)
+#> # A tibble: 4 × 1
+#>   name 
+#>   <chr>
+#> 1 A    
+#> 2 B    
+#> 3 C    
+#> 4 D    
+#> # A tibble: 4 × 3
+#>   from  edge  to   
+#>   <chr> <chr> <chr>
+#> 1 A     -->   B    
+#> 2 A     -->   C    
+#> 3 B     -->   D    
+#> 4 C     -->   D
 ```
 
-Coercion works both ways:
+You can query it:
 
-```r
-ig <- igraph::make_ring(5, directed = TRUE)
-
-cg <- as_caugi(ig)
+``` r
+neighbors(cg, D)
+#> # A tibble: 2 × 1
+#>   name 
+#>   <chr>
+#> 1 B    
+#> 2 C
+parents(cg, D)
+#> # A tibble: 2 × 1
+#>   name 
+#>   <chr>
+#> 1 B    
+#> 2 C
+children(cg, A)
+#> # A tibble: 2 × 1
+#>   name 
+#>   <chr>
+#> 1 B    
+#> 2 C
+ancestors(cg, D)
+#> # A tibble: 3 × 1
+#>   name 
+#>   <chr>
+#> 1 A    
+#> 2 B    
+#> 3 C
+descendants(cg, A)
+#> # A tibble: 3 × 1
+#>   name 
+#>   <chr>
+#> 1 B    
+#> 2 C    
+#> 3 D
 ```
 
-## How it works: compact CSR storage
+## Key features
 
-Internally, every *caugi\_graph* lives in **Compressed Sparse Row (CSR)** form:
-
-```
-row_ptr    : int[n_nodes + 1]
-col_ids    : int[n_edges]
-type_codes : int[n_edges]   # maps 1‑6 → {"-->", "<->", …}
-```
-
-## Roadmap
-
-We’re actively working on:
-
-* **d‑separation** queries (`dsep()`).
-* **Adjustment‑set identification** (`adjustment_sets()`).
-* **Graph distances** — Structural Hamming Distance (SHD), simple Hamming Distance (HD), Adjustment Identification Distance (AID), and more!
-* Additional causal metrics and utilities.
-
-Want to help? Open a discussion!
-
-## Contributing
-
-Pull requests, issues and feature requests are welcome. Please open an issue before large changes.
-
-### Style guide
-
-* tidyverse style; run `styler::style_pkg()` before committing.
-* Each PR must pass `devtools::check()` with no errors, warnings, or notes.
-
-## License
-
-MIT © 2025 caugi authors.
-
+| :rocket: | What | Why it matters |
+|----|----|----|
+| **Flexible coercion & formats** | `as_caugi()` ingests **igraph**, **graphNEL**, **pcalg** `amat` (CPDAG *and* PAG), sparse or dense (binary/integer‑coded) matrices, and tidy edge lists. | Re‑use existing data structures; no tedious re‑encoding. |
+| **PAG & mixed‑graph support** | Native edge codes for PAGs (`o->`, `o-o`, `--o`) and bidirected/undirected edges. | Analyse outputs of discovery algorithms like FCI or RFCI out‑of‑the‑box. |
+| **Readable syntax** | `A %-->% B`, `B %<->% C` … | Write graphs exactly as you draw them on a whiteboard. |
+| **Blazing speed** | Core implemented in Rust in a Compressed Sparse Row (CSR) representation. | Millions of edges? No problem. |
+| **Frontloading computation** | The CSR format is build to be immutable by design. You can add edges/nodes, but the graph is only rebuilt when you call `build()` or query the graph. | Avoids unnecessary recomputation; keeps your code snappy (and keeps you happy). |
+| **S7** | Modern S7 classes and methods. Made to be hard to break by mistake. | Future‑proof, safe, and extensible. |
