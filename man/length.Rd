@@ -4,7 +4,7 @@
 \alias{length}
 \title{Length of a \code{caugi_graph}}
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{x}{A \code{caugi_graph} object.}
 }
 \value{
 An integer representing the number of nodes.
