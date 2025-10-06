@@ -13,6 +13,6 @@
 A list of edge units, each with lhs, rhs, and glyph.
 }
 \description{
-Parse one caugi_graph(...) argument into edge units with L/R context.
+Parse one caugi_graph(...) argument into edge units
 }
 \keyword{internal}

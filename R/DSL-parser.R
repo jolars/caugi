@@ -188,7 +188,7 @@
 
 #' @title Parse one caugi_graph(...) argument
 #'
-#' @description Parse one caugi_graph(...) argument into edge units with L/R context.
+#' @description Parse one caugi_graph(...) argument into edge units
 #'
 #' @param expr An expression representing an edge with nodes
 #'
@@ -200,40 +200,96 @@
 
   is_edge <- vapply(terms, .is_edge_call, TRUE)
   if (!any(is_edge)) {
-    stop("Expected an edge expression; got: ",
-      deparse(expr),
-      call. = FALSE
-    )
+    stop("Expected an edge expression; got: ", deparse(expr), call. = FALSE)
   }
 
   edge_idx <- which(is_edge)
-  units <- vector("list", length(edge_idx))
+  units <- list()
 
   keep_node <- function(x) !is.null(x) && !.is_edge_call(x)
+
   for (k in seq_along(edge_idx)) {
     i <- edge_idx[k]
     edge_term <- terms[[i]]
 
-    lhs <- edge_term[[2L]]
-    rhs <- edge_term[[3L]]
-
-    prev_idx <- if (k > 1L) edge_idx[k - 1L] else 0L
-    next_idx <- if (k < length(edge_idx)) edge_idx[k + 1L] else length(terms) + 1L
-
-    left_idx <- if (prev_idx + 1L <= i - 1L) seq.int(prev_idx + 1L, i - 1L) else integer(0)
-    right_idx <- if (i + 1L <= next_idx - 1L) seq.int(i + 1L, next_idx - 1L) else integer(0)
-
+    # Identify contiguous non-edge nodes to the left/right of this edge term
+    prev_idx <- if (k > 1L) {
+      edge_idx[k - 1L]
+    } else {
+      0L
+    }
+    next_idx <- if (k < length(edge_idx)) {
+      edge_idx[k + 1L]
+    } else {
+      length(terms) + 1L
+    }
+    left_idx <- if (prev_idx + 1L <= i - 1L) {
+      seq.int(prev_idx + 1L, i - 1L)
+    } else {
+      integer(0)
+    }
+    right_idx <- if (i + 1L <= next_idx - 1L) {
+      seq.int(i + 1L, next_idx - 1L)
+    } else {
+      integer(0)
+    }
     left_nodes_terms <- Filter(keep_node, terms[left_idx])
     right_nodes_terms <- Filter(keep_node, terms[right_idx])
 
-    if (length(left_nodes_terms)) {
-      lhs <- call("+", .combine_plus(left_nodes_terms), lhs)
-    }
-    if (length(right_nodes_terms)) {
-      rhs <- call("+", rhs, .combine_plus(right_nodes_terms))
+    # Case 1: single edge call (no chaining)
+    if (!is.call(edge_term[[2L]]) || !.is_edge_call(edge_term[[2L]])) {
+      lhs <- edge_term[[2L]]
+      rhs <- edge_term[[3L]]
+      if (length(left_nodes_terms)) {
+        lhs <- call("+", .combine_plus(left_nodes_terms), lhs)
+      }
+      if (length(right_nodes_terms)) {
+        rhs <- call("+", rhs, .combine_plus(right_nodes_terms))
+      }
+      units <- c(units, list(list(
+        lhs = lhs,
+        rhs = rhs,
+        glyph = .glyph_of(edge_term[[1L]])
+      )))
+      next
     }
 
-    units[[k]] <- list(lhs = lhs, rhs = rhs, glyph = .glyph_of(edge_term[[1L]]))
+    # Case 2: chained edge expression: lhs is itself an edge call
+    chain <- .flatten_edge_chain(edge_term)
+    chain_terms <- chain$terms # list of term-exprs
+    chain_ops <- chain$ops # character(ops)
+
+    if (length(chain_ops) < 1L ||
+      length(chain_terms) != length(chain_ops) + 1L) {
+      stop("Malformed chained edge expression: ",
+        deparse(edge_term),
+        call. = FALSE
+      )
+    }
+
+    # Attach external left nodes to the first term; right nodes to the last term
+    if (length(left_nodes_terms)) {
+      chain_terms[[1L]] <- call(
+        "+",
+        .combine_plus(left_nodes_terms),
+        chain_terms[[1L]]
+      )
+    }
+    if (length(right_nodes_terms)) {
+      last <- length(chain_terms)
+      chain_terms[[last]] <- call(
+        "+",
+        chain_terms[[last]],
+        .combine_plus(right_nodes_terms)
+      )
+    }
+
+    # Emit one unit per segment, left-to-right
+    for (j in seq_along(chain_ops)) {
+      units <- c(units, list(
+        .segment_units(chain_terms[[j]], chain_ops[[j]], chain_terms[[j + 1L]])
+      ))
+    }
   }
   units
 }
@@ -301,4 +357,65 @@
     tibble::tibble(from = character(), to = character(), edge = character())
   }
   list(edges = edges, declared = unique(declared))
+}
+
+#' @title Flatten a chained edge expression
+#'
+#' @description Given a chained edge expression,
+#' flatten it into its terms and operators.
+#'
+#' @param call_expr A call expression representing a chained edge.
+#'
+#' @returns A list with two elements, `terms` and `ops`.
+#'
+#' @keywords internal
+.flatten_edge_chain <- function(call_expr) {
+  stopifnot(is.call(call_expr))
+  terms <- list()
+  ops <- character()
+
+  cur <- call_expr
+  repeat {
+    # If this node is an edge call, peel one layer and keep walking left
+    if (.is_edge_call(cur)) {
+      op_chr <- as.character(cur[[1L]])
+      right <- cur[[3L]]
+      ops <- c(op_chr, ops)
+      terms <- c(list(right), terms)
+      cur <- cur[[2L]] # continue with the left
+    } else {
+      # reached the leftmost term
+      terms <- c(list(cur), terms)
+      break
+    }
+  }
+  list(terms = terms, ops = ops)
+}
+
+#' @title Create an edge unit from lhs, op, rhs
+#'
+#' @description Create an edge unit from lhs, op, rhs expressions.
+#'
+#' @param lhs_term An expression for the left-hand side nodes.
+#' @param op_chr A string representing the edge operator glyph.
+#' @param rhs_term An expression for the right-hand side nodes.
+#'
+#' @returns A list with elements `lhs`, `rhs`, and `glyph`.
+#'
+#' @keywords internal
+.segment_units <- function(lhs_term, op_chr, rhs_term) {
+  glyph <- .glyph_of(as.name(op_chr))
+  if (is.null(glyph)) {
+    stop("Unknown edge operator in chain: ", op_chr, call. = FALSE)
+  }
+  froms <- .expand_nodes(lhs_term)
+  tos <- .expand_nodes(rhs_term)
+  if (!length(froms) || !length(tos)) {
+    stop("Empty node set in chained edge expression near operator ",
+      op_chr,
+      call. = FALSE
+    )
+  }
+  # Return an edge-unit compatible list: list(lhs=expr, rhs=expr, glyph=chr)
+  list(lhs = lhs_term, rhs = rhs_term, glyph = glyph)
 }
