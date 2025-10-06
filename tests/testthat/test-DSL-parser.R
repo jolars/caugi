@@ -244,3 +244,148 @@ test_that(".parse_edge_arg handles multiple edge units with context", {
 
   reset_caugi_registry()
 })
+
+# ----
+test_that("simple chain expands pairwise", {
+  cg <- caugi_graph(A %-->% B %-->% C)
+  expect_equal(sort(cg@edges$from), c("A", "B"))
+  expect_equal(sort(cg@edges$to), c("B", "C"))
+  expect_setequal(cg@edges$edge, c("-->"))
+})
+
+test_that("mixed operators chain left-to-right", {
+  cg <- caugi_graph(A %-->% B %---% C %<->% D)
+  expect_true(
+    any(
+      cg@edges$from == "A" &
+        cg@edges$edge == "-->" &
+        cg@edges$to == "B"
+    )
+  )
+  expect_true(
+    any(
+      cg@edges$from == "B" &
+        cg@edges$edge == "---" &
+        cg@edges$to == "C"
+    )
+  )
+  expect_true(
+    any(
+      cg@edges$from == "C" &
+        cg@edges$edge == "<->" &
+        cg@edges$to == "D"
+    )
+  )
+  expect_equal(nrow(cg@edges), 3)
+})
+
+test_that("set terms in chain expand to cartesian per segment", {
+  cg <- caugi_graph((A + B) %o->% (C + D) %--o% E)
+  # segment 1: {A,B} o-> {C,D}
+  expect_true(
+    any(
+      cg@edges$from == "A" &
+        cg@edges$edge == "o->" &
+        cg@edges$to == "C"
+    )
+  )
+  expect_true(
+    any(
+      cg@edges$from == "B" &
+        cg@edges$edge == "o->" &
+        cg@edges$to == "D"
+    )
+  )
+  # segment 2: {C,D} --o E
+  expect_true(
+    any(
+      cg@edges$from == "C" &
+        cg@edges$edge == "--o" &
+        cg@edges$to == "E"
+    )
+  )
+  expect_true(
+    any(
+      cg@edges$from == "D" &
+        cg@edges$edge == "--o" &
+        cg@edges$to == "E"
+    )
+  )
+  expect_equal(nrow(cg@edges), 6)
+})
+
+test_that("extra + nodes around a chain attach to the ends", {
+  cg <- caugi_graph(X + A %-->% B %-->% C + Y)
+  # first segment: {X,A} --> B
+  expect_true(
+    any(
+      cg@edges$from == "X" &
+        cg@edges$edge == "-->" &
+        cg@edges$to == "B"
+    )
+  )
+  expect_true(
+    any(
+      cg@edges$from == "A" &
+        cg@edges$edge == "-->" &
+        cg@edges$to == "B"
+    )
+  )
+  # last segment: B --> {C,Y}
+  expect_true(
+    any(cg@edges$from == "B" &
+      cg@edges$edge == "-->" &
+      cg@edges$to == "C")
+  )
+  expect_true(
+    any(
+      cg@edges$from == "B" &
+        cg@edges$edge == "-->" &
+        cg@edges$to == "Y"
+    )
+  )
+  # no A --> C directly
+  expect_false(any(cg@edges$from == "A" & cg@edges$to == "C"))
+})
+
+test_that("parentheses isolate terms inside chain", {
+  cg <- caugi_graph(A %-->% (B + C) %<->% D)
+  # segment 1
+  expect_true(
+    any(
+      cg@edges$from == "A" &
+        cg@edges$edge == "-->" &
+        cg@edges$to == "B"
+    )
+  )
+  expect_true(
+    any(
+      cg@edges$from == "A" &
+        cg@edges$edge == "-->" &
+        cg@edges$to == "C"
+    )
+  )
+  # segment 2
+  expect_true(
+    any(cg@edges$from == "B" &
+      cg@edges$edge == "<->" &
+      cg@edges$to == "D")
+  )
+  expect_true(
+    any(
+      cg@edges$from == "C" &
+        cg@edges$edge == "<->" &
+        cg@edges$to == "D"
+    )
+  )
+  expect_equal(nrow(cg@edges), 4)
+})
+
+test_that("self-loop is caugt by chained edges", {
+  expect_error(caugi_graph(A %-->% B %-->% B), "self-loops")
+})
+
+test_that("chains respect class constraints", {
+  expect_error(caugi_graph(A %---% B %-->% C, class = "DAG"))
+  expect_error(caugi_graph(A %o->% B %o-o% C, class = "PDAG"))
+})
