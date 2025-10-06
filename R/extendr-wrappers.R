@@ -26,10 +26,6 @@ graph_builder_new <- function(reg, n, simple) .Call(wrap__graph_builder_new, reg
 
 graph_builder_add_edges <- function(b, from, to, etype) invisible(.Call(wrap__graph_builder_add_edges, b, from, to, etype))
 
-graph_builder_build <- function(b) .Call(wrap__graph_builder_build, b)
-
-graphview_new <- function(core, class) .Call(wrap__graphview_new, core, class)
-
 graph_builder_build_view <- function(b, class) .Call(wrap__graph_builder_build_view, b, class)
 
 parents_of_ptr <- function(g, i) .Call(wrap__parents_of_ptr, g, i)
@@ -57,8 +53,6 @@ is_acyclic_ptr <- function(g) .Call(wrap__is_acyclic_ptr, g)
 is_dag_type_ptr <- function(g) .Call(wrap__is_dag_type_ptr, g)
 
 is_pdag_type_ptr <- function(g) .Call(wrap__is_pdag_type_ptr, g)
-
-validate_as_ptr <- function(g, class) .Call(wrap__validate_as_ptr, g, class)
 
 shd_of_ptrs <- function(g1, names1, g2, names2) .Call(wrap__shd_of_ptrs, g1, names1, g2, names2)
 

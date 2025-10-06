@@ -133,7 +133,6 @@ impl GraphView {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
