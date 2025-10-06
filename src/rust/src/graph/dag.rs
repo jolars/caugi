@@ -15,6 +15,10 @@ pub struct Dag {
 }
 
 impl Dag {
+    /// Builds a `Dag` view over a class-agnostic CSR graph.
+    ///
+    /// Validates that the directed part is acyclic and that every edge is directed.
+    /// Parents and children for each node are stored contiguously and are sorted.
     pub fn new(core: Arc<CaugiGraph>) -> Result<Self, String> {
         let n = core.n() as usize;
 
@@ -22,7 +26,7 @@ impl Dag {
             return Err("Dag contains a directed cycle".into());
         }
 
-        // count parents, children per row
+        // Count `(parents, children)` per row.
         let mut deg: Vec<(u32, u32)> = vec![(0, 0); n];
         for i in 0..n {
             for k in core.row_range(i as u32) {
@@ -30,9 +34,9 @@ impl Dag {
                 match spec.class {
                     EdgeClass::Directed => {
                         if core.side[k] == 1 {
-                            deg[i].0 += 1
+                            deg[i].0 += 1 // parent
                         } else {
-                            deg[i].1 += 1
+                            deg[i].1 += 1 // child
                         }
                     }
                     _ => return Err("Dag cannot contain non-directed edges".into()),
@@ -40,7 +44,7 @@ impl Dag {
             }
         }
 
-        // prefix sums
+        // Prefix sums for row slices into `neighbourhoods`.
         let mut node_edge_ranges = Vec::with_capacity(n + 1);
         node_edge_ranges.push(0usize);
         for i in 0..n {
@@ -49,12 +53,14 @@ impl Dag {
         }
         let mut neigh = vec![0u32; *node_edge_ranges.last().unwrap()];
 
-        // single scatter pass
+        // Single scatter pass per row.
+        // Parents occupy the first segment, children the second.
         for i in 0..n {
             let start = node_edge_ranges[i];
             let end = node_edge_ranges[i + 1];
             let pa = deg[i].0 as usize;
 
+            // Split the row slice once; fill with two cursors.
             let (pa_seg, ch_seg) = neigh[start..end].split_at_mut(pa);
             let mut pa_cur = 0;
             let mut ch_cur = 0;
@@ -81,25 +87,30 @@ impl Dag {
         })
     }
 
+    /// Number of nodes.
     #[inline]
     pub fn n(&self) -> u32 {
         self.core.n()
     }
+
+    /// Returns `(row_start, parents_end, children_start)` for node `i`.
     #[inline]
     fn row_bounds(&self, i: u32) -> (usize, usize, usize) {
         let i = i as usize;
         let start = self.node_edge_ranges[i];
         let end = self.node_edge_ranges[i + 1];
         let (pa, ch) = self.node_deg[i];
-        (start, start + pa as usize, end - ch as usize) // (start, parents_end, children_start)
+        (start, start + pa as usize, end - ch as usize)
     }
 
+    /// Sorted slice of parents of `i` (borrowed view into packed storage).
     #[inline]
     pub fn parents_of(&self, i: u32) -> &[u32] {
         let (s, pmid, _) = self.row_bounds(i);
         &self.neighbourhoods[s..pmid]
     }
 
+    /// Sorted slice of children of `i` (borrowed view into packed storage).
     #[inline]
     pub fn children_of(&self, i: u32) -> &[u32] {
         let (_, _, cstart) = self.row_bounds(i);
@@ -107,6 +118,7 @@ impl Dag {
         &self.neighbourhoods[cstart..e]
     }
 
+    /// Concatenated neighbors `[parents..., children...]` of `i`.
     #[inline]
     pub fn neighbors_of(&self, i: u32) -> &[u32] {
         let i = i as usize;
@@ -115,58 +127,67 @@ impl Dag {
         &self.neighbourhoods[s..e]
     }
 
+    /// All ancestors of `i`, returned in ascending order.
+    ///
+    /// Implementation: DFS with a boolean mask for de-duplication, then scan.
+    /// Complexity: `O(|An(i)| + deg(An(i)))` time, `O(n)` bits.
     #[inline]
     pub fn ancestors_of(&self, i: u32) -> Vec<u32> {
         let n = self.n() as usize;
         let mut seen = vec![false; n];
-        let mut out = Vec::new();
         let mut stack: Vec<u32> = self.parents_of(i).to_vec();
         while let Some(u) = stack.pop() {
             let ui = u as usize;
-            if seen[ui] {
+            if std::mem::replace(&mut seen[ui], true) {
                 continue;
             }
-            seen[ui] = true;
-            out.push(u);
             stack.extend_from_slice(self.parents_of(u));
         }
-        out.sort_unstable();
-        out
+        Self::collect_from_mask(&seen)
     }
+
+    /// All descendants of `i`, returned in ascending order.
+    ///
+    /// Implementation: DFS with a boolean mask for de-duplication, then scan.
+    /// Complexity: `O(|De(i)| + deg(De(i)))` time, `O(n)` bits.
     #[inline]
     pub fn descendants_of(&self, i: u32) -> Vec<u32> {
         let n = self.n() as usize;
         let mut seen = vec![false; n];
-        let mut out = Vec::new();
         let mut stack: Vec<u32> = self.children_of(i).to_vec();
         while let Some(u) = stack.pop() {
             let ui = u as usize;
-            if seen[ui] {
+            if std::mem::replace(&mut seen[ui], true) {
                 continue;
             }
-            seen[ui] = true;
-            out.push(u);
             stack.extend_from_slice(self.children_of(u));
         }
-        out.sort_unstable();
-        out
+        Self::collect_from_mask(&seen)
     }
+
+    /// Markov blanket of `i`: `Pa(i) ∪ Ch(i) ∪ (⋃ Pa(c) \ {i : c∈Ch(i)})`.
+    ///
+    /// Implementation uses a mask to avoid `sort_unstable + dedup`.
     #[inline]
     pub fn markov_blanket_of(&self, i: u32) -> Vec<u32> {
-        let mut mb: Vec<u32> = Vec::new();
-        mb.extend_from_slice(self.parents_of(i));
-        mb.extend_from_slice(self.children_of(i));
+        let n = self.n() as usize;
+        let mut m = vec![false; n];
+        for &p in self.parents_of(i) {
+            m[p as usize] = true;
+        }
         for &c in self.children_of(i) {
+            m[c as usize] = true;
             for &p in self.parents_of(c) {
                 if p != i {
-                    mb.push(p);
+                    m[p as usize] = true;
                 }
             }
         }
-        mb.sort_unstable();
-        mb.dedup();
-        mb
+        m[i as usize] = false; // exclude self
+        Self::collect_from_mask(&m)
     }
+
+    /// Nodes with no parents.
     #[inline]
     pub fn exogenous_nodes(&self) -> Vec<u32> {
         (0..self.n())
@@ -174,127 +195,50 @@ impl Dag {
             .collect()
     }
 
+    /// Access the underlying CSR.
     pub fn core_ref(&self) -> &CaugiGraph {
         &self.core
     }
 }
 
 impl Dag {
-    // -------- small set helpers --------
-    #[inline]
-    fn dedup(v: &mut Vec<u32>) {
-        v.sort_unstable();
-        v.dedup();
-    }
-    #[inline]
-    fn bitset(&self) -> Vec<bool> {
-        vec![false; self.n() as usize]
-    }
-    #[inline]
-    fn mark(mask: &mut [bool], vs: &[u32]) {
-        for &v in vs {
-            mask[v as usize] = true;
-        }
-    }
+    // -------- helpers for masks and small sets --------
 
+    /// Collect ascending indices where `mask[i]` is `true`.
     #[inline]
-    fn intersect_sorted(a: &[u32], b: &[u32]) -> Vec<u32> {
-        let (mut i, mut j) = (0, 0);
-        let mut out = Vec::new();
-        while i < a.len() && j < b.len() {
-            use std::cmp::Ordering::*;
-            match a[i].cmp(&b[j]) {
-                Less => i += 1,
-                Greater => j += 1,
-                Equal => {
-                    out.push(a[i]);
-                    i += 1;
-                    j += 1;
-                }
-            }
-        }
-        out
-    }
-    #[inline]
-    fn union_sorted<I: IntoIterator<Item = Vec<u32>>>(parts: I) -> Vec<u32> {
-        let mut out = Vec::new();
-        for mut p in parts {
-            Self::dedup(&mut p);
-            out.extend_from_slice(&p);
-        }
-        Self::dedup(&mut out);
-        out
-    }
-    #[inline]
-    fn difference_sorted(a: &[u32], b: &[u32]) -> Vec<u32> {
-        let mut out = Vec::with_capacity(a.len());
-        let mut j = 0;
-        for &v in a {
-            while j < b.len() && b[j] < v {
-                j += 1;
-            }
-            if j == b.len() || b[j] != v {
-                out.push(v);
+    fn collect_from_mask(mask: &[bool]) -> Vec<u32> {
+        let mut out = Vec::with_capacity(mask.len().min(64));
+        for (i, &b) in mask.iter().enumerate() {
+            if b {
+                out.push(i as u32);
             }
         }
         out
     }
 
-    pub fn adjustment_set_parents(&self, xs: &[u32], ys: &[u32]) -> Vec<u32> {
-        let pax = Self::union_sorted(xs.iter().map(|&x| self.parents_of(x).to_vec()));
-        let mut excl = xs.to_vec();
-        excl.extend_from_slice(ys);
-        Self::dedup(&mut excl);
-        Self::difference_sorted(&pax, &excl)
-    }
-
-    // -------- public: candidate Z via Pearl’s backdoor formula --------
-
-    /// Z = ( (⋃ Pa(X)) ∩ An(Y) ) \ (De(X) ∪ X ∪ Y)
-    pub fn adjustment_set_backdoor(&self, xs: &[u32], ys: &[u32]) -> Vec<u32> {
-        let pax = Self::union_sorted(xs.iter().map(|&x| self.parents_of(x).to_vec()));
-        let any = Self::union_sorted(ys.iter().map(|&y| self.ancestors_of(y)));
-        let inter = Self::intersect_sorted(&pax, &any);
-
-        let mut excl = Self::union_sorted(xs.iter().map(|&x| self.descendants_of(x)));
-        excl.extend_from_slice(xs);
-        excl.extend_from_slice(ys);
-        Self::dedup(&mut excl);
-
-        Self::difference_sorted(&inter, &excl)
-    }
-
-    /// O-set for single X→Y
-    pub fn adjustment_set_optimal(&self, x: u32, y: u32) -> Vec<u32> {
-        let mut de = self.descendants_of(x);
-        Self::dedup(&mut de);
-        let mut an = self.ancestors_of(y);
-        Self::dedup(&mut an);
-
-        let mut cn = Self::intersect_sorted(&de, &an);
-        if de.binary_search(&y).is_ok() {
-            cn.push(y);
+    /// Build a boolean membership mask for `nodes` over domain `[0, n)`.
+    #[inline]
+    fn mask_from(nodes: &[u32], n: u32) -> Vec<bool> {
+        let mut m = vec![false; n as usize];
+        for &v in nodes {
+            m[v as usize] = true;
         }
-        Self::dedup(&mut cn);
-
-        let pacn = Self::union_sorted(cn.iter().map(|&v| self.parents_of(v).to_vec()));
-        let mut forbid = cn;
-        forbid.push(x);
-        Self::dedup(&mut forbid);
-
-        Self::difference_sorted(&pacn, &forbid)
+        m
     }
 
-    // -------- d-separation (ancestral reduction + moralization) --------
+    /// Ancestors mask of a seed set. `a[v] == true` iff `v ∈ An(seeds) ∪ seeds`.
+    /// Used by d-separation and backdoor routines.
     fn ancestors_mask(&self, seeds: &[u32]) -> Vec<bool> {
-        let mut a = self.bitset();
+        let mut a = vec![false; self.n() as usize];
         let mut st = Vec::new();
+        // Seed the stack with parents of unseen seeds.
         for &s in seeds {
             if !a[s as usize] {
                 a[s as usize] = true;
                 st.extend_from_slice(self.parents_of(s));
             }
         }
+        // Climb parents until fixed point.
         while let Some(u) = st.pop() {
             let ui = u as usize;
             if a[ui] {
@@ -305,28 +249,33 @@ impl Dag {
         }
         a
     }
-    fn moral_adj(&self, a: &[bool]) -> Vec<Vec<u32>> {
+
+    /// Moralized adjacency within mask. Undirected edges among ancestors.
+    /// Output adjacency lists are sorted and deduplicated.
+    fn moral_adj(&self, mask: &[bool]) -> Vec<Vec<u32>> {
         let n = self.n() as usize;
         let mut adj = vec![Vec::<u32>::new(); n];
         for v in 0..self.n() {
-            if !a[v as usize] {
+            if !mask[v as usize] {
                 continue;
             }
             let pa = self.parents_of(v);
+            // Connect child with each included parent.
             for &p in pa {
-                if a[p as usize] {
+                if mask[p as usize] {
                     adj[v as usize].push(p);
                     adj[p as usize].push(v);
                 }
             }
+            // Marry included parents.
             for i in 0..pa.len() {
                 let pi = pa[i] as usize;
-                if !a[pi] {
+                if !mask[pi] {
                     continue;
                 }
                 for j in i + 1..pa.len() {
                     let pj = pa[j] as usize;
-                    if !a[pj] {
+                    if !mask[pj] {
                         continue;
                     }
                     adj[pi].push(pa[j]);
@@ -334,14 +283,19 @@ impl Dag {
                 }
             }
         }
+        // Dedup neighbors per node.
         for v in &mut adj {
-            Self::dedup(v);
+            v.sort_unstable();
+            v.dedup();
         }
         adj
     }
+
+    /// BFS over moral graph to check reachability from `src` to any `tgt`
+    /// while ignoring `blocked` nodes. Only visits nodes inside mask.
     fn reachable_to_any(
         adj: &[Vec<u32>],
-        a: &[bool],
+        mask: &[bool],
         src: &[u32],
         blocked: &[bool],
         tgt: &[u32],
@@ -358,7 +312,7 @@ impl Dag {
         let mut q = VecDeque::new();
         for &x in src {
             let xi = x as usize;
-            if a[xi] && !blocked[xi] && !seen[xi] {
+            if mask[xi] && !blocked[xi] && !seen[xi] {
                 seen[xi] = true;
                 q.push_back(x);
             }
@@ -370,7 +324,7 @@ impl Dag {
             }
             for &w in &adj[ui] {
                 let wi = w as usize;
-                if a[wi] && !blocked[wi] && !seen[wi] {
+                if mask[wi] && !blocked[wi] && !seen[wi] {
                     seen[wi] = true;
                     q.push_back(w);
                 }
@@ -378,65 +332,42 @@ impl Dag {
         }
         false
     }
-    /// Returns true iff every x∈xs is d-separated from every y∈ys given z.
-    pub fn is_d_separated(&self, xs: &[u32], ys: &[u32], z: &[u32]) -> bool {
-        if xs.is_empty() || ys.is_empty() {
-            return true;
-        }
-        let mut seeds = xs.to_vec();
-        seeds.extend_from_slice(ys);
-        seeds.extend_from_slice(z);
-        Self::dedup(&mut seeds);
-        let a = self.ancestors_mask(&seeds);
-        let mut blocked = self.bitset();
-        Self::mark(&mut blocked, z);
-        let adj = self.moral_adj(&a);
-        !Self::reachable_to_any(&adj, &a, xs, &blocked, ys)
-    }
 
-    // -------- backdoor utilities --------
-    pub fn is_valid_backdoor_set(&self, x: u32, y: u32, z: &[u32]) -> bool {
-        let mut de = self.descendants_of(x);
-        de.sort_unstable();
-        de.dedup();
-        for &v in z {
-            if de.binary_search(&v).is_ok() {
-                return false;
-            }
-        }
-        let mut obs = Vec::with_capacity(z.len() + 1);
-        obs.extend_from_slice(z);
-        obs.push(x);
-        for &p in self.parents_of(x) {
-            if !self.is_d_separated(&[p], &[y], &obs) {
-                return false;
-            }
-        }
-        true
-    }
+    /// Universe of candidates for backdoor adjustment wrt. `(x, y)`.
+    /// Excludes `x`, `y`, and descendants of `x`.
     fn backdoor_universe(&self, x: u32, y: u32) -> Vec<u32> {
-        let mut de = self.descendants_of(x);
-        Self::dedup(&mut de);
+        let mut de_mask = vec![false; self.n() as usize];
+        for d in self.descendants_of(x) {
+            de_mask[d as usize] = true;
+        }
         (0..self.n())
-            .filter(|&v| v != x && v != y && de.binary_search(&v).is_err())
+            .filter(|&v| v != x && v != y && !de_mask[v as usize])
             .collect()
     }
+
+    /// Remove non-minimal supersets in-place, keep inclusion-minimal sets only.
+    /// Input sets may be unsorted; this routine sorts and dedups each first.
     fn prune_minimal(sets: &mut Vec<Vec<u32>>) {
-        sets.iter_mut().for_each(Self::dedup);
+        sets.iter_mut().for_each(|v| {
+            v.sort_unstable();
+            v.dedup();
+        });
         sets.sort();
         let mut out: Vec<Vec<u32>> = Vec::new();
         'next: for z in sets.drain(..) {
             for s in &out {
                 if s.iter().all(|v| z.binary_search(v).is_ok()) {
-                    continue 'next;
+                    continue 'next; // skip z if it is a superset of some s
                 }
             }
+            // Remove any existing superset of z.
             out.retain(|s| !z.iter().all(|v| s.binary_search(v).is_ok()));
             out.push(z);
         }
         *sets = out;
     }
 
+    /// Enumerate all `k`-subsets of `u` into `out` (lexicographic order).
     fn k_subsets(u: &[u32], k: usize, start: usize, cur: &mut Vec<u32>, out: &mut Vec<Vec<u32>>) {
         if cur.len() == k {
             out.push(cur.clone());
@@ -449,7 +380,245 @@ impl Dag {
         }
     }
 
-    /// All valid backdoor sets Z for X --> Y up to size `max_size`.
+    /// Backward reachability through parents from every `y ∈ ys`.
+    /// Returns mask `r` with `r[v] == true` iff `v` can reach some `y`.
+    fn can_reach_any_y(&self, ys: &[u32]) -> Vec<bool> {
+        let mut r = vec![false; self.n() as usize];
+        let mut st = ys.to_vec();
+        while let Some(v) = st.pop() {
+            let vi = v as usize;
+            if r[vi] {
+                continue;
+            }
+            r[vi] = true;
+            st.extend_from_slice(self.parents_of(v));
+        }
+        r
+    }
+
+    /// Drop predicate for removing the first edge on each proper causal path.
+    /// Uses `xs_mask` and a precomputed `reach_y` mask.
+    fn drop_first_edge(&self, xs_mask: &[bool], reach_y: &[bool], row_u: u32, k: usize) -> bool {
+        let c = self.core_ref();
+        let v = c.col_index[k];
+        if c.side[k] == 0 {
+            // edge v -> row_u
+            xs_mask[row_u as usize] && reach_y[v as usize]
+        } else {
+            // edge row_u -> v
+            xs_mask[v as usize] && reach_y[row_u as usize]
+        }
+    }
+
+    /// Rebuild a filtered CSR by dropping edges selected by predicate `drop(u, k)`.
+    /// Preserves row order and metadata arrays.
+    fn rebuild_filtered<F: FnMut(u32, usize) -> bool>(
+        &self,
+        mut drop: F,
+    ) -> Result<CaugiGraph, String> {
+        let c = self.core_ref();
+        let n = self.n() as usize;
+
+        // First pass: count edges kept per row to form row_index.
+        let mut idx = vec![0u32; n + 1];
+        for u in 0..self.n() {
+            let mut keep = 0u32;
+            for k in c.row_range(u) {
+                if !drop(u, k) {
+                    keep += 1;
+                }
+            }
+            idx[u as usize + 1] = idx[u as usize] + keep;
+        }
+
+        // Allocate exact sizes.
+        let nnz = idx[n] as usize;
+        let mut col = vec![0u32; nnz];
+        let mut ety = vec![0u8; nnz];
+        let mut side = vec![0u8; nnz];
+
+        // Second pass: scatter kept edges.
+        let mut cur = idx[..n].to_vec();
+        for u in 0..self.n() {
+            for k in c.row_range(u) {
+                if drop(u, k) {
+                    continue;
+                }
+                let p = cur[u as usize] as usize;
+                col[p] = c.col_index[k];
+                ety[p] = c.etype[k];
+                side[p] = c.side[k];
+                cur[u as usize] += 1;
+            }
+        }
+
+        CaugiGraph::from_csr(idx, col, ety, side, c.simple, c.registry.clone())
+    }
+}
+
+impl Dag {
+    /// Parent-based heuristic adjustment set:
+    /// `Z = (⋃ Pa(X)) \ (X ∪ Y)`.
+    ///
+    /// Complexity: `O(|Pa(X)| + n)` due to the final mask scan.
+    pub fn adjustment_set_parents(&self, xs: &[u32], ys: &[u32]) -> Vec<u32> {
+        let n = self.n();
+        let mut keep = vec![false; n as usize];
+        for &x in xs {
+            for &p in self.parents_of(x) {
+                keep[p as usize] = true;
+            }
+        }
+        // Exclude X ∪ Y.
+        let mut dropm = Self::mask_from(xs, n);
+        for &y in ys {
+            dropm[y as usize] = true;
+        }
+        for i in 0..keep.len() {
+            if dropm[i] {
+                keep[i] = false;
+            }
+        }
+        Self::collect_from_mask(&keep)
+    }
+
+    /// Backdoor adjustment candidate set for `Xs → Ys`:
+    /// `Z = ( (⋃ Pa(X)) ∩ An(Y) ) \ (De(X) ∪ X ∪ Y )`.
+    ///
+    /// Complexity: linear in the size of relevant neighborhoods.
+    pub fn adjustment_set_backdoor(&self, xs: &[u32], ys: &[u32]) -> Vec<u32> {
+        let n = self.n();
+        // Mark An(Y).
+        let an_mask = self.ancestors_mask(ys);
+
+        // Mark parents of X that lie in An(Y).
+        let mut keep = vec![false; n as usize];
+        for &x in xs {
+            for &p in self.parents_of(x) {
+                if an_mask[p as usize] {
+                    keep[p as usize] = true;
+                }
+            }
+        }
+
+        // Drop descendants of X, then drop X and Y.
+        let mut dropm = vec![false; n as usize];
+        for &x in xs {
+            for d in self.descendants_of(x) {
+                dropm[d as usize] = true;
+            }
+            dropm[x as usize] = true;
+        }
+        for &y in ys {
+            dropm[y as usize] = true;
+        }
+
+        for i in 0..keep.len() {
+            if dropm[i] {
+                keep[i] = false;
+            }
+        }
+        Self::collect_from_mask(&keep)
+    }
+
+    /// Optimal O-set for single exposure-outcome pair `x → y`.
+    ///
+    /// Definition:
+    /// - Let `Cn = (De(x) ∩ An(y)) ∪ {y if y ∈ De(x)}`.
+    /// - Return `Pa(Cn) \ (Cn ∪ {x})`.
+    pub fn adjustment_set_optimal(&self, x: u32, y: u32) -> Vec<u32> {
+        let n = self.n();
+        // Mark descendants of x.
+        let mut de_mask = vec![false; n as usize];
+        for d in self.descendants_of(x) {
+            de_mask[d as usize] = true;
+        }
+        // Mark ancestors of y.
+        let an_mask = self.ancestors_mask(&[y]);
+
+        // Cn mask: De(x) ∩ An(y) plus y if y ∈ De(x).
+        let mut cn_mask = vec![false; n as usize];
+        for i in 0..n as usize {
+            if de_mask[i] && an_mask[i] {
+                cn_mask[i] = true;
+            }
+        }
+        if de_mask[y as usize] {
+            cn_mask[y as usize] = true;
+        }
+
+        // Parents of Cn, excluding Cn and x.
+        let mut pacn_mask = vec![false; n as usize];
+        for v in Self::collect_from_mask(&cn_mask) {
+            for &p in self.parents_of(v) {
+                pacn_mask[p as usize] = true;
+            }
+        }
+        pacn_mask[x as usize] = false;
+        for i in 0..n as usize {
+            if cn_mask[i] {
+                pacn_mask[i] = false;
+            }
+        }
+        Self::collect_from_mask(&pacn_mask)
+    }
+
+    /// d-separation test via ancestral reduction + moralization + BFS.
+    ///
+    /// Returns `true` iff every `x ∈ xs` is d-separated from every `y ∈ ys` given `z`.
+    pub fn is_d_separated(&self, xs: &[u32], ys: &[u32], z: &[u32]) -> bool {
+        if xs.is_empty() || ys.is_empty() {
+            return true;
+        }
+        let mut seeds = xs.to_vec();
+        seeds.extend_from_slice(ys);
+        seeds.extend_from_slice(z);
+        seeds.sort_unstable();
+        seeds.dedup();
+
+        let mask = self.ancestors_mask(&seeds);
+
+        // Block conditioned nodes.
+        let mut blocked = vec![false; self.n() as usize];
+        for &v in z {
+            blocked[v as usize] = true;
+        }
+
+        let adj = self.moral_adj(&mask);
+        !Self::reachable_to_any(&adj, &mask, xs, &blocked, ys)
+    }
+
+    /// Validates a proposed backdoor set `z` for pair `(x, y)`.
+    ///
+    /// Conditions:
+    /// 1) `z` must not contain descendants of `x`.
+    /// 2) Each parent `p` of `x` must be d-separated from `y` given `z ∪ {x}`.
+    pub fn is_valid_backdoor_set(&self, x: u32, y: u32, z: &[u32]) -> bool {
+        // Precompute De(x) mask for O(1) membership tests.
+        let mut de_mask = vec![false; self.n() as usize];
+        for d in self.descendants_of(x) {
+            de_mask[d as usize] = true;
+        }
+        for &v in z {
+            if de_mask[v as usize] {
+                return false;
+            }
+        }
+
+        // Test each parent of x.
+        let mut obs = Vec::with_capacity(z.len() + 1);
+        obs.extend_from_slice(z);
+        obs.push(x);
+        for &p in self.parents_of(x) {
+            if !self.is_d_separated(&[p], &[y], &obs) {
+                return false;
+            }
+        }
+        true
+    }
+
+    /// Enumerate all valid backdoor sets up to size `max_size`.
+    /// If `minimal` is true, return only inclusion-minimal sets.
     pub fn all_backdoor_sets(&self, x: u32, y: u32, minimal: bool, max_size: u32) -> Vec<Vec<u32>> {
         let u = self.backdoor_universe(x, y);
         let mut acc = Vec::new();
@@ -465,71 +634,18 @@ impl Dag {
         acc
     }
 
-    // -------- proper backdoor graph --------
-    fn can_reach_any_y(&self, ys: &[u32]) -> Vec<bool> {
-        let mut r = self.bitset();
-        let mut st = ys.to_vec();
-        while let Some(v) = st.pop() {
-            let vi = v as usize;
-            if r[vi] {
-                continue;
-            }
-            r[vi] = true;
-            st.extend_from_slice(self.parents_of(v));
-        }
-        r
-    }
-    fn drop_first_edge(&self, xs: &[u32], reach_y: &[bool], row_u: u32, k: usize) -> bool {
-        let c = self.core_ref();
-        let v = c.col_index[k];
-        if c.side[k] == 0 {
-            xs.binary_search(&row_u).is_ok() && reach_y[v as usize]
-        } else {
-            xs.binary_search(&v).is_ok() && reach_y[row_u as usize]
-        }
-    }
-    fn rebuild_filtered<F: FnMut(u32, usize) -> bool>(
-        &self,
-        mut drop: F,
-    ) -> Result<CaugiGraph, String> {
-        let c = self.core_ref();
-        let n = self.n() as usize;
-        let mut idx = vec![0u32; n + 1];
-        for u in 0..self.n() {
-            let mut keep = 0u32;
-            for k in c.row_range(u) {
-                if !drop(u, k) {
-                    keep += 1;
-                }
-            }
-            idx[u as usize + 1] = idx[u as usize] + keep;
-        }
-        let nnz = idx[n] as usize;
-        let mut col = vec![0u32; nnz];
-        let mut ety = vec![0u8; nnz];
-        let mut side = vec![0u8; nnz];
-        let mut cur = idx[..n].to_vec();
-        for u in 0..self.n() {
-            for k in c.row_range(u) {
-                if drop(u, k) {
-                    continue;
-                }
-                let p = cur[u as usize] as usize;
-                col[p] = c.col_index[k];
-                ety[p] = c.etype[k];
-                side[p] = c.side[k];
-                cur[u as usize] += 1;
-            }
-        }
-        CaugiGraph::from_csr(idx, col, ety, side, c.simple, c.registry.clone())
-    }
-    /// Remove first edge of each proper causal path from any x∈xs to any y∈ys.
+    /// Build the proper backdoor graph for `Xs → Ys` by removing the
+    /// first edge of each proper causal path from any `x ∈ Xs` to any `y ∈ Ys`.
+    ///
+    /// Implementation captures a precomputed `xs_mask` and a `reach_y` mask.
     pub fn proper_backdoor_graph(&self, xs: &[u32], ys: &[u32]) -> Result<Self, String> {
         let reach = self.can_reach_any_y(ys);
-        let core = self.rebuild_filtered(|u, k| self.drop_first_edge(xs, &reach, u, k))?;
+        let xs_mask = Self::mask_from(xs, self.n());
+        let core = self.rebuild_filtered(|u, k| self.drop_first_edge(&xs_mask, &reach, u, k))?;
         Dag::new(Arc::new(core))
     }
-    /// Valid Z for Xs→Ys in proper backdoor graph.
+
+    /// Validates `z` as an adjustment set for `Xs → Ys` using the proper backdoor graph.
     pub fn is_valid_adjustment_set(&self, xs: &[u32], ys: &[u32], z: &[u32]) -> bool {
         self.proper_backdoor_graph(xs, ys)
             .map(|g| g.is_d_separated(xs, ys, z))
