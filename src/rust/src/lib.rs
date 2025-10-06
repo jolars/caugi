@@ -151,17 +151,8 @@ fn graph_builder_add_edges(
         }
     }
 }
-#[extendr]
-fn graph_builder_build(mut b: ExternalPtr<GraphBuilder>) -> ExternalPtr<CaugiGraph> {
-    let g = b
-        .as_mut()
-        .finalize_in_place()
-        .unwrap_or_else(|e| throw_r_error(e));
-    ExternalPtr::new(g)
-}
 
 // ── Constructors for class views ────────────────────────────────────────────────────────────────
-#[extendr]
 fn graphview_new(core: ExternalPtr<CaugiGraph>, class: &str) -> ExternalPtr<GraphView> {
     match class.trim().to_ascii_uppercase().as_str() {
         "DAG" => {
@@ -265,21 +256,6 @@ fn is_dag_type_ptr(g: ExternalPtr<GraphView>) -> bool {
 fn is_pdag_type_ptr(g: ExternalPtr<GraphView>) -> bool {
     let core = g.as_ref().core();
     Pdag::new(Arc::new(core.clone())).is_ok()
-}
-
-#[extendr]
-fn validate_as_ptr(g: ExternalPtr<GraphView>, class: &str) -> Robj {
-    let core = g.as_ref().core();
-    let res = match class.trim().to_ascii_uppercase().as_str() {
-        "DAG" => Dag::new(Arc::new(core.clone())).map(|_| (true, "".to_string())),
-        "PDAG" | "CPDAG" => Pdag::new(Arc::new(core.clone())).map(|_| (true, "".to_string())),
-        "UNKNOWN" | "" => Ok((true, "".to_string())),
-        other => Err(format!("unknown graph class '{other}'")),
-    };
-    match res {
-        Ok((ok, msg)) => list!(ok = ok, message = msg).into_robj(),
-        Err(e) => list!(ok = false, message = e).into_robj(),
-    }
 }
 
 #[extendr]
@@ -439,10 +415,8 @@ extendr_module! {
     // builder + core
     fn graph_builder_new;
     fn graph_builder_add_edges;
-    fn graph_builder_build;
 
     // class factory
-    fn graphview_new;
     fn graph_builder_build_view;
 
     // queries
@@ -465,7 +439,6 @@ extendr_module! {
     // class tests + validator
     fn is_dag_type_ptr;
     fn is_pdag_type_ptr;
-    fn validate_as_ptr;
 
     // metrics
     fn shd_of_ptrs;
