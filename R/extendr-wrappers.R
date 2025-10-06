@@ -62,5 +62,17 @@ shd_of_ptrs <- function(g1, names1, g2, names2) .Call(wrap__shd_of_ptrs, g1, nam
 
 hd_of_ptrs <- function(g1, g2) .Call(wrap__hd_of_ptrs, g1, g2)
 
+is_d_separated_ptr <- function(g, xs, ys, z) .Call(wrap__is_d_separated_ptr, g, xs, ys, z)
+
+adjustment_set_parents_ptr <- function(g, xs, ys) .Call(wrap__adjustment_set_parents_ptr, g, xs, ys)
+
+adjustment_set_backdoor_ptr <- function(g, xs, ys) .Call(wrap__adjustment_set_backdoor_ptr, g, xs, ys)
+
+adjustment_set_optimal_ptr <- function(g, x, y) .Call(wrap__adjustment_set_optimal_ptr, g, x, y)
+
+is_valid_backdoor_set_ptr <- function(g, x, y, z) .Call(wrap__is_valid_backdoor_set_ptr, g, x, y, z)
+
+all_backdoor_sets_ptr <- function(g, x, y, minimal, max_size) .Call(wrap__all_backdoor_sets_ptr, g, x, y, minimal, max_size)
+
 
 # nolint end

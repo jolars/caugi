@@ -22,7 +22,7 @@ impl Dag {
             return Err("Dag contains a directed cycle".into());
         }
 
-        // 1) count parents, children per row
+        // count parents, children per row
         let mut deg: Vec<(u32, u32)> = vec![(0, 0); n];
         for i in 0..n {
             for k in core.row_range(i as u32) {
@@ -40,7 +40,7 @@ impl Dag {
             }
         }
 
-        // 2) prefix sums
+        // prefix sums
         let mut node_edge_ranges = Vec::with_capacity(n + 1);
         node_edge_ranges.push(0usize);
         for i in 0..n {
@@ -49,7 +49,7 @@ impl Dag {
         }
         let mut neigh = vec![0u32; *node_edge_ranges.last().unwrap()];
 
-        // 3) single scatter pass, no per-row sorting needed
+        // single scatter pass
         for i in 0..n {
             let start = node_edge_ranges[i];
             let end = node_edge_ranges[i + 1];
@@ -71,7 +71,6 @@ impl Dag {
             }
             debug_assert_eq!(pa_cur, pa);
             debug_assert_eq!(ch_cur, end - start - pa);
-            // segments are already sorted by nbr due to builder order
         }
 
         Ok(Self {
