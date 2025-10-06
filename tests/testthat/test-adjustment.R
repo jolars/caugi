@@ -19,7 +19,7 @@ names_of <- function(tbl) {
 }
 
 test_that("d-separation checks", {
-  expect_false(d_separated(adjustment_set_cg, X, Y)) # backdoor via A->K->Y and causal X->D->Y
+  expect_false(d_separated(adjustment_set_cg, X, Y)) # backdoor via A-->K-->Y and causal X-->D-->Y
   expect_false(d_separated(adjustment_set_cg, X, Y, Z = A)) # causal path still open
   expect_false(d_separated(adjustment_set_cg, X, Y, Z = K)) # causal path still open
   expect_false(d_separated(adjustment_set_cg, X, Y, Z = D)) # backdoor still open

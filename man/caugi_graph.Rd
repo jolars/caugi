@@ -6,6 +6,9 @@
 \usage{
 caugi_graph(
   ...,
+  from = NULL,
+  edge = NULL,
+  to = NULL,
   simple = TRUE,
   build = TRUE,
   class = c("Unknown", "DAG", "PDAG")
@@ -16,6 +19,15 @@ caugi_graph(
 nodes given by symbols or strings. Multiple edges can be
 combined using \code{+}: \verb{A --> B + C}, indicating an edge from \code{A} to both \code{B}
 and \code{C}. Nodes can also be grouped using \code{c(...)} or parentheses.}
+
+\item{from}{Character vector of source node names.
+Optional; mutually exclusive with \code{...}.}
+
+\item{edge}{Character vector of edge types.
+Optional; mutually exclusive with \code{...}.}
+
+\item{to}{Character vector of target node names.
+Optional; mutually exclusive with \code{...}.}
 
 \item{simple}{Logical; if \code{TRUE} (default), the graph is a simple graph, and
 the function will throw an error if the input contains parallel edges or

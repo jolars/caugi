@@ -21,6 +21,12 @@
 #' nodes given by symbols or strings. Multiple edges can be
 #' combined using `+`: `A --> B + C`, indicating an edge from `A` to both `B`
 #' and `C`. Nodes can also be grouped using `c(...)` or parentheses.
+#' @param from Character vector of source node names.
+#' Optional; mutually exclusive with `...`.
+#' @param edge Character vector of edge types.
+#' Optional; mutually exclusive with `...`.
+#' @param to Character vector of target node names.
+#' Optional; mutually exclusive with `...`.
 #' @param simple Logical; if `TRUE` (default), the graph is a simple graph, and
 #' the function will throw an error if the input contains parallel edges or
 #' self-loops.
@@ -171,20 +177,40 @@ caugi_graph <- S7::new_class(
     NULL
   },
   constructor = function(...,
+                         from = NULL, edge = NULL, to = NULL,
                          simple = TRUE,
                          build = TRUE,
                          class = c("Unknown", "DAG", "PDAG")) {
     class <- match.arg(class)
+
     calls <- as.list(substitute(list(...)))[-1L]
+    has_expr <- length(calls) > 0L
+    has_vec <- !(is.null(from) && is.null(edge) && is.null(to))
+
+    if (has_expr && has_vec) {
+      stop(
+        "Provide edges via infix expressions in `...` or ",
+        "via `from`, `edge`, `to`, but not both.",
+        call. = FALSE
+      )
+    }
 
     if (!simple && class != "Unknown") {
       stop("If simple = FALSE, class must be 'Unknown'", call. = FALSE)
     }
 
-    # Parse calls into edges + declared nodes
-    terms <- .collect_edges_nodes(calls)
-    edges <- terms$edges
-    declared <- terms$declared
+    # Parse into edges + declared nodes
+    if (has_expr) {
+      terms <- .collect_edges_nodes(calls)
+      edges <- terms$edges
+      declared <- terms$declared
+    } else if (has_vec) {
+      edges <- .get_edges_tibble(from, edge, to, calls = list())
+      declared <- character()
+    } else {
+      edges <- tibble::tibble(from = character(), edge = character(), to = character())
+      declared <- character()
+    }
 
     # All unique nodes
     nodes <- tibble::tibble(name = unique(c(edges$from, edges$to, declared)))
@@ -194,11 +220,8 @@ caugi_graph <- S7::new_class(
     # Initialize caugi registry (if not already registered)
     reg <- caugi_registry()
 
-    # Initialize graph pointer. If build = FALSE, the graph will not be built
-    # and the pointer will be NULL
+    # Initialize graph pointer and built flag
     gptr <- NULL
-
-    # Monitor if the graph has been built
     built <- FALSE
 
     # Build the graph using the Rust backend
@@ -219,7 +242,6 @@ caugi_graph <- S7::new_class(
         )
       }
 
-      # build + wrap with class
       gptr <- graph_builder_build_view(b, class)
       built <- TRUE
     }
@@ -227,7 +249,7 @@ caugi_graph <- S7::new_class(
     edges <- tibble::tibble(
       from = edges$from,
       edge = edges$edge,
-      to = edges$to
+      to   = edges$to
     ) |>
       dplyr::arrange(from, to, edge)
 
@@ -239,6 +261,7 @@ caugi_graph <- S7::new_class(
       simple = simple,
       class = class
     )
+
     S7::new_object(
       caugi_graph,
       `.state` = state,

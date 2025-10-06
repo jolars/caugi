@@ -254,6 +254,109 @@ test_that("building PDAG with bidirected edges results in error", {
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
+# ──────────────────────── Standard evaluation input ───────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("caugi_graph builds from parallel vectors", {
+  cg_vec <- caugi_graph(
+    from = c("A", "B", "C"),
+    edge = c("-->", "---", "<->"),
+    to   = c("B", "C", "D")
+  )
+
+  expect_s7_class(cg_vec, caugi_graph)
+  expect_equal(sort(cg_vec@nodes$name), sort(c("A", "B", "C", "D")))
+  expect_equal(nrow(cg_vec@edges), 3)
+  expect_true(all(c("from", "edge", "to") %in% names(cg_vec@edges)))
+
+  cg_expr <- caugi_graph(
+    A %-->% B,
+    B %---% C,
+    C %<->% D
+  )
+  expect_equal(cg_vec, cg_expr)
+})
+
+test_that("caugi_graph forbids mixing ... with from/edge/to", {
+  expect_error(
+    caugi_graph(
+      A %-->% B,
+      from = "C", edge = "-->", to = "D"
+    ),
+    "Provide edges via infix expressions"
+  )
+})
+
+test_that("caugi_graph requires from, edge, to all present and equal length", {
+  # missing one
+  expect_error(
+    caugi_graph(from = "A", edge = "-->"),
+    "`from`, `edge`, `to` must all be supplied"
+  )
+
+  # length mismatch
+  expect_error(
+    caugi_graph(
+      from = c("A", "B"),
+      edge = c("-->", "---"),
+      to   = "C"
+    ),
+    "`from`, `edge`, `to` must be equal length"
+  )
+})
+
+test_that("caugi_graph with empty vectors yields empty graph", {
+  cg <- caugi_graph(from = character(), edge = character(), to = character())
+  expect_s7_class(cg, caugi_graph)
+  expect_equal(length(cg), 0)
+  expect_equal(nrow(cg@edges), 0)
+  expect_equal(nrow(cg@nodes), 0)
+})
+
+test_that("caugi_graph(vector mode) gets the same result as in with DSL", {
+  cg1 <- caugi_graph(
+    from = c("A"),
+    edge = c("-->"),
+    to   = c("B")
+  )
+  cg2 <- caugi_graph(A %-->% B)
+  expect_equal(cg1, cg2)
+})
+
+test_that("caugi_graph(vector mode) respects class and simple rules", {
+  # valid PDAG
+  expect_s7_class(
+    caugi_graph(
+      from = c("A", "B"),
+      edge = c("-->", "---"),
+      to = c("B", "C"),
+      class = "PDAG"
+    ),
+    caugi_graph
+  )
+
+  # invalid DAG due to non-directed edge
+  expect_error(
+    caugi_graph(
+      from = c("A", "B"),
+      edge = c("-->", "---"),
+      to = c("B", "C"),
+      class = "DAG"
+    )
+  )
+
+  # simple = TRUE disallows parallel edges under Unknown
+  expect_error(
+    caugi_graph(
+      from = c("A", "A"),
+      edge = c("-->", "<->"),
+      to = c("B", "B"),
+      class = "Unknown",
+      simple = TRUE
+    )
+  )
+})
+# ──────────────────────────────────────────────────────────────────────────────
 # ────────────────────────────────── Errors ────────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
