@@ -6,12 +6,10 @@ pub mod edges;
 pub mod graph;
 
 use edges::{EdgeClass, EdgeRegistry, EdgeSpec, Mark, QueryFlags};
-use graph::CaugiGraph;
 use graph::builder::GraphBuilder;
-use graph::graph_type::GraphType;
 use graph::metrics::{hd, shd_with_perm};
-use graph::view::{GraphApi, GraphView};
-use graph::{dag::Dag, pdag::Pdag};
+use graph::view::GraphView;
+use graph::{CaugiGraph, dag::Dag, pdag::Pdag};
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -122,7 +120,7 @@ fn edge_registry_code_of(reg: ExternalPtr<EdgeRegistry>, glyph: &str) -> i32 {
         .unwrap_or_else(|e| throw_r_error(e.to_string()))
 }
 
-// ---------- Core builder ----------
+// ── Core builder ────────────────────────────────────────────────────────────────
 #[extendr]
 fn graph_builder_new(
     reg: ExternalPtr<EdgeRegistry>,
@@ -162,24 +160,21 @@ fn graph_builder_build(mut b: ExternalPtr<GraphBuilder>) -> ExternalPtr<CaugiGra
     ExternalPtr::new(g)
 }
 
-// ---------- Constructors for class views (return GraphView) ----------
+// ── Constructors for class views ────────────────────────────────────────────────────────────────
 #[extendr]
 fn graphview_new(core: ExternalPtr<CaugiGraph>, class: &str) -> ExternalPtr<GraphView> {
-    match class
-        .parse::<GraphType>()
-        .unwrap_or_else(|e| throw_r_error(e))
-    {
-        GraphType::Dag => {
+    match class.trim().to_ascii_uppercase().as_str() {
+        "DAG" => {
             let dag =
                 Dag::new(Arc::new(core.as_ref().clone())).unwrap_or_else(|e| throw_r_error(e));
             ExternalPtr::new(GraphView::Dag(Arc::new(dag)))
         }
-        GraphType::Pdag => {
+        "PDAG" | "CPDAG" => {
             let pdag =
                 Pdag::new(Arc::new(core.as_ref().clone())).unwrap_or_else(|e| throw_r_error(e));
             ExternalPtr::new(GraphView::Pdag(Arc::new(pdag)))
         }
-        GraphType::Unknown => ExternalPtr::new(GraphView::Raw(Arc::new(core.as_ref().clone()))),
+        _ => ExternalPtr::new(GraphView::Raw(Arc::new(core.as_ref().clone()))),
     }
 }
 
@@ -195,7 +190,7 @@ fn graph_builder_build_view(
     graphview_new(ExternalPtr::new(core), class)
 }
 
-// ---------- Unified queries ----------
+// ── Unified queries ────────────────────────────────────────────────────────────────
 #[extendr]
 fn parents_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
     g.as_ref()
@@ -259,17 +254,32 @@ fn exogenous_nodes_of_ptr(g: ExternalPtr<GraphView>, undirected_as_parents: Rboo
         .unwrap_or_else(|e| throw_r_error(e))
 }
 
-// ---------- Is queries ----------
+// ── Validation / class checks ────────────────────────────────────────────────────────────────
 #[extendr]
 fn is_dag_type_ptr(g: ExternalPtr<GraphView>) -> bool {
     let core = g.as_ref().core();
-    crate::graph::alg::validate_graph_type(&crate::graph::graph_type::GraphType::Dag, core).is_ok()
+    Dag::new(Arc::new(core.clone())).is_ok()
 }
 
 #[extendr]
 fn is_pdag_type_ptr(g: ExternalPtr<GraphView>) -> bool {
     let core = g.as_ref().core();
-    crate::graph::alg::validate_graph_type(&crate::graph::graph_type::GraphType::Pdag, core).is_ok()
+    Pdag::new(Arc::new(core.clone())).is_ok()
+}
+
+#[extendr]
+fn validate_as_ptr(g: ExternalPtr<GraphView>, class: &str) -> Robj {
+    let core = g.as_ref().core();
+    let res = match class.trim().to_ascii_uppercase().as_str() {
+        "DAG" => Dag::new(Arc::new(core.clone())).map(|_| (true, "".to_string())),
+        "PDAG" | "CPDAG" => Pdag::new(Arc::new(core.clone())).map(|_| (true, "".to_string())),
+        "UNKNOWN" | "" => Ok((true, "".to_string())),
+        other => Err(format!("unknown graph class '{other}'")),
+    };
+    match res {
+        Ok((ok, msg)) => list!(ok = ok, message = msg).into_robj(),
+        Err(e) => list!(ok = false, message = e).into_robj(),
+    }
 }
 
 #[extendr]
@@ -293,7 +303,7 @@ fn is_simple_ptr(g: ExternalPtr<GraphView>) -> bool {
     g.as_ref().core().simple
 }
 
-// ---------- Metrics ----------
+// ── Metrics ────────────────────────────────────────────────────────────────
 #[extendr]
 fn shd_of_ptrs(
     g1: ExternalPtr<GraphView>,
@@ -333,6 +343,8 @@ fn hd_of_ptrs(g1: ExternalPtr<GraphView>, g2: ExternalPtr<GraphView>) -> Robj {
     let (norm, count) = hd(g1.as_ref().core(), g2.as_ref().core());
     list!(normalized = norm, count = count as i32).into_robj()
 }
+
+// ── Causal queries ────────────────────────────────────────────────────────────────
 
 #[extendr]
 fn is_d_separated_ptr(g: ExternalPtr<GraphView>, xs: Integers, ys: Integers, z: Integers) -> bool {
@@ -450,9 +462,10 @@ extendr_module! {
     // acyclicity test
     fn is_acyclic_ptr;
 
-    // class tests
+    // class tests + validator
     fn is_dag_type_ptr;
     fn is_pdag_type_ptr;
+    fn validate_as_ptr;
 
     // metrics
     fn shd_of_ptrs;

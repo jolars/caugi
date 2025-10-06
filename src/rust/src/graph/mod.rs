@@ -14,9 +14,7 @@ pub mod builder;
 pub mod dag;
 pub mod pdag;
 pub mod view;
-pub use view::{GraphApi, GraphView};
-pub mod graph_type;
-pub use graph_type::GraphType;
+pub use view::GraphView;
 pub mod metrics;
 
 #[derive(Debug, Clone)]
