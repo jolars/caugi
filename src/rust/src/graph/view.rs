@@ -49,6 +49,31 @@ pub trait GraphApi {
     fn exogenous_nodes(&self, _undirected_as_parents: bool) -> Result<Vec<u32>, String> {
         Err("exogenous_nodes not implemented for this class".into())
     }
+    fn is_d_separated(&self, _xs: &[u32], _ys: &[u32], _z: &[u32]) -> Result<bool, String> {
+        Err("is_d_separated not implemented for this class".into())
+    }
+    fn adjustment_set_parents(&self, _xs: &[u32], _ys: &[u32]) -> Result<Vec<u32>, String> {
+        Err("adjustment_set_parents not implemented for this class".into())
+    }
+    fn adjustment_set_backdoor(&self, _xs: &[u32], _ys: &[u32]) -> Result<Vec<u32>, String> {
+        Err("adjustment_set_backdoor not implemented for this class".into())
+    }
+    fn adjustment_set_optimal(&self, _x: u32, _y: u32) -> Result<Vec<u32>, String> {
+        Err("adjustment_set_optimal not implemented for this class".into())
+    }
+    fn is_valid_backdoor_set(&self, _x: u32, _y: u32, _z: &[u32]) -> Result<bool, String> {
+        Err("is_valid_backdoor_set not implemented for this class".into())
+    }
+    fn all_backdoor_sets(
+        &self,
+        _x: u32,
+        _y: u32,
+        _minimal: bool,
+        _max_size: u32,
+    ) -> Result<Vec<Vec<u32>>, String> {
+        Err("all_backdoor_sets not implemented for this class".into())
+    }
+
     fn n(&self) -> u32;
 }
 
@@ -107,6 +132,48 @@ impl GraphApi for GraphView {
             GraphView::Dag(g) => Ok(g.exogenous_nodes()),
             GraphView::Pdag(g) => Ok(g.exogenous_nodes(undirected_as_parents)),
             GraphView::Raw(_) => Err("exogenous_nodes not implemented for UNKNOWN class".into()),
+        }
+    }
+    fn is_d_separated(&self, xs: &[u32], ys: &[u32], z: &[u32]) -> Result<bool, String> {
+        match self {
+            GraphView::Dag(d) => Ok(d.is_d_separated(xs, ys, z)),
+            _ => Err("is_d_separated is only defined for DAGs".into()),
+        }
+    }
+    fn adjustment_set_parents(&self, xs: &[u32], ys: &[u32]) -> Result<Vec<u32>, String> {
+        match self {
+            GraphView::Dag(d) => Ok(d.adjustment_set_parents(xs, ys)),
+            _ => Err("adjustment_set_parents is only defined for DAGs".into()),
+        }
+    }
+    fn adjustment_set_backdoor(&self, xs: &[u32], ys: &[u32]) -> Result<Vec<u32>, String> {
+        match self {
+            GraphView::Dag(d) => Ok(d.adjustment_set_backdoor(xs, ys)),
+            _ => Err("adjustment_set_backdoor is only defined for DAGs".into()),
+        }
+    }
+    fn adjustment_set_optimal(&self, x: u32, y: u32) -> Result<Vec<u32>, String> {
+        match self {
+            GraphView::Dag(d) => Ok(d.adjustment_set_optimal(x, y)),
+            _ => Err("adjustment_set_optimal is only defined for DAGs".into()),
+        }
+    }
+    fn is_valid_backdoor_set(&self, x: u32, y: u32, z: &[u32]) -> Result<bool, String> {
+        match self {
+            GraphView::Dag(d) => Ok(d.is_valid_backdoor_set(x, y, z)),
+            _ => Err("is_valid_backdoor_set is only defined for DAGs".into()),
+        }
+    }
+    fn all_backdoor_sets(
+        &self,
+        x: u32,
+        y: u32,
+        minimal: bool,
+        max_size: u32,
+    ) -> Result<Vec<Vec<u32>>, String> {
+        match self {
+            GraphView::Dag(d) => Ok(d.all_backdoor_sets(x, y, minimal, max_size)),
+            _ => Err("all_backdoor_sets is only defined for DAGs".into()),
         }
     }
 
@@ -225,6 +292,34 @@ mod tests {
             d.markov_blanket_of(0).unwrap_err(),
             "markov_blanket_of not implemented for this class"
         );
+        assert_eq!(
+            d.exogenous_nodes(false).unwrap_err(),
+            "exogenous_nodes not implemented for this class"
+        );
+        assert_eq!(
+            d.is_d_separated(&[], &[], &[]).unwrap_err(),
+            "is_d_separated not implemented for this class"
+        );
+        assert_eq!(
+            d.adjustment_set_parents(&[], &[]).unwrap_err(),
+            "adjustment_set_parents not implemented for this class"
+        );
+        assert_eq!(
+            d.adjustment_set_backdoor(&[], &[]).unwrap_err(),
+            "adjustment_set_backdoor not implemented for this class"
+        );
+        assert_eq!(
+            d.adjustment_set_optimal(0, 1).unwrap_err(),
+            "adjustment_set_optimal not implemented for this class"
+        );
+        assert_eq!(
+            d.is_valid_backdoor_set(0, 1, &[]).unwrap_err(),
+            "is_valid_backdoor_set not implemented for this class"
+        );
+        assert_eq!(
+            d.all_backdoor_sets(0, 1, true, 20).unwrap_err(),
+            "all_backdoor_sets not implemented for this class"
+        );
     }
 
     #[test]
@@ -236,9 +331,28 @@ mod tests {
         b.add_edge(2, 1, d).unwrap();
         b.add_edge(0, 1, d).unwrap();
         b.add_edge(0, 3, d).unwrap();
-        let dag = Arc::new(Dag::new(Arc::new(b.finalize().unwrap())).unwrap());
+        let dag = Arc::new(Dag::new(Arc::new(b.finalize_in_place().unwrap())).unwrap());
         let v = GraphView::Dag(dag);
         assert_eq!(v.markov_blanket_of(0).unwrap(), vec![1, 2, 3]);
+
+        // Pdag:
+        let mut b = GraphBuilder::new_with_registry(4, true, &r);
+        let u = r.code_of("---").unwrap();
+        b.add_edge(2, 1, d).unwrap();
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(0, 3, d).unwrap();
+        b.add_edge(1, 3, u).unwrap();
+        let pdag = Arc::new(Pdag::new(Arc::new(b.finalize_in_place().unwrap())).unwrap());
+
+        let v = GraphView::Pdag(pdag);
+        assert_eq!(v.markov_blanket_of(0).unwrap(), vec![1, 2, 3]);
+
+        // Raw view uses UNKNOWN class fallbacks
+        let v = GraphView::Raw(Arc::new(b.finalize().unwrap()));
+        assert_eq!(
+            v.markov_blanket_of(0).unwrap_err(),
+            "markov_blanket_of not implemented for UNKNOWN class"
+        );
     }
 
     #[test]
@@ -265,5 +379,128 @@ mod tests {
         ));
         assert_eq!(v.exogenous_nodes(false).unwrap(), vec![0, 2, 3]);
         assert_eq!(v.exogenous_nodes(true).unwrap(), vec![0, 3]);
+    }
+    #[test]
+    fn graphview_dag_adjustment_and_dsep_dispatch() {
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap();
+        let d = r.code_of("-->").unwrap();
+
+        // DAG: 0:L -> 1:A -> 2:Y and 0:L -> 2:Y (classic confounder)
+        let mut b = GraphBuilder::new_with_registry(3, true, &r);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(1, 2, d).unwrap();
+        b.add_edge(0, 2, d).unwrap();
+        let v = GraphView::Dag(Arc::new(Dag::new(Arc::new(b.finalize().unwrap())).unwrap()));
+
+        // d-sep: X=1, Y=2 is not separated unconditionally; conditioning on 0 separates them
+        assert_eq!(v.is_d_separated(&[1], &[2], &[]).unwrap(), false);
+        assert_eq!(v.is_d_separated(&[0], &[2], &[0]).unwrap(), true);
+
+        // adjustment sets (parents/backdoor/optimal) all return {0}
+        assert_eq!(v.adjustment_set_parents(&[1], &[2]).unwrap(), vec![0]);
+        assert_eq!(v.adjustment_set_backdoor(&[1], &[2]).unwrap(), vec![0]);
+        assert_eq!(v.adjustment_set_optimal(1, 2).unwrap(), vec![0]);
+
+        // backdoor validity + enumeration
+        assert_eq!(v.is_valid_backdoor_set(1, 2, &[0]).unwrap(), true);
+        assert_eq!(v.is_valid_backdoor_set(1, 2, &[]).unwrap(), false);
+        assert_eq!(v.all_backdoor_sets(1, 2, true, 20).unwrap(), vec![vec![0]]);
+    }
+
+    // --- d-sep simple chain to hit both true/false via GraphView::Dag ---
+    #[test]
+    fn graphview_dag_dsep_chain_true_false() {
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap();
+        let d = r.code_of("-->").unwrap();
+
+        // 0 -> 1 -> 2
+        let mut b = GraphBuilder::new_with_registry(3, true, &r);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(1, 2, d).unwrap();
+        let v = GraphView::Dag(Arc::new(Dag::new(Arc::new(b.finalize().unwrap())).unwrap()));
+
+        // Unblocked path 0—1—2 => not separated
+        assert_eq!(v.is_d_separated(&[0], &[2], &[]).unwrap(), false);
+        // Condition on middle node blocks it
+        assert_eq!(v.is_d_separated(&[0], &[2], &[1]).unwrap(), true);
+    }
+
+    // --- PDAG and RAW: all DAG-only methods must return errors ---
+    #[test]
+    fn graphview_pdag_and_raw_dagonly_methods_error() {
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap();
+        let d = r.code_of("-->").unwrap();
+        let u = r.code_of("---").unwrap();
+
+        // Build a small PDAG: 0->1, 1---2
+        let mut bp = GraphBuilder::new_with_registry(3, true, &r);
+        bp.add_edge(0, 1, d).unwrap();
+        bp.add_edge(1, 2, u).unwrap();
+        let pdag_core = Arc::new(bp.finalize().unwrap());
+        let vp = GraphView::Pdag(Arc::new(Pdag::new(pdag_core.clone()).unwrap()));
+        let vr = GraphView::Raw(pdag_core);
+
+        // is_d_separated
+        assert_eq!(
+            vp.is_d_separated(&[0], &[2], &[]).unwrap_err(),
+            "is_d_separated is only defined for DAGs"
+        );
+        assert_eq!(
+            vr.is_d_separated(&[0], &[2], &[]).unwrap_err(),
+            "is_d_separated is only defined for DAGs"
+        );
+
+        // adjustment_set_parents
+        assert_eq!(
+            vp.adjustment_set_parents(&[0], &[1]).unwrap_err(),
+            "adjustment_set_parents is only defined for DAGs"
+        );
+        assert_eq!(
+            vr.adjustment_set_parents(&[0], &[1]).unwrap_err(),
+            "adjustment_set_parents is only defined for DAGs"
+        );
+
+        // adjustment_set_backdoor
+        assert_eq!(
+            vp.adjustment_set_backdoor(&[0], &[1]).unwrap_err(),
+            "adjustment_set_backdoor is only defined for DAGs"
+        );
+        assert_eq!(
+            vr.adjustment_set_backdoor(&[0], &[1]).unwrap_err(),
+            "adjustment_set_backdoor is only defined for DAGs"
+        );
+
+        // adjustment_set_optimal
+        assert_eq!(
+            vp.adjustment_set_optimal(0, 1).unwrap_err(),
+            "adjustment_set_optimal is only defined for DAGs"
+        );
+        assert_eq!(
+            vr.adjustment_set_optimal(0, 1).unwrap_err(),
+            "adjustment_set_optimal is only defined for DAGs"
+        );
+
+        // is_valid_backdoor_set
+        assert_eq!(
+            vp.is_valid_backdoor_set(0, 1, &[]).unwrap_err(),
+            "is_valid_backdoor_set is only defined for DAGs"
+        );
+        assert_eq!(
+            vr.is_valid_backdoor_set(0, 1, &[]).unwrap_err(),
+            "is_valid_backdoor_set is only defined for DAGs"
+        );
+
+        // all_backdoor_sets
+        assert_eq!(
+            vp.all_backdoor_sets(0, 1, true, 20).unwrap_err(),
+            "all_backdoor_sets is only defined for DAGs"
+        );
+        assert_eq!(
+            vr.all_backdoor_sets(0, 1, true, 20).unwrap_err(),
+            "all_backdoor_sets is only defined for DAGs"
+        );
     }
 }
