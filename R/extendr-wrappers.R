@@ -58,6 +58,8 @@ is_dag_type_ptr <- function(g) .Call(wrap__is_dag_type_ptr, g)
 
 is_pdag_type_ptr <- function(g) .Call(wrap__is_pdag_type_ptr, g)
 
+validate_as_ptr <- function(g, class) .Call(wrap__validate_as_ptr, g, class)
+
 shd_of_ptrs <- function(g1, names1, g2, names2) .Call(wrap__shd_of_ptrs, g1, names1, g2, names2)
 
 hd_of_ptrs <- function(g1, g2) .Call(wrap__hd_of_ptrs, g1, g2)
