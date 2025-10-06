@@ -130,7 +130,6 @@ impl Dag {
     /// All ancestors of `i`, returned in ascending order.
     ///
     /// Implementation: DFS with a boolean mask for de-duplication, then scan.
-    /// Complexity: `O(|An(i)| + deg(An(i)))` time, `O(n)` bits.
     #[inline]
     pub fn ancestors_of(&self, i: u32) -> Vec<u32> {
         let n = self.n() as usize;
@@ -149,7 +148,6 @@ impl Dag {
     /// All descendants of `i`, returned in ascending order.
     ///
     /// Implementation: DFS with a boolean mask for de-duplication, then scan.
-    /// Complexity: `O(|De(i)| + deg(De(i)))` time, `O(n)` bits.
     #[inline]
     pub fn descendants_of(&self, i: u32) -> Vec<u32> {
         let n = self.n() as usize;
@@ -166,8 +164,6 @@ impl Dag {
     }
 
     /// Markov blanket of `i`: `Pa(i) ∪ Ch(i) ∪ (⋃ Pa(c) \ {i : c∈Ch(i)})`.
-    ///
-    /// Implementation uses a mask to avoid `sort_unstable + dedup`.
     #[inline]
     pub fn markov_blanket_of(&self, i: u32) -> Vec<u32> {
         let n = self.n() as usize;
@@ -459,8 +455,6 @@ impl Dag {
 impl Dag {
     /// Parent-based heuristic adjustment set:
     /// `Z = (⋃ Pa(X)) \ (X ∪ Y)`.
-    ///
-    /// Complexity: `O(|Pa(X)| + n)` due to the final mask scan.
     pub fn adjustment_set_parents(&self, xs: &[u32], ys: &[u32]) -> Vec<u32> {
         let n = self.n();
         let mut keep = vec![false; n as usize];
