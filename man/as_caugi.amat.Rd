@@ -4,7 +4,7 @@
 \alias{as_caugi.amat}
 \title{Convert a pcalg amat to a \code{caugi_graph}}
 \usage{
-\method{as_caugi}{amat}(x, amat_type = NULL, ...)
+as_caugi.amat(x, amat_type = NULL, ...)
 }
 \arguments{
 \item{x}{A pcalg adjacency matrix (amat).}

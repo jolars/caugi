@@ -1,25 +1,110 @@
 #' @title Convert to a `caugi_graph`
 #'
 #' @description Convert an object to a `caugi_graph`. The object can be a
-#' `graphNEL`, `sparseMatrix`, `dgCMatrix`, `matrix`, `pcalg`s `amat`,
+#' `graphNEL`, `sparseMatrix`, `dgCMatrix`, `matrix`, `pcalg`'s `amat`,
 #' or a data frame with `from`, `to`, and `edge_type` columns.
 #'
 #' @param x An object to convert to a `caugi_graph`.
+#' @param class "auto", "DAG", "PDAG", or "Unknown".
+#'   "auto": DAG if directed and acyclic, PDAG if undirected or mixed with
+#'   acyclic directed part, otherwise "Unknown".
+#' @param simple logical. If `TRUE` (default) the graph will be simple
+#' (no multiple edges or self-loops).
+#' @param build logical. If `TRUE` (default) build the graph now, otherwise
+#' build lazily on first query or when using [build()].
+#' @param collapse logical. If `TRUE` collapse mutual directed edges to
+#' undirected edges. Default is `FALSE`.
+#' @param collapse_to Character string to use as the edge glyph when collapsing.
+#' Should be a registered symmetrical edge glyph. Default is `"---"`.
 #' @param ... Additional arguments passed to specific methods.
-#' @importFrom stats setNames
+#'
 #' @export
-as_caugi <- function(x, ...) {
-  UseMethod("as_caugi")
+as_caugi <- S7::new_generic("as_caugi", "x")
+
+
+#' @name as_caugi
+#' @export
+S7::method(as_caugi, S7::new_S3_class("igraph")) <- function(
+    x,
+    class = c(
+      "auto",
+      "DAG",
+      "PDAG",
+      "Unknown"
+    ),
+    simple = igraph::is_simple(x),
+    build = TRUE,
+    collapse = FALSE,
+    collapse_to = "---") {
+  class <- match.arg(class)
+
+  n_edges <- igraph::ecount(x)
+  directed <- igraph::is_directed(x)
+
+  pick_class <- switch(class,
+    auto = if (igraph::is_dag(x)) {
+      "DAG"
+    } else if (!directed && is_acyclic(x)) {
+      "PDAG"
+    } else {
+      "Unknown"
+    },
+    DAG = "DAG",
+    PDAG = "PDAG",
+    Unknown = "Unknown"
+  )
+
+  if (n_edges == 0L) {
+    return(caugi_graph(
+      from = character(), edge = character(), to = character(),
+      simple = isTRUE(simple), build = isTRUE(build), class = pick_class
+    ))
+  }
+
+  e <- igraph::ends(x, igraph::E(x), names = TRUE)
+  glyph <- if (directed) "-->" else "---"
+
+  from <- e[, 1]
+  to <- e[, 2]
+  edge <- rep_len(glyph, length.out = nrow(e))
+
+  # collapse symmetrical edges
+  if (collapse && directed) {
+    # check if collapse_to is registered and symmetric (throws error if not)
+    is_edge_symmetric(collapse_to)
+
+    # pairwise canonical order
+    canon_from <- pmin(from, to)
+    canon_to <- pmax(from, to)
+    key <- interaction(canon_from, canon_to, drop = TRUE)
+
+    # reverse exists for this row
+    pair_key <- interaction(from, to, drop = TRUE)
+    rev_key <- interaction(to, from, drop = TRUE)
+    has_rev <- (from != to) & match(pair_key, rev_key, nomatch = 0L) > 0L
+
+    # keep asymmetric rows, plus the first canonical rep of each symmetric group
+    keep_rep <- !duplicated(key) & (from == canon_from)
+    keep <- !has_rev | keep_rep
+
+    # write collapsed rows
+    from <- ifelse(has_rev & keep, canon_from, from)[keep]
+    to <- ifelse(has_rev & keep, canon_to, to)[keep]
+    edge <- ifelse(has_rev & keep, collapse_to, edge)[keep]
+  }
+  caugi_graph(
+    from = from,
+    edge = edge,
+    to = to,
+    simple = isTRUE(simple),
+    build = isTRUE(build),
+    class = pick_class
+  )
 }
 
-#' @title Create a caugi_graph from a possibly‐mixed graphNEL
-#'
-#' @param x A graphNEL object
-#' @param collapse Logical, whether to collapse directed edges to undirected
-#' @param collapse_to The code to use for collapsed directed pairs (default "---")
-#' @param ... Additional arguments (will not be passed to anything).
+#' @name as_caugi
 #' @export
-as_caugi.graphNEL <- function(x, collapse = FALSE, collapse_to = "---", ...) {
+S7::method(as_caugi, methods::getClass("graphNEL")) <- function(x, collapse = FALSE, collapse_to = "---", ...) {
   NULL
 }
 
@@ -92,21 +177,4 @@ as_caugi.data.frame <- function(x, ...) {
 #' @export
 as_caugi.default <- function(x, ...) {
   stop("No as_caugi method for class ", paste(class(x), collapse = "/"))
-}
-
-#' Convert an **igraph** object to a `caugi_graph`
-#'
-#' @param x        An `igraph` object.
-#' @param collapse Logical. If `TRUE` (default) *mutual* pairs
-#'                 (`A-->B` **and** `B-->A`) that are marked as symmetric
-#'                 (`edge_type` %in% c("---","<->")) are collapsed to
-#'                 one row.  Set to `FALSE` to keep every edge exactly
-#'                 as it appears in the igraph.
-#' @param collapse_to The code to use for collapsed directed pairs (default "---")
-#' @param ...      Not used; kept for S3 compatibility.
-#' @seealso \code{\link[igraph:igraph-package]{the igraph package}} for details.
-#' @return A `caugi_graph`.
-#' @export
-as_caugi.igraph <- function(x, collapse = FALSE, collapse_to = "---", ...) {
-  NULL
 }

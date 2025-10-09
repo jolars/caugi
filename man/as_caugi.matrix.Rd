@@ -4,7 +4,7 @@
 \alias{as_caugi.matrix}
 \title{Create a caugi_graph from an integer-coded dense matrix}
 \usage{
-\method{as_caugi}{matrix}(x, ...)
+as_caugi.matrix(x, ...)
 }
 \arguments{
 \item{x}{A dense matrix with integer edge codes}

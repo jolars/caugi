@@ -4,7 +4,7 @@
 \alias{as_caugi.default}
 \title{Default method for \code{as_caugi}}
 \usage{
-\method{as_caugi}{default}(x, ...)
+as_caugi.default(x, ...)
 }
 \arguments{
 \item{x}{An object to convert to a \code{caugi_graph}.}

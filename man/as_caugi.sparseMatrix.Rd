@@ -5,9 +5,9 @@
 \alias{as_caugi.sparseMatrix}
 \title{Create a caugi_graph from a sparse \code{dgCMatrix} or \code{sparseMatrix}}
 \usage{
-\method{as_caugi}{dgCMatrix}(x, directed = TRUE, ...)
+as_caugi.dgCMatrix(x, directed = TRUE, ...)
 
-\method{as_caugi}{sparseMatrix}(x, directed = TRUE, ...)
+as_caugi.sparseMatrix(x, directed = TRUE, ...)
 }
 \arguments{
 \item{x}{A sparse matrix of class \code{dgCMatrix} or \code{sparseMatrix}.}

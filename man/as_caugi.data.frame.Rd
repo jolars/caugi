@@ -4,7 +4,7 @@
 \alias{as_caugi.data.frame}
 \title{Convert a data frame to a \code{caugi_graph}}
 \usage{
-\method{as_caugi}{data.frame}(x, ...)
+as_caugi.data.frame(x, ...)
 }
 \arguments{
 \item{x}{A data frame with columns \code{from}, \code{to}, and \code{edge_type}.}

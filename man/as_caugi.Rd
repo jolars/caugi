@@ -10,9 +10,25 @@ as_caugi(x, ...)
 \item{x}{An object to convert to a \code{caugi_graph}.}
 
 \item{...}{Additional arguments passed to specific methods.}
+
+\item{class}{"auto", "DAG", "PDAG", or "Unknown".
+"auto": DAG if directed and acyclic, PDAG if undirected or mixed with
+acyclic directed part, otherwise "Unknown".}
+
+\item{simple}{logical. If \code{TRUE} (default) the graph will be simple
+(no multiple edges or self-loops).}
+
+\item{build}{logical. If \code{TRUE} (default) build the graph now, otherwise
+build lazily on first query or when using \code{\link[=build]{build()}}.}
+
+\item{collapse}{logical. If \code{TRUE} collapse mutual directed edges to
+undirected edges. Default is \code{FALSE}.}
+
+\item{collapse_to}{Character string to use as the edge glyph when collapsing.
+Should be a registered symmetrical edge glyph. Default is \code{"---"}.}
 }
 \description{
 Convert an object to a \code{caugi_graph}. The object can be a
-\code{graphNEL}, \code{sparseMatrix}, \code{dgCMatrix}, \code{matrix}, \code{pcalg}s \code{amat},
+\code{graphNEL}, \code{sparseMatrix}, \code{dgCMatrix}, \code{matrix}, \code{pcalg}'s \code{amat},
 or a data frame with \code{from}, \code{to}, and \code{edge_type} columns.
 }
