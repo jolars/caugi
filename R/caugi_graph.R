@@ -208,7 +208,11 @@ caugi_graph <- S7::new_class(
       edges <- .get_edges_tibble(from, edge, to, calls = list())
       declared <- character()
     } else {
-      edges <- tibble::tibble(from = character(), edge = character(), to = character())
+      edges <- tibble::tibble(
+        from = character(),
+        edge = character(),
+        to = character()
+      )
       declared <- character()
     }
 
