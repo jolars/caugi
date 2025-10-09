@@ -116,3 +116,40 @@ seal_caugi_registry <- function() {
     assign("edge_ops", c(ops, op), envir = .caugi_env)
   }
 }
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────── Edge helpers ─────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+#' @title Is the edge symmetric?
+#'
+#' @description Check if the given edge glyph is symmetric in the edge registry.
+#'
+#' @param glyph A string representing the edge glyph (e.g., `"-->"`, `"<->"`).
+#'
+#' @returns Logical, `TRUE` if the edge is symmetric, otherwise throws error.
+#'
+#' @keywords internal
+is_edge_symmetric <- function(glyph) {
+  reg <- caugi_registry()
+
+  tryCatch(
+    code <- edge_registry_code_of(reg, glyph),
+    error = function(e) {
+      stop("glyph '", glyph, "' is not registered in caugi",
+        " edge registry. Please either register it first with ",
+        "register_caugi_edge() or use a glyph from the registry.",
+        call. = FALSE
+      )
+    }
+  )
+  # check if symmetric glyph
+  edge_spec <- edge_registry_spec_of_code(reg, code)
+  if (!edge_spec$symmetric) {
+    stop("glyph '", glyph, "' is not symmetric. ",
+      "Please use a symmetric glyph.",
+      call. = FALSE
+    )
+  }
+  TRUE
+}

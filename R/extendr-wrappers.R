@@ -22,6 +22,8 @@ edge_registry_register <- function(reg, glyph, tail_mark, head_mark, class, symm
 
 edge_registry_code_of <- function(reg, glyph) .Call(wrap__edge_registry_code_of, reg, glyph)
 
+edge_registry_spec_of_code <- function(reg, code) .Call(wrap__edge_registry_spec_of_code, reg, code)
+
 graph_builder_new <- function(reg, n, simple) .Call(wrap__graph_builder_new, reg, n, simple)
 
 graph_builder_add_edges <- function(b, from, to, etype) invisible(.Call(wrap__graph_builder_add_edges, b, from, to, etype))
