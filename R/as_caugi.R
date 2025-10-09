@@ -24,88 +24,92 @@ as_caugi <- S7::new_generic("as_caugi", "x")
 
 #' @name as_caugi
 #' @export
-S7::method(as_caugi, S7::new_S3_class("igraph")) <- function(
-    x,
-    class = c(
-      "auto",
-      "DAG",
-      "PDAG",
-      "Unknown"
-    ),
-    simple = igraph::is_simple(x),
-    build = TRUE,
-    collapse = FALSE,
-    collapse_to = "---") {
-  class <- match.arg(class)
+if (requireNamespace("igraph", quietly = TRUE)) {
+  S7::method(as_caugi, S7::new_S3_class("igraph")) <- function(x,
+                                                               class = c(
+                                                                 "auto",
+                                                                 "DAG",
+                                                                 "PDAG",
+                                                                 "Unknown"
+                                                               ),
+                                                               simple = igraph::is_simple(x),
+                                                               build = TRUE,
+                                                               collapse = FALSE,
+                                                               collapse_to = "---") {
+    class <- match.arg(class)
 
-  n_edges <- igraph::ecount(x)
-  directed <- igraph::is_directed(x)
+    n_edges <- igraph::ecount(x)
+    directed <- igraph::is_directed(x)
 
-  pick_class <- switch(class,
-    auto = if (igraph::is_dag(x)) {
-      "DAG"
-    } else if (!directed && is_acyclic(x)) {
-      "PDAG"
-    } else {
-      "Unknown"
-    },
-    DAG = "DAG",
-    PDAG = "PDAG",
-    Unknown = "Unknown"
-  )
+    pick_class <- switch(class,
+      auto = if (igraph::is_dag(x)) {
+        "DAG"
+      } else if (!directed && is_acyclic(x)) {
+        "PDAG"
+      } else {
+        "Unknown"
+      },
+      DAG = "DAG",
+      PDAG = "PDAG",
+      Unknown = "Unknown"
+    )
 
-  if (n_edges == 0L) {
-    return(caugi_graph(
-      from = character(), edge = character(), to = character(),
-      simple = isTRUE(simple), build = isTRUE(build), class = pick_class
-    ))
+    if (n_edges == 0L) {
+      return(caugi_graph(
+        from = character(), edge = character(), to = character(),
+        simple = isTRUE(simple), build = isTRUE(build), class = pick_class
+      ))
+    }
+
+    e <- igraph::ends(x, igraph::E(x), names = TRUE)
+    glyph <- if (directed) "-->" else "---"
+
+    from <- e[, 1]
+    to <- e[, 2]
+    edge <- rep_len(glyph, length.out = nrow(e))
+
+    # collapse symmetrical edges
+    if (collapse && directed) {
+      # check if collapse_to is registered and symmetric (throws error if not)
+      is_edge_symmetric(collapse_to)
+
+      # pairwise canonical order
+      canon_from <- pmin(from, to)
+      canon_to <- pmax(from, to)
+      key <- interaction(canon_from, canon_to, drop = TRUE)
+
+      # reverse exists for this row
+      pair_key <- interaction(from, to, drop = TRUE)
+      rev_key <- interaction(to, from, drop = TRUE)
+      has_rev <- (from != to) & match(pair_key, rev_key, nomatch = 0L) > 0L
+
+      # keep asymmetric rows, plus the first canonical rep of each symmetric group
+      keep_rep <- !duplicated(key) & (from == canon_from)
+      keep <- !has_rev | keep_rep
+
+      # write collapsed rows
+      from <- ifelse(has_rev & keep, canon_from, from)[keep]
+      to <- ifelse(has_rev & keep, canon_to, to)[keep]
+      edge <- ifelse(has_rev & keep, collapse_to, edge)[keep]
+    }
+    caugi_graph(
+      from = from,
+      edge = edge,
+      to = to,
+      simple = isTRUE(simple),
+      build = isTRUE(build),
+      class = pick_class
+    )
   }
-
-  e <- igraph::ends(x, igraph::E(x), names = TRUE)
-  glyph <- if (directed) "-->" else "---"
-
-  from <- e[, 1]
-  to <- e[, 2]
-  edge <- rep_len(glyph, length.out = nrow(e))
-
-  # collapse symmetrical edges
-  if (collapse && directed) {
-    # check if collapse_to is registered and symmetric (throws error if not)
-    is_edge_symmetric(collapse_to)
-
-    # pairwise canonical order
-    canon_from <- pmin(from, to)
-    canon_to <- pmax(from, to)
-    key <- interaction(canon_from, canon_to, drop = TRUE)
-
-    # reverse exists for this row
-    pair_key <- interaction(from, to, drop = TRUE)
-    rev_key <- interaction(to, from, drop = TRUE)
-    has_rev <- (from != to) & match(pair_key, rev_key, nomatch = 0L) > 0L
-
-    # keep asymmetric rows, plus the first canonical rep of each symmetric group
-    keep_rep <- !duplicated(key) & (from == canon_from)
-    keep <- !has_rev | keep_rep
-
-    # write collapsed rows
-    from <- ifelse(has_rev & keep, canon_from, from)[keep]
-    to <- ifelse(has_rev & keep, canon_to, to)[keep]
-    edge <- ifelse(has_rev & keep, collapse_to, edge)[keep]
-  }
-  caugi_graph(
-    from = from,
-    edge = edge,
-    to = to,
-    simple = isTRUE(simple),
-    build = isTRUE(build),
-    class = pick_class
-  )
 }
+
 
 #' @name as_caugi
 #' @export
-S7::method(as_caugi, methods::getClass("graphNEL")) <- function(x, collapse = FALSE, collapse_to = "---", ...) {
-  NULL
+if (requireNamespace("graph", quietly = TRUE)) {
+  S7::method(as_caugi, methods::getClass("graphNEL")) <- function(x, collapse = FALSE, collapse_to = "---", ...) {
+    NULL
+  }
 }
 
 #' @rdname as_caugi.sparseMatrix
