@@ -4,12 +4,18 @@
 \alias{as_caugi}
 \title{Convert to a \code{caugi_graph}}
 \usage{
-as_caugi(x, ...)
+as_caugi(
+  x,
+  class = c("auto", "DAG", "PDAG", "Unknown"),
+  simple = TRUE,
+  build = TRUE,
+  collapse = FALSE,
+  collapse_to = "---",
+  ...
+)
 }
 \arguments{
 \item{x}{An object to convert to a \code{caugi_graph}.}
-
-\item{...}{Additional arguments passed to specific methods.}
 
 \item{class}{"auto", "DAG", "PDAG", or "Unknown".
 "auto": DAG if directed and acyclic, PDAG if undirected or mixed with
@@ -26,6 +32,11 @@ undirected edges. Default is \code{FALSE}.}
 
 \item{collapse_to}{Character string to use as the edge glyph when collapsing.
 Should be a registered symmetrical edge glyph. Default is \code{"---"}.}
+
+\item{...}{Additional arguments passed to specific methods.}
+}
+\value{
+A \code{caugi_graph} object.
 }
 \description{
 Convert an object to a \code{caugi_graph}. The object can be a

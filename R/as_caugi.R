@@ -18,25 +18,44 @@
 #' Should be a registered symmetrical edge glyph. Default is `"---"`.
 #' @param ... Additional arguments passed to specific methods.
 #'
+#' @returns A `caugi_graph` object.
+#'
 #' @export
-as_caugi <- S7::new_generic("as_caugi", "x")
+as_caugi <- S7::new_generic(
+  "as_caugi",
+  dispatch_args = "x",
+  fun = function(
+      x,
+      class = c("auto", "DAG", "PDAG", "Unknown"),
+      simple = TRUE,
+      build = TRUE,
+      collapse = FALSE,
+      collapse_to = "---",
+      ...) {
+    S7::S7_dispatch()
+  }
+)
 
 
 #' @name as_caugi
 #' @export
 if (requireNamespace("igraph", quietly = TRUE)) {
-  S7::method(as_caugi, S7::new_S3_class("igraph")) <- function(x,
-                                                               class = c(
-                                                                 "auto",
-                                                                 "DAG",
-                                                                 "PDAG",
-                                                                 "Unknown"
-                                                               ),
-                                                               simple = igraph::is_simple(x),
-                                                               build = TRUE,
-                                                               collapse = FALSE,
-                                                               collapse_to = "---") {
+  S7::method(
+    as_caugi,
+    S7::new_S3_class("igraph")
+  ) <- function(x,
+                class = c(
+                  "auto",
+                  "DAG",
+                  "PDAG",
+                  "Unknown"
+                ),
+                simple = TRUE,
+                build = TRUE,
+                collapse = FALSE,
+                collapse_to = "---") {
     class <- match.arg(class)
+    if (missing(simple)) simple <- igraph::is_simple(x)
 
     n_edges <- igraph::ecount(x)
     directed <- igraph::is_directed(x)
@@ -104,81 +123,81 @@ if (requireNamespace("igraph", quietly = TRUE)) {
 }
 
 
-#' @name as_caugi
-#' @export
-if (requireNamespace("graph", quietly = TRUE)) {
-  S7::method(as_caugi, methods::getClass("graphNEL")) <- function(x, collapse = FALSE, collapse_to = "---", ...) {
-    NULL
-  }
-}
+# #' @name as_caugi
+# #' @export
+# if (requireNamespace("graph", quietly = TRUE)) {
+#   S7::method(as_caugi, methods::getClass("graphNEL")) <- function(x, collapse = FALSE, collapse_to = "---", ...) {
+#     NULL
+#   }
+# }
 
-#' @rdname as_caugi.sparseMatrix
-#' @export
-as_caugi.dgCMatrix <- function(x, directed = TRUE, ...) {
-  NULL
-}
-
-#' @title Create a caugi_graph from a sparse `dgCMatrix` or `sparseMatrix`
-#'
-#' @param x A sparse matrix of class `dgCMatrix` or `sparseMatrix`.
-#' @param directed Logical; if `TRUE` (default) the graph is directed.
-#' @param ... Additional arguments (will not be passed to anything).
-#' @export
-as_caugi.sparseMatrix <- function(x, directed = TRUE, ...) {
-  NULL
-}
-
-#' @title Create a caugi_graph from an integer-coded dense matrix
-#'
-#' @description Create a `caugi_graph` from a dense matrix with integer edge codes.
-#' The edge codes are:
-#' * 0: no edge
-#' * 1: directed edge (from --> to)
-#' * 2: bidirectional edge (from <-> to)
-#' * 3: PAG directed edge (from o-> to)
-#' * 4: PAG undirected edge (from o-- to)
-#' * 5: PAG bidirected edge (from o-o to)
-#' * 6: undirected edge (from --- to)
-#'
-#' @param x A dense matrix with integer edge codes
-#' @param ... Additional arguments (will not be passed to anything).
-#' @export
-as_caugi.matrix <- function(x, ...) {
-  NULL
-}
-
-#' @title Convert a pcalg amat to a `caugi_graph`
-#'
-#' @description Convert a pcalg adjacency matrix to a `caugi_graph`.
-#' The matrix must be a square matrix with integer edge codes.
-#' See pcalg documentation on amat for more details on the edge codes in amat.
-#'
-#' @param x A pcalg adjacency matrix (amat).
-#' @param amat_type The type of the adjacency matrix, `"cpdag"` or `"pag`.
-#' @param ... Additional arguments (will not be passed to anything).
-#' @export
-as_caugi.amat <- function(x, amat_type = NULL, ...) {
-  NULL
-}
-
-#' @title Convert a data frame to a `caugi_graph`
-#'
-#' @description Should be a data frame with columns `from`, `to`, and `edge_type`.
-#'
-#' @param x A data frame with columns `from`, `to`, and `edge_type`.
-#' @param ... Additional arguments (will not be passed to anything).
-#' @export
-as_caugi.data.frame <- function(x, ...) {
-  NULL
-}
-
-#' @title Default method for `as_caugi`
-#'
-#' @description Default method for `as_caugi` that throws an error.
-#'
-#' @param x An object to convert to a `caugi_graph`.
-#' @param ... Additional arguments (will not be passed to anything).
-#' @export
-as_caugi.default <- function(x, ...) {
-  stop("No as_caugi method for class ", paste(class(x), collapse = "/"))
-}
+# #' @rdname as_caugi.sparseMatrix
+# #' @export
+# as_caugi.dgCMatrix <- function(x, directed = TRUE, ...) {
+#   NULL
+# }
+#
+# #' @title Create a caugi_graph from a sparse `dgCMatrix` or `sparseMatrix`
+# #'
+# #' @param x A sparse matrix of class `dgCMatrix` or `sparseMatrix`.
+# #' @param directed Logical; if `TRUE` (default) the graph is directed.
+# #' @param ... Additional arguments (will not be passed to anything).
+# #' @export
+# as_caugi.sparseMatrix <- function(x, directed = TRUE, ...) {
+#   NULL
+# }
+#
+# #' @title Create a caugi_graph from an integer-coded dense matrix
+# #'
+# #' @description Create a `caugi_graph` from a dense matrix with integer edge codes.
+# #' The edge codes are:
+# #' * 0: no edge
+# #' * 1: directed edge (from --> to)
+# #' * 2: bidirectional edge (from <-> to)
+# #' * 3: PAG directed edge (from o-> to)
+# #' * 4: PAG undirected edge (from o-- to)
+# #' * 5: PAG bidirected edge (from o-o to)
+# #' * 6: undirected edge (from --- to)
+# #'
+# #' @param x A dense matrix with integer edge codes
+# #' @param ... Additional arguments (will not be passed to anything).
+# #' @export
+# as_caugi.matrix <- function(x, ...) {
+#   NULL
+# }
+#
+# #' @title Convert a pcalg amat to a `caugi_graph`
+# #'
+# #' @description Convert a pcalg adjacency matrix to a `caugi_graph`.
+# #' The matrix must be a square matrix with integer edge codes.
+# #' See pcalg documentation on amat for more details on the edge codes in amat.
+# #'
+# #' @param x A pcalg adjacency matrix (amat).
+# #' @param amat_type The type of the adjacency matrix, `"cpdag"` or `"pag`.
+# #' @param ... Additional arguments (will not be passed to anything).
+# #' @export
+# as_caugi.amat <- function(x, amat_type = NULL, ...) {
+#   NULL
+# }
+#
+# #' @title Convert a data frame to a `caugi_graph`
+# #'
+# #' @description Should be a data frame with columns `from`, `to`, and `edge_type`.
+# #'
+# #' @param x A data frame with columns `from`, `to`, and `edge_type`.
+# #' @param ... Additional arguments (will not be passed to anything).
+# #' @export
+# as_caugi.data.frame <- function(x, ...) {
+#   NULL
+# }
+#
+# #' @title Default method for `as_caugi`
+# #'
+# #' @description Default method for `as_caugi` that throws an error.
+# #'
+# #' @param x An object to convert to a `caugi_graph`.
+# #' @param ... Additional arguments (will not be passed to anything).
+# #' @export
+# as_caugi.default <- function(x, ...) {
+#   stop("No as_caugi method for class ", paste(class(x), collapse = "/"))
+# }
