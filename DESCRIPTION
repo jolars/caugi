@@ -13,15 +13,15 @@ Imports:
     processx,
     tibble,
     dplyr,
-    igraph,
     rlang,
-    S7
+    S7,
+    stats
 Suggests: 
     devtools,
+    igraph,
+    graph,
     knitr,
-    pcalg,
     rextendr,
-    Rgraphviz,
     rmarkdown,
     testthat
 Config/rextendr/version: 0.4.2
