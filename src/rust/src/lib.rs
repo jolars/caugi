@@ -120,6 +120,24 @@ fn edge_registry_code_of(reg: ExternalPtr<EdgeRegistry>, glyph: &str) -> i32 {
         .unwrap_or_else(|e| throw_r_error(e.to_string()))
 }
 
+#[extendr]
+fn edge_registry_spec_of_code(reg: ExternalPtr<EdgeRegistry>, code: i32) -> Robj {
+    if !(0..=255).contains(&code) {
+        throw_r_error("code must be in 0..=255");
+    }
+    match reg.as_ref().spec_of_code(code as u8) {
+        Ok(spec) => list!(
+            glyph = spec.glyph.to_string(),
+            tail = spec.tail.to_string(),
+            head = spec.head.to_string(),
+            class = spec.class.to_string(),
+            symmetric = spec.symmetric
+        )
+        .into_robj(),
+        Err(e) => throw_r_error(e.to_string()),
+    }
+}
+
 // ── Core builder ────────────────────────────────────────────────────────────────
 #[extendr]
 fn graph_builder_new(
@@ -411,6 +429,7 @@ extendr_module! {
     fn edge_registry_len;
     fn edge_registry_register;
     fn edge_registry_code_of;
+    fn edge_registry_spec_of_code;
 
     // builder + core
     fn graph_builder_new;

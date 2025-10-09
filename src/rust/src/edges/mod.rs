@@ -27,6 +27,18 @@ impl FromStr for Mark {
     }
 }
 
+impl fmt::Display for Mark {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Mark::Arrow => "arrow",
+            Mark::Tail => "tail",
+            Mark::Circle => "circle",
+            Mark::Other => "other",
+        };
+        write!(f, "{}", s)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EdgeClass {
     Directed,
@@ -49,6 +61,20 @@ impl FromStr for EdgeClass {
             "partially_undirected" => Ok(EdgeClass::PartiallyUndirected),
             _ => Err(format!("Unknown class '{}'", s)),
         }
+    }
+}
+
+impl fmt::Display for EdgeClass {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            EdgeClass::Directed => "directed",
+            EdgeClass::Undirected => "undirected",
+            EdgeClass::Bidirected => "bidirected",
+            EdgeClass::Partial => "partial",
+            EdgeClass::PartiallyDirected => "partially_directed",
+            EdgeClass::PartiallyUndirected => "partially_undirected",
+        };
+        write!(f, "{}", s)
     }
 }
 
