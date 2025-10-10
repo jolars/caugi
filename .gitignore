@@ -27,3 +27,4 @@ inst/doc
 /man/run_cargo_test.Rd
 /man/rust_r_covr.Rd
 docs
+tools/aaaaa-coding-helpers.R

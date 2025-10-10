@@ -16,3 +16,5 @@
 ^docs$
 ^pkgdown$
 ^README\.Rmd$
+^tools/aaaaa-coding-helpers\.R$
+^\.vscode$
