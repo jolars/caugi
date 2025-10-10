@@ -27,6 +27,7 @@
 #' Optional; mutually exclusive with `...`.
 #' @param to Character vector of target node names.
 #' Optional; mutually exclusive with `...`.
+#' @param nodes Character vector of node names to declare as isolated nodes.
 #' @param simple Logical; if `TRUE` (default), the graph is a simple graph, and
 #' the function will throw an error if the input contains parallel edges or
 #' self-loops.
@@ -177,7 +178,7 @@ caugi_graph <- S7::new_class(
     NULL
   },
   constructor = function(...,
-                         from = NULL, edge = NULL, to = NULL,
+                         from = NULL, edge = NULL, to = NULL, nodes = NULL,
                          simple = TRUE,
                          build = TRUE,
                          class = c("Unknown", "DAG", "PDAG")) {
@@ -206,7 +207,7 @@ caugi_graph <- S7::new_class(
       declared <- terms$declared
     } else if (has_vec) {
       edges <- .get_edges_tibble(from, edge, to, calls = list())
-      declared <- character()
+      declared <- nodes
     } else {
       edges <- tibble::tibble(
         from = character(),

@@ -9,6 +9,7 @@ caugi_graph(
   from = NULL,
   edge = NULL,
   to = NULL,
+  nodes = NULL,
   simple = TRUE,
   build = TRUE,
   class = c("Unknown", "DAG", "PDAG")
@@ -28,6 +29,8 @@ Optional; mutually exclusive with \code{...}.}
 
 \item{to}{Character vector of target node names.
 Optional; mutually exclusive with \code{...}.}
+
+\item{nodes}{Character vector of node names to declare as isolated nodes.}
 
 \item{simple}{Logical; if \code{TRUE} (default), the graph is a simple graph, and
 the function will throw an error if the input contains parallel edges or
