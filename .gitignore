@@ -10,21 +10,10 @@ examples/vgcore.*
 src/rust/vendor
 src/Makevars
 src/Makevars.win
-.vscode/settings.json
-R/aaaaa-coding-helpers.R
+.vscode/
 inst/doc
 /doc/
 /Meta/
 
-# Ignore coding helper doc files
-/man/cargo_test_roclet.Rd
-/man/cobertura_to_covr.Rd
-/man/coverage_report.Rd
-/man/document_caugi.Rd
-/man/roclet_clean.roclet_cargo_test.Rd
-/man/roclet_output.roclet_cargo_test.Rd
-/man/roclet_process.roclet_cargo_test.Rd
-/man/run_cargo_test.Rd
-/man/rust_r_covr.Rd
 docs
 tools/aaaaa-coding-helpers.R
