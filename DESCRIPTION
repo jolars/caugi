@@ -13,8 +13,7 @@ Imports:
     tibble,
     dplyr,
     rlang,
-    S7,
-    stats
+    S7
 Suggests: 
     devtools,
     igraph,

@@ -219,7 +219,8 @@ caugi_graph <- S7::new_class(
     # All unique nodes
     nodes <- tibble::tibble(name = unique(c(edges$from, edges$to, declared)))
     n <- nrow(nodes)
-    id <- stats::setNames(seq_len(n) - 1L, nodes$name)
+    id <- seq_len(n) - 1L
+    names(id) <- nodes$name
 
     # Initialize caugi registry (if not already registered)
     reg <- caugi_registry()
