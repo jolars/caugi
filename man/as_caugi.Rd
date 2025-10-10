@@ -6,7 +6,7 @@
 \usage{
 as_caugi(
   x,
-  class = c("DAG", "PDAG", "Unknown"),
+  class = c("DAG", "PDAG", "PAG", "Unknown"),
   simple = TRUE,
   build = TRUE,
   collapse = FALSE,
@@ -17,7 +17,8 @@ as_caugi(
 \arguments{
 \item{x}{An object to convert to a \code{caugi_graph}.}
 
-\item{class}{"DAG", "PDAG", or "Unknown".}
+\item{class}{"DAG", "PDAG", "PAG", or "Unknown".
+"PAG" is only supported for integer coded matrices.}
 
 \item{simple}{logical. If \code{TRUE} (default) the graph will be simple
 (no multiple edges or self-loops).}
@@ -38,6 +39,18 @@ A \code{caugi_graph} object.
 }
 \description{
 Convert an object to a \code{caugi_graph}. The object can be a
-\code{graphNEL}, \code{sparseMatrix}, \code{dgCMatrix}, \code{matrix}, \code{pcalg}'s \code{amat},
-or a data frame with \code{from}, \code{to}, and \code{edge_type} columns.
+\code{graphNEL}, ``matrix\verb{, or a data frame with }from`, `to`, and
+`edge_type` columns.
+}
+\details{
+For matrices, \code{as_caugi} assumes that the rows are the \code{from} nodes
+and the columns are the \code{to} nodes. Thus, for a graph, G: A --> B, we would
+have that \code{G["A", "B"] == 1} and \code{G["B", "A"] == 0}.
+For PAGs, the integer codes are as follows (as used in \code{pcalg}):
+\itemize{
+\item 0: no edge
+\item 1: tail (e.g., \verb{A o-- B} or \code{A --- B})
+\item 2: arrowhead (e.g., \verb{A --> B} or \verb{A o-> B})
+\item 3: circle (e.g., \verb{A o-o B})
+}
 }
