@@ -334,35 +334,35 @@ if (requireNamespace("Matrix", quietly = TRUE)) {
   }
 }
 
-#' #' @name as_caugi
-#' #' @export
-#' if (requireNamespace("Matrix", quietly = TRUE)) {
-#'   S7::method(
-#'     as_caugi,
-#'     methods::getClass("Matrix")
-#'   ) <- function(x,
-#'                 class = c("DAG", "PDAG", "PAG", "Unknown"),
-#'                 simple = TRUE,
-#'                 build = TRUE,
-#'                 collapse = FALSE,
-#'                 collapse_to = "---",
-#'                 ...) {
-#'     class <- match.arg(class)
-#'     m <- as.matrix(x)
-#'     print(m)
-#'     print(class(m))
-#'     print(mode(m))
-#'     as_caugi(
-#'       m,
-#'       class = class,
-#'       simple = simple,
-#'       build = build,
-#'       collapse = collapse,
-#'       collapse_to = collapse_to,
-#'       ...
-#'     )
-#'   }
-#' }
+# #' @name as_caugi
+# #' @export
+# if (requireNamespace("Matrix", quietly = TRUE)) {
+#   S7::method(
+#     as_caugi,
+#     methods::getClass("Matrix")
+#   ) <- function(x,
+#                 class = c("DAG", "PDAG", "PAG", "Unknown"),
+#                 simple = TRUE,
+#                 build = TRUE,
+#                 collapse = FALSE,
+#                 collapse_to = "---",
+#                 ...) {
+#     class <- match.arg(class)
+#     m <- as.matrix(x)
+#     print(m)
+#     print(class(m))
+#     print(mode(m))
+#     as_caugi(
+#       m,
+#       class = class,
+#       simple = simple,
+#       build = build,
+#       collapse = collapse,
+#       collapse_to = collapse_to,
+#       ...
+#     )
+#   }
+# }
 
 # #' @title Convert a data frame to a `caugi_graph`
 # #'
