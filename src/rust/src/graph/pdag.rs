@@ -14,7 +14,7 @@ pub struct Pdag {
     /// len = n; (parents, undirected, children)
     node_deg: Arc<[(u32, u32, u32)]>,
     /// packed as [parents | undirected | children]
-    neighbourhoods: Arc<[u32]>,
+    neighborhoods: Arc<[u32]>,
 }
 
 impl Pdag {
@@ -110,7 +110,7 @@ impl Pdag {
             core,
             node_edge_ranges: node_edge_ranges.into(),
             node_deg: deg.into(),
-            neighbourhoods: neigh.into(),
+            neighborhoods: neigh.into(),
         })
     }
 
@@ -133,18 +133,18 @@ impl Pdag {
     #[inline]
     pub fn parents_of(&self, i: u32) -> &[u32] {
         let (s, pm, _, _) = self.bounds(i);
-        &self.neighbourhoods[s..pm]
+        &self.neighborhoods[s..pm]
     }
     #[inline]
     pub fn children_of(&self, i: u32) -> &[u32] {
         let (_, _, _, cs) = self.bounds(i);
         let e = self.node_edge_ranges[i as usize + 1];
-        &self.neighbourhoods[cs..e]
+        &self.neighborhoods[cs..e]
     }
     #[inline]
     pub fn undirected_of(&self, i: u32) -> &[u32] {
         let (_, pm, um, _) = self.bounds(i);
-        &self.neighbourhoods[pm..um]
+        &self.neighborhoods[pm..um]
     }
 
     #[inline]
@@ -152,7 +152,7 @@ impl Pdag {
         let i = i as usize;
         let s = self.node_edge_ranges[i];
         let e = self.node_edge_ranges[i + 1];
-        &self.neighbourhoods[s..e]
+        &self.neighborhoods[s..e]
     }
 
     #[inline]

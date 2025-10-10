@@ -11,7 +11,7 @@ pub struct Dag {
     core: Arc<CaugiGraph>,
     node_edge_ranges: Arc<[usize]>,
     node_deg: Arc<[(u32, u32)]>,
-    neighbourhoods: Arc<[u32]>,
+    neighborhoods: Arc<[u32]>,
 }
 
 impl Dag {
@@ -44,7 +44,7 @@ impl Dag {
             }
         }
 
-        // Prefix sums for row slices into `neighbourhoods`.
+        // Prefix sums for row slices into `neighborhoods`.
         let mut node_edge_ranges = Vec::with_capacity(n + 1);
         node_edge_ranges.push(0usize);
         for i in 0..n {
@@ -83,7 +83,7 @@ impl Dag {
             core,
             node_edge_ranges: node_edge_ranges.into(),
             node_deg: deg.into(),
-            neighbourhoods: neigh.into(),
+            neighborhoods: neigh.into(),
         })
     }
 
@@ -107,7 +107,7 @@ impl Dag {
     #[inline]
     pub fn parents_of(&self, i: u32) -> &[u32] {
         let (s, pmid, _) = self.row_bounds(i);
-        &self.neighbourhoods[s..pmid]
+        &self.neighborhoods[s..pmid]
     }
 
     /// Sorted slice of children of `i` (borrowed view into packed storage).
@@ -115,7 +115,7 @@ impl Dag {
     pub fn children_of(&self, i: u32) -> &[u32] {
         let (_, _, cstart) = self.row_bounds(i);
         let e = self.node_edge_ranges[i as usize + 1];
-        &self.neighbourhoods[cstart..e]
+        &self.neighborhoods[cstart..e]
     }
 
     /// Concatenated neighbors `[parents..., children...]` of `i`.
@@ -124,7 +124,7 @@ impl Dag {
         let i = i as usize;
         let s = self.node_edge_ranges[i];
         let e = self.node_edge_ranges[i + 1];
-        &self.neighbourhoods[s..e]
+        &self.neighborhoods[s..e]
     }
 
     /// All ancestors of `i`, returned in ascending order.
