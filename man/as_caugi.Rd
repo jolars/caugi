@@ -6,7 +6,7 @@
 \usage{
 as_caugi(
   x,
-  class = c("auto", "DAG", "PDAG", "Unknown"),
+  class = c("DAG", "PDAG", "Unknown"),
   simple = TRUE,
   build = TRUE,
   collapse = FALSE,
@@ -17,9 +17,7 @@ as_caugi(
 \arguments{
 \item{x}{An object to convert to a \code{caugi_graph}.}
 
-\item{class}{"auto", "DAG", "PDAG", or "Unknown".
-"auto": DAG if directed and acyclic, PDAG if undirected or mixed with
-acyclic directed part, otherwise "Unknown".}
+\item{class}{"DAG", "PDAG", or "Unknown".}
 
 \item{simple}{logical. If \code{TRUE} (default) the graph will be simple
 (no multiple edges or self-loops).}
