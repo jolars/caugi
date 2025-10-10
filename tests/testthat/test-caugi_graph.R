@@ -356,6 +356,23 @@ test_that("caugi_graph(vector mode) respects class and simple rules", {
     )
   )
 })
+
+test_that("caugi_graph(vector mode) works with isolated nodes", {
+  cg_vec_1 <- caugi_graph(
+    from = c("A", "B", "C"),
+    edge = c("-->", "---", "<->"),
+    to = c("B", "C", "D"),
+    nodes = c("A", "B", "C", "D", "E", "F")
+  )
+  cg_vec_2 <- caugi_graph(
+    from = c("A", "B", "C"),
+    edge = c("-->", "---", "<->"),
+    to = c("B", "C", "D"),
+    nodes = c("E", "F")
+  )
+  expect_equal(cg_vec_1, cg_vec_2)
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ────────────────────────────────── Errors ────────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
