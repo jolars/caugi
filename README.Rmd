@@ -17,8 +17,8 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml)
-[![R coverage](https://codecov.io/gh/frederikfabriciusbjerre/caugi/graph/badge.svg?flag=r)](https://app.codecov.io/gh/frederikfabriciusbjerre/caugi?flags%5B%5D=r)
-[![Rust coverage](https://codecov.io/gh/frederikfabriciusbjerre/caugi/graph/badge.svg?flag=rust)](https://app.codecov.io/gh/frederikfabriciusbjerre/caugi?flags%5B%5D=rust)
+**R coverage**: [![R coverage](https://codecov.io/gh/frederikfabriciusbjerre/caugi/graph/badge.svg?flag=r)](https://app.codecov.io/gh/frederikfabriciusbjerre/caugi?flags%5B%5D=r)
+**Rust coverage**: [![Rust coverage](https://codecov.io/gh/frederikfabriciusbjerre/caugi/graph/badge.svg?flag=rust)](https://app.codecov.io/gh/frederikfabriciusbjerre/caugi?flags%5B%5D=rust)
 <!-- badges: end -->
 
 > **Causal Graph Interface (for R)** — a fast, tidy toolbox for building, coercing and analysing causal graphs.

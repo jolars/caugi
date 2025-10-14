@@ -6,9 +6,9 @@
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml)
-[![R
+**R coverage**: [![R
 coverage](https://codecov.io/gh/frederikfabriciusbjerre/caugi/graph/badge.svg?flag=r)](https://app.codecov.io/gh/frederikfabriciusbjerre/caugi?flags%5B%5D=r)
-[![Rust
+**Rust coverage**: [![Rust
 coverage](https://codecov.io/gh/frederikfabriciusbjerre/caugi/graph/badge.svg?flag=rust)](https://app.codecov.io/gh/frederikfabriciusbjerre/caugi?flags%5B%5D=rust)
 <!-- badges: end -->
 
