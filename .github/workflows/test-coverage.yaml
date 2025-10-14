@@ -44,6 +44,7 @@ jobs:
           fail_ci_if_error: ${{ github.event_name != 'pull_request' || secrets.CODECOV_TOKEN }}
           files: ./cobertura.xml
           plugins: noop
+          flags: r
           disable_search: true
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -60,3 +61,26 @@ jobs:
         with:
           name: coverage-test-failures
           path: ${{ runner.temp }}/package
+  rust-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+
+      - uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Generate lcov from Rust tests
+        working-directory: src/rust
+        run: cargo llvm-cov --all-features --lcov --output-path lcov.info
+
+      - name: Upload Rust coverage to Codecov (flag=rust)
+        uses: codecov/codecov-action@v5
+        with:
+          files: src/rust/lcov.info   # repo-relative path because `uses:` steps ignore working-directory
+          flags: rust
+          disable_search: true
+          fail_ci_if_error: ${{ github.event_name != 'pull_request' || secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }}
