@@ -173,6 +173,227 @@ if (requireNamespace("graph", quietly = TRUE)) {
 
 #' @name as_caugi
 #' @export
+S7::method(
+  as_caugi,
+  S7::new_S3_class("integer")
+) <- function(x,
+              class = c("DAG", "PDAG", "PAG", "Unknown"),
+              simple = TRUE,
+              build = TRUE,
+              collapse = FALSE,
+              collapse_to = "---",
+              ...) {
+  if (!is.matrix(x)) {
+    stop("`x` must be a matrix.", call. = FALSE)
+  }
+
+  class <- match.arg(class)
+
+  if (nrow(x) != ncol(x)) {
+    stop("`x` must be a square adjacency matrix.", call. = FALSE)
+  }
+
+  n <- nrow(x)
+  x <- as.matrix(x)
+
+  # accept logical or numeric; nonzero means edge
+  if (is.logical(x)) {
+    if (class == "PAG") {
+      stop("PAG class is not supported for logical matrices.", call. = FALSE)
+    }
+  } else if (is.numeric(x)) {
+    if (!all(x == floor(x)) || any(x < 0)) {
+      stop("`x` must be a logical or a non-negative integer matrix.",
+        call. = FALSE
+      )
+    }
+    if (class == "PAG" && any(!(x %in% 0:3))) {
+      stop("PAG class is only supported for integer codes 0-3.",
+        "This is meant to represent PAG edge types as used in `pcalg`.",
+        call. = FALSE
+      )
+    }
+    if (class != "PAG" && any(!(x %in% 0:1))) {
+      stop("Only 0 and 1 integer codes are supported for non-PAG matrices.",
+        call. = FALSE
+      )
+    }
+  } else {
+    stop("`x` must be logical or numeric matrix.", call. = FALSE)
+  }
+
+  # handle naming
+  nm <- colnames(x)
+  if (is.null(nm)) nm <- rownames(x)
+  if (is.null(nm)) nm <- paste0("V", seq_len(n))
+
+  # helpers
+  mark_sym <- function(k) {
+    switch(as.character(k),
+      "1" = "-",
+      "2" = ">",
+      "3" = "o",
+      stop("Invalid PAG code: ", k, call. = FALSE)
+    )
+  }
+
+  # build edge list
+  if (class %in% "PAG") {
+    mark_sym <- function(k) {
+      switch(as.character(k),
+        "1" = "-",
+        "2" = ">",
+        "3" = "o",
+        stop("Invalid PAG code: ", k, call. = FALSE)
+      )
+    }
+
+    from <- character(0)
+    to <- character(0)
+    edge <- character(0)
+
+    for (i in seq_len(n - 1L)) {
+      for (j in (i + 1L):n) {
+        a <- x[i, j] # mark at j-end
+        b <- x[j, i] # mark at i-end
+        if (a == 0L && b == 0L) next
+
+        lf <- mark_sym(b) # left mark (at i)
+        rt <- mark_sym(a) # right mark (at j)
+
+        # enforce right-pointing arrows only; swap if needed
+        if (lf == ">" && rt != ">") {
+          tmp <- lf
+          lf <- rt
+          rt <- tmp
+          ii <- i
+          i <- j
+          j <- ii
+        }
+        if (lf == "o" && rt == "-") {
+          tmp <- lf
+          lf <- rt
+          rt <- tmp
+          ii <- i
+          i <- j
+          j <- ii
+        }
+
+        glyph <- switch(paste0(lf, rt),
+          "--" = "---",
+          "->" = "-->",
+          "-o" = "--o",
+          "o>" = "o->",
+          "oo" = "o-o",
+          ">>" = "<->", # bidirected allowed
+          stop("Unsupported PAG endpoints: ", lf, " .. ", rt, call. = FALSE)
+        )
+
+        from <- c(from, nm[i])
+        to <- c(to, nm[j])
+        edge <- c(edge, glyph)
+      }
+    }
+  } else { # DAG / PDAG / Unknown: nonzero means directed i -> j
+    idx <- which(x != 0, arr.ind = TRUE)
+    if (nrow(idx) == 0L) {
+      return(caugi_graph(
+        from = character(), edge = character(), to = character(),
+        simple = isTRUE(simple), build = isTRUE(build), class = class
+      ))
+    }
+
+    from <- nm[idx[, 1L]]
+    to <- nm[idx[, 2L]]
+    edge <- rep_len("-->", nrow(idx))
+
+    if (collapse) {
+      is_edge_symmetric(collapse_to)
+
+      canon_from <- pmin(from, to)
+      canon_to <- pmax(from, to)
+      key <- interaction(canon_from, canon_to, drop = TRUE)
+
+      pair_key <- interaction(from, to, drop = TRUE)
+      rev_key <- interaction(to, from, drop = TRUE)
+      has_rev <- (from != to) & match(pair_key, rev_key, nomatch = 0L) > 0L
+
+      keep <- !has_rev | (from == canon_from)
+
+      from <- ifelse(has_rev & keep, canon_from, from)[keep]
+      to <- ifelse(has_rev & keep, canon_to, to)[keep]
+      edge <- ifelse(has_rev & keep, collapse_to, edge)[keep]
+    }
+  }
+
+  caugi_graph(
+    from = from,
+    edge = edge,
+    to = to,
+    simple = isTRUE(simple),
+    build = isTRUE(build),
+    class = class
+  )
+}
+
+#' @name as_caugi
+#' @export
+S7::method(
+  as_caugi,
+  S7::new_S3_class("double")
+) <- function(x,
+              class = c("DAG", "PDAG", "PAG", "Unknown"),
+              simple = TRUE,
+              build = TRUE,
+              collapse = FALSE,
+              collapse_to = "---",
+              ...) {
+  if (!is.matrix(x)) {
+    stop("`x` must be a matrix.", call. = FALSE)
+  }
+  class <- match.arg(class)
+
+  storage.mode(x) <- "integer"
+  as_caugi(x,
+    class = class,
+    simple = simple,
+    build = build,
+    collapse = collapse,
+    collapse_to = collapse_to,
+    ...
+  )
+}
+
+#' @name as_caugi
+#' @export
+S7::method(
+  as_caugi,
+  S7::new_S3_class("logical")
+) <- function(x,
+              class = c("DAG", "PDAG", "PAG", "Unknown"),
+              simple = TRUE,
+              build = TRUE,
+              collapse = FALSE,
+              collapse_to = "---",
+              ...) {
+  if (!is.matrix(x)) {
+    stop("`x` must be a matrix.", call. = FALSE)
+  }
+  class <- match.arg(class)
+
+  storage.mode(x) <- "integer"
+  as_caugi(x,
+    class = class,
+    simple = simple,
+    build = build,
+    collapse = collapse,
+    collapse_to = collapse_to,
+    ...
+  )
+}
+
+#' @name as_caugi
+#' @export
 if (requireNamespace("Matrix", quietly = TRUE)) {
   S7::method(
     as_caugi,
@@ -185,184 +406,21 @@ if (requireNamespace("Matrix", quietly = TRUE)) {
                 collapse_to = "---",
                 ...) {
     class <- match.arg(class)
-
-    if (nrow(x) != ncol(x)) {
-      stop("`x` must be a square adjacency matrix.", call. = FALSE)
-    }
-
-    n <- nrow(x)
-    x <- as.matrix(x)
-
-    # accept logical or numeric; nonzero means edge
-    if (is.logical(x)) {
-      if (class == "PAG") {
-        stop("PAG class is not supported for logical matrices.", call. = FALSE)
-      }
-    } else if (is.numeric(x)) {
-      if (!all(x == floor(x)) || any(x < 0)) {
-        stop("`x` must be a logical or a non-negative integer matrix.",
-          call. = FALSE
-        )
-      }
-      if (class == "PAG" && any(!(x %in% 0:3))) {
-        stop("PAG class is only supported for integer codes 0-3.",
-          "This is meant to represent PAG edge types as used in `pcalg`.",
-          call. = FALSE
-        )
-      }
-      if (class != "PAG" && any(!(x %in% 0:1))) {
-        stop("Only 0 and 1 integer codes are supported for non-PAG matrices.",
-          call. = FALSE
-        )
-      }
-    } else {
-      stop("`x` must be logical or numeric matrix.", call. = FALSE)
-    }
-
-    # handle naming
-    nm <- colnames(x)
-    if (is.null(nm)) nm <- rownames(x)
-    if (is.null(nm)) nm <- paste0("V", seq_len(n))
-
-    # helpers
-    mark_sym <- function(k) {
-      switch(as.character(k),
-        "1" = "-",
-        "2" = ">",
-        "3" = "o",
-        stop("Invalid PAG code: ", k, call. = FALSE)
-      )
-    }
-
-    # build edge list
-    if (class %in% "PAG") {
-      mark_sym <- function(k) {
-        switch(as.character(k),
-          "1" = "-",
-          "2" = ">",
-          "3" = "o",
-          stop("Invalid PAG code: ", k, call. = FALSE)
-        )
-      }
-
-      from <- character(0)
-      to <- character(0)
-      edge <- character(0)
-
-      for (i in seq_len(n - 1L)) {
-        for (j in (i + 1L):n) {
-          a <- x[i, j] # mark at j-end
-          b <- x[j, i] # mark at i-end
-          if (a == 0L && b == 0L) next
-
-          lf <- mark_sym(b) # left mark (at i)
-          rt <- mark_sym(a) # right mark (at j)
-
-          # enforce right-pointing arrows only; swap if needed
-          if (lf == ">" && rt != ">") {
-            tmp <- lf
-            lf <- rt
-            rt <- tmp
-            ii <- i
-            i <- j
-            j <- ii
-          }
-          if (lf == "o" && rt == "-") {
-            tmp <- lf
-            lf <- rt
-            rt <- tmp
-            ii <- i
-            i <- j
-            j <- ii
-          }
-
-          glyph <- switch(paste0(lf, rt),
-            "--" = "---",
-            "->" = "-->",
-            "-o" = "--o",
-            "o>" = "o->",
-            "oo" = "o-o",
-            ">>" = "<->", # bidirected allowed
-            stop("Unsupported PAG endpoints: ", lf, " .. ", rt, call. = FALSE)
-          )
-
-          from <- c(from, nm[i])
-          to <- c(to, nm[j])
-          edge <- c(edge, glyph)
-        }
-      }
-    } else { # DAG / PDAG / Unknown: nonzero means directed i -> j
-      idx <- which(x != 0, arr.ind = TRUE)
-      if (nrow(idx) == 0L) {
-        return(caugi_graph(
-          from = character(), edge = character(), to = character(),
-          simple = isTRUE(simple), build = isTRUE(build), class = class
-        ))
-      }
-
-      from <- nm[idx[, 1L]]
-      to <- nm[idx[, 2L]]
-      edge <- rep_len("-->", nrow(idx))
-
-      if (collapse) {
-        is_edge_symmetric(collapse_to)
-
-        canon_from <- pmin(from, to)
-        canon_to <- pmax(from, to)
-        key <- interaction(canon_from, canon_to, drop = TRUE)
-
-        pair_key <- interaction(from, to, drop = TRUE)
-        rev_key <- interaction(to, from, drop = TRUE)
-        has_rev <- (from != to) & match(pair_key, rev_key, nomatch = 0L) > 0L
-
-        keep <- !has_rev | (from == canon_from)
-
-        from <- ifelse(has_rev & keep, canon_from, from)[keep]
-        to <- ifelse(has_rev & keep, canon_to, to)[keep]
-        edge <- ifelse(has_rev & keep, collapse_to, edge)[keep]
-      }
-    }
-
-    caugi_graph(
-      from = from,
-      edge = edge,
-      to = to,
-      simple = isTRUE(simple),
-      build = isTRUE(build),
-      class = class
+    m <- as.matrix(x)
+    print(m)
+    print(class(m))
+    print(mode(m))
+    as_caugi(
+      m,
+      class = class,
+      simple = simple,
+      build = build,
+      collapse = collapse,
+      collapse_to = collapse_to,
+      ...
     )
   }
 }
-
-# #' @name as_caugi
-# #' @export
-# if (requireNamespace("Matrix", quietly = TRUE)) {
-#   S7::method(
-#     as_caugi,
-#     methods::getClass("Matrix")
-#   ) <- function(x,
-#                 class = c("DAG", "PDAG", "PAG", "Unknown"),
-#                 simple = TRUE,
-#                 build = TRUE,
-#                 collapse = FALSE,
-#                 collapse_to = "---",
-#                 ...) {
-#     class <- match.arg(class)
-#     m <- as.matrix(x)
-#     print(m)
-#     print(class(m))
-#     print(mode(m))
-#     as_caugi(
-#       m,
-#       class = class,
-#       simple = simple,
-#       build = build,
-#       collapse = collapse,
-#       collapse_to = collapse_to,
-#       ...
-#     )
-#   }
-# }
 
 # #' @title Convert a data frame to a `caugi_graph`
 # #'
