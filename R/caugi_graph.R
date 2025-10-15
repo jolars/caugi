@@ -12,7 +12,7 @@
 #' * `%---%` for undirected edges (A --- B)
 #' * `%<->%` for bidirected edges (A <-> B)
 #' * `%o->%` for partially directed edges (A o-> B)
-#' * `%o--%` for partially undirected edges (A o-- B)
+#' * `%--o%` for partially undirected edges (A --o B)
 #' * `%o-o%` for partial edges (A o-o B)
 #'
 #' You can register additional edge types using [register_caugi_edge()].

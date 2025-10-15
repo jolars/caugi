@@ -72,11 +72,18 @@ S7::method(
 
   n_edges <- igraph::ecount(x)
   directed <- igraph::is_directed(x)
+  nm <- igraph::V(x)$name
+  if (is.null(nm)) nm <- paste0("V", seq_len(igraph::vcount(x)))
 
   if (n_edges == 0L) {
     return(caugi_graph(
-      from = character(), edge = character(), to = character(),
-      simple = isTRUE(simple), build = isTRUE(build), class = class
+      from = character(),
+      edge = character(),
+      to = character(),
+      nodes = nm,
+      simple = isTRUE(simple),
+      build = isTRUE(build),
+      class = class
     ))
   }
 
@@ -115,6 +122,7 @@ S7::method(
     from = from,
     edge = edge,
     to = to,
+    nodes = nm,
     simple = isTRUE(simple),
     build = isTRUE(build),
     class = class
@@ -140,6 +148,8 @@ S7::method(
   lens <- vapply(nbrs, length, integer(1))
   from <- rep.int(names(nbrs), lens)
   to <- unlist(nbrs, use.names = FALSE)
+  nm <- x@nodes
+  if (is.null(nm)) nm <- paste0("V", seq_len(length(nbrs)))
 
   if (!directed) {
     canon_from <- pmin(from, to)
@@ -152,8 +162,13 @@ S7::method(
   # no edges
   if (length(from) == 0L) {
     return(caugi_graph(
-      from = character(), edge = character(), to = character(),
-      simple = isTRUE(simple), build = isTRUE(build), class = class
+      from = character(),
+      edge = character(),
+      to = character(),
+      nodes = nm,
+      simple = isTRUE(simple),
+      build = isTRUE(build),
+      class = class
     ))
   }
 
@@ -182,6 +197,7 @@ S7::method(
     from = from,
     edge = edge,
     to = to,
+    nodes = nm,
     simple = isTRUE(simple),
     build = isTRUE(build),
     class = class
@@ -243,7 +259,9 @@ S7::method(
   # handle naming
   nm <- colnames(x)
   if (is.null(nm)) nm <- rownames(x)
-  if (is.null(nm)) nm <- paste0("V", seq_len(n))
+  if (is.null(nm)) {
+    if (n > 0) nm <- paste0("V", seq_len(n))
+  }
 
   # helpers
   mark_sym <- function(k) {
@@ -316,8 +334,13 @@ S7::method(
     idx <- which(x != 0, arr.ind = TRUE)
     if (nrow(idx) == 0L) {
       return(caugi_graph(
-        from = character(), edge = character(), to = character(),
-        simple = isTRUE(simple), build = isTRUE(build), class = class
+        from = character(),
+        edge = character(),
+        to = character(),
+        nodes = nm,
+        simple = isTRUE(simple),
+        build = isTRUE(build),
+        class = class
       ))
     }
 
@@ -353,6 +376,7 @@ S7::method(
     from = from,
     edge = edge,
     to = to,
+    nodes = nm,
     simple = isTRUE(simple),
     build = isTRUE(build),
     class = class

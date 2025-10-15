@@ -59,7 +59,7 @@ The following edge operators are supported by default:
 \item \verb{\%---\%} for undirected edges (A --- B)
 \item \verb{\%<->\%} for bidirected edges (A <-> B)
 \item \verb{\%o->\%} for partially directed edges (A o-> B)
-\item \verb{\%o--\%} for partially undirected edges (A o-- B)
+\item \verb{\%--o\%} for partially undirected edges (A --o B)
 \item \verb{\%o-o\%} for partial edges (A o-o B)
 }
 

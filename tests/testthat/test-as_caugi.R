@@ -1,3 +1,7 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────── Matrix conversion ───────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
 test_that("integer adjacency → DAG works and preserves names", {
   m <- matrix(0L, 3, 3, dimnames = list(LETTERS[1:3], LETTERS[1:3]))
   m["A", "B"] <- 1L
@@ -53,7 +57,9 @@ test_that("matrix validation errors", {
   # invalid codes for non-PAG
   y <- matrix(0L, 2, 2)
   y[1, 2] <- 2L
-  expect_error(as_caugi(y, class = "DAG"), "Only 0 and 1 integer codes", fixed = TRUE)
+  expect_error(as_caugi(y, class = "DAG"), "Only 0 and 1 integer codes",
+    fixed = TRUE
+  )
 
   # invalid codes for PAG
   z <- matrix(0L, 2, 2)
@@ -147,6 +153,25 @@ test_that("Matrix::Matrix dispatch works", {
   expect_setequal(e$to, c("B", "C"))
 })
 
+test_that("Empty matrix yields empty caugi graph", {
+  m0 <- matrix(integer(0), 0, 0)
+  cg0 <- as_caugi(m0, class = "DAG")
+  expect_equal(nrow(as.data.frame(edges(cg0))), 0L)
+  expect_equal(nrow(nodes(cg0)), 0L)
+})
+
+test_that("Matrix with no edges works", {
+  m0 <- matrix(0L, 3, 3)
+  dimnames(m0) <- list(c("A", "B", "C"), c("A", "B", "C"))
+  cg0 <- as_caugi(m0, class = "DAG")
+  expect_equal(nrow(as.data.frame(edges(cg0))), 0L)
+  expect_setequal(nodes(cg0)[["name"]], c("A", "B", "C"))
+})
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────── igraph conversion ───────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
 test_that("igraph dispatch works and respects directedness + collapse", {
   skip_if_not_installed("igraph")
 
@@ -164,7 +189,10 @@ test_that("igraph dispatch works and respects directedness + collapse", {
   e_un <- as.data.frame(edges(cg_undir))
   expect_true(all(e_un$edge == "---"))
 
-  g_mut <- igraph::graph_from_edgelist(matrix(c("A", "B", "B", "A"), 2, 2, byrow = TRUE),
+  g_mut <- igraph::graph_from_edgelist(
+    matrix(c("A", "B", "B", "A"), 2, 2,
+      byrow = TRUE
+    ),
     directed = TRUE
   )
   cg_col <- as_caugi(g_mut, class = "PDAG", collapse = TRUE)
@@ -174,6 +202,26 @@ test_that("igraph dispatch works and respects directedness + collapse", {
   expect_equal(e_col$to, "B")
   expect_equal(e_col$edge, "---")
 })
+
+test_that("empty igraph yield empty caugi graphs", {
+  skip_if_not_installed("igraph")
+  g0 <- igraph::make_empty_graph(n = 0, directed = TRUE)
+  cg0 <- as_caugi(g0, class = "DAG")
+  expect_equal(nrow(as.data.frame(edges(cg0))), 0L)
+})
+
+test_that("igraph with no edges, but with nodes, works", {
+  skip_if_not_installed("igraph")
+  g0 <- igraph::make_empty_graph(n = 3, directed = TRUE)
+  igraph::V(g0)$name <- c("A", "B", "C")
+  cg0 <- as_caugi(g0, class = "DAG")
+  expect_equal(nrow(as.data.frame(edges(cg0))), 0L)
+  expect_setequal(nodes(cg0)[["name"]], c("A", "B", "C"))
+})
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────── graphNEL conversion ──────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 test_that("graphNEL dispatch works (directed and undirected)", {
   skip_if_not_installed("graph")
@@ -195,14 +243,11 @@ test_that("graphNEL dispatch works (directed and undirected)", {
   expect_equal(eu$edge, "---")
 })
 
-test_that("empty igraph/graphNEL yield empty caugi graphs", {
-  skip_if_not_installed("igraph")
-  g0 <- igraph::make_empty_graph(n = 0, directed = TRUE)
-  cg0 <- as_caugi(g0, class = "DAG")
-  expect_equal(nrow(as.data.frame(edges(cg0))), 0L)
 
+test_that("graphNEL with no edges, but with nodes, works", {
   skip_if_not_installed("graph")
-  h0 <- graph::graphNEL(nodes = character(), edgemode = "directed")
-  cg1 <- as_caugi(h0, class = "DAG")
-  expect_equal(nrow(as.data.frame(edges(cg1))), 0L)
+  h0 <- graph::graphNEL(nodes = c("A", "B", "C"), edgemode = "directed")
+  cg0 <- as_caugi(h0, class = "DAG")
+  expect_equal(nrow(as.data.frame(edges(cg0))), 0L)
+  expect_setequal(nodes(cg0)[["name"]], c("A", "B", "C"))
 })
