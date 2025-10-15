@@ -582,23 +582,22 @@ S7::method(
   class <- if (class == "PAG") "Unknown" else class
   ### NEEDS TO BE FIXED ONCE PAG IS SUPPORTED IN CAUGI ###
 
-  # optional collapse of mutual directed pairs to a symmetric glyph
   if (collapse) {
     is_edge_symmetric(collapse_to)
 
-    pair <- paste0(from, "\r", to)
-    revp <- paste0(to, "\r", from)
-    has_rev <- (from != to) & match(pair, revp, nomatch = 0L) > 0L
+    canon_from <- pmin(from, to)
+    canon_to <- pmax(from, to)
+    key <- interaction(canon_from, canon_to, drop = TRUE)
 
-    cf <- pmin(from, to)
-    ct <- pmax(from, to)
-    canon <- paste0(cf, "\r", ct)
-    keep_rep <- !duplicated(canon) & (from == cf)
+    pair_key <- interaction(from, to, drop = TRUE)
+    rev_key <- interaction(to, from, drop = TRUE)
+    has_rev <- (from != to) & match(pair_key, rev_key, nomatch = 0L) > 0L
 
-    keep2 <- !has_rev | keep_rep
-    from <- ifelse(has_rev & keep2, cf, from)[keep2]
-    to <- ifelse(has_rev & keep2, ct, to)[keep2]
-    edge <- ifelse(has_rev & keep2, collapse_to, edge)[keep2]
+    keep <- !has_rev | (from == canon_from)
+
+    from <- ifelse(has_rev & keep, canon_from, from)[keep]
+    to <- ifelse(has_rev & keep, canon_to, to)[keep]
+    edge <- ifelse(has_rev & keep, collapse_to, edge)[keep]
   }
 
   caugi_graph(
@@ -633,7 +632,6 @@ S7::method(
   nm <- bnlearn::nodes(x)
   ar <- bnlearn::arcs(x)
 
-  # no edges
   if (nrow(ar) == 0L) {
     return(caugi_graph(
       from = character(),
@@ -650,19 +648,22 @@ S7::method(
   to <- as.character(ar[, 2L])
   edge <- rep_len("-->", length.out = nrow(ar))
 
-  # optional collapse (bnlearn DAGs should not need it)
+  # precompute canonical order and string keys (avoid factor-level traps)
+  canon_from <- pmin(from, to)
+  canon_to <- pmax(from, to)
+  key <- paste0(canon_from, "\r", canon_to)
+  pair_key <- paste0(from, "\r", to)
+  rev_key <- paste0(to, "\r", from)
+
   if (collapse) {
     is_edge_symmetric(collapse_to)
-    pair <- paste0(from, "\r", to)
-    revp <- paste0(to, "\r", from)
-    has_rev <- (from != to) & match(pair, revp, nomatch = 0L) > 0L
-    cf <- pmin(from, to)
-    ct <- pmax(from, to)
-    canon <- paste0(cf, "\r", ct)
-    keep_rep <- !duplicated(canon) & (from == cf)
+
+    has_rev <- (from != to) & match(pair_key, rev_key, nomatch = 0L) > 0L
+    keep_rep <- !duplicated(key) & (from == canon_from)
     keep <- !has_rev | keep_rep
-    from <- ifelse(has_rev & keep, cf, from)[keep]
-    to <- ifelse(has_rev & keep, ct, to)[keep]
+
+    from <- ifelse(has_rev & keep, canon_from, from)[keep]
+    to <- ifelse(has_rev & keep, canon_to, to)[keep]
     edge <- ifelse(has_rev & keep, collapse_to, edge)[keep]
   }
 

@@ -382,11 +382,16 @@ test_that("bnlearn bn: arcs map to '-->'", {
   expect_equal(cg@edges$edge, "-->")
 })
 
-test_that("bnlearn: collapse option leaves DAG unchanged", {
+test_that("as_caugi with bnlearn and collapse = TRUE", {
+  skip_if_not_installed("igraph")
   skip_if_not_installed("bnlearn")
-  g <- bnlearn::empty.graph(nodes = c("A", "B"))
-  g <- bnlearn::set.arc(g, "A", "B")
-  cg <- as_caugi(g, class = "DAG", collapse = TRUE)
+  # don't know how to do it any other way
+  g <- igraph::graph_from_edgelist(
+    matrix(c("A", "B", "B", "A"), ncol = 2, byrow = TRUE),
+    directed = TRUE
+  )
+  g <- bnlearn::as.bn(g)
+  cg <- as_caugi(g, class = "PDAG", collapse = TRUE)
   expect_equal(nrow(cg@edges), 1L)
-  expect_equal(unique(cg@edges$edge), "-->")
+  expect_equal(unique(cg@edges$edge), "---")
 })
