@@ -75,6 +75,9 @@ S7::method(
   nm <- igraph::V(x)$name
   if (is.null(nm)) nm <- paste0("V", seq_len(igraph::vcount(x)))
 
+  if (class == "PAG") {
+    stop("PAG class is not supported for igraph objects.", call. = FALSE)
+  }
   if (n_edges == 0L) {
     return(caugi_graph(
       from = character(),
@@ -484,6 +487,9 @@ S7::method(
               collapse_to = "---",
               ...) {
   class <- match.arg(class)
+  if (class == "PAG") {
+    stop("PAG class is not supported for tidygraph objects.", call. = FALSE)
+  }
   as_caugi(
     tidygraph::as.igraph(x),
     class = class,
@@ -619,6 +625,11 @@ S7::method(
               collapse_to = "---",
               ...) {
   class <- match.arg(class)
+
+  if (class == "PAG") {
+    stop("PAG class is not supported for bnlearn objects.", call. = FALSE)
+  }
+
   nm <- bnlearn::nodes(x)
   ar <- bnlearn::arcs(x)
 
@@ -631,7 +642,7 @@ S7::method(
       nodes = nm,
       simple = isTRUE(simple),
       build = isTRUE(build),
-      class = if (class == "PAG") "Unknown" else class
+      class = class
     ))
   }
 
@@ -654,11 +665,6 @@ S7::method(
     to <- ifelse(has_rev & keep, ct, to)[keep]
     edge <- ifelse(has_rev & keep, collapse_to, edge)[keep]
   }
-
-  # todo:
-  ### NEEDS TO BE FIXED ONCE PAG IS SUPPORTED IN CAUGI ###
-  class <- if (class == "PAG") "Unknown" else class
-  ### NEEDS TO BE FIXED ONCE PAG IS SUPPORTED IN CAUGI ###
 
   caugi_graph(
     from = from,
