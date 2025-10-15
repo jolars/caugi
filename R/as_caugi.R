@@ -133,6 +133,14 @@ if (requireNamespace("graph", quietly = TRUE)) {
       from <- rep.int(names(nbrs), lens)
       to <- unlist(nbrs, use.names = FALSE)
 
+      if (!directed) {
+        canon_from <- pmin(from, to)
+        canon_to <- pmax(from, to)
+        keep <- !duplicated(interaction(canon_from, canon_to, drop = TRUE))
+        from <- canon_from[keep]
+        to <- canon_to[keep]
+      }
+
       # no edges
       if (length(from) == 0L) {
         return(caugi_graph(
@@ -328,6 +336,11 @@ S7::method(
     }
   }
 
+  # todo:
+  ### NEEDS TO BE FIXED ONCE PAG IS SUPPORTED IN CAUGI ###
+  class <- if (class == "PAG") "Unknown" else class
+  ### NEEDS TO BE FIXED ONCE PAG IS SUPPORTED IN CAUGI ###
+
   caugi_graph(
     from = from,
     edge = edge,
@@ -352,6 +365,11 @@ S7::method(
               ...) {
   if (!is.matrix(x)) {
     stop("`x` must be a matrix.", call. = FALSE)
+  }
+  if (!all(x == floor(x)) || any(x < 0)) {
+    stop("`x` must be a logical or a non-negative integer matrix.",
+      call. = FALSE
+    )
   }
   class <- match.arg(class)
 
@@ -382,7 +400,9 @@ S7::method(
     stop("`x` must be a matrix.", call. = FALSE)
   }
   class <- match.arg(class)
-
+  if (class == "PAG") {
+    stop("PAG class is not supported for logical matrices.", call. = FALSE)
+  }
   storage.mode(x) <- "integer"
   as_caugi(x,
     class = class,
@@ -409,9 +429,6 @@ if (requireNamespace("Matrix", quietly = TRUE)) {
                 ...) {
     class <- match.arg(class)
     m <- as.matrix(x)
-    print(m)
-    print(class(m))
-    print(mode(m))
     as_caugi(
       m,
       class = class,
@@ -423,25 +440,3 @@ if (requireNamespace("Matrix", quietly = TRUE)) {
     )
   }
 }
-
-# #' @title Convert a data frame to a `caugi_graph`
-# #'
-# #' @description Should be a data frame with columns `from`, `to`, and `edge_type`.
-# #'
-# #' @param x A data frame with columns `from`, `to`, and `edge_type`.
-# #' @param ... Additional arguments (will not be passed to anything).
-# #' @export
-# as_caugi.data.frame <- function(x, ...) {
-#   NULL
-# }
-#
-# #' @title Default method for `as_caugi`
-# #'
-# #' @description Default method for `as_caugi` that throws an error.
-# #'
-# #' @param x An object to convert to a `caugi_graph`.
-# #' @param ... Additional arguments (will not be passed to anything).
-# #' @export
-# as_caugi.default <- function(x, ...) {
-#   stop("No as_caugi method for class ", paste(class(x), collapse = "/"))
-# }
