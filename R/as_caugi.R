@@ -56,7 +56,8 @@ if (requireNamespace("igraph", quietly = TRUE)) {
                 simple = TRUE,
                 build = TRUE,
                 collapse = FALSE,
-                collapse_to = "---") {
+                collapse_to = "---",
+                ...) {
     class <- match.arg(class)
 
     n_edges <- igraph::ecount(x)
@@ -121,7 +122,8 @@ if (requireNamespace("graph", quietly = TRUE)) {
              simple = TRUE,
              build = TRUE,
              collapse = FALSE,
-             collapse_to = "---") {
+             collapse_to = "---",
+             ...) {
       class <- match.arg(class)
 
       directed <- graph::isDirected(x)
