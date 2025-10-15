@@ -251,3 +251,142 @@ test_that("graphNEL with no edges, but with nodes, works", {
   expect_equal(nrow(as.data.frame(edges(cg0))), 0L)
   expect_setequal(nodes(cg0)[["name"]], c("A", "B", "C"))
 })
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────── dagitty conversion ──────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("dagitty -> caugi: empty graph with isolates builds node set only", {
+  skip_if_not_installed("dagitty")
+  g <- dagitty::dagitty("dag { A; B; C }")
+  cg <- as_caugi(g, class = "DAG", build = TRUE)
+
+  expect_s3_class(cg, "S7_object")
+  expect_identical(sort(cg@nodes$name), c("A", "B", "C"))
+  expect_equal(nrow(cg@edges), 0L)
+})
+
+test_that("dagitty -> caugi: directed edges map to '-->' with forward and reverse notations", {
+  skip_if_not_installed("dagitty")
+  g1 <- dagitty::dagitty("dag { A -> B }")
+  cg1 <- as_caugi(g1, class = "DAG")
+
+  expect_equal(cg1@edges$from, "A")
+  expect_equal(cg1@edges$to, "B")
+  expect_equal(cg1@edges$edge, "-->")
+
+  # reverse arrow notation in dagitty input
+  g2 <- dagitty::dagitty("dag { B <- A }")
+  cg2 <- as_caugi(g2, class = "DAG")
+
+  expect_equal(cg2@edges$from, "A")
+  expect_equal(cg2@edges$to, "B")
+  expect_equal(cg2@edges$edge, "-->")
+})
+
+test_that("dagitty -> caugi: undirected '--' maps to '---' and canonicalizes order", {
+  skip_if_not_installed("dagitty")
+  # only specified as B -- A; output should be A --- B
+  g <- dagitty::dagitty("pdag { B -- A }")
+  cg <- as_caugi(g, class = "PDAG")
+
+  expect_equal(cg@edges$from, "A")
+  expect_equal(cg@edges$to, "B")
+  expect_equal(cg@edges$edge, "---")
+})
+
+test_that("dagitty -> caugi: bidirected '<->' is preserved", {
+  skip_if_not_installed("dagitty")
+  g <- dagitty::dagitty("pdag { A <-> B }")
+  cg <- as_caugi(g, class = "Unknown")
+
+  expect_equal(sort(c(cg@edges$from, cg@edges$to)), c("A", "B"))
+  expect_equal(cg@edges$edge, "<->")
+})
+
+test_that("dagitty -> caugi: partial edges 'o->' and 'o-o' map correctly", {
+  skip_if_not_installed("dagitty")
+  g <- dagitty::dagitty("pag { A @-> B; C @-@ D }")
+  cg <- as_caugi(g, class = "PAG")
+
+  expect_true(any(cg@edges$from == "A" & cg@edges$to == "B" &
+    cg@edges$edge == "o->"))
+  expect_true(any(cg@edges$from == "C" & cg@edges$to == "D" &
+    cg@edges$edge == "o-o"))
+})
+
+test_that("dagitty -> caugi: collapse mutual directed pairs to symmetric glyph", {
+  skip_if_not_installed("dagitty")
+  g <- dagitty::dagitty("dag { A -> B; B -> A }")
+  cg_noc <- as_caugi(g, class = "Unknown", collapse = FALSE, simple = FALSE)
+  expect_equal(nrow(cg_noc@edges), 2L)
+  expect_setequal(cg_noc@edges$edge, c("-->"))
+
+  cg_col <- as_caugi(g, class = "PDAG", collapse = TRUE, collapse_to = "---")
+  expect_equal(nrow(cg_col@edges), 1L)
+  expect_equal(cg_col@edges$from, "A")
+  expect_equal(cg_col@edges$to, "B")
+  expect_equal(cg_col@edges$edge, "---")
+})
+
+test_that("dagitty -> caugi: isolates are retained alongside edges", {
+  skip_if_not_installed("dagitty")
+  g <- dagitty::dagitty("dag { A -> B; C }")
+  cg <- as_caugi(g, class = "DAG")
+
+  expect_setequal(cg@nodes$name, c("A", "B", "C"))
+  expect_equal(nrow(cg@edges), 1L)
+})
+
+test_that("dagitty -> caugi: PAG class is routed to Unknown until supported", {
+  skip_if_not_installed("dagitty")
+  g <- dagitty::dagitty("pag { A @-> B }")
+  cg <- as_caugi(g, class = "PAG", build = TRUE)
+
+  # graph_class getter returns uppercase from Rust; compare in upper
+  expect_identical(toupper(cg@graph_class), "UNKNOWN")
+  expect_true(any(cg@edges$edge == "o->"))
+})
+
+test_that("dagitty -> caugi: respects `simple` flag and builds pointer when requested", {
+  skip_if_not_installed("dagitty")
+  g <- dagitty::dagitty("dag { A -> B }")
+  cg <- as_caugi(g, class = "DAG", simple = TRUE, build = TRUE)
+
+  expect_true(isTRUE(cg@built))
+  expect_true(isTRUE(cg@simple))
+  expect_false(is.null(cg@ptr))
+})
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────── bnlearn conversion ──────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("bnlearn bn: isolates only", {
+  skip_if_not_installed("bnlearn")
+  g <- bnlearn::empty.graph(nodes = c("A", "B", "C"))
+  cg <- as_caugi(g, class = "DAG", build = TRUE)
+  expect_s3_class(cg, "S7_object")
+  expect_setequal(cg@nodes$name, c("A", "B", "C"))
+  expect_equal(nrow(cg@edges), 0L)
+})
+
+test_that("bnlearn bn: arcs map to '-->'", {
+  skip_if_not_installed("bnlearn")
+  g <- bnlearn::empty.graph(nodes = c("A", "B"))
+  g <- bnlearn::set.arc(g, "A", "B")
+  cg <- as_caugi(g, class = "DAG")
+  expect_equal(nrow(cg@edges), 1L)
+  expect_equal(cg@edges$from, "A")
+  expect_equal(cg@edges$to, "B")
+  expect_equal(cg@edges$edge, "-->")
+})
+
+test_that("bnlearn: collapse option leaves DAG unchanged", {
+  skip_if_not_installed("bnlearn")
+  g <- bnlearn::empty.graph(nodes = c("A", "B"))
+  g <- bnlearn::set.arc(g, "A", "B")
+  cg <- as_caugi(g, class = "DAG", collapse = TRUE)
+  expect_equal(nrow(cg@edges), 1L)
+  expect_equal(unique(cg@edges$edge), "-->")
+})

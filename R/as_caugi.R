@@ -470,3 +470,203 @@ S7::method(
     ...
   )
 }
+
+#' @name as_caugi
+#' @export
+S7::method(
+  as_caugi,
+  S7::new_S3_class("tidygraph")
+) <- function(x,
+              class = c("DAG", "PDAG", "PAG", "Unknown"),
+              simple = TRUE,
+              build = TRUE,
+              collapse = FALSE,
+              collapse_to = "---",
+              ...) {
+  class <- match.arg(class)
+  as_caugi(
+    tidygraph::as.igraph(x),
+    class = class,
+    simple = simple,
+    build = build,
+    collapse = collapse,
+    collapse_to = collapse_to,
+    ...
+  )
+}
+
+#' @name as_caugi
+#' @export
+S7::method(
+  as_caugi,
+  S7::new_S3_class("dagitty")
+) <- function(x,
+              class = c("DAG", "PDAG", "PAG", "Unknown"),
+              simple = TRUE,
+              build = TRUE,
+              collapse = FALSE,
+              collapse_to = "---",
+              ...) {
+  class <- match.arg(class)
+
+  nm <- names(x) |> as.vector()
+
+  # edges() returns data frame with columns v, w, e
+  ed <- as.data.frame(dagitty::edges(x), stringsAsFactors = FALSE)
+  if (nrow(ed) == 0L) {
+    # collect declared nodes, including isolates if available
+    nm <- names(x)
+    return(caugi_graph(
+      from = character(),
+      edge = character(),
+      to = character(),
+      nodes = nm,
+      simple = isTRUE(simple),
+      build = isTRUE(build),
+      class = if (class == "PAG") "Unknown" else class
+    ))
+  }
+
+  v <- as.character(ed$v)
+  w <- as.character(ed$w)
+  e <- as.character(ed$e)
+
+  # normalize direction when dagitty encodes reverse
+  e <- gsub("@", "o", e, fixed = TRUE)
+
+  # swap reverse encodings (anything starting with "<-")
+  rev <- grepl("^<-", e)
+  if (any(rev)) {
+    tmp <- v[rev]
+    v[rev] <- w[rev]
+    w[rev] <- tmp
+    e[rev] <- sub("^<-o$", "o->", sub("^<-$", "->", e[rev]))
+  }
+
+  map_glyph <- function(s) {
+    switch(s,
+      "->" = "-->",
+      "<->" = "<->",
+      "--" = "---",
+      "o->" = "o->",
+      "o-o" = "o-o",
+      stop("Unsupported dagitty edge code: ", s, call. = FALSE)
+    )
+  }
+  edge <- vapply(e, map_glyph, character(1L))
+
+  # canonicalize undirected to avoid duplicates
+  und <- edge == "---"
+  if (any(und)) {
+    cf <- pmin(v[und], w[und])
+    ct <- pmax(v[und], w[und])
+    keep <- !duplicated(paste0(cf, "\r", ct))
+    v[und] <- cf
+    w[und] <- ct
+    edge[und][!keep] <- NA_character_
+  }
+
+  keep <- !is.na(edge)
+  from <- v[keep]
+  to <- w[keep]
+  edge <- edge[keep]
+
+  # todo:
+  ### NEEDS TO BE FIXED ONCE PAG IS SUPPORTED IN CAUGI ###
+  class <- if (class == "PAG") "Unknown" else class
+  ### NEEDS TO BE FIXED ONCE PAG IS SUPPORTED IN CAUGI ###
+
+  # optional collapse of mutual directed pairs to a symmetric glyph
+  if (collapse) {
+    is_edge_symmetric(collapse_to)
+
+    pair <- paste0(from, "\r", to)
+    revp <- paste0(to, "\r", from)
+    has_rev <- (from != to) & match(pair, revp, nomatch = 0L) > 0L
+
+    cf <- pmin(from, to)
+    ct <- pmax(from, to)
+    canon <- paste0(cf, "\r", ct)
+    keep_rep <- !duplicated(canon) & (from == cf)
+
+    keep2 <- !has_rev | keep_rep
+    from <- ifelse(has_rev & keep2, cf, from)[keep2]
+    to <- ifelse(has_rev & keep2, ct, to)[keep2]
+    edge <- ifelse(has_rev & keep2, collapse_to, edge)[keep2]
+  }
+
+  caugi_graph(
+    from = from,
+    edge = edge,
+    to = to,
+    nodes = nm,
+    simple = isTRUE(simple),
+    build = isTRUE(build),
+    class = class
+  )
+}
+
+#' @name as_caugi
+#' @export
+S7::method(
+  as_caugi,
+  S7::new_S3_class("bn")
+) <- function(x,
+              class = c("DAG", "PDAG", "PAG", "Unknown"),
+              simple = TRUE,
+              build = TRUE,
+              collapse = FALSE,
+              collapse_to = "---",
+              ...) {
+  class <- match.arg(class)
+  nm <- bnlearn::nodes(x)
+  ar <- bnlearn::arcs(x)
+
+  # no edges
+  if (nrow(ar) == 0L) {
+    return(caugi_graph(
+      from = character(),
+      edge = character(),
+      to = character(),
+      nodes = nm,
+      simple = isTRUE(simple),
+      build = isTRUE(build),
+      class = if (class == "PAG") "Unknown" else class
+    ))
+  }
+
+  from <- as.character(ar[, 1L])
+  to <- as.character(ar[, 2L])
+  edge <- rep_len("-->", length.out = nrow(ar))
+
+  # optional collapse (bnlearn DAGs should not need it)
+  if (collapse) {
+    is_edge_symmetric(collapse_to)
+    pair <- paste0(from, "\r", to)
+    revp <- paste0(to, "\r", from)
+    has_rev <- (from != to) & match(pair, revp, nomatch = 0L) > 0L
+    cf <- pmin(from, to)
+    ct <- pmax(from, to)
+    canon <- paste0(cf, "\r", ct)
+    keep_rep <- !duplicated(canon) & (from == cf)
+    keep <- !has_rev | keep_rep
+    from <- ifelse(has_rev & keep, cf, from)[keep]
+    to <- ifelse(has_rev & keep, ct, to)[keep]
+    edge <- ifelse(has_rev & keep, collapse_to, edge)[keep]
+  }
+
+  # todo:
+  ### NEEDS TO BE FIXED ONCE PAG IS SUPPORTED IN CAUGI ###
+  class <- if (class == "PAG") "Unknown" else class
+  ### NEEDS TO BE FIXED ONCE PAG IS SUPPORTED IN CAUGI ###
+
+  caugi_graph(
+    from = from,
+    edge = edge,
+    to = to,
+    nodes = nm,
+    simple = isTRUE(simple),
+    build = isTRUE(build),
+    class = class
+  )
+}
