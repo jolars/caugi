@@ -19,6 +19,7 @@ Suggests:
     igraph,
     graph,
     knitr,
+    Matrix,
     rextendr,
     rmarkdown,
     testthat
