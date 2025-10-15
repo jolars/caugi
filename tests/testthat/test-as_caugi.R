@@ -84,7 +84,7 @@ test_that("PAG code pairs map to expected glyphs", {
   nm <- c("A", "B", "C", "D")
   M <- matrix(0L, 4, 4, dimnames = list(nm, nm))
 
-  # A-B: tail->arrow => A --> B
+  # A-B: tail-arrow => A --> B
   M["A", "B"] <- 2L # mark at B end
   M["B", "A"] <- 1L # mark at A end
 
@@ -92,7 +92,7 @@ test_that("PAG code pairs map to expected glyphs", {
   M["A", "C"] <- 1L
   M["C", "A"] <- 1L
 
-  # B-C: circle->arrow => B o-> C
+  # B-C: circle-arrow => B o-> C
   M["B", "C"] <- 2L
   M["C", "B"] <- 3L
 
