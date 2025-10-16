@@ -192,17 +192,15 @@ pub mod aid {
                         a[pr][vr] = 1;
                     }
                 }
-                // undirected edges. Encode once; loader is lenient.
+                // undirected edges v --- w
                 for v in 0..g.n() {
                     for &w in g.undirected_of(v) {
                         let i0 = v as usize;
                         let j0 = w as usize;
                         let ir = inv_guess_to_true.map_or(i0, |inv| inv[i0]);
                         let jr = inv_guess_to_true.map_or(j0, |inv| inv[j0]);
-                        if ir < jr {
-                            a[ir][jr] = 2;
-                            a[jr][ir] = 2;
-                        }
+                        a[ir][jr] = 2;
+                        a[jr][ir] = 2;
                     }
                 }
                 Ok(GPDAG::from_row_to_column_vecvec(a))
