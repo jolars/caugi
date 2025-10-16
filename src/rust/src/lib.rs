@@ -7,7 +7,11 @@ pub mod graph;
 
 use edges::{EdgeClass, EdgeRegistry, EdgeSpec, Mark, QueryFlags};
 use graph::builder::GraphBuilder;
+
+#[cfg(feature = "gadjid")]
+use graph::metrics::aid;
 use graph::metrics::{hd, shd_with_perm};
+
 use graph::view::GraphView;
 use graph::{CaugiGraph, dag::Dag, pdag::Pdag};
 use std::collections::HashMap;
@@ -338,6 +342,120 @@ fn hd_of_ptrs(g1: ExternalPtr<GraphView>, g2: ExternalPtr<GraphView>) -> Robj {
     list!(normalized = norm, count = count as i32).into_robj()
 }
 
+#[cfg(feature = "gadjid")]
+fn to_aid_input(view: &GraphView) -> std::result::Result<aid::AidInput<'_>, String> {
+    match view {
+        GraphView::Dag(d) => Ok(aid::AidInput::Dag(d.as_ref())),
+        GraphView::Pdag(p) => Ok(aid::AidInput::Pdag(p.as_ref())),
+        _ => Err("expected graph of type DAG or PDAG".into()),
+    }
+}
+
+#[cfg(feature = "gadjid")]
+fn build_inv_from_names(
+    names_true: &extendr_api::prelude::Strings,
+    names_guess: &extendr_api::prelude::Strings,
+) -> std::result::Result<Vec<usize>, String> {
+    use std::collections::HashMap;
+    let n = names_true.len();
+    if n != names_guess.len() {
+        return Err("names length must match number of nodes".into());
+    }
+    let mut idx_guess: HashMap<String, usize> = HashMap::with_capacity(n);
+    for (i, s) in names_guess.iter().enumerate() {
+        let k = s.as_str().to_string();
+        if idx_guess.insert(k, i).is_some() {
+            return Err("duplicate node name in names_guess".into());
+        }
+    }
+    // perm[i] = guess-index of the i-th true node
+    let mut perm = Vec::with_capacity(n);
+    for s in names_true.iter() {
+        let key = s.as_str();
+        let j = *idx_guess
+            .get(key)
+            .ok_or_else(|| format!("name '{key}' present in names_true but not in names_guess"))?;
+        perm.push(j);
+    }
+    // invert: inv[j] = i
+    let mut inv = vec![0usize; n];
+    for (i, &j) in perm.iter().enumerate() {
+        inv[j] = i;
+    }
+    Ok(inv)
+}
+
+#[cfg(feature = "gadjid")]
+#[extendr]
+fn ancestor_aid_of_ptrs(
+    g_true: ExternalPtr<GraphView>,
+    names_true: Strings,
+    g_guess: ExternalPtr<GraphView>,
+    names_guess: Strings,
+) -> Robj {
+    let core_t = g_true.as_ref().core();
+    let core_g = g_guess.as_ref().core();
+    if core_t.n() != core_g.n() {
+        throw_r_error("graph size mismatch");
+    }
+    let inv = build_inv_from_names(&names_true, &names_guess)
+        .unwrap_or_else(|e| throw_r_error(e.to_string()));
+
+    let t = to_aid_input(g_true.as_ref()).unwrap_or_else(|e| throw_r_error(e.to_string()));
+    let g = to_aid_input(g_guess.as_ref()).unwrap_or_else(|e| throw_r_error(e.to_string()));
+    let (score, count) =
+        aid::ancestor_aid_align(t, g, &inv).unwrap_or_else(|e| throw_r_error(e.to_string()));
+    list!(score = score, count = count as i32).into_robj()
+}
+
+#[cfg(feature = "gadjid")]
+#[extendr]
+fn oset_aid_of_ptrs(
+    g_true: ExternalPtr<GraphView>,
+    names_true: Strings,
+    g_guess: ExternalPtr<GraphView>,
+    names_guess: Strings,
+) -> Robj {
+    let core_t = g_true.as_ref().core();
+    let core_g = g_guess.as_ref().core();
+    if core_t.n() != core_g.n() {
+        throw_r_error("graph size mismatch");
+    }
+    let inv = build_inv_from_names(&names_true, &names_guess)
+        .unwrap_or_else(|e| throw_r_error(e.to_string()));
+
+    let t = to_aid_input(g_true.as_ref()).unwrap_or_else(|e| throw_r_error(e.to_string()));
+    let g = to_aid_input(g_guess.as_ref()).unwrap_or_else(|e| throw_r_error(e.to_string()));
+    let (score, count) =
+        aid::oset_aid_align(t, g, &inv).unwrap_or_else(|e| throw_r_error(e.to_string()));
+    list!(score = score, count = count as i32).into_robj()
+}
+
+#[cfg(feature = "gadjid")]
+#[extendr]
+fn parent_aid_of_ptrs(
+    g_true: ExternalPtr<GraphView>,
+    names_true: Strings,
+    g_guess: ExternalPtr<GraphView>,
+    names_guess: Strings,
+) -> Robj {
+    let core_t = g_true.as_ref().core();
+    let core_g = g_guess.as_ref().core();
+    if core_t.n() != core_g.n() {
+        throw_r_error("graph size mismatch");
+    }
+    let inv = build_inv_from_names(&names_true, &names_guess)
+        .unwrap_or_else(|e| throw_r_error(e.to_string()));
+
+    let t = to_aid_input(g_true.as_ref()).unwrap_or_else(|e| throw_r_error(e.to_string()));
+    let g = to_aid_input(g_guess.as_ref()).unwrap_or_else(|e| throw_r_error(e.to_string()));
+    let (score, count) =
+        aid::parent_aid_align(t, g, &inv).unwrap_or_else(|e| throw_r_error(e.to_string()));
+    list!(score = score, count = count as i32).into_robj()
+}
+
+
+
 // ── Causal queries ────────────────────────────────────────────────────────────────
 
 #[extendr]
@@ -462,6 +580,10 @@ extendr_module! {
     // metrics
     fn shd_of_ptrs;
     fn hd_of_ptrs;
+    
+    fn ancestor_aid_of_ptrs;
+    fn oset_aid_of_ptrs;
+    fn parent_aid_of_ptrs;
 
     // causal queries
     fn is_d_separated_ptr;

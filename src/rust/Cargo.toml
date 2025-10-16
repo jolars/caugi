@@ -16,7 +16,7 @@ bitflags = '2.9.3'
 gadjid = { git = "https://github.com/CausalDisco/gadjid", package = 'gadjid', rev = '099d750b0c93ae20ab9b7664a11eed7932335998', optional = true }
 
 [features]
-default = []
+default = ['gadjid']
 gadjid = ['dep:gadjid']
 
 [profile.release]

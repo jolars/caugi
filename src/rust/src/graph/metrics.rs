@@ -117,6 +117,133 @@ pub fn hd(t: &CaugiGraph, g: &CaugiGraph) -> (f64, usize) {
     ((dist as f64) / (comps as f64), dist)
 }
 
+#[cfg(feature = "gadjid")]
+pub mod aid {
+    use crate::edges::EdgeClass;
+    use crate::graph::CaugiGraph;
+    use crate::graph::{dag::Dag, pdag::Pdag};
+    use gadjid::PDAG as GPDAG;
+
+    /// Input for AID functions. Only DAG or PDAG accepted.
+    pub enum AidInput<'a> {
+        Dag(&'a Dag),
+        Pdag(&'a Pdag),
+    }
+
+    #[inline]
+    fn ensure_same_n(t: &GPDAG, g: &GPDAG) -> Result<(), String> {
+        if t.n_nodes != g.n_nodes {
+            Err("graph size mismatch".into())
+        } else {
+            Ok(())
+        }
+    }
+
+    /// Build a gadjid PDAG. If `inv_guess_to_true` is Some, reindex nodes using that mapping.
+    /// `inv_guess_to_true[j] = i` means: guess-index `j` should appear at position `i` in the true order.
+    fn to_gadjid_pdag_with_map(
+        x: AidInput<'_>,
+        inv_guess_to_true: Option<&[usize]>,
+    ) -> Result<GPDAG, String> {
+        match x {
+            AidInput::Dag(d) => {
+                let n = d.n() as usize;
+                if let Some(inv) = inv_guess_to_true {
+                    if inv.len() != n {
+                        return Err("index map length does not match graph size".into());
+                    }
+                }
+                let mut a = vec![vec![0i8; n]; n];
+                let core: &CaugiGraph = d.core_ref();
+                for u in 0..n as u32 {
+                    for k in core.row_range(u) {
+                        let spec = &core.registry.specs[core.etype[k] as usize];
+                        if matches!(spec.class, EdgeClass::Directed) && core.side[k] == 0 {
+                            // u -> v in DAG
+                            let u0 = u as usize;
+                            let v0 = core.col_index[k] as usize;
+                            let ur = inv_guess_to_true.map_or(u0, |inv| inv[u0]);
+                            let vr = inv_guess_to_true.map_or(v0, |inv| inv[v0]);
+                            a[ur][vr] = 1;
+                        }
+                    }
+                }
+                Ok(GPDAG::from_row_to_column_vecvec(a))
+            }
+            AidInput::Pdag(g) => {
+                if !g.is_cpdag() {
+                    return Err("Expected CPDAG input; got a PDAG that is not a CPDAG".into());
+                }
+                let n = g.n() as usize;
+                if let Some(inv) = inv_guess_to_true {
+                    if inv.len() != n {
+                        return Err("index map length does not match graph size".into());
+                    }
+                }
+                let mut a = vec![vec![0i8; n]; n];
+
+                // directed edges p -> v
+                for v in 0..g.n() {
+                    for &p in g.parents_of(v) {
+                        let p0 = p as usize;
+                        let v0 = v as usize;
+                        let pr = inv_guess_to_true.map_or(p0, |inv| inv[p0]);
+                        let vr = inv_guess_to_true.map_or(v0, |inv| inv[v0]);
+                        a[pr][vr] = 1;
+                    }
+                }
+                // undirected edges. Encode once; loader is lenient.
+                for v in 0..g.n() {
+                    for &w in g.undirected_of(v) {
+                        let i0 = v as usize;
+                        let j0 = w as usize;
+                        let ir = inv_guess_to_true.map_or(i0, |inv| inv[i0]);
+                        let jr = inv_guess_to_true.map_or(j0, |inv| inv[j0]);
+                        if ir < jr {
+                            a[ir][jr] = 2;
+                            a[jr][ir] = 2;
+                        }
+                    }
+                }
+                Ok(GPDAG::from_row_to_column_vecvec(a))
+            }
+        }
+    }
+
+    /// Aligned variants. `inv_guess_to_true[j] = i`.
+    pub fn ancestor_aid_align(
+        true_g: AidInput<'_>,
+        guess_g: AidInput<'_>,
+        inv_guess_to_true: &[usize],
+    ) -> Result<(f64, usize), String> {
+        let t = to_gadjid_pdag_with_map(true_g, None)?;
+        let g = to_gadjid_pdag_with_map(guess_g, Some(inv_guess_to_true))?;
+        ensure_same_n(&t, &g)?;
+        Ok(gadjid::graph_operations::ancestor_aid(&t, &g))
+    }
+    pub fn oset_aid_align(
+        true_g: AidInput<'_>,
+        guess_g: AidInput<'_>,
+        inv_guess_to_true: &[usize],
+    ) -> Result<(f64, usize), String> {
+        let t = to_gadjid_pdag_with_map(true_g, None)?;
+        let g = to_gadjid_pdag_with_map(guess_g, Some(inv_guess_to_true))?;
+        ensure_same_n(&t, &g)?;
+        Ok(gadjid::graph_operations::oset_aid(&t, &g))
+    }
+    pub fn parent_aid_align(
+        true_g: AidInput<'_>,
+        guess_g: AidInput<'_>,
+        inv_guess_to_true: &[usize],
+    ) -> Result<(f64, usize), String> {
+        let t = to_gadjid_pdag_with_map(true_g, None)?;
+        let g = to_gadjid_pdag_with_map(guess_g, Some(inv_guess_to_true))?;
+        ensure_same_n(&t, &g)?;
+        Ok(gadjid::graph_operations::parent_aid(&t, &g))
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;

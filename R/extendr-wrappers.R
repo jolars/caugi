@@ -60,6 +60,12 @@ shd_of_ptrs <- function(g1, names1, g2, names2) .Call(wrap__shd_of_ptrs, g1, nam
 
 hd_of_ptrs <- function(g1, g2) .Call(wrap__hd_of_ptrs, g1, g2)
 
+ancestor_aid_of_ptrs <- function(g_true, names_true, g_guess, names_guess) .Call(wrap__ancestor_aid_of_ptrs, g_true, names_true, g_guess, names_guess)
+
+oset_aid_of_ptrs <- function(g_true, names_true, g_guess, names_guess) .Call(wrap__oset_aid_of_ptrs, g_true, names_true, g_guess, names_guess)
+
+parent_aid_of_ptrs <- function(g_true, names_true, g_guess, names_guess) .Call(wrap__parent_aid_of_ptrs, g_true, names_true, g_guess, names_guess)
+
 is_d_separated_ptr <- function(g, xs, ys, z) .Call(wrap__is_d_separated_ptr, g, xs, ys, z)
 
 adjustment_set_parents_ptr <- function(g, xs, ys) .Call(wrap__adjustment_set_parents_ptr, g, xs, ys)

@@ -45,3 +45,29 @@ hd <- function(cg1, cg2, normalized = FALSE) {
   out <- if (normalized) out_lst$normalized else out_lst$count
   out
 }
+
+#' @title Adjustment Identification Distance
+#'
+#' @description Compute the Adjustment Identification Distance (AID) between two
+#' graphs using the `gadjid` Rust package.
+#'
+#' @param cg1 A `caugi_graph` object.
+#' @param cg2 A `caugi_graph` object.
+#'
+#' @returns The AID between the two graphs.
+aid <- function(cg1, cg2, type = c("oset", "ancestor", "parent")) {
+  type <- match.arg(type)
+  is_caugi(cg1, throw_error = TRUE)
+  is_caugi(cg2, throw_error = TRUE)
+  same_nodes(cg1, cg2, throw_error = TRUE)
+
+  nm1 <- cg1@nodes$name
+  nm2 <- cg2@nodes$name
+
+  res <- switch(type,
+    oset     = oset_aid_of_ptrs(cg1@ptr, nm1, cg2@ptr, nm2),
+    ancestor = ancestor_aid_of_ptrs(cg1@ptr, nm1, cg2@ptr, nm2),
+    parent   = parent_aid_of_ptrs(cg1@ptr, nm1, cg2@ptr, nm2)
+  )
+  res
+}
