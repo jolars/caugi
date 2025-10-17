@@ -51,23 +51,37 @@ hd <- function(cg1, cg2, normalized = FALSE) {
 #' @description Compute the Adjustment Identification Distance (AID) between two
 #' graphs using the `gadjid` Rust package.
 #'
-#' @param cg1 A `caugi_graph` object.
-#' @param cg2 A `caugi_graph` object.
+#' @param truth A `caugi_graph` object.
+#' @param guess A `caugi_graph` object.
+#' @param type A character string specifying the type of AID to compute.
+#' Options are `"oset"` (default), `"ancestor"`, and `"parent"`.
 #'
-#' @returns The AID between the two graphs.
-aid <- function(cg1, cg2, type = c("oset", "ancestor", "parent")) {
+#' @returns A list containing the score (normalized) and the count.
+aid <- function(truth, guess, type = c("oset", "ancestor", "parent")) {
   type <- match.arg(type)
-  is_caugi(cg1, throw_error = TRUE)
-  is_caugi(cg2, throw_error = TRUE)
-  same_nodes(cg1, cg2, throw_error = TRUE)
-
-  nm1 <- cg1@nodes$name
-  nm2 <- cg2@nodes$name
+  is_caugi(truth, throw_error = TRUE)
+  is_caugi(guess, throw_error = TRUE)
+  same_nodes(truth, guess, throw_error = TRUE)
 
   res <- switch(type,
-    oset     = oset_aid_of_ptrs(cg1@ptr, nm1, cg2@ptr, nm2),
-    ancestor = ancestor_aid_of_ptrs(cg1@ptr, nm1, cg2@ptr, nm2),
-    parent   = parent_aid_of_ptrs(cg1@ptr, nm1, cg2@ptr, nm2)
+    oset = oset_aid_of_ptrs(
+      truth@ptr,
+      truth@nodes$name,
+      guess@ptr,
+      guess@nodes$name
+    ),
+    ancestor = ancestor_aid_of_ptrs(
+      truth@ptr,
+      truth@nodes$name,
+      guess@ptr,
+      guess@nodes$name
+    ),
+    parent = parent_aid_of_ptrs(
+      truth@ptr,
+      truth@nodes$name,
+      guess@ptr,
+      guess@nodes$name
+    )
   )
   res
 }

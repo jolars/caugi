@@ -454,8 +454,6 @@ fn parent_aid_of_ptrs(
     list!(score = score, count = count as i32).into_robj()
 }
 
-
-
 // ── Causal queries ────────────────────────────────────────────────────────────────
 
 #[extendr]
@@ -580,7 +578,7 @@ extendr_module! {
     // metrics
     fn shd_of_ptrs;
     fn hd_of_ptrs;
-    
+
     fn ancestor_aid_of_ptrs;
     fn oset_aid_of_ptrs;
     fn parent_aid_of_ptrs;

@@ -4,15 +4,18 @@
 \alias{aid}
 \title{Adjustment Identification Distance}
 \usage{
-aid(cg1, cg2, type = c("oset", "ancestor", "parent"))
+aid(truth, guess, type = c("oset", "ancestor", "parent"))
 }
 \arguments{
-\item{cg1}{A \code{caugi_graph} object.}
+\item{truth}{A \code{caugi_graph} object.}
 
-\item{cg2}{A \code{caugi_graph} object.}
+\item{guess}{A \code{caugi_graph} object.}
+
+\item{type}{A character string specifying the type of AID to compute.
+Options are \code{"oset"} (default), \code{"ancestor"}, and \code{"parent"}.}
 }
 \value{
-The AID between the two graphs.
+A list containing the score (normalized) and the count.
 }
 \description{
 Compute the Adjustment Identification Distance (AID) between two

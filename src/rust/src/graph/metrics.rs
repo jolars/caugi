@@ -241,7 +241,6 @@ pub mod aid {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
