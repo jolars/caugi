@@ -703,12 +703,19 @@ mod tests {
         assert_eq!(g.exogenous_nodes(true), vec![0, 3]); // undirected count as parents
     }
 
+    // return edge codes as u8 to match GraphBuilder::add_edge signature
+    fn setup() -> (EdgeRegistry, u8, u8) {
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d: u8 = reg.code_of("-->").unwrap();
+        let u: u8 = reg.code_of("---").unwrap();
+        (reg, d, u)
+    }
+
     #[test]
     fn cpdag_trivial_undirected_is_cpdag() {
         // 0 -- 1
-        let mut reg = EdgeRegistry::new();
-        reg.register_builtins().unwrap();
-        let u = reg.code_of("---").unwrap();
+        let (reg, _d, u) = setup();
 
         let mut b = GraphBuilder::new_with_registry(2, true, &reg);
         b.add_edge(0, 1, u).unwrap();
@@ -719,10 +726,7 @@ mod tests {
     #[test]
     fn cpdag_triangle_standard_is_cpdag() {
         // 0 -> 1, 0 -> 2, 1 -- 2  (classic CPDAG)
-        let mut reg = EdgeRegistry::new();
-        reg.register_builtins().unwrap();
-        let d = reg.code_of("-->").unwrap();
-        let u = reg.code_of("---").unwrap();
+        let (reg, d, u) = setup();
 
         let mut b = GraphBuilder::new_with_registry(3, true, &reg);
         b.add_edge(0, 1, d).unwrap();
@@ -735,9 +739,7 @@ mod tests {
     #[test]
     fn cpdag_non_chordal_component_rejected() {
         // 0 -- 1 -- 2 -- 3 -- 0 (4-cycle, no chord) => not CPDAG
-        let mut reg = EdgeRegistry::new();
-        reg.register_builtins().unwrap();
-        let u = reg.code_of("---").unwrap();
+        let (reg, _d, u) = setup();
 
         let mut b = GraphBuilder::new_with_registry(4, true, &reg);
         b.add_edge(0, 1, u).unwrap();
@@ -751,10 +753,7 @@ mod tests {
     #[test]
     fn cpdag_meek_closure_would_change_rejected() {
         // 0 -> 1, 1 -- 2, and 0 not adj to 2. Meek R1 would orient 1->2 => not CPDAG.
-        let mut reg = EdgeRegistry::new();
-        reg.register_builtins().unwrap();
-        let d = reg.code_of("-->").unwrap();
-        let u = reg.code_of("---").unwrap();
+        let (reg, d, u) = setup();
 
         let mut b = GraphBuilder::new_with_registry(3, true, &reg);
         b.add_edge(0, 1, d).unwrap();
@@ -766,10 +765,7 @@ mod tests {
     #[test]
     fn cpdag_directed_inside_component_rejected() {
         // chain component {1,2,3}: 1--2--3, plus 1->3 inside the same component ⇒ not CPDAG
-        let mut reg = EdgeRegistry::new();
-        reg.register_builtins().unwrap();
-        let d = reg.code_of("-->").unwrap();
-        let u = reg.code_of("---").unwrap();
+        let (reg, d, u) = setup();
 
         let mut b = GraphBuilder::new_with_registry(4, true, &reg);
         b.add_edge(1, 2, u).unwrap();
@@ -782,10 +778,7 @@ mod tests {
     #[test]
     fn cpdag_component_dag_cycle_rejected() {
         // Components {0,1} and {2,3}; edges 0->2 and 2->1 give a cycle C0->C1->C0 => not CPDAG.
-        let mut reg = EdgeRegistry::new();
-        reg.register_builtins().unwrap();
-        let d = reg.code_of("-->").unwrap();
-        let u = reg.code_of("---").unwrap();
+        let (reg, d, u) = setup();
 
         let mut b = GraphBuilder::new_with_registry(4, true, &reg);
         b.add_edge(0, 1, u).unwrap(); // comp A
@@ -794,15 +787,6 @@ mod tests {
         b.add_edge(2, 1, d).unwrap(); // B -> A
         let g = Pdag::new(std::sync::Arc::new(b.finalize().unwrap())).unwrap();
         assert!(!g.is_cpdag());
-    }
-
-    // return edge codes as u8 to match GraphBuilder::add_edge signature
-    fn setup() -> (EdgeRegistry, u8, u8) {
-        let mut reg = EdgeRegistry::new();
-        reg.register_builtins().unwrap();
-        let d: u8 = reg.code_of("-->").unwrap();
-        let u: u8 = reg.code_of("---").unwrap();
-        (reg, d, u)
     }
 
     #[test]
@@ -911,7 +895,6 @@ mod tests {
         let g = Pdag::new(Arc::new(b.finalize().unwrap())).unwrap();
         assert!(g.is_cpdag());
     }
-    // ---------- Meeks rules rejections ----------
 
     #[test]
     fn cpdag_meeks_r1_rejected_multiple_parents() {
@@ -964,8 +947,6 @@ mod tests {
         let g = Pdag::new(Arc::new(b.finalize().unwrap())).unwrap();
         assert!(!g.is_cpdag());
     }
-
-    // ---------- more positive cases ----------
 
     #[test]
     fn cpdag_mixed_components_chordal_ok() {
