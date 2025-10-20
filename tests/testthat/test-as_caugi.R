@@ -92,15 +92,15 @@ test_that("PAG code pairs map to expected glyphs", {
 
   # A-B: tail-arrow => A --> B
   M["A", "B"] <- 2L # mark at B end
-  M["B", "A"] <- 1L # mark at A end
+  M["B", "A"] <- 3L # mark at A end
 
   # A-C: tail-tail => A --- C
-  M["A", "C"] <- 1L
-  M["C", "A"] <- 1L
+  M["A", "C"] <- 3L
+  M["C", "A"] <- 3L
 
   # B-C: circle-arrow => B o-> C
   M["B", "C"] <- 2L
-  M["C", "B"] <- 3L
+  M["C", "B"] <- 1L
 
   # C-D: arrow-arrow => C <-> D
   M["C", "D"] <- 2L
