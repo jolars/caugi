@@ -12,8 +12,75 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+set.seed(1)
 ```
+
+## Performance
+
+This vignette discusses the performance characteristics of `caugi` including a comparison to the popular [`igraph` R package](https://igraph.org/r/) ([rigraph](https://github.com/igraph/rigraph)).
+We focus on the practical trade-offs that arise from different core data structures and design choices.
+
+The headline is: caugi frontloads computation.
+That is, `caugi` spends more effort when constructing a graph and preparing indexes, so that queries are wicked fast. The high performance is also due to the Rust backend.
+
+### Design choices
+
+#### Compressed Sparse Row (CSR) representation
+
+The core data structure in `caugi` is a Compressed Sparse Row (CSR) representation of the graph.
+CSR stores for each vertex a contiguous slice of neighbor IDs with a pointer (offset) array that marks the start/end of each slice.
+This format is memory efficient for sparse graphs. The `caugi` graph object also stores important query information in the object, leading to parent, child, and neighbor queries being done in $\mathcal{O}(1)$. This yields a larger memory footprint, but the trade-off is that queries are extremely fast.
+
+#### Mutation and lazy building
+
+The `caugi` graph objects are expensive to build. This is the performance downside of using `caugi`. For each time, we make a modification to a `caugi` graph object, we need to rebuild the graph completely, since the graph object is immutable by design. This has complexity $\mathcal{O}(|V| + |E|)$, where $V$ is the vertex set and $E$ is the edge set. 
+
+However, the graph object will only be rebuild, when the user either calls `build()` directly or queries the graph. Therefore, you do not need to worry about wasting compute time by iteratively making changes to a `caugi` graph object, as the graph rebuilds lazily when queried. By doing this `caugi` graphs _feel_ mutable, but, in reality, they are not. 
+
+By doing it this way, we ensure 
+- that the graph object is always in a consistent state when queried, and
+- that queries are as fast as possible,
+while keeping the user experience smooth.
+
+### Comparison
 
 ```{r setup}
 library(caugi)
+library(igraph)
+library(microbenchmark)
+```
+
+We compare `caugi` to `igraph` on querying. 
+We generate a random tree graph with 1000 nodes for the comparison.
+
+```{r generate-graph}
+ig <- igraph::make_tree(n=1000)
+cg <- caugi::as_caugi(ig, class = "DAG")
+```
+
+```{r benchmark-igraph-query}
+mb_igraph <- microbenchmark(
+  igraph_neighbors = igraph::neighbors(ig, 50),
+  igraph_parents = igraph::neighbors(ig, 50, mode = "in"),
+  igraph_children = igraph::neighbors(ig, 50, mode = "out"),
+  times = 1000
+)
+
+mb_caugi <- microbenchmark(
+  caugi_neighbors = caugi::neighbors(cg, 50),
+  caugi_parents = caugi::parents(cg, 50),
+  caugi_children = caugi::children(cg, 50),
+  times = 1000
+)
+```
+
+```{r benchmark-results}
+print(mb_igraph)
+print(mb_caugi)
+```
+
+### Session info
+
+```{r session-info}
+sessionInfo()
 ```
