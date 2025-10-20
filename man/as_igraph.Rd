@@ -2,24 +2,10 @@
 % Please edit documentation in R/as_igraph.R
 \name{as_igraph}
 \alias{as_igraph}
-\alias{as_igraph.caugi_graph}
 \title{Convert a caugi_graph to an igraph object}
 \usage{
 as_igraph(x, ...)
-
-\method{as_igraph}{caugi_graph}(x, ...)
-}
-\arguments{
-\item{x}{A caugi_graph}
-
-\item{...}{Passed on to igraph::graph_from_data_frame()}
-}
-\value{
-An igraph object with an \code{edge_type} attribute on each edge.
 }
 \description{
 Convert a caugi_graph to an igraph object
-}
-\seealso{
-\code{\link[igraph:igraph-package]{the igraph package}} for full details.
 }
