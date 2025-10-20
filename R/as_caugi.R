@@ -266,23 +266,15 @@ S7::method(
     if (n > 0) nm <- paste0("V", seq_len(n))
   }
 
-  # helpers
-  mark_sym <- function(k) {
-    switch(as.character(k),
-      "1" = "-",
-      "2" = ">",
-      "3" = "o",
-      stop("Invalid PAG code: ", k, call. = FALSE)
-    )
-  }
-
   # build edge list
   if (class %in% "PAG") {
+    # Correct pcalg PAG code mapping:
+    # 1 = circle, 2 = arrowhead, 3 = tail (codes refer to the COLUMN end)
     mark_sym <- function(k) {
       switch(as.character(k),
-        "1" = "-",
-        "2" = ">",
-        "3" = "o",
+        "1" = "o", # circle
+        "2" = ">", # arrowhead
+        "3" = "-", # tail
         stop("Invalid PAG code: ", k, call. = FALSE)
       )
     }
@@ -297,25 +289,19 @@ S7::method(
         b <- x[j, i] # mark at i-end
         if (a == 0L && b == 0L) next
 
-        lf <- mark_sym(b) # left mark (at i)
-        rt <- mark_sym(a) # right mark (at j)
+        lf <- mark_sym(b) # left endpoint (node i)
+        rt <- mark_sym(a) # right endpoint (node j)
 
-        # enforce right-pointing arrows only; swap if needed
-        if (lf == ">" && rt != ">") {
-          tmp <- lf
-          lf <- rt
-          rt <- tmp
-          ii <- i
-          i <- j
-          j <- ii
-        }
-        if (lf == "o" && rt == "-") {
-          tmp <- lf
-          lf <- rt
-          rt <- tmp
-          ii <- i
-          i <- j
-          j <- ii
+        li <- i
+        lj <- j # local copies only; never mutate loop indices
+
+        # normalize j -> i arrows to i -> j
+        if (lf == ">" && rt == "-") { # i <- j
+          lf <- "-"
+          rt <- ">"
+          tmp <- li
+          li <- lj
+          lj <- tmp
         }
 
         glyph <- switch(paste0(lf, rt),
@@ -324,12 +310,12 @@ S7::method(
           "-o" = "--o",
           "o>" = "o->",
           "oo" = "o-o",
-          ">>" = "<->", # bidirected allowed
+          ">>" = "<->",
           stop("Unsupported PAG endpoints: ", lf, " .. ", rt, call. = FALSE)
         )
 
-        from <- c(from, nm[i])
-        to <- c(to, nm[j])
+        from <- c(from, nm[li])
+        to <- c(to, nm[lj])
         edge <- c(edge, glyph)
       }
     }
@@ -385,6 +371,7 @@ S7::method(
     class = class
   )
 }
+
 
 #' @name as_caugi
 #' @export
