@@ -44,19 +44,6 @@ library(caugi)
 
 `caugi` is a small R interface to a fast Rust backend for causal graphs. You define graphs with readable infix operators, query relations, and keep R code nice and tidy, while Rust handles performance.
 
-## Why `caugi`?
-
-Causal graphs are easy to draw and aid us in understanding causal mechanisms by visual representation. In R, representing them can feel clunky. We usually resort to adjacency matrices, edge lists, or packages like `igraph` or `graph`. 
-
-These packages are great and each have their strengths, but they are not built for _causal_ graphs, which often have special edge types and properties. 
-
-In the same way, adjacency matrices can be hard to read, especially since different standards exists for representing different types of causal relationships. For example, it is not even standardized, if `A[i,j] == 1` represents `i --> j` or `j --> i`, or how to represent a PAG edge such as `o->`.
-
-For people working in causal inference and causal discovery, this can lead to clunky, hacky code that is hard to read and maintain. `caugi` aims to fix this with a well thought, readable syntax, which mimics how we draw graphs in hand. 
-
-When makeshift solutions are used to represent causal graphs, it leads to not only bugs, but confusion and wasted time. With `caugi` we aim to make causal graphs safe to work with, so you do not accidentally create invalid graphs, and so you can focus on the causal problems at hand, not on the representation.
-
-So why `caugi`? `caugi` makes it easy to define, query, and modify causal graphs in R with a clean syntax and fast performance. 
 
 ## The basic object: `caugi_graph`
 
