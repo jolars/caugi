@@ -161,7 +161,7 @@ is_pdag <- function(cg, force_check = FALSE) {
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
-# ──────────────────────────────── Relations ───────────────────────────────────
+# ───────────────────────────── Nodes and edges ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
 #' @title Get nodes or edges of a `caugi_graph`
@@ -201,6 +201,20 @@ edges <- function(cg) {
 #' @rdname nodes_and_edges
 #' @export
 E <- edges # igraph notation
+
+#' @title Get the edge types of a `caugi_graph`.
+#'
+#' @param cg A `caugi_graph` object.
+#' @returns A character vector of edge types.
+#' @export
+edge_types <- function(cg) {
+  is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
+  unique(cg@edges$edge)
+}
+# ──────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────────── Relations ───────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 #' @title Get parents of nodes in a `caugi_graph`
 #'
