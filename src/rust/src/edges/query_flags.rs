@@ -8,3 +8,5 @@ bitflags! {
         const LATENT_CONFOUNDING           = 1 << 1;
     }
 }
+
+// todo: remove query flags
