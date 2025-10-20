@@ -6,6 +6,11 @@
 \usage{
 as_igraph(x, ...)
 }
+\arguments{
+\item{x}{A \code{caugi_graph} object.}
+
+\item{...}{Additional arguments passed to \code{igraph::graph_from_data_frame()}.}
+}
 \description{
 Convert a caugi_graph to an igraph object
 }

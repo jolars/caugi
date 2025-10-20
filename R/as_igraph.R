@@ -1,4 +1,7 @@
 #' @title Convert a caugi_graph to an igraph object
+#'
+#' @param x A `caugi_graph` object.
+#' @param ... Additional arguments passed to `igraph::graph_from_data_frame()`.
 #' @export
 as_igraph <- function(x, ...) {
   is_caugi(x, throw_error = TRUE)
