@@ -29,24 +29,29 @@ Causal graphs are easy to draw and aid us in understanding causal mechanisms by 
 These packages are great and each have their strengths, but they are not built for _causal_ graphs, which often have special edge types and properties. This leads to situations such as representing undirected edges as two directed edges going in each direction, or representing PAG-type edges by opaque matrix formats, as seen in for example `pcalg`, where 
 
 ```{r pcalg-pag}
-nodes <- c("A","B","C","D","E"); 
+nodes <- c("A", "B", "C", "D", "E")
 amat <- matrix(
   c(
-  0L,2L,0L,0L,1L, 
-  3L,0L,2L,1L,0L, 
-  0L,1L,0L,0L,3L,
-  0L,1L,0L,0L,3L,
-  3L,0L,3L,3L,0L), 
-  5, 5, byrow = TRUE, dimnames = list(nodes, nodes))
+    0L, 2L, 0L, 0L, 1L,
+    3L, 0L, 2L, 1L, 0L,
+    0L, 1L, 0L, 0L, 3L,
+    0L, 1L, 0L, 0L, 3L,
+    3L, 0L, 3L, 3L, 0L
+  ),
+  5, 5,
+  byrow = TRUE, dimnames = list(nodes, nodes)
+)
 amat
 ```
 
 describes the graph
 
 ```{r caugi-pag}
-caugi_graph(A %-->% B %o->% C %---% E, 
-            B %o-o% D %---% E, 
-            A %--o% E)
+caugi_graph(
+  A %-->% B %o->% C %---% E,
+  B %o-o% D %---% E,
+  A %--o% E
+)
 ```
 
 Hopefully, it is clear what is easier to read. 
