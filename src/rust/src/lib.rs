@@ -204,58 +204,103 @@ fn graph_builder_build_view(
 }
 
 // ── Unified queries ────────────────────────────────────────────────────────────────
+// ── Unified queries ────────────────────────────────────────────────────────────────
 #[extendr]
-fn parents_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
-    g.as_ref()
-        .parents_of(i as u32)
-        .map(|s| s.iter().map(|&x| x as i32).collect_robj())
-        .unwrap_or_else(|e| throw_r_error(e))
-}
-#[extendr]
-fn children_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
-    g.as_ref()
-        .children_of(i as u32)
-        .map(|s| s.iter().map(|&x| x as i32).collect_robj())
-        .unwrap_or_else(|e| throw_r_error(e))
-}
-#[extendr]
-fn undirected_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
-    g.as_ref()
-        .undirected_of(i as u32)
-        .map(|s| s.iter().map(|&x| x as i32).collect_robj())
-        .unwrap_or_else(|e| throw_r_error(e))
+fn parents_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
+    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
+    for ri in idxs.iter() {
+        let i = rint_to_u32(ri, "idxs");
+        let v = g
+            .as_ref()
+            .parents_of(i)
+            .unwrap_or_else(|e| throw_r_error(e));
+        out.push(v.into_iter().map(|&x| x as i32).collect_robj());
+    }
+    extendr_api::prelude::List::from_values(out).into_robj()
 }
 
 #[extendr]
-fn neighbors_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
-    g.as_ref()
-        .neighbors_of(i as u32)
-        .map(|s| s.iter().map(|&x| x as i32).collect_robj())
-        .unwrap_or_else(|e| throw_r_error(e))
+fn children_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
+    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
+    for ri in idxs.iter() {
+        let i = rint_to_u32(ri, "idxs");
+        let v = g
+            .as_ref()
+            .children_of(i)
+            .unwrap_or_else(|e| throw_r_error(e));
+        out.push(v.into_iter().map(|&x| x as i32).collect_robj());
+    }
+    extendr_api::prelude::List::from_values(out).into_robj()
 }
 
 #[extendr]
-fn ancestors_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
-    g.as_ref()
-        .ancestors_of(i as u32)
-        .map(|s| s.iter().map(|x| *x as i32).collect_robj())
-        .unwrap_or_else(|e| throw_r_error(e))
+fn undirected_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
+    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
+    for ri in idxs.iter() {
+        let i = rint_to_u32(ri, "idxs");
+        let v = g
+            .as_ref()
+            .undirected_of(i)
+            .unwrap_or_else(|e| throw_r_error(e));
+        out.push(v.into_iter().map(|&x| x as i32).collect_robj());
+    }
+    extendr_api::prelude::List::from_values(out).into_robj()
 }
 
 #[extendr]
-fn descendants_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
-    g.as_ref()
-        .descendants_of(i as u32)
-        .map(|s| s.iter().map(|x| *x as i32).collect_robj())
-        .unwrap_or_else(|e| throw_r_error(e))
+fn neighbors_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
+    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
+    for ri in idxs.iter() {
+        let i = rint_to_u32(ri, "idxs");
+        let v = g
+            .as_ref()
+            .neighbors_of(i)
+            .unwrap_or_else(|e| throw_r_error(e));
+        out.push(v.into_iter().map(|&x| x as i32).collect_robj());
+    }
+    extendr_api::prelude::List::from_values(out).into_robj()
 }
 
 #[extendr]
-fn markov_blanket_of_ptr(g: ExternalPtr<GraphView>, i: i32) -> Robj {
-    g.as_ref()
-        .markov_blanket_of(i as u32)
-        .map(|s| s.iter().map(|x| *x as i32).collect_robj())
-        .unwrap_or_else(|e| throw_r_error(e))
+fn ancestors_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
+    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
+    for ri in idxs.iter() {
+        let i = rint_to_u32(ri, "idxs");
+        let v = g
+            .as_ref()
+            .ancestors_of(i)
+            .unwrap_or_else(|e| throw_r_error(e));
+        out.push(v.iter().map(|&x| x as i32).collect_robj());
+    }
+    extendr_api::prelude::List::from_values(out).into_robj()
+}
+
+#[extendr]
+fn descendants_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
+    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
+    for ri in idxs.iter() {
+        let i = rint_to_u32(ri, "idxs");
+        let v = g
+            .as_ref()
+            .descendants_of(i)
+            .unwrap_or_else(|e| throw_r_error(e));
+        out.push(v.iter().map(|&x| x as i32).collect_robj());
+    }
+    extendr_api::prelude::List::from_values(out).into_robj()
+}
+
+#[extendr]
+fn markov_blanket_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
+    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
+    for ri in idxs.iter() {
+        let i = rint_to_u32(ri, "idxs");
+        let v = g
+            .as_ref()
+            .markov_blanket_of(i)
+            .unwrap_or_else(|e| throw_r_error(e));
+        out.push(v.iter().map(|&x| x as i32).collect_robj());
+    }
+    extendr_api::prelude::List::from_values(out).into_robj()
 }
 
 #[extendr]
