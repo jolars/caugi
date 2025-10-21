@@ -439,13 +439,22 @@ exogenous <- function(cg, undirected_as_parents = FALSE) {
 #' @param cg A `caugi_graph` object.
 #' @param idx0 A vector of zero-based node indices.
 #'
-#' @returns A tibble with a `name` column.
+#' @returns A list of character vectors, each a set of node names.
 #'
 #' @keywords internal
 .getter_output <- function(cg, idx0) {
-  id <- as.integer(idx0) + 1L
-  names(id) <- cg@nodes$name[id]
-  id
+  to_names <- function(ix0) {
+    ix1 <- as.integer(ix0) + 1L
+    if (length(ix1) == 0L) {
+      return(character())
+    }
+    cg@nodes$name[ix1]
+  }
+  if (is.list(idx0)) {
+    lapply(idx0, to_names) # list of character vectors (node names)
+  } else {
+    list(to_names(idx0)) # always return a list
+  }
 }
 
 #' @title Get relations of nodes in a `caugi_graph`
@@ -458,22 +467,24 @@ exogenous <- function(cg, undirected_as_parents = FALSE) {
 #' @param getter A function that takes a pointer to the graph and a zero-based
 #' node index, and returns a vector of zero-based indices of related nodes.
 #'
-#' @returns A tibble with a `name` column.
+#' @returns A list of character vectors, each a set of related node names.
 #'
 #' @keywords internal
 #' @title Get relations of nodes in a `caugi_graph`
 #' @keywords internal
 .relations <- function(cg, nodes_expr, index, getter) {
   is_caugi(cg, throw_error = TRUE)
-  cg <- build(cg)
-  has_index <- !missing(index) && !is.null(index)
 
-  if (has_index) {
-    idx0 <- .resolve_idx_from_index(cg, index)
+  idx_supplied <- !missing(index) && !is.null(index)
+  if (idx_supplied) {
+    idx <- as.integer(index)
+    idx0 <- .resolve_idx_from_index(cg, idx)
+    if (!cg@built) cg <- build(cg)
   } else {
+    # names path
+    if (!cg@built) cg <- build(cg)
     idx0 <- .resolve_idx(cg, nodes_expr)
   }
 
-  rows <- lapply(idx0, function(i0) .getter_output(cg, getter(cg@ptr, i0)))
-  if (length(rows) == 1L) rows[[1]] else do.call(rbind, rows)
+  .getter_output(cg, getter(cg@ptr, idx0))
 }
