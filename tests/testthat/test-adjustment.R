@@ -12,12 +12,6 @@ adjustment_set_cg <- caugi_graph(
   class = "DAG"
 )
 
-names_of <- function(tbl) {
-  tbl |>
-    dplyr::pull(name) |>
-    sort()
-}
-
 test_that("d-separation checks", {
   expect_false(d_separated(adjustment_set_cg, X, Y)) # backdoor via A-->K-->Y and causal X-->D-->Y
   expect_false(d_separated(adjustment_set_cg, X, Y, Z = A)) # causal path still open
@@ -28,18 +22,18 @@ test_that("d-separation checks", {
 })
 
 test_that("adjustment_set(type = 'parents') returns Pa(X) \\ {X,Y}", {
-  got <- names_of(adjustment_set(adjustment_set_cg, X, Y, type = "parents"))
-  expect_setequal(got, c("A", "C"))
+  got <- adjustment_set(adjustment_set_cg, X, Y, type = "parents")
+  expect_setequal(got[[1]], c("A", "C"))
 })
 
 test_that("adjustment_set(type = 'backdoor') returns a valid backdoor set", {
-  Z <- names_of(adjustment_set(adjustment_set_cg, X, Y, type = "backdoor"))
+  Z <- adjustment_set(adjustment_set_cg, X, Y, type = "backdoor")
   expect_true(is_valid_backdoor(adjustment_set_cg, x = X, y = Y, Z = Z))
   expect_false("D" %in% Z) # descendant of X should not appear
 })
 
 test_that("adjustment_set(type = 'optimal') is valid and minimal here", {
-  Z <- names_of(adjustment_set(adjustment_set_cg, X, Y, type = "optimal"))
+  Z <- adjustment_set(adjustment_set_cg, X, Y, type = "optimal")
   expect_true(is_valid_backdoor(adjustment_set_cg, x = X, y = Y, Z = Z))
   expect_true(setequal(Z, "A") || setequal(Z, "K")) # minimal sets in this DAG
 })

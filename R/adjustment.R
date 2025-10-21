@@ -218,7 +218,6 @@ all_backdoor_sets <- function(cg,
   )
   if (length(x0) != 1L || length(y0) != 1L) {
     stop("Provide exactly one x and one y.", call. = FALSE)
-    # nocov
   }
 
   sets_idx0 <- all_backdoor_sets_ptr(
@@ -228,8 +227,8 @@ all_backdoor_sets <- function(cg,
     minimal,
     max_size
   )
-  # Map each integer vector (0-based) to names
-  lapply(sets_idx0, function(idx0) .getter_output(cg, idx0)$name)
+
+  .getter_output(cg, sets_idx0)
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -256,19 +255,14 @@ all_backdoor_sets <- function(cg,
 #' @returns Integer vector of 0-based indices.
 #'
 #' @keywords internal
-.resolve_idx_adjustment <- function(cg,
-                                    nodes,
-                                    index,
-                                    what,
+.resolve_idx_adjustment <- function(cg, nodes, index, what,
                                     allow_empty = FALSE,
                                     env = parent.frame()) {
   index_supplied <- !missing(index) && !is.null(index)
   expr_supplied <- !missing(nodes) && !is.null(nodes)
 
   if (expr_supplied && index_supplied) {
-    stop("For ", what, ", supply either names/expression or indices, not both.",
-      call. = FALSE
-    )
+    stop("For ", what, ", supply either names/expression or indices, not both.", call. = FALSE)
   }
   if (!expr_supplied && !index_supplied) {
     if (allow_empty) {
@@ -278,8 +272,18 @@ all_backdoor_sets <- function(cg,
   }
 
   if (index_supplied) {
-    .resolve_idx_from_index(cg, index)
-  } else {
-    .resolve_idx(cg, .expand_nodes(nodes, env))
+    return(.resolve_idx_from_index(cg, index))
   }
+
+  val <- try(eval(nodes, env), silent = TRUE)
+  if (!inherits(val, "try-error")) {
+    if (is.list(val) && length(val) == 1L && is.character(val[[1]])) {
+      return(.resolve_idx(cg, val[[1]]))
+    }
+    if (is.character(val)) {
+      return(.resolve_idx(cg, val))
+    }
+  }
+
+  .resolve_idx(cg, .expand_nodes(nodes, env))
 }

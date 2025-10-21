@@ -29,8 +29,8 @@ test_that("graph builder works for directed edge in reverse direction", {
 
   gptr <- graph_builder_build_view(b, class = "PDAG")
 
-  expect_identical(parents_of_ptr(gptr, 0L), 1L)
-  expect_identical(children_of_ptr(gptr, 1L), 0L)
+  expect_identical(parents_of_ptr(gptr, 0L), list(1L))
+  expect_identical(children_of_ptr(gptr, 1L), list(0L))
   reset_caugi_registry()
 })
 
@@ -38,36 +38,36 @@ test_that("queries work for DAGs and PDAGs", {
   # DAG EXAMPLE
   cg <- caugi_graph(A %-->% B, class = "DAG")
 
-  expect_identical(parents_of_ptr(cg@ptr, 0L), integer())
-  expect_identical(children_of_ptr(cg@ptr, 0L), 1L)
-  expect_identical(parents_of_ptr(cg@ptr, 1L), 0L)
-  expect_identical(children_of_ptr(cg@ptr, 1L), integer())
+  expect_identical(parents_of_ptr(cg@ptr, 0L), list(integer(0)))
+  expect_identical(children_of_ptr(cg@ptr, 0L), list(1L))
+  expect_identical(parents_of_ptr(cg@ptr, 1L), list(0L))
+  expect_identical(children_of_ptr(cg@ptr, 1L), list(integer(0)))
 
   cg <- add_edges(cg, B %-->% C)
   cg <- build(cg)
 
-  expect_identical(parents_of_ptr(cg@ptr, 0L), integer())
-  expect_identical(children_of_ptr(cg@ptr, 0L), 1L)
-  expect_identical(parents_of_ptr(cg@ptr, 1L), 0L)
-  expect_identical(children_of_ptr(cg@ptr, 1L), 2L)
-  expect_identical(parents_of_ptr(cg@ptr, 2L), 1L)
-  expect_identical(children_of_ptr(cg@ptr, 2L), integer())
+  expect_identical(parents_of_ptr(cg@ptr, 0L), list(integer(0)))
+  expect_identical(children_of_ptr(cg@ptr, 0L), list(1L))
+  expect_identical(parents_of_ptr(cg@ptr, 1L), list(0L))
+  expect_identical(children_of_ptr(cg@ptr, 1L), list(2L))
+  expect_identical(parents_of_ptr(cg@ptr, 2L), list(1L))
+  expect_identical(children_of_ptr(cg@ptr, 2L), list(integer(0)))
 
   expect_error(undirected_of_ptr(cg@ptr, 0L))
 
   # PDAG EXAMPLE
   cg <- caugi_graph(A %-->% B, class = "PDAG")
-  expect_identical(parents_of_ptr(cg@ptr, 0L), integer())
-  expect_identical(children_of_ptr(cg@ptr, 0L), 1L)
-  expect_identical(parents_of_ptr(cg@ptr, 1L), 0L)
-  expect_identical(children_of_ptr(cg@ptr, 1L), integer())
+  expect_identical(parents_of_ptr(cg@ptr, 0L), list(integer(0)))
+  expect_identical(children_of_ptr(cg@ptr, 0L), list(1L))
+  expect_identical(parents_of_ptr(cg@ptr, 1L), list(0L))
+  expect_identical(children_of_ptr(cg@ptr, 1L), list(integer(0)))
 
   cg <- add_edges(cg, B %---% C)
   cg <- build(cg)
 
-  expect_identical(parents_of_ptr(cg@ptr, 0L), integer())
-  expect_identical(children_of_ptr(cg@ptr, 0L), 1L)
-  expect_identical(undirected_of_ptr(cg@ptr, 1L), 2L)
+  expect_identical(parents_of_ptr(cg@ptr, 0L), list(integer(0)))
+  expect_identical(children_of_ptr(cg@ptr, 0L), list(1L))
+  expect_identical(undirected_of_ptr(cg@ptr, 1L), list(2L))
 })
 
 test_that("edge registry seal works", {

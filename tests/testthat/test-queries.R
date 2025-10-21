@@ -93,32 +93,29 @@ test_that("is_pdag works", {
 
 test_that("parents returns expected nodes for names, indices, and expr", {
   cg <- caugi_graph(A %-->% B, B %-->% C, A %---% D, D %-->% B, class = "PDAG")
-  # by name
-  expect_identical(sort(parents(cg, "B")$name), c("A", "D"))
-  # by unquoted expression
-  expect_identical(parents(cg, B)$name, c("A", "D"))
-
-  # by unquoted expression
-  expect_identical(sort(parents(cg, A + B)$name), c("A", "D"))
-  # vector of names
+  expect_identical(sort(parents(cg, "B")[[1]]), c("A", "D"))
+  expect_identical(sort(parents(cg, B)[[1]]), c("A", "D"))
+  expect_identical(sort(parents(cg, A + B)[[1]]), character(0))
+  expect_identical(sort(parents(cg, index = 2)[[1]]), c("A", "D"))
   res <- parents(cg, c("B", "C"))
-  expect_true(all(res$name %in% c("A", "B", "D")))
+  expect_true(all(res[[1]] %in% c("A", "B", "D")))
 })
 
 test_that("children returns expected nodes", {
   cg <- caugi_graph(A %-->% B, B %-->% C, C %---% D, D %-->% E, class = "PDAG")
-  expect_identical(children(cg, "A")$name, "B")
-  expect_identical(sort(children(cg, c("B", "D"))$name), c("C", "E"))
+  expect_identical(children(cg, "A")[[1]], "B")
+  expect_identical(children(cg, c("B", "D"))[[1]], "C")
+  expect_identical(children(cg, C + D)[[2]], "E")
   # indices
-  expect_identical(children(cg, index = 1)$name, "B")
+  expect_identical(children(cg, index = 1)[[1]], "B")
 })
 
 test_that("neighbors returns undirected and directed adjacency", {
   cg <- caugi_graph(A %-->% B, B %-->% C, B %---% D, C %---% E, class = "PDAG")
   # B has neighbors A (incoming), C (outgoing), D (undirected)
-  expect_identical(sort(neighbors(cg, "B")$name), c("A", "C", "D"))
+  expect_identical(sort(neighbors(cg, "B")[[1]]), c("A", "C", "D"))
   # C has neighbors B and E
-  expect_identical(sort(neighbors(cg, "C")$name), c("B", "E"))
+  expect_identical(sort(neighbors(cg, "C")[[1]]), c("B", "E"))
 })
 
 test_that("queries match with nodes and indexes", {
@@ -147,12 +144,12 @@ test_that("queries fail with bad input", {
 test_that("getter queries handle missing relations and duplicates", {
   cg <- caugi_graph(A %-->% B, B %-->% C, class = "DAG")
   # node with no parents
-  expect_identical(nrow(parents(cg, "A")), 0L)
+  expect_identical(length(parents(cg, "A")[[1]]), 0L)
   # node with no children
-  expect_identical(nrow(children(cg, "C")), 0L)
-  # duplicate targets return concatenated rows
+  expect_identical(length(children(cg, "C")[[1]]), 0L)
+  # duplicate targets collapse to the same combined set
   res <- parents(cg, c("B", "B"))
-  expect_true(nrow(res) >= 2L) # two blocks for the two queries
+  expect_identical(sort(res[[1]]), sort(parents(cg, "B")[[1]]))
 })
 
 test_that("getter queries error on bad nodes or indices", {
@@ -164,14 +161,15 @@ test_that("getter queries error on bad nodes or indices", {
 
 test_that("aliases route correctly", {
   cg <- caugi_graph(A %-->% B, B %---% C, class = "PDAG")
-  expect_identical(neighbours(cg, "B")$name, neighbors(cg, "B")$name)
+  expect_identical(neighbours(cg, "B")[[1]], neighbors(cg, "B")[[1]])
 })
 
 test_that("public getters trigger lazy build", {
   cg <- caugi_graph(A %-->% B, B %-->% C, class = "PDAG")
   cg <- cg |> add_edges(C %---% D)
   expect_false(cg@built)
-  expect_s3_class(parents(cg, "B"), "tbl_df")
+  out <- parents(cg, "B")
+  expect_type(out, "list")
   expect_true(cg@built)
 })
 
@@ -199,21 +197,21 @@ test_that("nodes and edges getters work", {
 
 test_that("an and de works", {
   cg <- caugi_graph(A %-->% B, B %-->% C, C %---% D, class = "PDAG")
-  expect_identical(ancestors(cg, "C")$name, c("A", "B"))
-  expect_identical(descendants(cg, "A")$name, c("B", "C"))
-  expect_identical(sort(ancestors(cg, c("C", "D"))$name), c("A", "B"))
-  expect_identical(sort(descendants(cg, c("A", "D"))$name), c("B", "C"))
+  expect_identical(ancestors(cg, "C")[[1]], c("A", "B"))
+  expect_identical(descendants(cg, "A")[[1]], c("B", "C"))
+  expect_identical(sort(ancestors(cg, c("C", "D"))[[1]]), c("A", "B"))
+  expect_identical(sort(descendants(cg, c("A", "D"))[[1]]), c("B", "C"))
 
   # test index
-  expect_identical(ancestors(cg, index = 3)$name, c("A", "B"))
-  expect_identical(descendants(cg, index = 1)$name, c("B", "C"))
-  expect_identical(sort(ancestors(cg, index = c(3, 4))$name), c("A", "B"))
-  expect_identical(sort(descendants(cg, index = c(1, 4))$name), c("B", "C"))
+  expect_identical(ancestors(cg, index = 3)[[1]], c("A", "B"))
+  expect_identical(descendants(cg, index = 1)[[1]], c("B", "C"))
+  expect_identical(sort(ancestors(cg, index = c(3, 4))[[1]]), c("A", "B"))
+  expect_identical(sort(descendants(cg, index = c(1, 4))[[1]]), c("B", "C"))
 
   cg <- caugi_graph(A, B, class = "DAG")
 
-  expect_equal(nrow(ancestors(cg, "A")), 0L)
-  expect_equal(nrow(descendants(cg, "A")), 0L)
+  expect_equal(length(ancestors(cg, "A")[[1]]), 0L)
+  expect_equal(length(descendants(cg, "A")[[1]]), 0L)
 })
 
 test_that("markov_blanket works on DAGs (parents, children, spouses)", {
@@ -226,18 +224,19 @@ test_that("markov_blanket works on DAGs (parents, children, spouses)", {
   )
 
   mb_A <- markov_blanket(cg, "A")
-  expect_setequal(mb_A$name, c("B", "C", "D"))
+  expect_setequal(mb_A[[1]], c("B", "C", "D"))
 
   mb_B <- markov_blanket(cg, "B")
-  expect_setequal(mb_B$name, c("A", "D", "E", "F"))
+  expect_setequal(mb_B[[1]], c("A", "D", "E", "F"))
 
   # unquoted and vector inputs
   mb_AC <- markov_blanket(cg, A + C)
-  expect_setequal(mb_AC$name, c("A", "B", "C", "D"))
+  expect_setequal(mb_AC[[1]], c("B", "C", "D"))
+  expect_setequal(mb_AC[[2]], c("A"))
 
   # index input
   mb_idx <- markov_blanket(cg, index = 1)
-  expect_setequal(mb_idx$name, c("B", "C", "D"))
+  expect_setequal(mb_idx[[1]], c("B", "C", "D"))
 })
 
 test_that("markov_blanket includes undirected neighbors in PDAGs", {
@@ -248,7 +247,7 @@ test_that("markov_blanket includes undirected neighbors in PDAGs", {
     class = "PDAG"
   )
   mb_B <- markov_blanket(cg, B)
-  expect_setequal(mb_B$name, c("A", "C", "D"))
+  expect_setequal(mb_B[[1]], c("A", "C", "D"))
 })
 
 test_that("markov_blanket argument validation", {
@@ -270,11 +269,11 @@ test_that("exogenous works", {
   )
 
   e <- exogenous(cg)
-  expect_identical(sort(e$name), c("A", "D", "F"))
+  expect_identical(sort(e[[1]]), c("A", "D", "F"))
 
   cg <- caugi_graph(A %---% B, C %-->% A, class = "PDAG")
   e <- exogenous(cg)
-  expect_setequal(e$name, c("B", "C"))
+  expect_setequal(e[[1]], c("B", "C"))
 
   expect_error(exogenous("not a graph"), "Input must be a caugi_graph")
 })
@@ -282,10 +281,10 @@ test_that("exogenous works", {
 test_that("exogenous works on PDAGs", {
   cg <- caugi_graph(A %---% B, C %-->% D, class = "PDAG")
   e <- exogenous(cg)
-  expect_setequal(e$name, c("A", "B", "C"))
+  expect_setequal(e[[1]], c("A", "B", "C"))
 
   e <- exogenous(cg, undirected_as_parents = TRUE)
-  expect_setequal(e$name, c("C"))
+  expect_setequal(e[[1]], c("C"))
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -310,9 +309,8 @@ test_that(".resolve_idx maps names and 1-based indices to 0-based", {
 test_that(".getter_output returns tibble with name column", {
   cg <- caugi_graph(A %-->% B, B %-->% C, class = "DAG")
   out <- caugi:::.getter_output(cg, c(0L, 2L))
-  expect_s3_class(out, "tbl_df")
-  expect_named(out, "name")
-  expect_identical(out$name, c("A", "C"))
+  expect_type(out, "list")
+  expect_identical(out[[1]], c("A", "C"))
 })
 
 test_that(".relations builds, resolves, and binds rows when multiple", {
@@ -323,14 +321,14 @@ test_that(".relations builds, resolves, and binds rows when multiple", {
   parent_getter <- function(ptr, i0) {
     # translate i0 back to name then use public API to avoid duplicating backend
     nm <- cg@nodes$name[i0 + 1L]
-    res <- parents(cg, nm)
-    match(res$name, cg@nodes$name) - 1L
+    res <- parents(cg, nm)[[1]]
+    match(res, cg@nodes$name) - 1L
   }
 
   out_single <- caugi:::.relations(cg, "B", NULL, parent_getter)
-  expect_identical(out_single$name, "A")
+  expect_identical(out_single[[1]], "A")
 
   out_multi <- caugi:::.relations(cg, c("B", "C"), NULL, parent_getter)
-  expect_s3_class(out_multi, "tbl_df")
-  expect_true(nrow(out_multi) >= 1L)
+  expect_type(out_multi, "list")
+  expect_true(length(out_multi[[1]]) >= 1L)
 })
