@@ -297,13 +297,15 @@ caugi_graph <- S7::new_class(
 
 #' @title Internal: Freeze the state environment of a `caugi_graph`
 #'
-#' @description Internal function to freeze the state environment of a
-#' `caugi_graph`, preventing further modifications. This function is not
+#' @description Internal functions to freeze and unfreezethe state environment
+#' of a `caugi_graph`, preventing further modifications. These functions are not
 #' intended to be used directly by users.
 #'
-#' @param e The state environment to freeze.
+#' @param e The state environment to freeze/unfreeze.
 #'
-#' @returns The frozen environment.
+#' @returns The frozen/unfrozen environment.
+#'
+#' @name freeze_state
 #' @keywords internal
 .freeze_state <- function(e) {
   for (nm in ls(envir = e, all.names = TRUE)) lockBinding(nm, e)
@@ -311,6 +313,8 @@ caugi_graph <- S7::new_class(
   e
 }
 
+#' @name freeze_state
+#' @keywords internal
 .unfreeze_state <- function(e) {
   for (nm in ls(envir = e, all.names = TRUE)) unlockBinding(nm, e)
   e

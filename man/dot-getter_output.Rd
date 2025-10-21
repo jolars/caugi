@@ -12,7 +12,7 @@
 \item{idx0}{A vector of zero-based node indices.}
 }
 \value{
-A tibble with a \code{name} column.
+A list of character vectors, each a set of node names.
 }
 \description{
 Helper to format the output of getter queries.

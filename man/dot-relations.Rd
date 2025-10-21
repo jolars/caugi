@@ -17,7 +17,7 @@
 node index, and returns a vector of zero-based indices of related nodes.}
 }
 \value{
-A tibble with a \code{name} column.
+A list of character vectors, each a set of related node names.
 }
 \description{
 Helper to get relations (parents, children, etc.) of nodes.
