@@ -70,16 +70,96 @@ microbenchmark(
   caugi_parents_index = caugi::parents(cg, index = 50),
   caugi_children_index = caugi::children(cg, index = 50),
 
-  # using node name (same as index here, but slower)
-  caugi_neighbors_parsed = caugi::neighbors(cg, "50"),
-  caugi_parents_parsed = caugi::parents(cg, "50"),
-  caugi_children_parsed = caugi::children(cg, "50"),
+  # using node name (same as index here)
+  caugi_neighbors_parsed = caugi::neighbors(cg, nodes = 50),
+  caugi_parents_parsed = caugi::parents(cg, nodes = "50"),
+  caugi_children_parsed = caugi::children(cg, nodes = "50"),
 
   # using Rust backend directly (fastest possible, 0 indexed, less safe)
   caugi_neighbors_rust = caugi:::neighbors_of_ptr(cg@ptr, 49L),
   caugi_parents_rust = caugi:::parents_of_ptr(cg@ptr, 49L),
   caugi_children_rust = caugi:::children_of_ptr(cg@ptr, 49L),
   times = 10000
+)
+```
+
+```{r library-gRbase}
+library(gRbase)
+```
+
+```{r define_graphs}
+# using gRbase to check d-separation
+d_separates <- function(dag_, a, b, c) {
+  ag <- ancestralGraph(c(a, b, c), dag_)
+  separates(a, b, c, moralize(ag))
+}
+
+cg0 <- caugi_graph(
+  A %-->% B + C + E,
+  B %-->% C,
+  C %-->% D,
+  E %-->% D,
+  F %-->% G,
+  G %-->% E,
+  class = "DAG",
+  simple = TRUE,
+  build = TRUE
+)
+grbg <- gRbase::dag(~a, ~ b * a, ~ c * a * b, ~ d * c * e, ~ e * a * g, ~ g * f)
+ig <- caugi::as_igraph(cg0)
+bng <- bnlearn::as.bn(ig)
+ggmg <- ggm::DAG(
+  A ~ B + C + E,
+  B ~ C,
+  C ~ D,
+  E ~ D,
+  F ~ G,
+  G ~ E
+) |> t()
+```
+
+```{r benchmark-parents-children}
+microbenchmark(
+  grbase = {
+    gRbase::parents("d", grbg)
+    gRbase::children("a", grbg)
+  },
+  caugi = {
+    caugi::parents(cg0, D)
+    caugi::children(cg0, A)
+  },
+  caugi_index = {
+    caugi::parents(cg0, index = 7)
+    caugi::children(cg0, index = 1)
+  },
+  caugi_rust = {
+    caugi:::parents_of_ptr(cg0@ptr, 6L)
+    caugi:::children_of_ptr(cg0@ptr, 0L)
+  },
+  igraph = {
+    igraph::neighbors(ig, "D", mode = "in")
+    igraph::neighbors(ig, "A", mode = "out")
+  },
+  bnlearn = {
+    bnlearn::parents(bng, "D")
+    bnlearn::children(bng, "A")
+  },
+  ggm = {
+    ggm::pa("D", ggmg)
+    ggm::ch("A", ggmg)
+  },
+  times = 1000
+)
+```
+
+```{r benchmark-d-sep}
+microbenchmark(
+  grbase = d_separates(grbg, "c", "e", "a"),
+  caugi = caugi::d_separated(cg0, C, E, A),
+  caugi_rust = caugi:::is_d_separated_ptr(cg0@ptr, 2L, 3L, 0L),
+  bnlearn = bnlearn::dsep(bng, "C", "E", "A"),
+  ggm = ggm::dSep(ggmg, "C", "E", "A"),
+  times = 1000
 )
 ```
 
