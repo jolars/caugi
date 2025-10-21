@@ -30,19 +30,19 @@ graph_builder_add_edges <- function(b, from, to, etype) invisible(.Call(wrap__gr
 
 graph_builder_build_view <- function(b, class) .Call(wrap__graph_builder_build_view, b, class)
 
-parents_of_ptr <- function(g, i) .Call(wrap__parents_of_ptr, g, i)
+parents_of_ptr <- function(g, idxs) .Call(wrap__parents_of_ptr, g, idxs)
 
-children_of_ptr <- function(g, i) .Call(wrap__children_of_ptr, g, i)
+children_of_ptr <- function(g, idxs) .Call(wrap__children_of_ptr, g, idxs)
 
-undirected_of_ptr <- function(g, i) .Call(wrap__undirected_of_ptr, g, i)
+undirected_of_ptr <- function(g, idxs) .Call(wrap__undirected_of_ptr, g, idxs)
 
-neighbors_of_ptr <- function(g, i) .Call(wrap__neighbors_of_ptr, g, i)
+neighbors_of_ptr <- function(g, idxs) .Call(wrap__neighbors_of_ptr, g, idxs)
 
-ancestors_of_ptr <- function(g, i) .Call(wrap__ancestors_of_ptr, g, i)
+ancestors_of_ptr <- function(g, idxs) .Call(wrap__ancestors_of_ptr, g, idxs)
 
-descendants_of_ptr <- function(g, i) .Call(wrap__descendants_of_ptr, g, i)
+descendants_of_ptr <- function(g, idxs) .Call(wrap__descendants_of_ptr, g, idxs)
 
-markov_blanket_of_ptr <- function(g, i) .Call(wrap__markov_blanket_of_ptr, g, i)
+markov_blanket_of_ptr <- function(g, idxs) .Call(wrap__markov_blanket_of_ptr, g, idxs)
 
 exogenous_nodes_of_ptr <- function(g, undirected_as_parents) .Call(wrap__exogenous_nodes_of_ptr, g, undirected_as_parents)
 
