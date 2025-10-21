@@ -444,8 +444,8 @@ exogenous <- function(cg, undirected_as_parents = FALSE) {
 #' @keywords internal
 .getter_output <- function(cg, idx0) {
   id <- as.integer(idx0) + 1L
-  nm <- cg@nodes$name
-  tibble::tibble(name = if (is.null(nm)) as.character(id) else nm[id])
+  names(id) <- cg@nodes$name[id]
+  id
 }
 
 #' @title Get relations of nodes in a `caugi_graph`
@@ -466,17 +466,7 @@ exogenous <- function(cg, undirected_as_parents = FALSE) {
 .relations <- function(cg, nodes_expr, index, getter) {
   is_caugi(cg, throw_error = TRUE)
   cg <- build(cg)
-
-  # exactly one of nodes or index
-  has_nodes <- !missing(nodes_expr) && !is.null(nodes_expr)
   has_index <- !missing(index) && !is.null(index)
-  # extra precaution
-  if (has_nodes && has_index) {
-    stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
-  }
-  if (!has_nodes && !has_index) {
-    stop("Supply one of `nodes` or `index`.", call. = FALSE)
-  }
 
   if (has_index) {
     idx0 <- .resolve_idx_from_index(cg, index)

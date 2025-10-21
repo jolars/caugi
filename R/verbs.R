@@ -28,21 +28,10 @@ S7::method(build, caugi_graph) <- function(cg, ...) {
   if (is_empty_caugi(cg)) {
     return(cg)
   }
-  s <- cg@`.state`
-
-  current_fingerprint <- digest::digest(list(
-    nodes  = s$nodes,
-    edges  = s$edges,
-    simple = s$simple,
-    class  = s$class
-  ))
-
-  mutated <- !identical(cg@fingerprint, current_fingerprint)
-
-  if (cg@built && !mutated) {
+  if (cg@built) {
     return(cg)
   }
-
+  s <- .unfreeze_state(cg@`.state`)
 
   n <- nrow(s$nodes)
   id <- setNames(seq_len(n) - 1L, s$nodes$name)
@@ -75,13 +64,7 @@ S7::method(build, caugi_graph) <- function(cg, ...) {
 
   s$ptr <- p
   s$built <- TRUE
-
-  cg@fingerprint <- digest::digest(list(
-    nodes = s$nodes,
-    edges = s$edges,
-    class = s$class,
-    simple = s$simple
-  ))
+  .freeze_state(cg@`.state`)
   cg
 }
 
@@ -371,10 +354,14 @@ subgraph <- function(cg, ...) {
 #'
 #' @keywords internal
 .mark_not_built <- function(cg) {
-  # Temporarily disable S7 validation (S7 checks this attr)
   attr(cg, ".should_validate") <- FALSE
   on.exit(attr(cg, ".should_validate") <- NULL)
-  cg@`.state`$built <- FALSE
+
+  s <- cg@`.state`
+  if (bindingIsLocked("built", s)) unlockBinding("built", s)
+  s$built <- FALSE
+  lockBinding("built", s)
+
   cg
 }
 
@@ -394,7 +381,7 @@ subgraph <- function(cg, ...) {
 .update_caugi_graph <- function(cg, nodes = NULL, edges = NULL,
                                 action = c("add", "remove")) {
   action <- match.arg(action)
-  s <- cg@`.state`
+  s <- .unfreeze_state(cg@`.state`)
 
   if (identical(action, "add")) {
     if (!is.null(nodes)) {
@@ -429,5 +416,6 @@ subgraph <- function(cg, ...) {
     s$nodes <- tibble::tibble(name = unique(s$nodes$name))
     s$edges <- dplyr::distinct(s$edges)
   }
+  .freeze_state(cg@`.state`)
   .mark_not_built(cg)
 }

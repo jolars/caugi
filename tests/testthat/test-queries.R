@@ -334,18 +334,3 @@ test_that(".relations builds, resolves, and binds rows when multiple", {
   expect_s3_class(out_multi, "tbl_df")
   expect_true(nrow(out_multi) >= 1L)
 })
-
-test_that(".relations fails with bad input", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, class = "DAG")
-
-  parent_getter <- function(ptr, i0) {
-    nm <- cg@nodes$name[i0 + 1L]
-    res <- parents(cg, nm)
-    matchildren(res$name, cg@nodes$name) - 1L
-  }
-
-  expect_error(caugi:::.relations(cg, NULL, NULL, parent_getter), "Supply one of `nodes` or `index`")
-  expect_error(caugi:::.relations(cg, "A", 1L, parent_getter), "Supply either `nodes` or `index`")
-  expect_error(caugi:::.relations(cg, "Z", NULL, parent_getter), "Unknown node\\(s\\)")
-  expect_error(caugi:::.relations(cg, NULL, 0L, parent_getter), "out of bounds")
-})

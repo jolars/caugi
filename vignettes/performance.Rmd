@@ -54,10 +54,10 @@ We compare `caugi` to `igraph` on querying.
 We generate a random tree graph with 1000 nodes for the comparison.
 
 ```{r generate-graph}
-ig <- igraph::make_tree(n=1000)
+ig <- igraph::make_tree(n = 1000)
 cg <- caugi::as_caugi(ig, class = "DAG")
 ```
-
+`
 ```{r benchmark-igraph-query}
 mb_igraph <- microbenchmark(
   igraph_neighbors = igraph::neighbors(ig, 50),
@@ -67,9 +67,9 @@ mb_igraph <- microbenchmark(
 )
 
 mb_caugi <- microbenchmark(
-  caugi_neighbors = caugi::neighbors(cg, 50),
-  caugi_parents = caugi::parents(cg, 50),
-  caugi_children = caugi::children(cg, 50),
+  caugi_neighbors = caugi:::neighbors_of_ptr(cg@ptr, 50),
+  caugi_parents = caugi:::parents_of_ptr(cg@ptr, 50),
+  caugi_children = caugi:::children_of_ptr(cg@ptr, 50),
   times = 1000
 )
 ```

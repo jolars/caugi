@@ -135,13 +135,7 @@ caugi_graph <- S7::new_class(
           call. = FALSE
         )
       }
-    ),
-    # the fingerprint is used to detect changes in the graph structure
-    # if the graph state is modified in place (not recommended), build()
-    # should still build a new graph in the Rust backend. The fingerprint
-    # is a hash of the state (excluding the pointer). If the fingerprint
-    # changes, build() will know to rebuild the graph.
-    fingerprint = S7::new_property(S7::class_character)
+    )
   ),
   validator = function(self) {
     s <- self@`.state`
@@ -270,15 +264,7 @@ caugi_graph <- S7::new_class(
 
     S7::new_object(
       caugi_graph,
-      `.state` = state,
-      fingerprint = digest::digest(
-        list(
-          nodes = state$nodes,
-          edges = state$edges,
-          simple = state$simple,
-          class = state$class
-        )
-      )
+      `.state` = .freeze_state(state)
     )
   }
 )
@@ -306,5 +292,26 @@ caugi_graph <- S7::new_class(
   e$built <- isTRUE(built)
   e$simple <- isTRUE(simple)
   e$class <- class
+  e
+}
+
+#' @title Internal: Freeze the state environment of a `caugi_graph`
+#'
+#' @description Internal function to freeze the state environment of a
+#' `caugi_graph`, preventing further modifications. This function is not
+#' intended to be used directly by users.
+#'
+#' @param e The state environment to freeze.
+#'
+#' @returns The frozen environment.
+#' @keywords internal
+.freeze_state <- function(e) {
+  for (nm in ls(envir = e, all.names = TRUE)) lockBinding(nm, e)
+  lockEnvironment(e, bindings = TRUE)
+  e
+}
+
+.unfreeze_state <- function(e) {
+  for (nm in ls(envir = e, all.names = TRUE)) unlockBinding(nm, e)
   e
 }
