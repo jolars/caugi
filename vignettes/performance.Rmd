@@ -148,7 +148,7 @@ microbenchmark(
     ggm::pa("D", ggmg)
     ggm::ch("A", ggmg)
   },
-  times = 1000
+  times = 10000
 )
 ```
 
@@ -159,7 +159,7 @@ microbenchmark(
   caugi_rust = caugi:::is_d_separated_ptr(cg0@ptr, 2L, 3L, 0L),
   bnlearn = bnlearn::dsep(bng, "C", "E", "A"),
   ggm = ggm::dSep(ggmg, "C", "E", "A"),
-  times = 1000
+  times = 10000
 )
 ```
 
