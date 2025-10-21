@@ -59,24 +59,28 @@ cg <- caugi::as_caugi(ig, class = "DAG")
 ```
 `
 ```{r benchmark-igraph-query}
-mb_igraph <- microbenchmark(
+microbenchmark(
+  # igraph
   igraph_neighbors = igraph::neighbors(ig, 50),
   igraph_parents = igraph::neighbors(ig, 50, mode = "in"),
   igraph_children = igraph::neighbors(ig, 50, mode = "out"),
-  times = 1000
-)
 
-mb_caugi <- microbenchmark(
-  caugi_neighbors = caugi:::neighbors_of_ptr(cg@ptr, 50),
-  caugi_parents = caugi:::parents_of_ptr(cg@ptr, 50),
-  caugi_children = caugi:::children_of_ptr(cg@ptr, 50),
-  times = 1000
-)
-```
+  # using index (fastest R side option)
+  caugi_neighbors_index = caugi::neighbors(cg, index = 50),
+  caugi_parents_index = caugi::parents(cg, index = 50),
+  caugi_children_index = caugi::children(cg, index = 50),
 
-```{r benchmark-results}
-print(mb_igraph)
-print(mb_caugi)
+  # using node name (same as index here, but slower)
+  caugi_neighbors_parsed = caugi::neighbors(cg, "50"),
+  caugi_parents_parsed = caugi::parents(cg, "50"),
+  caugi_children_parsed = caugi::children(cg, "50"),
+
+  # using Rust backend directly (fastest possible, 0 indexed, less safe)
+  caugi_neighbors_rust = caugi:::neighbors_of_ptr(cg@ptr, 49L),
+  caugi_parents_rust = caugi:::parents_of_ptr(cg@ptr, 49L),
+  caugi_children_rust = caugi:::children_of_ptr(cg@ptr, 49L),
+  times = 10000
+)
 ```
 
 ### Session info
