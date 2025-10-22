@@ -135,6 +135,18 @@ caugi_graph <- S7::new_class(
           call. = FALSE
         )
       }
+    ),
+    name_index_map = S7::new_property(
+      S7::class_any,
+      getter = function(self) {
+        return(self@`.state`$name_index_map)
+      },
+      setter = function(self, value) {
+        stop("`name_index_map` property is read-only via @ <-. ",
+          "It is managed internally.",
+          call. = FALSE
+        )
+      }
     )
   ),
   validator = function(self) {
@@ -253,13 +265,20 @@ caugi_graph <- S7::new_class(
     ) |>
       dplyr::arrange(from, to, edge)
 
+    # initialize fastmap for name to index mapping
+    name_index_map <- fastmap::fastmap()
+    for (i in seq_len(nrow(nodes))) {
+      name_index_map$set(nodes$name[i], as.integer(id[i]))
+    }
+
     state <- .cg_state(
       nodes = nodes,
       edges = edges,
       ptr = gptr,
       built = built,
       simple = simple,
-      class = class
+      class = class,
+      name_index_map = name_index_map
     )
 
     S7::new_object(
@@ -282,9 +301,13 @@ caugi_graph <- S7::new_class(
 #' @param simple Logical; whether the graph is simple
 #' (no parallel edges or self-loops).
 #' @param class Character; one of `"Unknown"`, `"DAG"`, or `"PDAG"`.
+#' @param name_index_map A `fastmap` mapping node names to their zero indexed
+#' indices.
 #'
+#' @returns An environment containing the graph state.
 #' @keywords internal
-.cg_state <- function(nodes, edges, ptr, built, simple, class) {
+.cg_state <- function(nodes, edges, ptr, built, simple, class,
+                      name_index_map, index_name_map) {
   e <- new.env(parent = emptyenv())
   e$nodes <- tibble::tibble(name = nodes$name)
   e$edges <- tibble::tibble(from = edges$from, edge = edges$edge, to = edges$to)
@@ -292,6 +315,7 @@ caugi_graph <- S7::new_class(
   e$built <- isTRUE(built)
   e$simple <- isTRUE(simple)
   e$class <- class
+  e$name_index_map <- name_index_map
   e
 }
 
