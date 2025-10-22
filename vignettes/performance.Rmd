@@ -54,31 +54,35 @@ We compare `caugi` to `igraph` on querying.
 We generate a random tree graph with 1000 nodes for the comparison.
 
 ```{r generate-graph}
-ig <- igraph::make_tree(n = 1000)
+ig <- igraph::sample_gnm(10000, 50000) |> igraph::as_directed(mode = "acyclic")
 cg <- caugi::as_caugi(ig, class = "DAG")
 ```
-`
+
 ```{r benchmark-igraph-query}
 microbenchmark(
   # igraph
-  igraph_neighbors = igraph::neighbors(ig, 50),
-  igraph_parents = igraph::neighbors(ig, 50, mode = "in"),
-  igraph_children = igraph::neighbors(ig, 50, mode = "out"),
+  igraph_neighbors = igraph::neighbors(ig, 5000),
+  igraph_parents = igraph::neighbors(ig, 5000, mode = "in"),
+  igraph_children = igraph::neighbors(ig, 5000, mode = "out"),
   
   # using index (fastest R side option)
-  caugi_neighbors_index = caugi::neighbors(cg, index = 50),
-  caugi_parents_index = caugi::parents(cg, index = 50),
-  caugi_children_index = caugi::children(cg, index = 50),
+  caugi_neighbors_index = caugi::neighbors(cg, index = 5000),
+  caugi_parents_index = caugi::parents(cg, index = 5000),
+  caugi_children_index = caugi::children(cg, index = 5000),
 
   # using node name (same as index here)
-  caugi_neighbors_parsed = caugi::neighbors(cg, nodes = "50"),
-  caugi_parents_parsed = caugi::parents(cg, nodes = "50"),
-  caugi_children_parsed = caugi::children(cg, nodes = "50"),
+  caugi_neighbors_parsed = caugi::neighbors(cg, nodes = "5000"),
+  caugi_parents_parsed = caugi::parents(cg, nodes = "5000"),
+  caugi_children_parsed = caugi::children(cg, nodes = "5000"),
 
   # using Rust backend directly (fastest possible, 0 indexed, less safe)
-  caugi_neighbors_rust = caugi:::neighbors_of_ptr(cg@ptr, 49L),
-  caugi_parents_rust = caugi:::parents_of_ptr(cg@ptr, 49L),
-  caugi_children_rust = caugi:::children_of_ptr(cg@ptr, 49L),
+  caugi_neighbors_rust = caugi:::neighbors_of_ptr(cg@ptr, 4999L),
+  caugi_parents_rust = caugi:::parents_of_ptr(cg@ptr, 4999L),
+  caugi_children_rust = caugi:::children_of_ptr(cg@ptr, 4999L),
+  
+  # new parent
+  caugi_parents2_parsed = caugi:::parents2(cg, nodes = "5000"),
+  caugi_parents2_index = caugi:::parents2(cg, index = 5000),
   times = 10000
 )
 ```
@@ -135,6 +139,14 @@ microbenchmark(
   caugi_rust = {
     caugi:::parents_of_ptr(cg0@ptr, 6L)
     caugi:::children_of_ptr(cg0@ptr, 0L)
+  },
+  caugi_parents2 = {
+    caugi:::parents2(cg0, "D")
+    caugi:::parents2(cg0, "B")
+  },
+  caugi_parents2_index = {
+    caugi:::parents2(cg0, index = 7)
+    caugi:::parents2(cg0, index = 2)
   },
   igraph = {
     igraph::neighbors(ig, "D", mode = "in")
