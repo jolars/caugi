@@ -52,7 +52,7 @@ is_empty_caugi <- function(cg) {
 same_nodes <- function(cg1, cg2, throw_error = FALSE) {
   is_caugi(cg1, throw_error)
   is_caugi(cg2, throw_error)
-  if (!identical(sort(cg1@nodes$name), sort(cg2@nodes$name))) {
+  if (!setequal(cg1@nodes$name, cg2@nodes$name)) {
     differing_nodes <- setdiff(
       union(cg1@nodes$name, cg2@nodes$name),
       intersect(cg1@nodes$name, cg2@nodes$name)
@@ -234,15 +234,34 @@ parents <- function(cg, nodes = NULL, index = NULL) {
   if (nodes_supplied && index_supplied) {
     stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
   }
+  if (!cg@built) cg <- build(cg)
   if (index_supplied) {
-    return(.relations(cg, NULL, index, parents_of_ptr))
+    return(.getter_output(
+      cg,
+      parents_of_ptr(cg@ptr, as.integer(index - 1L)),
+      cg@nodes$name[index]
+    ))
   }
   if (!nodes_supplied) {
     stop("Supply one of `nodes` or `index`.", call. = FALSE)
   }
-  expr <- substitute(nodes)
-  env <- parent.frame()
-  .relations(cg, .expand_nodes(expr, env), NULL, parents_of_ptr)
+  if (!is.character(nodes)) {
+    stop("`nodes` must be a character vector of node names.", call. = FALSE)
+  }
+
+  index <- cg@name_index_map$mget(nodes,
+    missing = stop(
+      paste(
+        "Non-existant node name:",
+        paste(setdiff(nodes, cg@nodes$name),
+          collapse = ", "
+        )
+      ),
+      call. = FALSE
+    )
+  )
+
+  .getter_output(cg, parents_of_ptr(cg@ptr, as.integer(index)), nodes)
 }
 
 #' @title Get children of nodes in a `caugi_graph`
@@ -259,15 +278,34 @@ children <- function(cg, nodes = NULL, index = NULL) {
   if (nodes_supplied && index_supplied) {
     stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
   }
+  if (!cg@built) cg <- build(cg)
   if (index_supplied) {
-    return(.relations(cg, NULL, index, children_of_ptr))
+    return(.getter_output(
+      cg,
+      children_of_ptr(cg@ptr, as.integer(index - 1L)),
+      cg@nodes$name[index]
+    ))
   }
   if (!nodes_supplied) {
     stop("Supply one of `nodes` or `index`.", call. = FALSE)
   }
-  expr <- substitute(nodes)
-  env <- parent.frame()
-  .relations(cg, .expand_nodes(expr, env), NULL, children_of_ptr)
+  if (!is.character(nodes)) {
+    stop("`nodes` must be a character vector of node names.", call. = FALSE)
+  }
+
+  index <- cg@name_index_map$mget(nodes,
+    missing = stop(
+      paste(
+        "Non-existant node name:",
+        paste(setdiff(nodes, cg@nodes$name),
+          collapse = ", "
+        )
+      ),
+      call. = FALSE
+    )
+  )
+
+  .getter_output(cg, children_of_ptr(cg@ptr, as.integer(index)), nodes)
 }
 
 #' @title Get neighbors of nodes in a `caugi_graph`
@@ -284,15 +322,34 @@ neighbors <- function(cg, nodes = NULL, index = NULL) {
   if (nodes_supplied && index_supplied) {
     stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
   }
+  if (!cg@built) cg <- build(cg)
   if (index_supplied) {
-    return(.relations(cg, NULL, index, neighbors_of_ptr))
+    return(.getter_output(
+      cg,
+      neighbors_of_ptr(cg@ptr, as.integer(index - 1L)),
+      cg@nodes$name[index]
+    ))
   }
   if (!nodes_supplied) {
     stop("Supply one of `nodes` or `index`.", call. = FALSE)
   }
-  expr <- substitute(nodes)
-  env <- parent.frame()
-  .relations(cg, .expand_nodes(expr, env), NULL, neighbors_of_ptr)
+  if (!is.character(nodes)) {
+    stop("`nodes` must be a character vector of node names.", call. = FALSE)
+  }
+
+  index <- cg@name_index_map$mget(nodes,
+    missing = stop(
+      paste(
+        "Non-existant node name:",
+        paste(setdiff(nodes, cg@nodes$name),
+          collapse = ", "
+        )
+      ),
+      call. = FALSE
+    )
+  )
+
+  .getter_output(cg, neighbors_of_ptr(cg@ptr, as.integer(index)), nodes)
 }
 
 #' @rdname neighbors
@@ -313,15 +370,34 @@ ancestors <- function(cg, nodes = NULL, index = NULL) {
   if (nodes_supplied && index_supplied) {
     stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
   }
+  if (!cg@built) cg <- build(cg)
   if (index_supplied) {
-    return(.relations(cg, NULL, index, ancestors_of_ptr))
+    return(.getter_output(
+      cg,
+      ancestors_of_ptr(cg@ptr, as.integer(index - 1L)),
+      cg@nodes$name[index]
+    ))
   }
   if (!nodes_supplied) {
     stop("Supply one of `nodes` or `index`.", call. = FALSE)
   }
-  expr <- substitute(nodes)
-  env <- parent.frame()
-  .relations(cg, .expand_nodes(expr, env), NULL, ancestors_of_ptr)
+  if (!is.character(nodes)) {
+    stop("`nodes` must be a character vector of node names.", call. = FALSE)
+  }
+
+  index <- cg@name_index_map$mget(nodes,
+    missing = stop(
+      paste(
+        "Non-existant node name:",
+        paste(setdiff(nodes, cg@nodes$name),
+          collapse = ", "
+        )
+      ),
+      call. = FALSE
+    )
+  )
+
+  .getter_output(cg, ancestors_of_ptr(cg@ptr, as.integer(index)), nodes)
 }
 
 #' @title Get descendants of nodes in a `caugi_graph`
@@ -338,16 +414,36 @@ descendants <- function(cg, nodes = NULL, index = NULL) {
   if (nodes_supplied && index_supplied) {
     stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
   }
+  if (!cg@built) cg <- build(cg)
   if (index_supplied) {
-    return(.relations(cg, NULL, index, descendants_of_ptr))
+    return(.getter_output(
+      cg,
+      descendants_of_ptr(cg@ptr, as.integer(index - 1L)),
+      cg@nodes$name[index]
+    ))
   }
   if (!nodes_supplied) {
     stop("Supply one of `nodes` or `index`.", call. = FALSE)
   }
-  expr <- substitute(nodes)
-  env <- parent.frame()
-  .relations(cg, .expand_nodes(expr, env), NULL, descendants_of_ptr)
+  if (!is.character(nodes)) {
+    stop("`nodes` must be a character vector of node names.", call. = FALSE)
+  }
+
+  index <- cg@name_index_map$mget(nodes,
+    missing = stop(
+      paste(
+        "Non-existant node name:",
+        paste(setdiff(nodes, cg@nodes$name),
+          collapse = ", "
+        )
+      ),
+      call. = FALSE
+    )
+  )
+
+  .getter_output(cg, descendants_of_ptr(cg@ptr, as.integer(index)), nodes)
 }
+
 #' @title Get Markov blanket of nodes in a `caugi_graph`
 #'
 #' @param cg A `caugi_graph` object.
@@ -362,15 +458,34 @@ markov_blanket <- function(cg, nodes = NULL, index = NULL) {
   if (nodes_supplied && index_supplied) {
     stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
   }
+  if (!cg@built) cg <- build(cg)
   if (index_supplied) {
-    return(.relations(cg, NULL, index, markov_blanket_of_ptr))
+    return(.getter_output(
+      cg,
+      markov_blanket_of_ptr(cg@ptr, as.integer(index - 1L)),
+      cg@nodes$name[index]
+    ))
   }
   if (!nodes_supplied) {
     stop("Supply one of `nodes` or `index`.", call. = FALSE)
   }
-  expr <- substitute(nodes)
-  env <- parent.frame()
-  .relations(cg, .expand_nodes(expr, env), NULL, markov_blanket_of_ptr)
+  if (!is.character(nodes)) {
+    stop("`nodes` must be a character vector of node names.", call. = FALSE)
+  }
+
+  index <- cg@name_index_map$mget(nodes,
+    missing = stop(
+      paste(
+        "Non-existant node name:",
+        paste(setdiff(nodes, cg@nodes$name),
+          collapse = ", "
+        )
+      ),
+      call. = FALSE
+    )
+  )
+
+  .getter_output(cg, markov_blanket_of_ptr(cg@ptr, as.integer(index)), nodes)
 }
 
 #' @title Get all exogenous nodes in a `caugi_graph`
@@ -388,49 +503,12 @@ exogenous <- function(cg, undirected_as_parents = FALSE) {
   is_caugi(cg, throw_error = TRUE)
   cg <- build(cg)
   idx0 <- exogenous_nodes_of_ptr(cg@ptr, undirected_as_parents)
-  .getter_output(cg, idx0)
+  .getter_output(cg, idx0, NULL)
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
 # ──────────────────────────── Relations helpers ───────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
-
-#' @title Resolve node names or indices to zero-based indices
-#'
-#' @description Convert node names or one-based indices to zero-based indices.
-#'
-#' @param cg A `caugi_graph` object.
-#' @param nodes A vector of node names or one-based indices.
-#'
-#' @returns An integer vector of zero-based node indices.
-#'
-#' @keywords internal
-.resolve_idx <- function(cg, nodes) {
-  nm <- cg@nodes$name
-  # extra precaution
-  if (is.null(nm)) {
-    stop("Node names unavailable on this graph.", call. = FALSE) # nocov
-  }
-  m <- match(as.character(nodes), nm)
-  if (anyNA(m)) {
-    bad <- nodes[is.na(m)]
-    stop("Unknown node(s): ", paste(bad, collapse = ", "), call. = FALSE)
-  }
-  m - 1L
-}
-
-#' @title Resolve 1-based indices to zero-based
-#' @keywords internal
-.resolve_idx_from_index <- function(cg, index) {
-  if (!is.numeric(index)) {
-    stop("`index` must be numeric.", call. = FALSE)
-  }
-  ix <- as.integer(index)
-  if (any(ix < 1L) || any(ix > nrow(cg@nodes))) {
-    stop("`index` out of bounds [1, ", nrow(cg@nodes), "].", call. = FALSE)
-  }
-  ix - 1L
-}
 
 #' @title Output object of getter queries
 #'
@@ -438,53 +516,28 @@ exogenous <- function(cg, undirected_as_parents = FALSE) {
 #'
 #' @param cg A `caugi_graph` object.
 #' @param idx0 A vector of zero-based node indices.
+#' @param nodes A vector of node names.
 #'
 #' @returns A list of character vectors, each a set of node names.
+#' If only one node is requested, returns a character vector.
 #'
 #' @keywords internal
-.getter_output <- function(cg, idx0) {
+.getter_output <- function(cg, idx0, nodes) {
+  nm <- cg@nodes$name
   to_names <- function(ix0) {
-    ix1 <- as.integer(ix0) + 1L
-    if (length(ix1) == 0L) {
-      return(character())
+    if (length(ix0) == 0L) {
+      return(NULL)
     }
-    cg@nodes$name[ix1]
-  }
-  if (is.list(idx0)) {
-    lapply(idx0, to_names) # list of character vectors (node names)
-  } else {
-    list(to_names(idx0)) # always return a list
-  }
-}
-
-#' @title Get relations of nodes in a `caugi_graph`
-#'
-#' @description Helper to get relations (parents, children, etc.) of nodes.
-#'
-#' @param cg A `caugi_graph` object.
-#' @param nodes_expr A node expression from .expand_nodes.
-#' @param index A vector of node indices.
-#' @param getter A function that takes a pointer to the graph and a zero-based
-#' node index, and returns a vector of zero-based indices of related nodes.
-#'
-#' @returns A list of character vectors, each a set of related node names.
-#'
-#' @keywords internal
-#' @title Get relations of nodes in a `caugi_graph`
-#' @keywords internal
-.relations <- function(cg, nodes_expr, index, getter) {
-  is_caugi(cg, throw_error = TRUE)
-
-  idx_supplied <- !missing(index) && !is.null(index)
-  if (idx_supplied) {
-    idx <- as.integer(index)
-    idx0 <- .resolve_idx_from_index(cg, idx)
-    if (!cg@built) cg <- build(cg)
-  } else {
-    # names path
-    if (!cg@built) cg <- build(cg)
-    idx0 <- .resolve_idx(cg, nodes_expr)
+    nm[ix0 + 1L]
   }
 
-  .getter_output(cg, getter(cg@ptr, idx0))
+  # faster check than doing is.null and length == 1, since length(NULL) == 0
+  if (length(nodes) <= 1L) {
+    ix <- idx0[[1L]]
+    return(to_names(ix))
+  }
+
+  out <- lapply(idx0, to_names)
+  names(out) <- nodes
+  out
 }

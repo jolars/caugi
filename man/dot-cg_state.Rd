@@ -4,7 +4,16 @@
 \alias{.cg_state}
 \title{Internal: Create the state environment for a \code{caugi_graph}}
 \usage{
-.cg_state(nodes, edges, ptr, built, simple, class, name_index_map)
+.cg_state(
+  nodes,
+  edges,
+  ptr,
+  built,
+  simple,
+  class,
+  name_index_map,
+  index_name_map
+)
 }
 \arguments{
 \item{nodes}{A tibble of nodes with a \code{name} column.}

@@ -4,15 +4,18 @@
 \alias{.getter_output}
 \title{Output object of getter queries}
 \usage{
-.getter_output(cg, idx0)
+.getter_output(cg, idx0, nodes)
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}
 
 \item{idx0}{A vector of zero-based node indices.}
+
+\item{nodes}{A vector of node names.}
 }
 \value{
 A list of character vectors, each a set of node names.
+If only one node is requested, returns a character vector.
 }
 \description{
 Helper to format the output of getter queries.
