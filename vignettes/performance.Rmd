@@ -64,14 +64,14 @@ microbenchmark(
   igraph_neighbors = igraph::neighbors(ig, 50),
   igraph_parents = igraph::neighbors(ig, 50, mode = "in"),
   igraph_children = igraph::neighbors(ig, 50, mode = "out"),
-
+  
   # using index (fastest R side option)
   caugi_neighbors_index = caugi::neighbors(cg, index = 50),
   caugi_parents_index = caugi::parents(cg, index = 50),
   caugi_children_index = caugi::children(cg, index = 50),
 
   # using node name (same as index here)
-  caugi_neighbors_parsed = caugi::neighbors(cg, nodes = 50),
+  caugi_neighbors_parsed = caugi::neighbors(cg, nodes = "50"),
   caugi_parents_parsed = caugi::parents(cg, nodes = "50"),
   caugi_children_parsed = caugi::children(cg, nodes = "50"),
 

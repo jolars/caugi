@@ -204,7 +204,6 @@ fn graph_builder_build_view(
 }
 
 // ── Unified queries ────────────────────────────────────────────────────────────────
-// ── Unified queries ────────────────────────────────────────────────────────────────
 #[extendr]
 fn parents_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
     let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
