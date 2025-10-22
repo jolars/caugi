@@ -4,7 +4,7 @@
 \alias{.cg_state}
 \title{Internal: Create the state environment for a \code{caugi_graph}}
 \usage{
-.cg_state(nodes, edges, ptr, built, simple, class)
+.cg_state(nodes, edges, ptr, built, simple, class, name_index_map)
 }
 \arguments{
 \item{nodes}{A tibble of nodes with a \code{name} column.}
@@ -20,6 +20,12 @@
 (no parallel edges or self-loops).}
 
 \item{class}{Character; one of \code{"Unknown"}, \code{"DAG"}, or \code{"PDAG"}.}
+
+\item{name_index_map}{A \code{fastmap} mapping node names to their zero indexed
+indices.}
+}
+\value{
+An environment containing the graph state.
 }
 \description{
 Internal function to create the state environment for a
