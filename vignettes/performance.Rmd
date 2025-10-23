@@ -45,47 +45,18 @@ while keeping the user experience smooth.
 ### Comparison
 
 ```{r setup}
-library(caugi)
-library(igraph)
-library(microbenchmark)
+library(gRbase)
+library(bench)
 ```
 
 We compare `caugi` to `igraph` on querying. 
 We generate a random tree graph with 1000 nodes for the comparison.
 
 ```{r generate-graph}
-ig <- igraph::sample_gnm(10000, 50000) |> igraph::as_directed(mode = "acyclic")
+ig <- igraph::sample_gnm(100, 500) |> igraph::as_directed(mode = "acyclic")
 cg <- caugi::as_caugi(ig, class = "DAG")
 ```
 
-```{r benchmark-igraph-query}
-microbenchmark(
-  # igraph
-  igraph_neighbors = igraph::neighbors(ig, 5000),
-  igraph_parents = igraph::neighbors(ig, 5000, mode = "in"),
-  igraph_children = igraph::neighbors(ig, 5000, mode = "out"),
-
-  # using index (fastest R side option)
-  caugi_neighbors_index = caugi::neighbors(cg, index = 5000),
-  caugi_parents_index = caugi::parents(cg, index = 5000),
-  caugi_children_index = caugi::children(cg, index = 5000),
-
-  # using node name (same as index here)
-  caugi_neighbors_parsed = caugi::neighbors(cg, nodes = "5000"),
-  caugi_parents_parsed = caugi::parents(cg, nodes = "5000"),
-  caugi_children_parsed = caugi::children(cg, nodes = "5000"),
-
-  # using Rust backend directly (fastest possible, 0 indexed, less safe)
-  caugi_neighbors_rust = caugi:::neighbors_of_ptr(cg@ptr, 4999L),
-  caugi_parents_rust = caugi:::parents_of_ptr(cg@ptr, 4999L),
-  caugi_children_rust = caugi:::children_of_ptr(cg@ptr, 4999L),
-  times = 10000
-)
-```
-
-```{r library-gRbase}
-library(gRbase)
-```
 
 ```{r define_graphs}
 # using gRbase to check d-separation
@@ -94,73 +65,67 @@ d_separates <- function(dag_, a, b, c) {
   separates(a, b, c, moralize(ag))
 }
 
-cg0 <- caugi_graph(
-  A %-->% B + C + E,
-  B %-->% C,
-  C %-->% D,
-  E %-->% D,
-  F %-->% G,
-  G %-->% E,
-  class = "DAG",
-  simple = TRUE,
-  build = TRUE
-)
-grbg <- gRbase::dag(~a, ~ b * a, ~ c * a * b, ~ d * c * e, ~ e * a * g, ~ g * f)
-ig <- caugi::as_igraph(cg0)
+ig <- igraph::sample_gnm(100, 500) |> igraph::as_directed(mode = "acyclic")
+igraph::V(ig)$name <- paste0("V", 1:length(igraph::V(ig)))
+cg <- caugi::as_caugi(ig, class = "DAG")
+forms <- lapply(igraph::V(ig)$name, function(v) {
+  pa <- names(igraph::neighbors(ig, v, mode = "in"))
+  if (length(pa) == 0) as.formula(paste(v, "~ 1")) else as.formula(paste(v, "~", paste(pa, collapse = "+")))
+})
+ggmg <- do.call(ggm::DAG, forms)
+forms_gr <- lapply(igraph::V(g)$name, function(v) {
+  pa <- names(igraph::neighbors(g, v, mode = "in"))
+  if (length(pa) == 0) {
+    as.formula(paste("~", v))
+  } else {
+    as.formula(paste("~", paste(c(v, pa), collapse = "*")))
+  }
+})
+grbg <- gRbase::dagList(forms_gr)
 bng <- bnlearn::as.bn(ig)
-ggmg <- ggm::DAG(
-  A ~ B + C + E,
-  B ~ C,
-  C ~ D,
-  E ~ D,
-  F ~ G,
-  G ~ E
-) |> t()
 ```
 
 ```{r benchmark-parents-children}
-microbenchmark(
+bench::mark(
   grbase = {
-    gRbase::parents("d", grbg)
-    gRbase::children("a", grbg)
+    gRbase::parents("V50", grbg)
+    gRbase::children("V50", grbg)
   },
   caugi = {
-    caugi::parents(cg0, "D")
-    caugi::children(cg0, "A")
+    caugi::parents(cg, "V50")
+    caugi::children(cg, "V50")
   },
   caugi_index = {
-    caugi::parents(cg0, index = 7)
-    caugi::children(cg0, index = 1)
+    caugi::parents(cg, index = 50)
+    caugi::children(cg, index = 50)
   },
   caugi_rust = {
-    caugi:::parents_of_ptr(cg0@ptr, 6L)
-    caugi:::children_of_ptr(cg0@ptr, 0L)
+    caugi:::parents_of_ptr(cg@ptr, 49L)
+    caugi:::children_of_ptr(cg@ptr, 49L)
   },
   igraph = {
-    igraph::neighbors(ig, "D", mode = "in")
-    igraph::neighbors(ig, "A", mode = "out")
+    igraph::neighbors(ig, "V50", mode = "in")
+    igraph::neighbors(ig, "V50", mode = "out")
   },
   bnlearn = {
-    bnlearn::parents(bng, "D")
-    bnlearn::children(bng, "A")
+    bnlearn::parents(bng, "V50")
+    bnlearn::children(bng, "V50")
   },
   ggm = {
-    ggm::pa("D", ggmg)
-    ggm::ch("A", ggmg)
-  },
-  times = 10000
+    ggm::pa("V50", ggmg)
+    ggm::ch("V50", ggmg)
+  }
 )
 ```
 
 ```{r benchmark-d-sep}
-microbenchmark(
+bench::mark(
   grbase = d_separates(grbg, "c", "e", "a"),
   caugi = caugi::d_separated(cg0, "C", "E", "A"),
   caugi_index = caugi::d_separated(cg0, X_index = 3L, Y_index = 4L, Z_index = 1L),
   caugi_rust = caugi:::d_separated_ptr(cg0@ptr, 2L, 3L, 0L),
   bnlearn = bnlearn::dsep(bng, "C", "E", "A"),
-  ggm = ggm::dSep(ggmg, "C", "E", "A"),
-  times = 10000
+  ggm = ggm::dSep(ggmg, "C", "E", "A")
 )
 ```
 
