@@ -383,10 +383,10 @@ test_that("caugi_graph preserves node order from nodes parameter", {
     nodes = paste0("V", 1:10),
     class = "DAG"
   )
-  
+
   # Node order should match the provided nodes parameter
   expect_equal(V(cg)$name, paste0("V", 1:10))
-  
+
   # Edges should still be present and correct
   expect_equal(nrow(edges(cg)), 3)
 })

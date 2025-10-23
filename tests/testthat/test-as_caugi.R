@@ -221,16 +221,16 @@ test_that("igraph with no edges, but with nodes, works", {
 
 test_that("igraph vertex order is preserved when converting to caugi", {
   skip_if_not_installed("igraph")
-  
+
   # Create igraph with specific vertex names (V1...V10)
   # Add edges that would naturally scramble the order if we use unique(c(from, to))
   set.seed(1022)
   g <- igraph::sample_gnm(10, 5) |> igraph::as_directed(mode = "acyclic")
   igraph::V(g)$name <- paste0("V", 1:length(igraph::V(g)))
-  
+
   # Convert to caugi
   cg <- as_caugi(g, class = "DAG")
-  
+
   # Vertex order should be preserved
   expect_equal(V(cg)$name, igraph::V(g)$name)
   expect_equal(V(cg)$name, paste0("V", 1:10))
