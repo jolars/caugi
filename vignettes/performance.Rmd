@@ -64,7 +64,7 @@ microbenchmark(
   igraph_neighbors = igraph::neighbors(ig, 5000),
   igraph_parents = igraph::neighbors(ig, 5000, mode = "in"),
   igraph_children = igraph::neighbors(ig, 5000, mode = "out"),
-  
+
   # using index (fastest R side option)
   caugi_neighbors_index = caugi::neighbors(cg, index = 5000),
   caugi_parents_index = caugi::parents(cg, index = 5000),
@@ -79,10 +79,6 @@ microbenchmark(
   caugi_neighbors_rust = caugi:::neighbors_of_ptr(cg@ptr, 4999L),
   caugi_parents_rust = caugi:::parents_of_ptr(cg@ptr, 4999L),
   caugi_children_rust = caugi:::children_of_ptr(cg@ptr, 4999L),
-  
-  # new parent
-  caugi_parents2_parsed = caugi:::parents2(cg, nodes = "5000"),
-  caugi_parents2_index = caugi:::parents2(cg, index = 5000),
   times = 10000
 )
 ```
@@ -129,8 +125,8 @@ microbenchmark(
     gRbase::children("a", grbg)
   },
   caugi = {
-    caugi::parents(cg0, D)
-    caugi::children(cg0, A)
+    caugi::parents(cg0, "D")
+    caugi::children(cg0, "A")
   },
   caugi_index = {
     caugi::parents(cg0, index = 7)
@@ -139,14 +135,6 @@ microbenchmark(
   caugi_rust = {
     caugi:::parents_of_ptr(cg0@ptr, 6L)
     caugi:::children_of_ptr(cg0@ptr, 0L)
-  },
-  caugi_parents2 = {
-    caugi:::parents2(cg0, "D")
-    caugi:::parents2(cg0, "B")
-  },
-  caugi_parents2_index = {
-    caugi:::parents2(cg0, index = 7)
-    caugi:::parents2(cg0, index = 2)
   },
   igraph = {
     igraph::neighbors(ig, "D", mode = "in")
@@ -167,8 +155,9 @@ microbenchmark(
 ```{r benchmark-d-sep}
 microbenchmark(
   grbase = d_separates(grbg, "c", "e", "a"),
-  caugi = caugi::d_separated(cg0, C, E, A),
-  caugi_rust = caugi:::is_d_separated_ptr(cg0@ptr, 2L, 3L, 0L),
+  caugi = caugi::d_separated(cg0, "C", "E", "A"),
+  caugi_index = caugi::d_separated(cg0, X_index = 3L, Y_index = 4L, Z_index = 1L),
+  caugi_rust = caugi:::d_separated_ptr(cg0@ptr, 2L, 3L, 0L),
   bnlearn = bnlearn::dsep(bng, "C", "E", "A"),
   ggm = ggm::dSep(ggmg, "C", "E", "A"),
   times = 10000

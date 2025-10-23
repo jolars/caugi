@@ -131,9 +131,9 @@ cg <- caugi_graph(
   E %---% F,
   class = "PDAG"
 )
-parents(cg, D)
+parents(cg, "D")
 children(cg, index = 3)
-neighbors(cg, c(B, C))
+neighbors(cg, c("B", "C"))
 ```
 
 ### Properties
