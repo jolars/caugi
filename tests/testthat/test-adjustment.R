@@ -13,41 +13,41 @@ adjustment_set_cg <- caugi_graph(
 )
 
 test_that("d-separation checks", {
-  expect_false(d_separated(adjustment_set_cg, X, Y)) # backdoor via A-->K-->Y and causal X-->D-->Y
-  expect_false(d_separated(adjustment_set_cg, X, Y, Z = A)) # causal path still open
-  expect_false(d_separated(adjustment_set_cg, X, Y, Z = K)) # causal path still open
-  expect_false(d_separated(adjustment_set_cg, X, Y, Z = D)) # backdoor still open
-  expect_true(d_separated(adjustment_set_cg, X, Y, Z = c(A, D))) # backdoor and causal both blocked
-  expect_true(d_separated(adjustment_set_cg, X, Y, Z = c(K, D))) # backdoor and causal both blocked
+  expect_false(d_separated(adjustment_set_cg, "X", "Y")) # backdoor via A-->K-->Y and causal X-->D-->Y
+  expect_false(d_separated(adjustment_set_cg, "X", "Y", Z = "A")) # causal path still open
+  expect_false(d_separated(adjustment_set_cg, "X", "Y", Z = "K")) # causal path still open
+  expect_false(d_separated(adjustment_set_cg, "X", "Y", Z = "D")) # backdoor still open
+  expect_true(d_separated(adjustment_set_cg, "X", "Y", Z = c("A", "D"))) # backdoor and causal both blocked
+  expect_true(d_separated(adjustment_set_cg, "X", "Y", Z = c("K", "D"))) # backdoor and causal both blocked
 })
 
 test_that("adjustment_set(type = 'parents') returns Pa(X) \\ {X,Y}", {
-  got <- adjustment_set(adjustment_set_cg, X, Y, type = "parents")
-  expect_setequal(got[[1]], c("A", "C"))
+  got <- adjustment_set(adjustment_set_cg, "X", "Y", type = "parents")
+  expect_setequal(got, c("A", "C"))
 })
 
 test_that("adjustment_set(type = 'backdoor') returns a valid backdoor set", {
-  Z <- adjustment_set(adjustment_set_cg, X, Y, type = "backdoor")
-  expect_true(is_valid_backdoor(adjustment_set_cg, x = X, y = Y, Z = Z))
+  Z <- adjustment_set(adjustment_set_cg, "X", "Y", type = "backdoor")
+  expect_true(is_valid_backdoor(adjustment_set_cg, X = "X", Y = "Y", Z = Z))
   expect_false("D" %in% Z) # descendant of X should not appear
 })
 
 test_that("adjustment_set(type = 'optimal') is valid and minimal here", {
-  Z <- adjustment_set(adjustment_set_cg, X, Y, type = "optimal")
-  expect_true(is_valid_backdoor(adjustment_set_cg, x = X, y = Y, Z = Z))
+  Z <- adjustment_set(adjustment_set_cg, "X", "Y", type = "optimal")
+  expect_true(is_valid_backdoor(adjustment_set_cg, X = "X", Y = "Y", Z = Z))
   expect_true(setequal(Z, "A") || setequal(Z, "K")) # minimal sets in this DAG
 })
 
 test_that("is_valid_backdoor works on canonical choices", {
-  expect_true(is_valid_backdoor(adjustment_set_cg, x = X, y = Y, Z = A))
-  expect_true(is_valid_backdoor(adjustment_set_cg, x = X, y = Y, Z = K))
-  expect_false(is_valid_backdoor(adjustment_set_cg, x = X, y = Y, Z = D))
-  expect_false(is_valid_backdoor(adjustment_set_cg, x = X, y = Y, Z = c(A, D)))
-  expect_false(is_valid_backdoor(adjustment_set_cg, x = X, y = Y, Z = NULL))
+  expect_true(is_valid_backdoor(adjustment_set_cg, X = "X", Y = "Y", Z = "A"))
+  expect_true(is_valid_backdoor(adjustment_set_cg, X = "X", Y = "Y", Z = "K"))
+  expect_false(is_valid_backdoor(adjustment_set_cg, X = "X", Y = "Y", Z = "D"))
+  expect_false(is_valid_backdoor(adjustment_set_cg, X = "X", Y = "Y", Z = c("A", "D")))
+  expect_false(is_valid_backdoor(adjustment_set_cg, X = "X", Y = "Y", Z = NULL))
 })
 
 test_that("all_backdoor_sets enumerates minimal sets", {
-  sets <- all_backdoor_sets(adjustment_set_cg, x = X, y = Y)
+  sets <- all_backdoor_sets(adjustment_set_cg, X = "X", Y = "Y")
   norm <- lapply(sets, sort)
   expect_equal(length(norm), 2L)
   expect_true(any(setequal(norm[[1]], "A") | setequal(norm[[2]], "A")))
@@ -55,11 +55,11 @@ test_that("all_backdoor_sets enumerates minimal sets", {
 })
 
 test_that("all_backdoor_sets respects max_size and minimal", {
-  sets <- all_backdoor_sets(adjustment_set_cg, x = X, y = Y, minimal = TRUE)
+  sets <- all_backdoor_sets(adjustment_set_cg, X = "X", Y = "Y", minimal = TRUE)
   expect_equal(length(sets), 2L)
   expect_setequal(sets, c("A", "K"))
   sets2 <- all_backdoor_sets(adjustment_set_cg,
-    x = X, y = Y, minimal = FALSE,
+    X = "X", Y = "Y", minimal = FALSE,
     max_size = 2
   )
   expect_equal(length(sets2), 5L)
@@ -81,10 +81,10 @@ test_that("all_backdoor_sets includes empty set, if valid", {
     class = "DAG"
   )
   # check if empty set is valid
-  expect_true(is_valid_backdoor(adjustment_set_cg, x = X, y = Y, Z = NULL))
+  expect_true(is_valid_backdoor(adjustment_set_cg, X = "X", Y = "Y", Z = NULL))
 
   sets <- all_backdoor_sets(adjustment_set_cg,
-    x = X, y = Y, minimal = FALSE,
+    X = "X", Y = "Y", minimal = FALSE,
     max_size = 2
   )
   valid_sets <- list(
