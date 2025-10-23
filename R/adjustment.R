@@ -23,36 +23,68 @@ d_separated <- function(cg,
   is_caugi(cg, TRUE)
   cg <- build(cg)
 
-  xi0 <- .resolve_idx_adjustment(
-    cg,
-    substitute(X),
-    X_index,
-    "X",
-    allow_empty = FALSE,
-    env = parent.frame()
-  )
-  yi0 <- .resolve_idx_adjustment(
-    cg,
-    substitute(Y),
-    Y_index,
-    "Y",
-    allow_empty = FALSE,
-    env = parent.frame()
-  )
-  zi0 <- if (missing(Z) && missing(Z_index)) {
-    integer(0)
+  X_idx0 <- if (!is.null(X_index)) {
+    as.integer(X_index - 1L)
+  } else if (!is.null(X)) {
+    if (!is.null(X_index)) {
+      stop("Provide only one of `X` or `X_index`.")
+    }
+    cg@name_index_map$get(X, missing = stop(
+      paste(
+        "Non-existant node name:",
+        paste(setdiff(X, cg@nodes$name),
+          collapse = ", "
+        )
+      ),
+      call. = FALSE
+    ))
   } else {
-    .resolve_idx_adjustment(
-      cg,
-      substitute(Z),
-      Z_index,
-      "Z",
-      allow_empty = TRUE,
-      env = parent.frame()
+    stop("Either X or X_index must be provided.", call. = FALSE)
+  }
+
+  Y_idx0 <- if (!is.null(Y_index)) {
+    as.integer(Y_index - 1L)
+  } else if (!is.null(Y)) {
+    if (!is.null(Y_index)) {
+      stop("Provide only one of `Y` or `Y_index`.")
+    }
+    cg@name_index_map$get(Y, missing = stop(
+      paste(
+        "Non-existant node name:",
+        paste(setdiff(Y, cg@nodes$name),
+          collapse = ", "
+        )
+      ),
+      call. = FALSE
+    ))
+  } else {
+    stop("Either Y or Y_index must be provided.", call. = FALSE)
+  }
+
+  Z_idx0 <- if (is.null(Z) && is.null(Z_index)) {
+    integer(0)
+  } else if (!is.null(Z_index)) {
+    as.integer(Z_index - 1L)
+  } else if (!is.null(Z)) {
+    if (!is.null(Z_index)) {
+      stop("Provide only one of `Z` or `Z_index`.")
+    }
+    as.integer(
+      cg@name_index_map$mget(Z,
+        missing = stop(
+          paste(
+            "Non-existant node name:",
+            paste(setdiff(Z, cg@nodes$name),
+              collapse = ", "
+            )
+          ),
+          call. = FALSE
+        )
+      )
     )
   }
 
-  is_d_separated_ptr(cg@ptr, xi0, yi0, zi0)
+  d_separated_ptr(cg@ptr, X_idx0, Y_idx0, Z_idx0)
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -69,8 +101,7 @@ d_separated <- function(cg,
 #' - `"optimal"`: O-set (only for single `x` and single `y`)
 #'
 #' @param cg A `caugi_graph` object.
-#' @param X,Y Node selectors for exposures and outcomes.
-#' Use `*_index` to pass indices.
+#' @param X,Y Node names.
 #' @param X_index,Y_index Optional numeric 1-based indices.
 #' @param type One of `"parents"`, `"backdoor"`, `"optimal"`.
 #'
@@ -87,36 +118,58 @@ adjustment_set <- function(cg,
   cg <- build(cg)
   type <- match.arg(type)
 
-  X0 <- .resolve_idx_adjustment(
-    cg,
-    substitute(X),
-    X_index,
-    "X",
-    allow_empty = FALSE,
-    env = parent.frame()
-  )
-  Y0 <- .resolve_idx_adjustment(
-    cg,
-    substitute(Y),
-    Y_index,
-    "Y",
-    allow_empty = FALSE,
-    env = parent.frame()
-  )
+  if (length(X) > 1 || length(Y) > 1 ||
+    length(X_index) > 1 || length(Y_index) > 1) {
+    stop("Provide exactly one X and one Y.",
+      call. = FALSE
+    )
+  }
+
+  X_idx0 <- if (!is.null(X_index)) {
+    as.integer(X_index - 1L)
+  } else if (!is.null(X)) {
+    if (!is.null(X_index)) {
+      stop("Provide only one of `X` or `X_index`.")
+    }
+    cg@name_index_map$get(X, missing = stop(
+      paste(
+        "Non-existant node name:",
+        paste(setdiff(X, cg@nodes$name),
+          collapse = ", "
+        )
+      ),
+      call. = FALSE
+    ))
+  } else {
+    stop("Either X or X_index must be provided.", call. = FALSE)
+  }
+
+  Y_idx0 <- if (!is.null(Y_index)) {
+    as.integer(Y_index - 1L)
+  } else if (!is.null(Y)) {
+    if (!is.null(Y_index)) {
+      stop("Provide only one of `Y` or `Y_index`.")
+    }
+    cg@name_index_map$get(Y, missing = stop(
+      paste(
+        "Non-existant node name:",
+        paste(setdiff(Y, cg@nodes$name),
+          collapse = ", "
+        )
+      ),
+      call. = FALSE
+    ))
+  } else {
+    stop("Either Y or Y_index must be provided.", call. = FALSE)
+  }
+
 
   idx0 <- switch(type,
-    parents = adjustment_set_parents_ptr(cg@ptr, X0, Y0),
-    backdoor = adjustment_set_backdoor_ptr(cg@ptr, X0, Y0),
-    optimal = {
-      if (length(X0) != 1L || length(Y0) != 1L) {
-        stop("For type = 'optimal', provide exactly one X and one Y.",
-          call. = FALSE
-        )
-      }
-      adjustment_set_optimal_ptr(cg@ptr, X0[[1]], Y0[[1]])
-    }
+    parents = adjustment_set_parents_ptr(cg@ptr, X_idx0, Y_idx0),
+    backdoor = adjustment_set_backdoor_ptr(cg@ptr, X_idx0, Y_idx0),
+    optimal = adjustment_set_optimal_ptr(cg@ptr, X_idx0, Y_idx0)
   )
-  .getter_output(cg, idx0)
+  cg@nodes$name[idx0 + 1L]
 }
 
 #' @title Is a backdoor set valid?
@@ -134,56 +187,87 @@ adjustment_set <- function(cg,
 #' @returns Logical scalar.
 #' @export
 is_valid_backdoor <- function(cg,
-                              x = NULL,
-                              y = NULL,
+                              X = NULL,
+                              Y = NULL,
                               Z = NULL,
-                              x_index = NULL,
-                              y_index = NULL,
+                              X_index = NULL,
+                              Y_index = NULL,
                               Z_index = NULL) {
   is_caugi(cg, TRUE)
   cg <- build(cg)
 
-  x0 <- .resolve_idx_adjustment(
-    cg,
-    substitute(x),
-    x_index, "x",
-    allow_empty = FALSE,
-    env = parent.frame()
-  )
-  y0 <- .resolve_idx_adjustment(
-    cg,
-    substitute(y),
-    y_index,
-    "y",
-    allow_empty = FALSE,
-    env = parent.frame()
-  )
-  if (length(x0) != 1L || length(y0) != 1L) {
-    stop("Provide exactly one x and one y.", call. = FALSE)
-  }
-  z0 <- if (missing(Z) && missing(Z_index)) {
-    integer(0)
+  X_idx0 <- if (!is.null(X_index)) {
+    as.integer(X_index - 1L)
+  } else if (!is.null(X)) {
+    if (!is.null(X_index)) {
+      stop("Provide only one of `X` or `X_index`.")
+    }
+    cg@name_index_map$get(X, missing = stop(
+      paste(
+        "Non-existant node name:",
+        paste(setdiff(X, cg@nodes$name),
+          collapse = ", "
+        )
+      ),
+      call. = FALSE
+    ))
   } else {
-    .resolve_idx_adjustment(
-      cg,
-      substitute(Z),
-      Z_index,
-      "Z",
-      allow_empty = TRUE,
-      env = parent.frame()
+    stop("Either X or X_index must be provided.", call. = FALSE)
+  }
+
+  Y_idx0 <- if (!is.null(Y_index)) {
+    as.integer(Y_index - 1L)
+  } else if (!is.null(Y)) {
+    if (!is.null(Y_index)) {
+      stop("Provide only one of `Y` or `Y_index`.")
+    }
+    cg@name_index_map$get(Y, missing = stop(
+      paste(
+        "Non-existant node name:",
+        paste(setdiff(Y, cg@nodes$name),
+          collapse = ", "
+        )
+      ),
+      call. = FALSE
+    ))
+  } else {
+    stop("Either Y or Y_index must be provided.", call. = FALSE)
+  }
+
+  Z_idx0 <- if (is.null(Z) && is.null(Z_index)) {
+    integer(0)
+  } else if (!is.null(Z_index)) {
+    as.integer(Z_index - 1L)
+  } else if (!is.null(Z)) {
+    if (!is.null(Z_index)) {
+      stop("Provide only one of `Z` or `Z_index`.")
+    }
+    as.integer(
+      cg@name_index_map$mget(Z,
+        missing = stop(
+          paste(
+            "Non-existant node name:",
+            paste(setdiff(Z, cg@nodes$name),
+              collapse = ", "
+            )
+          ),
+          call. = FALSE
+        )
+      )
     )
   }
 
-  is_valid_backdoor_set_ptr(cg@ptr, x0[[1]], y0[[1]], z0)
+  is_valid_backdoor_set_ptr(cg@ptr, X_idx0, Y_idx0, Z_idx0)
 }
 
-#' @title Enumerate minimal backdoor sets
+#' @title Get all backdoor sets up to a certain size.
 #'
-#' @description Enumerates minimal valid backdoor sets for the pair `x -> y`.
+#' @description This function returns the backdoor sets up to size `max_size`,
+#' which per default is set to 10.
 #'
 #' @param cg A `caugi_graph`.
-#' @param x,y Single node (name/expression) or via `x_index`,`y_index`.
-#' @param x_index,y_index Optional 1-based indices (exclusive with name args).
+#' @param X,Y Single node name.
+#' @param X_index,Y_index Optional 1-based indices (exclusive with name args).
 #' @param minimal Logical; if `TRUE` (default), only minimal sets are returned.
 #' @param max_size Integer; maximum size of sets to consider (default 10).
 #'
@@ -191,99 +275,54 @@ is_valid_backdoor <- function(cg,
 #' (possibly empty).
 #' @export
 all_backdoor_sets <- function(cg,
-                              x = NULL,
-                              y = NULL,
-                              x_index = NULL,
-                              y_index = NULL,
+                              X = NULL,
+                              Y = NULL,
+                              X_index = NULL,
+                              Y_index = NULL,
                               minimal = TRUE,
                               max_size = 10L) {
   is_caugi(cg, TRUE)
   cg <- build(cg)
 
-  x0 <- .resolve_idx_adjustment(
-    cg,
-    substitute(x),
-    x_index,
-    "x",
-    allow_empty = FALSE,
-    env = parent.frame()
-  )
-  y0 <- .resolve_idx_adjustment(
-    cg,
-    substitute(y),
-    y_index,
-    "y",
-    allow_empty = FALSE,
-    env = parent.frame()
-  )
-  if (length(x0) != 1L || length(y0) != 1L) {
-    stop("Provide exactly one x and one y.", call. = FALSE)
+  X_idx0 <- if (!is.null(X_index)) {
+    as.integer(X_index - 1L)
+  } else if (!is.null(X)) {
+    cg@name_index_map$get(X, missing = stop(
+      paste(
+        "Non-existant node name:",
+        paste(setdiff(X, cg@nodes$name),
+          collapse = ", "
+        )
+      ),
+      call. = FALSE
+    ))
+  } else {
+    stop("Either X or X_index must be provided.", call. = FALSE)
+  }
+
+  Y_idx0 <- if (!is.null(Y_index)) {
+    as.integer(Y_index - 1L)
+  } else if (!is.null(Y)) {
+    cg@name_index_map$get(Y, missing = stop(
+      paste(
+        "Non-existant node name:",
+        paste(setdiff(Y, cg@nodes$name),
+          collapse = ", "
+        )
+      ),
+      call. = FALSE
+    ))
+  } else {
+    stop("Either Y or Y_index must be provided.", call. = FALSE)
   }
 
   sets_idx0 <- all_backdoor_sets_ptr(
     cg@ptr,
-    x0[[1]],
-    y0[[1]],
+    X_idx0,
+    Y_idx0,
     minimal,
-    max_size
+    as.integer(max_size)
   )
-
-  .getter_output(cg, sets_idx0)
-}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# ───────────────────────────────── Helpers ────────────────────────────────────
-# ──────────────────────────────────────────────────────────────────────────────
-
-# Like .relations(), but returns 0-based integer vector and accepts NULL.
-# nodes can be character or unquoted expression; index is 1-based numeric.
-# Exactly one of (nodes, index) must be supplied unless allow_empty = TRUE.
-# If allow_empty and both are missing/NULL, returns integer(0).
-#' @title Resolve nodes or indices
-#'
-#' @description Internal helper to resolve nodes or indices.
-#'
-#' @param cg A `caugi_graph` object.
-#' @param nodes Node selector: character vector of names or unquoted expression
-#' (supports `+` and `c()`). Exclusive with `index`.
-#' @param index Optional numeric 1-based indices (exclusive with `nodes`).
-#' @param what Character; description of what is being resolved (for error
-#' messages).
-#' @param allow_empty Logical; if `TRUE`, allows both `nodes` and `index` to be
-#' missing/`NULL`, returning `integer(0)`.
-#'
-#' @returns Integer vector of 0-based indices.
-#'
-#' @keywords internal
-.resolve_idx_adjustment <- function(cg, nodes, index, what,
-                                    allow_empty = FALSE,
-                                    env = parent.frame()) {
-  index_supplied <- !missing(index) && !is.null(index)
-  expr_supplied <- !missing(nodes) && !is.null(nodes)
-
-  if (expr_supplied && index_supplied) {
-    stop("For ", what, ", supply either names/expression or indices, not both.", call. = FALSE)
-  }
-  if (!expr_supplied && !index_supplied) {
-    if (allow_empty) {
-      return(integer(0))
-    }
-    stop("Missing ", what, ".", call. = FALSE)
-  }
-
-  if (index_supplied) {
-    return(.resolve_idx_from_index(cg, index))
-  }
-
-  val <- try(eval(nodes, env), silent = TRUE)
-  if (!inherits(val, "try-error")) {
-    if (is.list(val) && length(val) == 1L && is.character(val[[1]])) {
-      return(.resolve_idx(cg, val[[1]]))
-    }
-    if (is.character(val)) {
-      return(.resolve_idx(cg, val))
-    }
-  }
-
-  .resolve_idx(cg, .expand_nodes(nodes, env))
+  nm <- cg@nodes$name
+  lapply(sets_idx0, \(idx0) nm[idx0 + 1L])
 }
