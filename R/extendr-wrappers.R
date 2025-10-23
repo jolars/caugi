@@ -66,7 +66,7 @@ oset_aid_of_ptrs <- function(g_true, names_true, g_guess, names_guess) .Call(wra
 
 parent_aid_of_ptrs <- function(g_true, names_true, g_guess, names_guess) .Call(wrap__parent_aid_of_ptrs, g_true, names_true, g_guess, names_guess)
 
-is_d_separated_ptr <- function(g, xs, ys, z) .Call(wrap__is_d_separated_ptr, g, xs, ys, z)
+d_separated_ptr <- function(g, xs, ys, z) .Call(wrap__d_separated_ptr, g, xs, ys, z)
 
 adjustment_set_parents_ptr <- function(g, xs, ys) .Call(wrap__adjustment_set_parents_ptr, g, xs, ys)
 
