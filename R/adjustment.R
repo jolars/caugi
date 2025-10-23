@@ -178,11 +178,9 @@ adjustment_set <- function(cg,
 #' `X --> Y`.
 #' @param cg A `caugi_graph` object.
 #'
-#' @param x,y Single node (name/expression)
-#' or 1-based index via `x_index`,`y_index`.
-#' @param Z Optional node set for conditioning; or `Z_index` for indices.
-#' @param x_index,y_index,Z_index Optional 1-based indices
-#' (exclusive with name args).
+#' @param X,Y Single node names.
+#' @param Z Optional node set for conditioning
+#' @param X_index,Y_index,Z_index Optional 1-based indices.
 #'
 #' @returns Logical scalar.
 #' @export

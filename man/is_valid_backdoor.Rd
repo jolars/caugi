@@ -17,13 +17,11 @@ is_valid_backdoor(
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}
 
-\item{Z}{Optional node set for conditioning; or \code{Z_index} for indices.}
+\item{X, Y}{Single node names.}
 
-\item{x, y}{Single node (name/expression)
-or 1-based index via \code{x_index},\code{y_index}.}
+\item{Z}{Optional node set for conditioning}
 
-\item{x_index, y_index, Z_index}{Optional 1-based indices
-(exclusive with name args).}
+\item{X_index, Y_index, Z_index}{Optional 1-based indices.}
 }
 \value{
 Logical scalar.
