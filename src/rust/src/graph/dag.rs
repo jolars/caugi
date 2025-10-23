@@ -560,7 +560,7 @@ impl Dag {
     /// d-separation test via ancestral reduction + moralization + BFS.
     ///
     /// Returns `true` iff every `x ∈ xs` is d-separated from every `y ∈ ys` given `z`.
-    pub fn is_d_separated(&self, xs: &[u32], ys: &[u32], z: &[u32]) -> bool {
+    pub fn d_separated(&self, xs: &[u32], ys: &[u32], z: &[u32]) -> bool {
         if xs.is_empty() || ys.is_empty() {
             return true;
         }
@@ -604,7 +604,7 @@ impl Dag {
         obs.extend_from_slice(z);
         obs.push(x);
         for &p in self.parents_of(x) {
-            if !self.is_d_separated(&[p], &[y], &obs) {
+            if !self.d_separated(&[p], &[y], &obs) {
                 return false;
             }
         }
@@ -642,7 +642,7 @@ impl Dag {
     /// Validates `z` as an adjustment set for `Xs → Ys` using the proper backdoor graph.
     pub fn is_valid_adjustment_set(&self, xs: &[u32], ys: &[u32], z: &[u32]) -> bool {
         self.proper_backdoor_graph(xs, ys)
-            .map(|g| g.is_d_separated(xs, ys, z))
+            .map(|g| g.d_separated(xs, ys, z))
             .unwrap_or(false)
     }
 }
@@ -804,7 +804,7 @@ mod tests {
     }
 
     #[test]
-    fn dag_is_d_separated_basic_patterns() {
+    fn dag_d_separated_basic_patterns() {
         // Chain: 0->1->2. 0 ⟂̸ 2 | ∅ ; but 0 ⟂ 2 | {1}.
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
@@ -815,12 +815,12 @@ mod tests {
         b.add_edge(1, 2, d).unwrap();
         let g = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
 
-        assert_eq!(g.is_d_separated(&[0], &[2], &[]), false);
-        assert_eq!(g.is_d_separated(&[0], &[2], &[1]), true);
+        assert_eq!(g.d_separated(&[0], &[2], &[]), false);
+        assert_eq!(g.d_separated(&[0], &[2], &[1]), true);
     }
 
     #[test]
-    fn dag_is_d_separated_collider_activation() {
+    fn dag_d_separated_collider_activation() {
         // Collider: 0->2<-1. 0 ⟂ 1 | ∅ ; but 0 ⟂̸ 1 | {2}.
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
@@ -831,8 +831,8 @@ mod tests {
         b.add_edge(1, 2, d).unwrap();
         let g = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
 
-        assert_eq!(g.is_d_separated(&[0], &[1], &[]), true);
-        assert_eq!(g.is_d_separated(&[0], &[1], &[2]), false);
+        assert_eq!(g.d_separated(&[0], &[1], &[]), true);
+        assert_eq!(g.d_separated(&[0], &[1], &[2]), false);
     }
 
     #[test]
@@ -877,7 +877,7 @@ mod tests {
     }
 
     #[test]
-    fn dag_is_d_separated_empty_x_or_y_trivially_true() {
+    fn dag_d_separated_empty_x_or_y_trivially_true() {
         // With empty X or Y, should return true by definition.
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
@@ -887,8 +887,8 @@ mod tests {
         b.add_edge(0, 1, d).unwrap();
         let g = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
 
-        assert!(g.is_d_separated(&[], &[1], &[]));
-        assert!(g.is_d_separated(&[0], &[], &[]));
+        assert!(g.d_separated(&[], &[1], &[]));
+        assert!(g.d_separated(&[0], &[], &[]));
     }
     #[test]
     fn dag_descendants_seen_continue_path() {
@@ -983,7 +983,7 @@ mod tests {
         let pb = dag.proper_backdoor_graph(&[1], &[2]).unwrap();
 
         assert_eq!(pb.parents_of(2), &[0]); // A->Y removed; L->Y kept
-        assert!(!pb.is_d_separated(&[1], &[2], &[])); // A and Y still d-connected via L
+        assert!(!pb.d_separated(&[1], &[2], &[])); // A and Y still d-connected via L
     }
 
     #[test]

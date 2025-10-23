@@ -501,12 +501,12 @@ fn parent_aid_of_ptrs(
 // ── Causal queries ────────────────────────────────────────────────────────────────
 
 #[extendr]
-fn is_d_separated_ptr(g: ExternalPtr<GraphView>, xs: Integers, ys: Integers, z: Integers) -> bool {
+fn d_separated_ptr(g: ExternalPtr<GraphView>, xs: Integers, ys: Integers, z: Integers) -> bool {
     let xs_u: Vec<u32> = xs.iter().map(|ri| rint_to_u32(ri, "xs")).collect();
     let ys_u: Vec<u32> = ys.iter().map(|ri| rint_to_u32(ri, "ys")).collect();
     let z_u: Vec<u32> = z.iter().map(|ri| rint_to_u32(ri, "z")).collect();
     g.as_ref()
-        .is_d_separated(&xs_u, &ys_u, &z_u)
+        .d_separated(&xs_u, &ys_u, &z_u)
         .unwrap_or_else(|e| throw_r_error(e))
 }
 
@@ -628,7 +628,7 @@ extendr_module! {
     fn parent_aid_of_ptrs;
 
     // causal queries
-    fn is_d_separated_ptr;
+    fn d_separated_ptr;
     fn adjustment_set_parents_ptr;
     fn adjustment_set_backdoor_ptr;
     fn adjustment_set_optimal_ptr;

@@ -89,10 +89,10 @@ impl GraphView {
     }
 
     // ---- DAG-only methods ----
-    pub fn is_d_separated(&self, xs: &[u32], ys: &[u32], z: &[u32]) -> Result<bool, String> {
+    pub fn d_separated(&self, xs: &[u32], ys: &[u32], z: &[u32]) -> Result<bool, String> {
         match self {
-            GraphView::Dag(d) => Ok(d.is_d_separated(xs, ys, z)),
-            _ => Err("is_d_separated is only defined for DAGs".into()),
+            GraphView::Dag(d) => Ok(d.d_separated(xs, ys, z)),
+            _ => Err("d_separated is only defined for DAGs".into()),
         }
     }
     pub fn adjustment_set_parents(&self, xs: &[u32], ys: &[u32]) -> Result<Vec<u32>, String> {
@@ -272,8 +272,8 @@ mod tests {
         let v = GraphView::Dag(Arc::new(Dag::new(Arc::new(b.finalize().unwrap())).unwrap()));
 
         // d-sep: X=1, Y=2 is not separated unconditionally; conditioning on 0 separates them
-        assert_eq!(v.is_d_separated(&[1], &[2], &[]).unwrap(), false);
-        assert_eq!(v.is_d_separated(&[0], &[2], &[0]).unwrap(), true);
+        assert_eq!(v.d_separated(&[1], &[2], &[]).unwrap(), false);
+        assert_eq!(v.d_separated(&[0], &[2], &[0]).unwrap(), true);
 
         // adjustment sets (parents/backdoor/optimal) all return {0}
         assert_eq!(v.adjustment_set_parents(&[1], &[2]).unwrap(), vec![0]);
@@ -300,9 +300,9 @@ mod tests {
         let v = GraphView::Dag(Arc::new(Dag::new(Arc::new(b.finalize().unwrap())).unwrap()));
 
         // Unblocked path 0—1—2 => not separated
-        assert_eq!(v.is_d_separated(&[0], &[2], &[]).unwrap(), false);
+        assert_eq!(v.d_separated(&[0], &[2], &[]).unwrap(), false);
         // Condition on middle node blocks it
-        assert_eq!(v.is_d_separated(&[0], &[2], &[1]).unwrap(), true);
+        assert_eq!(v.d_separated(&[0], &[2], &[1]).unwrap(), true);
     }
 
     // --- PDAG and RAW: all DAG-only methods must return errors ---
@@ -321,14 +321,14 @@ mod tests {
         let vp = GraphView::Pdag(Arc::new(Pdag::new(pdag_core.clone()).unwrap()));
         let vr = GraphView::Raw(pdag_core);
 
-        // is_d_separated
+        // d_separated
         assert_eq!(
-            vp.is_d_separated(&[0], &[2], &[]).unwrap_err(),
-            "is_d_separated is only defined for DAGs"
+            vp.d_separated(&[0], &[2], &[]).unwrap_err(),
+            "d_separated is only defined for DAGs"
         );
         assert_eq!(
-            vr.is_d_separated(&[0], &[2], &[]).unwrap_err(),
-            "is_d_separated is only defined for DAGs"
+            vr.d_separated(&[0], &[2], &[]).unwrap_err(),
+            "d_separated is only defined for DAGs"
         );
 
         // adjustment_set_parents
