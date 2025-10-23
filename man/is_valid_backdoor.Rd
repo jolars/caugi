@@ -6,21 +6,21 @@
 \usage{
 is_valid_backdoor(
   cg,
-  x = NULL,
-  y = NULL,
+  X = NULL,
+  Y = NULL,
   Z = NULL,
-  x_index = NULL,
-  y_index = NULL,
+  X_index = NULL,
+  Y_index = NULL,
   Z_index = NULL
 )
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}
 
+\item{Z}{Optional node set for conditioning; or \code{Z_index} for indices.}
+
 \item{x, y}{Single node (name/expression)
 or 1-based index via \code{x_index},\code{y_index}.}
-
-\item{Z}{Optional node set for conditioning; or \code{Z_index} for indices.}
 
 \item{x_index, y_index, Z_index}{Optional 1-based indices
 (exclusive with name args).}

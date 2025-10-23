@@ -16,8 +16,7 @@ adjustment_set(
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}
 
-\item{X, Y}{Node selectors for exposures and outcomes.
-Use \verb{*_index} to pass indices.}
+\item{X, Y}{Node names.}
 
 \item{X_index, Y_index}{Optional numeric 1-based indices.}
 

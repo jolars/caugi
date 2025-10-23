@@ -2,14 +2,14 @@
 % Please edit documentation in R/adjustment.R
 \name{all_backdoor_sets}
 \alias{all_backdoor_sets}
-\title{Enumerate minimal backdoor sets}
+\title{Get all backdoor sets up to a certain size.}
 \usage{
 all_backdoor_sets(
   cg,
-  x = NULL,
-  y = NULL,
-  x_index = NULL,
-  y_index = NULL,
+  X = NULL,
+  Y = NULL,
+  X_index = NULL,
+  Y_index = NULL,
   minimal = TRUE,
   max_size = 10L
 )
@@ -17,9 +17,9 @@ all_backdoor_sets(
 \arguments{
 \item{cg}{A \code{caugi_graph}.}
 
-\item{x, y}{Single node (name/expression) or via \code{x_index},\code{y_index}.}
+\item{X, Y}{Single node name.}
 
-\item{x_index, y_index}{Optional 1-based indices (exclusive with name args).}
+\item{X_index, Y_index}{Optional 1-based indices (exclusive with name args).}
 
 \item{minimal}{Logical; if \code{TRUE} (default), only minimal sets are returned.}
 
@@ -30,5 +30,6 @@ A list of character vectors, each an adjustment set
 (possibly empty).
 }
 \description{
-Enumerates minimal valid backdoor sets for the pair \code{x -> y}.
+This function returns the backdoor sets up to size \code{max_size},
+which per default is set to 10.
 }
