@@ -503,7 +503,7 @@ exogenous <- function(cg, undirected_as_parents = FALSE) {
   is_caugi(cg, throw_error = TRUE)
   cg <- build(cg)
   idx0 <- exogenous_nodes_of_ptr(cg@ptr, undirected_as_parents)
-  .getter_output(cg, idx0, NULL)
+  cg@nodes$name[idx0 + 1L]
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -532,7 +532,7 @@ exogenous <- function(cg, undirected_as_parents = FALSE) {
   }
 
   # faster check than doing is.null and length == 1, since length(NULL) == 0
-  if (length(nodes) <= 1L) {
+  if (length(nodes) <= 1L && length(idx0) == 1L) {
     ix <- idx0[[1L]]
     return(to_names(ix))
   }
