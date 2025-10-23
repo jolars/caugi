@@ -224,7 +224,21 @@ caugi_graph <- S7::new_class(
     }
 
     # All unique nodes
-    nodes <- tibble::tibble(name = unique(c(edges$from, edges$to, declared)))
+    # When declared nodes are provided and contain ALL edge nodes,
+    # preserve their order (important for igraph conversion)
+    edge_node_names <- unique(c(edges$from, edges$to))
+    if (length(declared) > 0L && all(edge_node_names %in% declared)) {
+      # Declared contains all edge nodes: preserve declared order
+      all_node_names <- unique(declared)
+    } else if (length(declared) > 0L) {
+      # Declared exists but doesn't contain all edge nodes:
+      # use edge order first, then add declared isolates (old behavior)
+      all_node_names <- unique(c(edge_node_names, declared))
+    } else {
+      # No declared nodes: use edge order (old behavior)
+      all_node_names <- edge_node_names
+    }
+    nodes <- tibble::tibble(name = all_node_names)
     n <- nrow(nodes)
     id <- seq_len(n) - 1L
     names(id) <- nodes$name

@@ -373,8 +373,26 @@ test_that("caugi_graph(vector mode) works with isolated nodes", {
   expect_equal(cg_vec_1, cg_vec_2)
 })
 
+test_that("caugi_graph preserves node order from nodes parameter", {
+  # When nodes parameter is provided, its order should be preserved
+  # even when edges reference nodes in different order
+  cg <- caugi_graph(
+    from = c("V3", "V7", "V2"),
+    edge = c("-->", "-->", "-->"),
+    to = c("V1", "V9", "V5"),
+    nodes = paste0("V", 1:10),
+    class = "DAG"
+  )
+  
+  # Node order should match the provided nodes parameter
+  expect_equal(V(cg)$name, paste0("V", 1:10))
+  
+  # Edges should still be present and correct
+  expect_equal(nrow(edges(cg)), 3)
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
-# ────────────────────────────────── Errors ────────────────────────────────────
+# ────────────────────────────────────── Errors ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
 test_that("caugi_graph errors with trailing commas", {
