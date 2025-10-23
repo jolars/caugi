@@ -268,7 +268,7 @@ caugi_graph <- S7::new_class(
     # initialize fastmap for name to index mapping
     name_index_map <- fastmap::fastmap()
     for (i in seq_len(nrow(nodes))) {
-      name_index_map$set(nodes$name[i], as.integer(id[i]))
+      name_index_map$set(nodes$name[i], i - 1L)
     }
 
     state <- .cg_state(

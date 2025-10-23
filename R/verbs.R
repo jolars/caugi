@@ -34,7 +34,8 @@ S7::method(build, caugi_graph) <- function(cg, ...) {
   s <- .unfreeze_state(cg@`.state`)
 
   n <- nrow(s$nodes)
-  id <- setNames(seq_len(n) - 1L, s$nodes$name)
+  id <- seq_len(n) - 1L
+  names(id) <- s$nodes$name
 
   reg <- caugi_registry()
   b <- graph_builder_new(reg, n = n, simple = cg@simple)
@@ -62,6 +63,11 @@ S7::method(build, caugi_graph) <- function(cg, ...) {
   ) |>
     dplyr::arrange(from, to, edge)
 
+  name_index_map <- fastmap::fastmap()
+  for (i in seq_len(nrow(s$nodes))) {
+    name_index_map$set(s$nodes$name[i], i - 1L)
+  }
+  s$name_index_map <- name_index_map
   s$ptr <- p
   s$built <- TRUE
   .freeze_state(cg@`.state`)

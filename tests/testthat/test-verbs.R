@@ -43,6 +43,26 @@ test_that("build() errors when breaking simple graph assumptions", {
   expect_error(build(cg), "self-loop")
 })
 
+test_that("build updates name_index_map", {
+  # start with a built graph
+  cg <- caugi_graph(from = "A", edge = "-->", to = "B")
+  expect_true(cg@built)
+  expect_identical(cg@name_index_map$get("A"), 0L)
+  expect_identical(cg@name_index_map$get("B"), 1L)
+
+  # mutate graph → not built, fastmap still stale
+  cg <- add_nodes(cg, name = "C")
+  expect_false(cg@built)
+  expect_null(cg@name_index_map$get("C"))
+
+  # rebuild → fastmap must include the new node with correct index
+  cg <- build(cg)
+  expect_true(cg@built)
+  expect_identical(cg@name_index_map$get("A"), 0L)
+  expect_identical(cg@name_index_map$get("B"), 1L)
+  expect_identical(cg@name_index_map$get("C"), 2L)
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ────────────────────────────────── Edges ─────────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
