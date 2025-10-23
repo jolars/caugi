@@ -224,7 +224,19 @@ caugi_graph <- S7::new_class(
     }
 
     # All unique nodes
-    nodes <- tibble::tibble(name = unique(c(edges$from, edges$to, declared)))
+    # When declared nodes are provided, preserve their order
+    if (length(declared) > 0L) {
+      # Start with declared nodes in their original order
+      all_node_names <- unique(declared)
+      # Add any nodes from edges that aren't in declared
+      edge_nodes <- unique(c(edges$from, edges$to))
+      new_nodes <- setdiff(edge_nodes, all_node_names)
+      all_node_names <- c(all_node_names, new_nodes)
+    } else {
+      # If no declared nodes, use edge order (original behavior)
+      all_node_names <- unique(c(edges$from, edges$to))
+    }
+    nodes <- tibble::tibble(name = all_node_names)
     n <- nrow(nodes)
     id <- seq_len(n) - 1L
     names(id) <- nodes$name
