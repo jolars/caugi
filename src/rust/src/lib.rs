@@ -24,7 +24,7 @@ fn rint_to_u32(x: Rint, field: &str) -> u32 {
     }
     let v = x.inner();
     if v < 0 {
-        throw_r_error(format!("`{}` must be >= 0", field));
+        throw_r_error(format!("`{}` must be >= 0. Note that the input number from R might have been subtracted with 1.", field));
     }
     v as u32
 }
@@ -209,6 +209,10 @@ fn parents_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
     let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
     for ri in idxs.iter() {
         let i = rint_to_u32(ri, "idxs");
+        // check if index is out of bounds
+        if i >= g.as_ref().n() {
+            throw_r_error(format!("Index {} is out of bounds", i));
+        }
         let v = g
             .as_ref()
             .parents_of(i)
@@ -223,6 +227,9 @@ fn children_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
     let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
     for ri in idxs.iter() {
         let i = rint_to_u32(ri, "idxs");
+        if i >= g.as_ref().n() {
+            throw_r_error(format!("Index {} is out of bounds", i));
+        }
         let v = g
             .as_ref()
             .children_of(i)
@@ -237,6 +244,9 @@ fn undirected_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
     let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
     for ri in idxs.iter() {
         let i = rint_to_u32(ri, "idxs");
+        if i >= g.as_ref().n() {
+            throw_r_error(format!("Index {} is out of bounds", i));
+        }
         let v = g
             .as_ref()
             .undirected_of(i)
@@ -251,6 +261,9 @@ fn neighbors_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
     let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
     for ri in idxs.iter() {
         let i = rint_to_u32(ri, "idxs");
+        if i >= g.as_ref().n() {
+            throw_r_error(format!("Index {} is out of bounds", i));
+        }
         let v = g
             .as_ref()
             .neighbors_of(i)
@@ -265,6 +278,9 @@ fn ancestors_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
     let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
     for ri in idxs.iter() {
         let i = rint_to_u32(ri, "idxs");
+        if i >= g.as_ref().n() {
+            throw_r_error(format!("Index {} is out of bounds", i));
+        }
         let v = g
             .as_ref()
             .ancestors_of(i)
@@ -279,6 +295,9 @@ fn descendants_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
     let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
     for ri in idxs.iter() {
         let i = rint_to_u32(ri, "idxs");
+        if i >= g.as_ref().n() {
+            throw_r_error(format!("Index {} is out of bounds", i));
+        }
         let v = g
             .as_ref()
             .descendants_of(i)
@@ -293,6 +312,9 @@ fn markov_blanket_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
     let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
     for ri in idxs.iter() {
         let i = rint_to_u32(ri, "idxs");
+        if i >= g.as_ref().n() {
+            throw_r_error(format!("Index {} is out of bounds", i));
+        }
         let v = g
             .as_ref()
             .markov_blanket_of(i)
@@ -505,6 +527,12 @@ fn d_separated_ptr(g: ExternalPtr<GraphView>, xs: Integers, ys: Integers, z: Int
     let xs_u: Vec<u32> = xs.iter().map(|ri| rint_to_u32(ri, "xs")).collect();
     let ys_u: Vec<u32> = ys.iter().map(|ri| rint_to_u32(ri, "ys")).collect();
     let z_u: Vec<u32> = z.iter().map(|ri| rint_to_u32(ri, "z")).collect();
+    // Check that all indices are within bounds
+    for &i in xs_u.iter().chain(ys_u.iter()).chain(z_u.iter()) {
+        if i >= g.as_ref().n() {
+            throw_r_error(format!("Index {} is out of bounds", i+1));
+        }
+    }
     g.as_ref()
         .d_separated(&xs_u, &ys_u, &z_u)
         .unwrap_or_else(|e| throw_r_error(e))
