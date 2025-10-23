@@ -24,7 +24,10 @@ fn rint_to_u32(x: Rint, field: &str) -> u32 {
     }
     let v = x.inner();
     if v < 0 {
-        throw_r_error(format!("`{}` must be >= 0. Note that the input number from R might have been subtracted with 1.", field));
+        throw_r_error(format!(
+            "`{}` must be >= 0. Note that the input number from R might have been subtracted with 1.",
+            field
+        ));
     }
     v as u32
 }
@@ -530,7 +533,7 @@ fn d_separated_ptr(g: ExternalPtr<GraphView>, xs: Integers, ys: Integers, z: Int
     // Check that all indices are within bounds
     for &i in xs_u.iter().chain(ys_u.iter()).chain(z_u.iter()) {
         if i >= g.as_ref().n() {
-            throw_r_error(format!("Index {} is out of bounds", i+1));
+            throw_r_error(format!("Index {} is out of bounds", i + 1));
         }
     }
     g.as_ref()
