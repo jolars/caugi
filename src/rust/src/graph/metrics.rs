@@ -455,8 +455,8 @@ mod tests {
     #[cfg(feature = "gadjid")]
     #[test]
     fn aid_to_gadjid_map_length_mismatch_errors() {
+        use super::aid::{AidInput, ancestor_aid_align};
         use crate::graph::dag::Dag;
-        use super::aid::{ancestor_aid_align, AidInput};
 
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
@@ -471,14 +471,16 @@ mod tests {
         // Wrong-length inverse map (2 instead of 3)
         let bad_inv = [0usize, 1usize];
         let err = ancestor_aid_align(AidInput::Dag(&dag), AidInput::Dag(&dag), &bad_inv);
-        assert!(matches!(err, Err(msg) if msg.contains("index map length does not match graph size")));
+        assert!(
+            matches!(err, Err(msg) if msg.contains("index map length does not match graph size"))
+        );
     }
 
     #[cfg(feature = "gadjid")]
     #[test]
     fn aid_to_gadjid_rejects_non_cpdag() {
+        use super::aid::{AidInput, oset_aid_align};
         use crate::graph::pdag::Pdag;
-        use super::aid::{oset_aid_align, AidInput};
 
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
@@ -501,8 +503,8 @@ mod tests {
     #[cfg(feature = "gadjid")]
     #[test]
     fn aid_align_identical_dag_zero_errors() {
+        use super::aid::{AidInput, ancestor_aid_align, oset_aid_align, parent_aid_align};
         use crate::graph::dag::Dag;
-        use super::aid::{ancestor_aid_align, oset_aid_align, parent_aid_align, AidInput};
 
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
@@ -515,16 +517,31 @@ mod tests {
         let dag = Dag::new(std::sync::Arc::new(b.finalize().unwrap())).unwrap();
 
         let inv = [0usize, 1usize, 2usize];
-        assert_eq!(ancestor_aid_align(AidInput::Dag(&dag), AidInput::Dag(&dag), &inv).unwrap().1, 0);
-        assert_eq!(oset_aid_align(AidInput::Dag(&dag), AidInput::Dag(&dag), &inv).unwrap().1, 0);
-        assert_eq!(parent_aid_align(AidInput::Dag(&dag), AidInput::Dag(&dag), &inv).unwrap().1, 0);
+        assert_eq!(
+            ancestor_aid_align(AidInput::Dag(&dag), AidInput::Dag(&dag), &inv)
+                .unwrap()
+                .1,
+            0
+        );
+        assert_eq!(
+            oset_aid_align(AidInput::Dag(&dag), AidInput::Dag(&dag), &inv)
+                .unwrap()
+                .1,
+            0
+        );
+        assert_eq!(
+            parent_aid_align(AidInput::Dag(&dag), AidInput::Dag(&dag), &inv)
+                .unwrap()
+                .1,
+            0
+        );
     }
 
     #[cfg(feature = "gadjid")]
     #[test]
     fn aid_align_permutation_corrected_by_inverse_map() {
+        use super::aid::{AidInput, ancestor_aid_align, oset_aid_align, parent_aid_align};
         use crate::graph::dag::Dag;
-        use super::aid::{ancestor_aid_align, oset_aid_align, parent_aid_align, AidInput};
 
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
@@ -545,16 +562,31 @@ mod tests {
         // inv_guess_to_true[j] = i  => inverse of [1,2,0] is [2,0,1]
         let inv = [2usize, 0usize, 1usize];
 
-        assert_eq!(ancestor_aid_align(AidInput::Dag(&t), AidInput::Dag(&g), &inv).unwrap().1, 0);
-        assert_eq!(oset_aid_align(AidInput::Dag(&t), AidInput::Dag(&g), &inv).unwrap().1, 0);
-        assert_eq!(parent_aid_align(AidInput::Dag(&t), AidInput::Dag(&g), &inv).unwrap().1, 0);
+        assert_eq!(
+            ancestor_aid_align(AidInput::Dag(&t), AidInput::Dag(&g), &inv)
+                .unwrap()
+                .1,
+            0
+        );
+        assert_eq!(
+            oset_aid_align(AidInput::Dag(&t), AidInput::Dag(&g), &inv)
+                .unwrap()
+                .1,
+            0
+        );
+        assert_eq!(
+            parent_aid_align(AidInput::Dag(&t), AidInput::Dag(&g), &inv)
+                .unwrap()
+                .1,
+            0
+        );
     }
 
     #[cfg(feature = "gadjid")]
     #[test]
     fn aid_align_cpdag_identical_zero_errors() {
+        use super::aid::{AidInput, ancestor_aid_align, oset_aid_align, parent_aid_align};
         use crate::graph::pdag::Pdag;
-        use super::aid::{ancestor_aid_align, oset_aid_align, parent_aid_align, AidInput};
 
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
@@ -570,16 +602,31 @@ mod tests {
         assert!(p.is_cpdag());
 
         let inv = [0usize, 1usize, 2usize];
-        assert_eq!(ancestor_aid_align(AidInput::Pdag(&p), AidInput::Pdag(&p), &inv).unwrap().1, 0);
-        assert_eq!(oset_aid_align(AidInput::Pdag(&p), AidInput::Pdag(&p), &inv).unwrap().1, 0);
-        assert_eq!(parent_aid_align(AidInput::Pdag(&p), AidInput::Pdag(&p), &inv).unwrap().1, 0);
+        assert_eq!(
+            ancestor_aid_align(AidInput::Pdag(&p), AidInput::Pdag(&p), &inv)
+                .unwrap()
+                .1,
+            0
+        );
+        assert_eq!(
+            oset_aid_align(AidInput::Pdag(&p), AidInput::Pdag(&p), &inv)
+                .unwrap()
+                .1,
+            0
+        );
+        assert_eq!(
+            parent_aid_align(AidInput::Pdag(&p), AidInput::Pdag(&p), &inv)
+                .unwrap()
+                .1,
+            0
+        );
     }
 
     #[cfg(feature = "gadjid")]
     #[test]
     fn aid_align_cpdag_structure_difference_counts_mistake() {
+        use super::aid::{AidInput, oset_aid_align};
         use crate::graph::pdag::Pdag;
-        use super::aid::{oset_aid_align, AidInput};
 
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
@@ -603,7 +650,8 @@ mod tests {
         assert!(p_guess.is_cpdag());
 
         let inv = [0usize, 1usize, 2usize];
-        let (_f, m) = oset_aid_align(AidInput::Pdag(&p_true), AidInput::Pdag(&p_guess), &inv).unwrap();
+        let (_f, m) =
+            oset_aid_align(AidInput::Pdag(&p_true), AidInput::Pdag(&p_guess), &inv).unwrap();
         assert!(m > 0);
     }
 
@@ -684,13 +732,13 @@ mod tests {
     #[cfg(feature = "gadjid")]
     #[test]
     fn aid_pdag_inv_length_err_line_hit() {
+        use super::aid::{AidInput, oset_aid_align};
         use crate::graph::pdag::Pdag;
-        use super::aid::{oset_aid_align, AidInput};
 
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
         let d = reg.code_of("-->").unwrap();
-        
+
         // Build a valid CPDAG with n=3: 0->1, 1--2.
         let mut b = GraphBuilder::new_with_registry(3, true, &reg);
         b.add_edge(0, 1, d).unwrap();
