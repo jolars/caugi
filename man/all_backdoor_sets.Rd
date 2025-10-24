@@ -11,7 +11,7 @@ all_backdoor_sets(
   X_index = NULL,
   Y_index = NULL,
   minimal = TRUE,
-  max_size = 10L
+  max_size = 3L
 )
 }
 \arguments{
@@ -23,7 +23,7 @@ all_backdoor_sets(
 
 \item{minimal}{Logical; if \code{TRUE} (default), only minimal sets are returned.}
 
-\item{max_size}{Integer; maximum size of sets to consider (default 10).}
+\item{max_size}{Integer; maximum size of sets to consider (default 3).}
 }
 \value{
 A list of character vectors, each an adjustment set
