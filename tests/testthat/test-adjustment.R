@@ -19,6 +19,14 @@ test_that("d-separation checks", {
   expect_false(d_separated(adjustment_set_cg, "X", "Y", Z = "D")) # backdoor still open
   expect_true(d_separated(adjustment_set_cg, "X", "Y", Z = c("A", "D"))) # backdoor and causal both blocked
   expect_true(d_separated(adjustment_set_cg, "X", "Y", Z = c("K", "D"))) # backdoor and causal both blocked
+
+  # now with indexes
+  expect_false(d_separated(adjustment_set_cg, X_index = 2L, Y_index = 6L)) # backdoor via A-->K-->Y and causal X-->D-->Y
+  expect_false(d_separated(adjustment_set_cg, X_index = 2L, Y_index = 6L, Z_index = 3L)) # causal path still open
+  expect_false(d_separated(adjustment_set_cg, X_index = 2L, Y_index = 6L, Z_index = 4L)) # causal path still open
+  expect_false(d_separated(adjustment_set_cg, X_index = 2L, Y_index = 6L, Z_index = 5L)) # backdoor still open
+  expect_true(d_separated(adjustment_set_cg, X_index = 2L, Y_index = 6L, Z_index = c(3L, 5L)))
+  expect_true(d_separated(adjustment_set_cg, X_index = 2L, Y_index = 6L, Z_index = c(4L, 5L)))
 })
 
 test_that("adjustment_set(type = 'parents') returns Pa(X) \\ {X,Y}", {
@@ -92,4 +100,38 @@ test_that("all_backdoor_sets includes empty set, if valid", {
     c("A", "L"), c("K", "L")
   )
   expect_setequal(sets, valid_sets)
+})
+
+test_that("adjustment functions cannot take multiple inputs", {
+  expect_error(
+    adjustment_set(adjustment_set_cg, X = c("X", "A"), Y = "Y", type = "parents"),
+    "Provide exactly one X and one Y."
+  )
+  expect_error(
+    is_valid_backdoor(adjustment_set_cg, X = "X", Y = c("Y", "D"), Z = "A"),
+    "Provide exactly one X and one Y."
+  )
+  expect_error(
+    all_backdoor_sets(adjustment_set_cg, X = "X", Y = c("Y", "D")),
+    "Provide exactly one X and one Y."
+  )
+  expect_error(
+    d_separated(adjustment_set_cg, X_index = c(1L, 2L), Y = "Y", Z = "A"),
+    "Provide exactly one X and one Y."
+  )
+})
+
+test_that("adjust functions fails with faulty input", {
+  expect_error(
+    adjustment_set(adjustment_set_cg, X = "X", Y = NULL, type = "parents"),
+    "Either the node name or the node index must be provided"
+  )
+  expect_error(
+    adjustment_set(adjustment_set_cg, X = "X", Y = "Y", Y_index = 6L, type = "parent"),
+    "Provide either a node name or node index"
+  )
+  expect_error(
+    d_separated(adjustment_set_cg, X = "X", Y = "Y", Z = "A", Z_index = 3L),
+    "Provide either a node name or node index"
+  )
 })

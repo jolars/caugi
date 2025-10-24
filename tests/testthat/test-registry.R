@@ -167,3 +167,20 @@ test_that("new edge type, x-x, cannot create duplicate or parallel edges", {
 
   reset_caugi_registry()
 })
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────── Is edge symmetric? ───────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("is_edge_symmetric errors with non registered glyph", {
+  reset_caugi_registry()
+  expect_error(is_edge_symmetric(":o)"), "not registered")
+  reset_caugi_registry()
+})
+
+test_that("is_edge_symmetric works for registered edges", {
+  reset_caugi_registry()
+  expect_error(is_edge_symmetric("-->"))
+  expect_true(is_edge_symmetric("---"))
+  reset_caugi_registry()
+})
