@@ -130,15 +130,6 @@ pub mod aid {
         Pdag(&'a Pdag),
     }
 
-    #[inline]
-    fn ensure_same_n(t: &GPDAG, g: &GPDAG) -> Result<(), String> {
-        if t.n_nodes != g.n_nodes {
-            Err("graph size mismatch".into())
-        } else {
-            Ok(())
-        }
-    }
-
     /// Build a gadjid PDAG. If `inv_guess_to_true` is Some, reindex nodes using that mapping.
     /// `inv_guess_to_true[j] = i` means: guess-index `j` should appear at position `i` in the true order.
     fn to_gadjid_pdag_with_map(
@@ -216,7 +207,6 @@ pub mod aid {
     ) -> Result<(f64, usize), String> {
         let t = to_gadjid_pdag_with_map(true_g, None)?;
         let g = to_gadjid_pdag_with_map(guess_g, Some(inv_guess_to_true))?;
-        ensure_same_n(&t, &g)?;
         Ok(gadjid::graph_operations::ancestor_aid(&t, &g))
     }
     pub fn oset_aid_align(
@@ -226,7 +216,6 @@ pub mod aid {
     ) -> Result<(f64, usize), String> {
         let t = to_gadjid_pdag_with_map(true_g, None)?;
         let g = to_gadjid_pdag_with_map(guess_g, Some(inv_guess_to_true))?;
-        ensure_same_n(&t, &g)?;
         Ok(gadjid::graph_operations::oset_aid(&t, &g))
     }
     pub fn parent_aid_align(
@@ -236,7 +225,6 @@ pub mod aid {
     ) -> Result<(f64, usize), String> {
         let t = to_gadjid_pdag_with_map(true_g, None)?;
         let g = to_gadjid_pdag_with_map(guess_g, Some(inv_guess_to_true))?;
-        ensure_same_n(&t, &g)?;
         Ok(gadjid::graph_operations::parent_aid(&t, &g))
     }
 }
@@ -248,7 +236,7 @@ mod tests {
     use crate::graph::builder::GraphBuilder;
 
     #[test]
-    fn identical_zero() {
+    fn identical_zero_shd() {
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
         let e_dir = reg.code_of("-->").unwrap();
@@ -462,5 +450,257 @@ mod tests {
         let c2 = b2.finalize().unwrap();
         let res = std::panic::catch_unwind(|| hd(&c1, &c2));
         assert!(res.is_err());
+    }
+
+    #[cfg(feature = "gadjid")]
+    #[test]
+    fn aid_to_gadjid_map_length_mismatch_errors() {
+        use crate::graph::dag::Dag;
+        use super::aid::{ancestor_aid_align, AidInput};
+
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        // n = 3 DAG
+        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(1, 2, d).unwrap();
+        let dag = Dag::new(std::sync::Arc::new(b.finalize().unwrap())).unwrap();
+
+        // Wrong-length inverse map (2 instead of 3)
+        let bad_inv = [0usize, 1usize];
+        let err = ancestor_aid_align(AidInput::Dag(&dag), AidInput::Dag(&dag), &bad_inv);
+        assert!(matches!(err, Err(msg) if msg.contains("index map length does not match graph size")));
+    }
+
+    #[cfg(feature = "gadjid")]
+    #[test]
+    fn aid_to_gadjid_rejects_non_cpdag() {
+        use crate::graph::pdag::Pdag;
+        use super::aid::{oset_aid_align, AidInput};
+
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let u = reg.code_of("---").unwrap();
+
+        // Build a PDAG that is valid as a PDAG but NOT a CPDAG: undirected 4-cycle without chord
+        let mut b = GraphBuilder::new_with_registry(4, true, &reg);
+        b.add_edge(0, 1, u).unwrap();
+        b.add_edge(1, 2, u).unwrap();
+        b.add_edge(2, 3, u).unwrap();
+        b.add_edge(3, 0, u).unwrap();
+        let p = Pdag::new(std::sync::Arc::new(b.finalize().unwrap())).unwrap();
+        assert!(!p.is_cpdag());
+
+        let inv = [0usize, 1usize, 2usize, 3usize];
+        let err = oset_aid_align(AidInput::Pdag(&p), AidInput::Pdag(&p), &inv);
+        assert!(matches!(err, Err(msg) if msg.contains("Expected CPDAG")));
+    }
+
+    #[cfg(feature = "gadjid")]
+    #[test]
+    fn aid_align_identical_dag_zero_errors() {
+        use crate::graph::dag::Dag;
+        use super::aid::{ancestor_aid_align, oset_aid_align, parent_aid_align, AidInput};
+
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        // 0 -> 1 -> 2
+        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(1, 2, d).unwrap();
+        let dag = Dag::new(std::sync::Arc::new(b.finalize().unwrap())).unwrap();
+
+        let inv = [0usize, 1usize, 2usize];
+        assert_eq!(ancestor_aid_align(AidInput::Dag(&dag), AidInput::Dag(&dag), &inv).unwrap().1, 0);
+        assert_eq!(oset_aid_align(AidInput::Dag(&dag), AidInput::Dag(&dag), &inv).unwrap().1, 0);
+        assert_eq!(parent_aid_align(AidInput::Dag(&dag), AidInput::Dag(&dag), &inv).unwrap().1, 0);
+    }
+
+    #[cfg(feature = "gadjid")]
+    #[test]
+    fn aid_align_permutation_corrected_by_inverse_map() {
+        use crate::graph::dag::Dag;
+        use super::aid::{ancestor_aid_align, oset_aid_align, parent_aid_align, AidInput};
+
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        // True DAG: 0 -> 1 -> 2
+        let mut bt = GraphBuilder::new_with_registry(3, true, &reg);
+        bt.add_edge(0, 1, d).unwrap();
+        bt.add_edge(1, 2, d).unwrap();
+        let t = Dag::new(std::sync::Arc::new(bt.finalize().unwrap())).unwrap();
+
+        // Guess DAG is relabeled: 1 -> 2, 2 -> 0  (permutation [1,2,0])
+        let mut bg = GraphBuilder::new_with_registry(3, true, &reg);
+        bg.add_edge(1, 2, d).unwrap();
+        bg.add_edge(2, 0, d).unwrap();
+        let g = Dag::new(std::sync::Arc::new(bg.finalize().unwrap())).unwrap();
+
+        // inv_guess_to_true[j] = i  => inverse of [1,2,0] is [2,0,1]
+        let inv = [2usize, 0usize, 1usize];
+
+        assert_eq!(ancestor_aid_align(AidInput::Dag(&t), AidInput::Dag(&g), &inv).unwrap().1, 0);
+        assert_eq!(oset_aid_align(AidInput::Dag(&t), AidInput::Dag(&g), &inv).unwrap().1, 0);
+        assert_eq!(parent_aid_align(AidInput::Dag(&t), AidInput::Dag(&g), &inv).unwrap().1, 0);
+    }
+
+    #[cfg(feature = "gadjid")]
+    #[test]
+    fn aid_align_cpdag_identical_zero_errors() {
+        use crate::graph::pdag::Pdag;
+        use super::aid::{ancestor_aid_align, oset_aid_align, parent_aid_align, AidInput};
+
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+        let u = reg.code_of("---").unwrap();
+
+        // CPDAG: 0 -> 1, 1 -- 2
+        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(0, 2, d).unwrap();
+        b.add_edge(1, 2, u).unwrap();
+        let p = Pdag::new(std::sync::Arc::new(b.finalize().unwrap())).unwrap();
+        assert!(p.is_cpdag());
+
+        let inv = [0usize, 1usize, 2usize];
+        assert_eq!(ancestor_aid_align(AidInput::Pdag(&p), AidInput::Pdag(&p), &inv).unwrap().1, 0);
+        assert_eq!(oset_aid_align(AidInput::Pdag(&p), AidInput::Pdag(&p), &inv).unwrap().1, 0);
+        assert_eq!(parent_aid_align(AidInput::Pdag(&p), AidInput::Pdag(&p), &inv).unwrap().1, 0);
+    }
+
+    #[cfg(feature = "gadjid")]
+    #[test]
+    fn aid_align_cpdag_structure_difference_counts_mistake() {
+        use crate::graph::pdag::Pdag;
+        use super::aid::{oset_aid_align, AidInput};
+
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+        let u = reg.code_of("---").unwrap();
+
+        // True CPDAG: 0 -> 1, 1 -- 2
+        let mut bt = GraphBuilder::new_with_registry(3, true, &reg);
+        bt.add_edge(0, 1, d).unwrap();
+        bt.add_edge(0, 2, d).unwrap();
+        bt.add_edge(1, 2, u).unwrap();
+        let p_true = Pdag::new(std::sync::Arc::new(bt.finalize().unwrap())).unwrap();
+        assert!(p_true.is_cpdag());
+
+        // Guess CPDAG: change 1 -- 2 into 1 -> 2
+        let mut bg = GraphBuilder::new_with_registry(3, true, &reg);
+        bg.add_edge(0, 1, d).unwrap();
+        bg.add_edge(0, 2, d).unwrap();
+        bg.add_edge(1, 2, d).unwrap();
+        let p_guess = Pdag::new(std::sync::Arc::new(bg.finalize().unwrap())).unwrap();
+        assert!(p_guess.is_cpdag());
+
+        let inv = [0usize, 1usize, 2usize];
+        let (_f, m) = oset_aid_align(AidInput::Pdag(&p_true), AidInput::Pdag(&p_guess), &inv).unwrap();
+        assert!(m > 0);
+    }
+
+    #[test]
+    fn shd_pair_kind_c_gt_v_branch() {
+        use crate::edges::EdgeRegistry;
+        use crate::graph::builder::GraphBuilder;
+
+        // t: edge 0->2 only; g: empty. For pair (u=0,v=1), row has col=2>1 ⇒ early None.
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        let mut bt = GraphBuilder::new_with_registry(3, true, &reg);
+        bt.add_edge(0, 2, d).unwrap();
+        let t = bt.finalize().unwrap();
+
+        let bg = GraphBuilder::new_with_registry(3, true, &reg);
+        let g = bg.finalize().unwrap();
+
+        assert_eq!(shd(&t, &g), (1.0 / 3.0, 1));
+    }
+
+    #[test]
+    fn hd_pair_any_c_gt_v_branch() {
+        use crate::edges::EdgeRegistry;
+        use crate::graph::builder::GraphBuilder;
+
+        // Same shape as above. For pair_any at (0,1) we hit c>v ⇒ (false, k).
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        let mut bt = GraphBuilder::new_with_registry(3, true, &reg);
+        bt.add_edge(0, 2, d).unwrap();
+        let t = bt.finalize().unwrap();
+
+        let bg = GraphBuilder::new_with_registry(3, true, &reg);
+        let g = bg.finalize().unwrap();
+
+        assert_eq!(hd(&t, &g), (1.0 / 3.0, 1));
+    }
+
+    #[test]
+    fn shd_with_perm_n_le_1_fast_path() {
+        use crate::edges::EdgeRegistry;
+        use crate::graph::builder::GraphBuilder;
+
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+
+        let b1 = GraphBuilder::new_with_registry(1, true, &reg);
+        let t = b1.finalize().unwrap();
+        let b2 = GraphBuilder::new_with_registry(1, true, &reg);
+        let g = b2.finalize().unwrap();
+
+        let (f, d) = shd_with_perm(&t, &g, &[0]);
+        assert_eq!((f, d), (0.0, 0));
+    }
+
+    #[test]
+    fn hd_n_le_1_fast_path() {
+        use crate::edges::EdgeRegistry;
+        use crate::graph::builder::GraphBuilder;
+
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+
+        let b1 = GraphBuilder::new_with_registry(1, true, &reg);
+        let t = b1.finalize().unwrap();
+        let b2 = GraphBuilder::new_with_registry(1, true, &reg);
+        let g = b2.finalize().unwrap();
+
+        let (f, d) = hd(&t, &g);
+        assert_eq!((f, d), (0.0, 0));
+    }
+
+    #[cfg(feature = "gadjid")]
+    #[test]
+    fn aid_pdag_inv_length_err_line_hit() {
+        use crate::graph::pdag::Pdag;
+        use super::aid::{oset_aid_align, AidInput};
+
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+        
+        // Build a valid CPDAG with n=3: 0->1, 1--2.
+        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(1, 2, d).unwrap();
+        let p = Pdag::new(std::sync::Arc::new(b.finalize().unwrap())).unwrap();
+        assert!(p.is_cpdag());
+
+        // Wrong-length inverse map to hit the PDAG arm's length check.
+        let bad_inv = [0usize, 1usize];
+        let err = oset_aid_align(AidInput::Pdag(&p), AidInput::Pdag(&p), &bad_inv).unwrap_err();
+        assert!(err.contains("index map length does not match graph size"));
     }
 }
