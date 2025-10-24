@@ -43,16 +43,20 @@ while keeping the user experience smooth.
 
 ### Comparison
 ```{r dagitty-conversion-fn-def, collapse=TRUE}
-as_dagitty_bn <- function( x, ... ){
-	nodes <- names( x$nodes )
-	ee <- c()
-	if( nrow(x$arcs) > 0 ){
-		ee <- apply(x$arcs, 1, function(a) {paste(a[1],"->",a[2])})
-	}
-	dagitty::dagitty(paste("pdag{ " , 
-		paste(nodes, collapse="\n"), 
-		paste(ee, collapse="\n"), 
-		" }"))
+as_dagitty_bn <- function(x, ...) {
+  nodes <- names(x$nodes)
+  ee <- c()
+  if (nrow(x$arcs) > 0) {
+    ee <- apply(x$arcs, 1, function(a) {
+      paste(a[1], "->", a[2])
+    })
+  }
+  dagitty::dagitty(paste(
+    "pdag{ ",
+    paste(nodes, collapse = "\n"),
+    paste(ee, collapse = "\n"),
+    " }"
+  ))
 }
 ```
 
@@ -73,8 +77,10 @@ cg <- caugi::as_caugi(ig, class = "DAG")
 forms <- lapply(igraph::V(ig)$name, function(v) {
   pa <- names(igraph::neighbors(ig, v, mode = "in"))
   if (length(pa) == 0) {
-    as.formula(paste0(v, " ~ 1"))} else {
-      as.formula(paste(v, "~", paste(pa, collapse = "+")))}
+    as.formula(paste0(v, " ~ 1"))
+  } else {
+    as.formula(paste(v, "~", paste(pa, collapse = "+")))
+  }
 })
 ggmg <- do.call(ggm::DAG, forms)
 bng <- bnlearn::as.bn(ig)
@@ -118,12 +124,14 @@ bench::mark(
 ```{r benchmark-d-sep}
 bench::mark(
   caugi = caugi::d_separated(cg, "V50", "V18", c("V8", "V20", "V43")),
-  caugi_index = caugi::d_separated(cg, X_index = 50L, Y_index = 18L, 
-                                   Z_index = c(8L, 20L, 43L)),
+  caugi_index = caugi::d_separated(cg,
+    X_index = 50L, Y_index = 18L,
+    Z_index = c(8L, 20L, 43L)
+  ),
   caugi_rust = caugi:::d_separated_ptr(cg@ptr, 49L, 17L, c(7L, 19L, 42L)),
   bnlearn = bnlearn::dsep(bng, "V50", "V18", c("V8", "V20", "V43")),
-  ggm = ggm::dSep(ggmg, "V50", "V18", c("V8", "V20", "V43")), 
-  dagitty = dagitty::dseparated(dg, "V50", "V18", c("V8", "V20", "V43")), 
+  ggm = ggm::dSep(ggmg, "V50", "V18", c("V8", "V20", "V43")),
+  dagitty = dagitty::dseparated(dg, "V50", "V18", c("V8", "V20", "V43")),
   check = FALSE # ggm returns FALSE, so check fails
 ) |> dplyr::arrange(median)
 ```
