@@ -38,7 +38,7 @@ as_igraph <- function(x, ...) {
   }
 
   # edge validity for Unknown
-  if (x@graph_class == "Unknown") {
+  if (x@graph_class == "UNKNOWN") {
     if (any(!(et %in% c("-->", "<->", "---")))) {
       stop("Conversion to igraph is only supported for 'Unknown' caugi graphs ",
         " with '-->', '<->', or '---' edges.",
