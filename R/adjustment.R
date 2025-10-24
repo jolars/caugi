@@ -21,6 +21,12 @@ d_separated <- function(cg,
                         X = NULL, Y = NULL, Z = NULL,
                         X_index = NULL, Y_index = NULL, Z_index = NULL) {
   is_caugi(cg, TRUE)
+  if (length(X) > 1 || length(Y) > 1 ||
+    length(X_index) > 1 || length(Y_index) > 1) {
+    stop("Provide exactly one X and one Y.",
+      call. = FALSE
+    )
+  }
   cg <- build(cg)
 
   X_idx0 <- .resolve_idx0_get(cg@name_index_map, X, X_index)
@@ -58,15 +64,14 @@ adjustment_set <- function(cg,
                            Y_index = NULL,
                            type = c("parents", "backdoor", "optimal")) {
   is_caugi(cg, TRUE)
-  cg <- build(cg)
-  type <- match.arg(type)
-
   if (length(X) > 1 || length(Y) > 1 ||
     length(X_index) > 1 || length(Y_index) > 1) {
     stop("Provide exactly one X and one Y.",
       call. = FALSE
     )
   }
+  cg <- build(cg)
+  type <- match.arg(type)
 
   X_idx0 <- .resolve_idx0_get(cg@name_index_map, X, X_index)
   Y_idx0 <- .resolve_idx0_get(cg@name_index_map, Y, Y_index)
@@ -99,6 +104,12 @@ is_valid_backdoor <- function(cg,
                               Y_index = NULL,
                               Z_index = NULL) {
   is_caugi(cg, TRUE)
+  if (length(X) > 1 || length(Y) > 1 ||
+    length(X_index) > 1 || length(Y_index) > 1) {
+    stop("Provide exactly one X and one Y.",
+      call. = FALSE
+    )
+  }
   cg <- build(cg)
 
   X_idx0 <- .resolve_idx0_get(cg@name_index_map, X, X_index)
@@ -117,7 +128,7 @@ is_valid_backdoor <- function(cg,
 #' @param X,Y Single node name.
 #' @param X_index,Y_index Optional 1-based indices (exclusive with name args).
 #' @param minimal Logical; if `TRUE` (default), only minimal sets are returned.
-#' @param max_size Integer; maximum size of sets to consider (default 10).
+#' @param max_size Integer; maximum size of sets to consider (default 3).
 #'
 #' @returns A list of character vectors, each an adjustment set
 #' (possibly empty).
@@ -128,8 +139,14 @@ all_backdoor_sets <- function(cg,
                               X_index = NULL,
                               Y_index = NULL,
                               minimal = TRUE,
-                              max_size = 10L) {
+                              max_size = 3L) {
   is_caugi(cg, TRUE)
+  if (length(X) > 1 || length(Y) > 1 ||
+    length(X_index) > 1 || length(Y_index) > 1) {
+    stop("Provide exactly one X and one Y.",
+      call. = FALSE
+    )
+  }
   cg <- build(cg)
 
 
@@ -167,11 +184,11 @@ all_backdoor_sets <- function(cg,
                               node_name = NULL,
                               node_index = NULL) {
   if (!is.null(node_index)) {
-    as.integer(node_index - 1L)
-  } else if (!is.null(node_name)) {
-    if (!is.null(node_index)) {
+    if (!is.null(node_name)) {
       stop("Provide either a node name or node index.")
     }
+    as.integer(node_index - 1L)
+  } else if (!is.null(node_name)) {
     nm_idx_map$get(node_name, missing = stop(
       paste(
         "Non-existant node name:",
@@ -196,11 +213,11 @@ all_backdoor_sets <- function(cg,
   if (is.null(node_name) && is.null(node_index)) {
     integer(0)
   } else if (!is.null(node_index)) {
-    as.integer(node_index - 1L)
-  } else if (!is.null(node_name)) {
-    if (!is.null(node_index)) {
+    if (!is.null(node_name)) {
       stop("Provide either a node name or node index.")
     }
+    as.integer(node_index - 1L)
+  } else if (!is.null(node_name)) {
     as.integer(
       nm_idx_map$mget(node_name,
         missing = stop(
