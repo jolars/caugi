@@ -23,66 +23,9 @@ d_separated <- function(cg,
   is_caugi(cg, TRUE)
   cg <- build(cg)
 
-  X_idx0 <- if (!is.null(X_index)) {
-    as.integer(X_index - 1L)
-  } else if (!is.null(X)) {
-    if (!is.null(X_index)) {
-      stop("Provide only one of `X` or `X_index`.")
-    }
-    cg@name_index_map$get(X, missing = stop(
-      paste(
-        "Non-existant node name:",
-        paste(setdiff(X, cg@nodes$name),
-          collapse = ", "
-        )
-      ),
-      call. = FALSE
-    ))
-  } else {
-    stop("Either X or X_index must be provided.", call. = FALSE)
-  }
-
-  Y_idx0 <- if (!is.null(Y_index)) {
-    as.integer(Y_index - 1L)
-  } else if (!is.null(Y)) {
-    if (!is.null(Y_index)) {
-      stop("Provide only one of `Y` or `Y_index`.")
-    }
-    cg@name_index_map$get(Y, missing = stop(
-      paste(
-        "Non-existant node name:",
-        paste(setdiff(Y, cg@nodes$name),
-          collapse = ", "
-        )
-      ),
-      call. = FALSE
-    ))
-  } else {
-    stop("Either Y or Y_index must be provided.", call. = FALSE)
-  }
-
-  Z_idx0 <- if (is.null(Z) && is.null(Z_index)) {
-    integer(0)
-  } else if (!is.null(Z_index)) {
-    as.integer(Z_index - 1L)
-  } else if (!is.null(Z)) {
-    if (!is.null(Z_index)) {
-      stop("Provide only one of `Z` or `Z_index`.")
-    }
-    as.integer(
-      cg@name_index_map$mget(Z,
-        missing = stop(
-          paste(
-            "Non-existant node name:",
-            paste(setdiff(Z, cg@nodes$name),
-              collapse = ", "
-            )
-          ),
-          call. = FALSE
-        )
-      )
-    )
-  }
+  X_idx0 <- .resolve_idx0_get(cg@name_index_map, X, X_index)
+  Y_idx0 <- .resolve_idx0_get(cg@name_index_map, Y, Y_index)
+  Z_idx0 <- .resolve_idx0_mget(cg@name_index_map, Z, Z_index)
 
   d_separated_ptr(cg@ptr, X_idx0, Y_idx0, Z_idx0)
 }
@@ -125,44 +68,8 @@ adjustment_set <- function(cg,
     )
   }
 
-  X_idx0 <- if (!is.null(X_index)) {
-    as.integer(X_index - 1L)
-  } else if (!is.null(X)) {
-    if (!is.null(X_index)) {
-      stop("Provide only one of `X` or `X_index`.")
-    }
-    cg@name_index_map$get(X, missing = stop(
-      paste(
-        "Non-existant node name:",
-        paste(setdiff(X, cg@nodes$name),
-          collapse = ", "
-        )
-      ),
-      call. = FALSE
-    ))
-  } else {
-    stop("Either X or X_index must be provided.", call. = FALSE)
-  }
-
-  Y_idx0 <- if (!is.null(Y_index)) {
-    as.integer(Y_index - 1L)
-  } else if (!is.null(Y)) {
-    if (!is.null(Y_index)) {
-      stop("Provide only one of `Y` or `Y_index`.")
-    }
-    cg@name_index_map$get(Y, missing = stop(
-      paste(
-        "Non-existant node name:",
-        paste(setdiff(Y, cg@nodes$name),
-          collapse = ", "
-        )
-      ),
-      call. = FALSE
-    ))
-  } else {
-    stop("Either Y or Y_index must be provided.", call. = FALSE)
-  }
-
+  X_idx0 <- .resolve_idx0_get(cg@name_index_map, X, X_index)
+  Y_idx0 <- .resolve_idx0_get(cg@name_index_map, Y, Y_index)
 
   idx0 <- switch(type,
     parents = adjustment_set_parents_ptr(cg@ptr, X_idx0, Y_idx0),
@@ -194,66 +101,9 @@ is_valid_backdoor <- function(cg,
   is_caugi(cg, TRUE)
   cg <- build(cg)
 
-  X_idx0 <- if (!is.null(X_index)) {
-    as.integer(X_index - 1L)
-  } else if (!is.null(X)) {
-    if (!is.null(X_index)) {
-      stop("Provide only one of `X` or `X_index`.")
-    }
-    cg@name_index_map$get(X, missing = stop(
-      paste(
-        "Non-existant node name:",
-        paste(setdiff(X, cg@nodes$name),
-          collapse = ", "
-        )
-      ),
-      call. = FALSE
-    ))
-  } else {
-    stop("Either X or X_index must be provided.", call. = FALSE)
-  }
-
-  Y_idx0 <- if (!is.null(Y_index)) {
-    as.integer(Y_index - 1L)
-  } else if (!is.null(Y)) {
-    if (!is.null(Y_index)) {
-      stop("Provide only one of `Y` or `Y_index`.")
-    }
-    cg@name_index_map$get(Y, missing = stop(
-      paste(
-        "Non-existant node name:",
-        paste(setdiff(Y, cg@nodes$name),
-          collapse = ", "
-        )
-      ),
-      call. = FALSE
-    ))
-  } else {
-    stop("Either Y or Y_index must be provided.", call. = FALSE)
-  }
-
-  Z_idx0 <- if (is.null(Z) && is.null(Z_index)) {
-    integer(0)
-  } else if (!is.null(Z_index)) {
-    as.integer(Z_index - 1L)
-  } else if (!is.null(Z)) {
-    if (!is.null(Z_index)) {
-      stop("Provide only one of `Z` or `Z_index`.")
-    }
-    as.integer(
-      cg@name_index_map$mget(Z,
-        missing = stop(
-          paste(
-            "Non-existant node name:",
-            paste(setdiff(Z, cg@nodes$name),
-              collapse = ", "
-            )
-          ),
-          call. = FALSE
-        )
-      )
-    )
-  }
+  X_idx0 <- .resolve_idx0_get(cg@name_index_map, X, X_index)
+  Y_idx0 <- .resolve_idx0_get(cg@name_index_map, Y, Y_index)
+  Z_idx0 <- .resolve_idx0_mget(cg@name_index_map, Z, Z_index)
 
   is_valid_backdoor_set_ptr(cg@ptr, X_idx0, Y_idx0, Z_idx0)
 }
@@ -282,37 +132,9 @@ all_backdoor_sets <- function(cg,
   is_caugi(cg, TRUE)
   cg <- build(cg)
 
-  X_idx0 <- if (!is.null(X_index)) {
-    as.integer(X_index - 1L)
-  } else if (!is.null(X)) {
-    cg@name_index_map$get(X, missing = stop(
-      paste(
-        "Non-existant node name:",
-        paste(setdiff(X, cg@nodes$name),
-          collapse = ", "
-        )
-      ),
-      call. = FALSE
-    ))
-  } else {
-    stop("Either X or X_index must be provided.", call. = FALSE)
-  }
 
-  Y_idx0 <- if (!is.null(Y_index)) {
-    as.integer(Y_index - 1L)
-  } else if (!is.null(Y)) {
-    cg@name_index_map$get(Y, missing = stop(
-      paste(
-        "Non-existant node name:",
-        paste(setdiff(Y, cg@nodes$name),
-          collapse = ", "
-        )
-      ),
-      call. = FALSE
-    ))
-  } else {
-    stop("Either Y or Y_index must be provided.", call. = FALSE)
-  }
+  X_idx0 <- .resolve_idx0_get(cg@name_index_map, X, X_index)
+  Y_idx0 <- .resolve_idx0_get(cg@name_index_map, Y, Y_index)
 
   sets_idx0 <- all_backdoor_sets_ptr(
     cg@ptr,
@@ -323,4 +145,74 @@ all_backdoor_sets <- function(cg,
   )
   nm <- cg@nodes$name
   lapply(sets_idx0, \(idx0) nm[idx0 + 1L])
+}
+
+#' @title Resolve node name or index to 0-based index.
+#'
+#' @description Internal helper function to resolve either a node name or a
+#' node index to a 0-based index.
+#' `.resolve_idx0_get` uses `get` on the `fastmap` and expects a single value,
+#' while `.resolve_idx0_mget` uses `mget` and can return multiple values.
+#'
+#' @param nm_idx_map A `fastmap` mapping node names to 0-based indices from
+#' a `caugi_graph`.
+#' @param node_name Optional character vector of node names.
+#' @param node_index Optional numeric vector of 1-based node indices.
+#'
+#' @name .resolve_idx0_get
+#'
+#' @seealso [fastmap::fastmap]
+#' @keywords internal
+.resolve_idx0_get <- function(nm_idx_map,
+                              node_name = NULL,
+                              node_index = NULL) {
+  if (!is.null(node_index)) {
+    as.integer(node_index - 1L)
+  } else if (!is.null(node_name)) {
+    if (!is.null(node_index)) {
+      stop("Provide either a node name or node index.")
+    }
+    nm_idx_map$get(node_name, missing = stop(
+      paste(
+        "Non-existant node name:",
+        paste(setdiff(node_name, nm_idx_map$keys()),
+          collapse = ", "
+        )
+      ),
+      call. = FALSE
+    ))
+  } else {
+    stop("Either the node name or the node index must be provided.",
+      call. = FALSE
+    )
+  }
+}
+
+#' @name .resolve_idx0_get
+#' @keywords internal
+.resolve_idx0_mget <- function(nm_idx_map,
+                               node_name = NULL,
+                               node_index = NULL) {
+  if (is.null(node_name) && is.null(node_index)) {
+    integer(0)
+  } else if (!is.null(node_index)) {
+    as.integer(node_index - 1L)
+  } else if (!is.null(node_name)) {
+    if (!is.null(node_index)) {
+      stop("Provide either a node name or node index.")
+    }
+    as.integer(
+      nm_idx_map$mget(node_name,
+        missing = stop(
+          paste(
+            "Non-existant node name:",
+            paste(setdiff(node_name, nm_idx_map$keys()),
+              collapse = ", "
+            )
+          ),
+          call. = FALSE
+        )
+      )
+    )
+  }
 }
