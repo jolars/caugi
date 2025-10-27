@@ -289,6 +289,25 @@ test_that("exogenous works on PDAGs", {
   expect_setequal(e, c("C"))
 })
 
+test_that("getter queries errors on non-character input", {
+  cg <- caugi_graph(A %-->% B, B %-->% C, class = "DAG")
+  expect_error(parents(cg, 1), "must be a character vector")
+  expect_error(children(cg, 2), "must be a character vector")
+  expect_error(neighbors(cg, 3), "must be a character vector")
+  expect_error(ancestors(cg, 4), "must be a character vector")
+  expect_error(descendants(cg, 5), "must be a character vector")
+  expect_error(markov_blanket(cg, 6), "must be a character vector")
+})
+
+test_that("getter queries builds", {
+  getter_queries <- c(parents, children, neighbors, ancestors, descendants, markov_blanket)
+  for (getter in getter_queries) {
+    cg <- caugi_graph(A %-->% B, B %-->% C, class = "DAG", build = FALSE)
+    getter(cg, "B")
+    expect_true(cg@built)
+  }
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ────────────────────────────── Getter helpers ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
