@@ -15,19 +15,18 @@ reference:
   - title: Adjustment and d-separation
     contents:
       - has_concept("adjustment")
-  - title Simulation
+  - title: Simulation
     contents:
       - has_concept("simulation")
-  - title: Methods
-    contents:
-      - has_concept("methods")
   - title: Metrics
     contents:
       - has_concept("metrics")
   - title: Edge Registry
     contents:
       - has_concept("registry")
+  - title: Methods
+    contents:
+      - has_concept("methods")
   - title: Conversions
     contents:
       - has_concept("conversion")
-
