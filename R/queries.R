@@ -17,6 +17,7 @@
 #' @returns A logical value indicating whether the object is a `caugi_graph`.
 #'
 #' @family queries
+#' @concept queries
 #'
 #' @export
 is_caugi <- function(x, throw_error = FALSE) {
@@ -37,6 +38,7 @@ is_caugi <- function(x, throw_error = FALSE) {
 #' @returns A logical value indicating whether the graph is empty.
 #'
 #' @family queries
+#' @concept queries
 #'
 #' @export
 is_empty_caugi <- function(cg) {
@@ -56,6 +58,7 @@ is_empty_caugi <- function(cg) {
 #' @returns A logical indicating if the two graphs have the same nodes.
 #'
 #' @family queries
+#' @concept queries
 #'
 #' @export
 same_nodes <- function(cg1, cg2, throw_error = FALSE) {
@@ -108,6 +111,7 @@ same_nodes <- function(cg1, cg2, throw_error = FALSE) {
 #' @returns A logical value indicating whether the graph is acyclic.
 #'
 #' @family queries
+#' @concept queries
 #'
 #' @export
 is_acyclic <- function(cg, force_check = FALSE) {
@@ -137,6 +141,7 @@ is_acyclic <- function(cg, force_check = FALSE) {
 #' @returns A logical value indicating whether the graph is a DAG.
 #'
 #' @family queries
+#' @concept queries
 #'
 #' @export
 is_dag <- function(cg, force_check = FALSE) {
@@ -164,6 +169,7 @@ is_dag <- function(cg, force_check = FALSE) {
 #' @returns A logical value indicating whether the graph is a PDAG.
 #'
 #' @family queries
+#' @concept queries
 #'
 #' @export
 is_pdag <- function(cg, force_check = FALSE) {
@@ -190,6 +196,7 @@ is_pdag <- function(cg, force_check = FALSE) {
 #'
 #' @rdname nodes
 #' @family queries
+#' @concept queries
 #'
 #' @export
 nodes <- function(cg) {
@@ -211,8 +218,10 @@ V <- nodes # igraph notation
 #' @param cg A `caugi_graph` object.
 #'
 #' @rdname edges
+#' @concept queries
 #'
 #' @family queries
+#' @concept queries
 #'
 #' @export
 edges <- function(cg) {
@@ -232,6 +241,7 @@ E <- edges # igraph notation
 #' @returns A character vector of edge types.
 #'
 #' @family queries
+#' @concept queries
 #'
 #' @export
 edge_types <- function(cg) {
@@ -258,6 +268,7 @@ edge_types <- function(cg) {
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
 #' @family queries
+#' @concept queries
 #'
 #' @export
 parents <- function(cg, nodes = NULL, index = NULL) {
@@ -307,6 +318,7 @@ parents <- function(cg, nodes = NULL, index = NULL) {
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
 #' @family queries
+#' @concept queries
 #'
 #' @export
 children <- function(cg, nodes = NULL, index = NULL) {
@@ -356,6 +368,7 @@ children <- function(cg, nodes = NULL, index = NULL) {
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
 #' @family queries
+#' @concept queries
 #'
 #' @export
 neighbors <- function(cg, nodes = NULL, index = NULL) {
@@ -409,6 +422,7 @@ neighbours <- neighbors
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
 #' @family queries
+#' @concept queries
 #'
 #' @export
 ancestors <- function(cg, nodes = NULL, index = NULL) {
@@ -458,6 +472,7 @@ ancestors <- function(cg, nodes = NULL, index = NULL) {
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
 #' @family queries
+#' @concept queries
 #'
 #' @export
 descendants <- function(cg, nodes = NULL, index = NULL) {
@@ -507,6 +522,7 @@ descendants <- function(cg, nodes = NULL, index = NULL) {
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
 #' @family queries
+#' @concept queries
 #'
 #' @export
 markov_blanket <- function(cg, nodes = NULL, index = NULL) {
@@ -558,6 +574,7 @@ markov_blanket <- function(cg, nodes = NULL, index = NULL) {
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
 #' @family queries
+#' @concept queries
 #'
 #' @export
 exogenous <- function(cg, undirected_as_parents = FALSE) {

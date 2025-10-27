@@ -2,3 +2,8 @@ url: https://frederikfabriciusbjerre.github.io/caugi/
 template:
   bootstrap: 5
 
+reference:
+  - title: Queries
+    contents:
+      - has_concept("queries")
+
