@@ -15,9 +15,9 @@ reference:
   - title: Adjustment and d-separation
     contents:
       - has_concept("adjustment")
-  - title: Conversions
+  - title Simulation
     contents:
-      - has_concept("conversion")
+      - has_concept("simulation")
   - title: Methods
     contents:
       - has_concept("methods")
@@ -27,4 +27,7 @@ reference:
   - title: Edge Registry
     contents:
       - has_concept("registry")
+  - title: Conversions
+    contents:
+      - has_concept("conversion")
 
