@@ -54,6 +54,10 @@ graph_class_ptr <- function(g) .Call(wrap__graph_class_ptr, g)
 
 is_acyclic_ptr <- function(g) .Call(wrap__is_acyclic_ptr, g)
 
+to_cpdag_ptr <- function(g) .Call(wrap__to_cpdag_ptr, g)
+
+is_cpdag_ptr <- function(g) .Call(wrap__is_cpdag_ptr, g)
+
 is_dag_type_ptr <- function(g) .Call(wrap__is_dag_type_ptr, g)
 
 is_pdag_type_ptr <- function(g) .Call(wrap__is_pdag_type_ptr, g)
@@ -79,6 +83,10 @@ adjustment_set_optimal_ptr <- function(g, x, y) .Call(wrap__adjustment_set_optim
 is_valid_backdoor_set_ptr <- function(g, x, y, z) .Call(wrap__is_valid_backdoor_set_ptr, g, x, y, z)
 
 all_backdoor_sets_ptr <- function(g, x, y, minimal, max_size) .Call(wrap__all_backdoor_sets_ptr, g, x, y, minimal, max_size)
+
+n_ptr <- function(g) .Call(wrap__n_ptr, g)
+
+edges_ptr_df <- function(g) .Call(wrap__edges_ptr_df, g)
 
 
 # nolint end
