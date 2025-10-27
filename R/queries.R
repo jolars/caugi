@@ -615,49 +615,67 @@ subgraph <- function(cg, nodes = NULL, index = NULL) {
     stop("Supply one of `nodes` or `index`.", call. = FALSE)
   }
 
+  # resolve -> keep_ids0 (0-based), keep_names, preserving order
   if (index_supplied) {
+    if (!is.numeric(index) || anyNA(index)) {
+      stop("`index` must be numeric without NA.", call. = FALSE)
+    }
     idx1 <- as.integer(index)
     if (any(idx1 < 1L) || any(idx1 > nrow(cg@nodes))) {
       stop("`index` out of range (1..n).", call. = FALSE)
     }
+    keep_ids0 <- idx1 - 1L
     keep_names <- cg@nodes$name[idx1]
   } else {
     if (!is.character(nodes)) {
       stop("`nodes` must be a character vector.", call. = FALSE)
+    }
+    if (anyNA(nodes)) {
+      stop("`nodes` contains NA.", call. = FALSE)
     }
     missing <- setdiff(nodes, cg@nodes$name)
     if (length(missing)) {
       stop("Unknown node(s): ", paste(missing, collapse = ", "), call. = FALSE)
     }
     keep_names <- nodes
+    keep_ids0 <- vapply(nodes, cg@name_index_map$get, integer(1))
   }
 
-  if (any(duplicated(keep_names))) {
-    dups <- unique(keep_names[duplicated(keep_names)])
-    stop("`nodes`/`index` contains duplicates: ",
-      paste(dups, collapse = ", "),
-      call. = FALSE
-    )
+  # duplicates are an error
+  if (any(duplicated(keep_ids0))) {
+    dups <- unique(keep_names[duplicated(keep_ids0) | duplicated(keep_ids0, fromLast = TRUE)])
+    stop("`nodes`/`index` contains duplicates: ", paste(dups, collapse = ", "), call. = FALSE)
   }
 
-  # filter edges to the kept nodes; keep constructor’s sort
+  # call Rust (always reindexed)
+  ptr_sub <- induced_subgraph_ptr(cg@ptr, as.integer(keep_ids0))
+
+  # nodes table in input order
+  nodes_sub <- tibble::tibble(name = keep_names)
+
+  # filter edges to kept names and sort like constructor
   keep_set <- fastmap::fastmap()
   for (nm in keep_names) keep_set$set(nm, TRUE)
   edges_sub <- cg@edges |>
     dplyr::filter(keep_set$has(.data$from) & keep_set$has(.data$to)) |>
     dplyr::arrange(.data$from, .data$to, .data$edge)
 
-  # rebuild via constructor: declared nodes contain all edge nodes
-  caugi_graph(
-    from   = edges_sub$from,
-    edge   = edges_sub$edge,
-    to     = edges_sub$to,
-    nodes  = keep_names,
+  # rebuild name_index_map
+  name_index_map_sub <- fastmap::fastmap()
+  for (i in seq_len(nrow(nodes_sub))) name_index_map_sub$set(nodes_sub$name[i], i - 1L)
+
+  state_sub <- .cg_state(
+    nodes = nodes_sub,
+    edges = edges_sub,
+    ptr = ptr_sub,
+    built = TRUE,
     simple = cg@simple,
-    build  = TRUE,
-    class  = cg@graph_class
+    class = cg@graph_class,
+    name_index_map = name_index_map_sub
   )
+  caugi_graph(state = state_sub)
 }
+
 
 
 

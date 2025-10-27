@@ -83,6 +83,83 @@ impl CaugiGraph {
     }
 }
 
+impl CaugiGraph {
+    /// Node-induced subgraph on `keep` (new ids are 0..k-1, in the SAME order as `keep`).
+    /// Returns: (new_core, new_to_old, old_to_new).
+    pub fn induced_subgraph(
+        &self,
+        keep: &[u32],
+    ) -> Result<(CaugiGraph, Vec<u32>, Vec<u32>), String> {
+        let n = self.n() as usize;
+
+        // validate + deduplicate while preserving order
+        let mut seen = vec![false; n];
+        let mut new_to_old: Vec<u32> = Vec::with_capacity(keep.len());
+        for &u in keep {
+            if (u as usize) >= n {
+                return Err("node id out of range".into());
+            }
+            if std::mem::replace(&mut seen[u as usize], true) {
+                return Err("duplicate node id in `keep`".into());
+            }
+            new_to_old.push(u);
+        }
+
+        // old -> new map
+        let mut old_to_new = vec![u32::MAX; n];
+        for (new, &old) in new_to_old.iter().enumerate() {
+            old_to_new[old as usize] = new as u32;
+        }
+
+        // row counts
+        let k = new_to_old.len();
+        let mut row_index: Vec<u32> = Vec::with_capacity(k + 1);
+        row_index.push(0);
+        for &old_u in &new_to_old {
+            let mut cnt = 0u32;
+            for kk in self.row_range(old_u) {
+                let ov = self.col_index[kk] as usize;
+                if ov < n && old_to_new[ov] != u32::MAX {
+                    cnt += 1;
+                }
+            }
+            row_index.push(row_index.last().unwrap() + cnt);
+        }
+
+        // allocate + scatter
+        let nnz = *row_index.last().unwrap() as usize;
+        let mut col_index = vec![0u32; nnz];
+        let mut etype = vec![0u8; nnz];
+        let mut side = vec![0u8; nnz];
+        let mut cur = row_index[..k].to_vec();
+
+        for (new_u, &old_u) in new_to_old.iter().enumerate() {
+            for kk in self.row_range(old_u) {
+                let ov = self.col_index[kk] as usize;
+                let nv = old_to_new[ov];
+                if nv == u32::MAX {
+                    continue;
+                }
+                let p = cur[new_u] as usize;
+                col_index[p] = nv;
+                etype[p] = self.etype[kk];
+                side[p] = self.side[kk];
+                cur[new_u] += 1;
+            }
+        }
+
+        let out = CaugiGraph::from_csr(
+            row_index,
+            col_index,
+            etype,
+            side,
+            self.simple,
+            self.registry.clone(),
+        )?;
+        Ok((out, new_to_old, old_to_new))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

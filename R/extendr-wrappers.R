@@ -46,6 +46,8 @@ markov_blanket_of_ptr <- function(g, idxs) .Call(wrap__markov_blanket_of_ptr, g,
 
 exogenous_nodes_of_ptr <- function(g, undirected_as_parents) .Call(wrap__exogenous_nodes_of_ptr, g, undirected_as_parents)
 
+induced_subgraph_ptr <- function(g, keep) .Call(wrap__induced_subgraph_ptr, g, keep)
+
 is_simple_ptr <- function(g) .Call(wrap__is_simple_ptr, g)
 
 graph_class_ptr <- function(g) .Call(wrap__graph_class_ptr, g)

@@ -611,6 +611,28 @@ fn all_backdoor_sets_ptr(
     extendr_api::prelude::List::from_values(robjs).into_robj()
 }
 
+// ── Subgraph ────────────────────────────────────────────────────────────────
+
+#[extendr]
+fn induced_subgraph_ptr(g: ExternalPtr<GraphView>, keep: Integers) -> Robj {
+    let mut ks: Vec<u32> = Vec::with_capacity(keep.len());
+    for ri in keep.iter() {
+        let u = rint_to_u32(ri, "keep");
+        if u >= g.as_ref().n() {
+            throw_r_error(format!("node id {} out of bounds", u));
+        }
+        ks.push(u);
+    }
+
+    let  sub= g
+        .as_ref()
+        .induced_subgraph(&ks)
+        .unwrap_or_else(|e| throw_r_error(e));
+
+    let sub_ptr = ExternalPtr::new(sub);
+    sub_ptr.into_robj()
+}
+
 extendr_module! {
     mod caugi;
     // registry
@@ -638,6 +660,7 @@ extendr_module! {
     fn descendants_of_ptr;
     fn markov_blanket_of_ptr;
     fn exogenous_nodes_of_ptr;
+    fn induced_subgraph_ptr;
 
     // graph properties
     fn is_simple_ptr;

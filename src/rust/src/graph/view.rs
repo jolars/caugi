@@ -131,6 +131,25 @@ impl GraphView {
             _ => Err("all_backdoor_sets is only defined for DAGs".into()),
         }
     }
+
+    pub fn induced_subgraph(
+        &self,
+        keep: &[u32],
+    ) -> Result<GraphView, String> {
+        let (core2, _new_to_old, _old_to_new) = self.core().induced_subgraph(keep)?;
+        let gv = match self {
+            GraphView::Dag(_) => {
+                let d = super::dag::Dag::new(std::sync::Arc::new(core2))?;
+                GraphView::Dag(std::sync::Arc::new(d))
+            }
+            GraphView::Pdag(_) => {
+                let p = super::pdag::Pdag::new(std::sync::Arc::new(core2))?;
+                GraphView::Pdag(std::sync::Arc::new(p))
+            }
+            GraphView::Raw(_) => GraphView::Raw(std::sync::Arc::new(core2)),
+        };
+        Ok(gv)
+    }
 }
 
 #[cfg(test)]
