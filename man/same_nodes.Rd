@@ -30,6 +30,7 @@ Other queries:
 \code{\link{exogenous}()},
 \code{\link{is_acyclic}()},
 \code{\link{is_caugi}()},
+\code{\link{is_cpdag}()},
 \code{\link{is_dag}()},
 \code{\link{is_empty_caugi}()},
 \code{\link{is_pdag}()},
