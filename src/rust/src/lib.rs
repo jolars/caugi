@@ -123,7 +123,8 @@ fn edge_registry_register(
 fn edge_registry_code_of(reg: ExternalPtr<EdgeRegistry>, glyphs: Strings) -> Robj {
     let mut out: Vec<i32> = Vec::with_capacity(glyphs.len());
     for g in glyphs.iter() {
-        let code = reg.as_ref()
+        let code = reg
+            .as_ref()
             .code_of(g.as_str())
             .unwrap_or_else(|e| throw_r_error(e.to_string()));
         out.push(code as i32);
@@ -628,7 +629,7 @@ fn induced_subgraph_ptr(g: ExternalPtr<GraphView>, keep: Integers) -> Robj {
         ks.push(u);
     }
 
-    let  sub= g
+    let sub = g
         .as_ref()
         .induced_subgraph(&ks)
         .unwrap_or_else(|e| throw_r_error(e));

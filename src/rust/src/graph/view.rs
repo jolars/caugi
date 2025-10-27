@@ -132,10 +132,7 @@ impl GraphView {
         }
     }
 
-    pub fn induced_subgraph(
-        &self,
-        keep: &[u32],
-    ) -> Result<GraphView, String> {
+    pub fn induced_subgraph(&self, keep: &[u32]) -> Result<GraphView, String> {
         let (core2, _new_to_old, _old_to_new) = self.core().induced_subgraph(keep)?;
         let gv = match self {
             GraphView::Dag(_) => {
