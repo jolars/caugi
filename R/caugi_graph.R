@@ -268,11 +268,7 @@ caugi_graph <- S7::new_class(
       b <- graph_builder_new(reg, n = n, simple = simple)
 
       if (nrow(edges)) {
-        codes <- vapply(
-          edges$edge,
-          function(g) edge_registry_code_of(reg, g),
-          integer(1L)
-        )
+        codes <- edge_registry_code_of(reg, edges$edge)
         graph_builder_add_edges(
           b,
           as.integer(unname(id[edges$from])),

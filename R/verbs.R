@@ -24,7 +24,6 @@ build <- S7::new_generic("build", "cg")
 #' @name build
 #' @export
 S7::method(build, caugi_graph) <- function(cg, ...) {
-  # if ... is non-empty, throw error
   if (length(list(...)) > 0L) {
     stop("`build()` does not take any arguments other than `cg`.",
       call. = FALSE
@@ -36,6 +35,7 @@ S7::method(build, caugi_graph) <- function(cg, ...) {
   if (cg@built) {
     return(cg)
   }
+
   s <- .unfreeze_state(cg@`.state`)
 
   n <- nrow(s$nodes)
@@ -46,10 +46,8 @@ S7::method(build, caugi_graph) <- function(cg, ...) {
   b <- graph_builder_new(reg, n = n, simple = cg@simple)
 
   if (nrow(s$edges)) {
-    codes <- vapply(
-      s$edges$edge, function(g) edge_registry_code_of(reg, g),
-      integer(1L)
-    )
+    # batched glyph->code lookup
+    codes <- edge_registry_code_of(reg, s$edges$edge)
     graph_builder_add_edges(
       b,
       as.integer(unname(id[s$edges$from])),
@@ -68,11 +66,14 @@ S7::method(build, caugi_graph) <- function(cg, ...) {
   ) |>
     dplyr::arrange(from, to, edge)
 
+  # fastmap bulk fill
   name_index_map <- fastmap::fastmap()
-  for (i in seq_len(nrow(s$nodes))) {
-    name_index_map$set(s$nodes$name[i], i - 1L)
-  }
+  do.call(
+    name_index_map$mset,
+    setNames(as.list(seq_len(nrow(s$nodes)) - 1L), s$nodes$name)
+  )
   s$name_index_map <- name_index_map
+
   s$ptr <- p
   s$built <- TRUE
   .freeze_state(cg@`.state`)
