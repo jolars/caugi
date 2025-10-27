@@ -115,9 +115,6 @@
 .expand_nodes <- function(expr, env = parent.frame()) {
   if (is.symbol(expr)) {
     val <- tryCatch(eval(expr, env), error = function(e) NULL)
-    if (is.character(val) || is.numeric(val)) {
-      return(as.character(val))
-    }
     return(deparse1(expr))
   }
   if (is.character(expr) && length(expr) == 1L) {
@@ -259,14 +256,6 @@
     chain_terms <- chain$terms # list of term-exprs
     chain_ops <- chain$ops # character(ops)
 
-    if (length(chain_ops) < 1L ||
-      length(chain_terms) != length(chain_ops) + 1L) {
-      stop("Malformed chained edge expression: ",
-        deparse(edge_term),
-        call. = FALSE
-      )
-    }
-
     # Attach external left nodes to the first term; right nodes to the last term
     if (length(left_nodes_terms)) {
       chain_terms[[1L]] <- call(
@@ -405,17 +394,7 @@
 #' @keywords internal
 .segment_units <- function(lhs_term, op_chr, rhs_term) {
   glyph <- .glyph_of(as.name(op_chr))
-  if (is.null(glyph)) {
-    stop("Unknown edge operator in chain: ", op_chr, call. = FALSE)
-  }
   froms <- .expand_nodes(lhs_term)
   tos <- .expand_nodes(rhs_term)
-  if (!length(froms) || !length(tos)) {
-    stop("Empty node set in chained edge expression near operator ",
-      op_chr,
-      call. = FALSE
-    )
-  }
-  # Return an edge-unit compatible list: list(lhs=expr, rhs=expr, glyph=chr)
   list(lhs = lhs_term, rhs = rhs_term, glyph = glyph)
 }
