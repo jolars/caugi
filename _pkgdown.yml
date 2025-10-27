@@ -6,4 +6,10 @@ reference:
   - title: Queries
     contents:
       - has_concept("queries")
+  - title: Adjustment and d-separation
+    contents:
+      - has_concept("adjustment")
+  - title: Conversions
+    contents:
+      - has_concept("conversion")
 

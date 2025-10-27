@@ -21,3 +21,9 @@ A list containing the score (normalized) and the count.
 Compute the Adjustment Identification Distance (AID) between two
 graphs using the \code{gadjid} Rust package.
 }
+\seealso{
+Other metrics: 
+\code{\link{hd}()},
+\code{\link{shd}()}
+}
+\concept{metrics}

@@ -30,3 +30,10 @@ Logical scalar.
 Checks whether \code{Z} is a valid backdoor adjustment set for
 \verb{X --> Y}.
 }
+\seealso{
+Other adjustment: 
+\code{\link{adjustment_set}()},
+\code{\link{all_backdoor_sets}()},
+\code{\link{d_separated}()}
+}
+\concept{adjustment}

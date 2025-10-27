@@ -59,5 +59,7 @@ Caugi graph verbs
 
 }}
 \seealso{
-\code{\link[=caugi_graph]{caugi_graph()}}, \code{\link[=build]{build()}}
+Other verbs: 
+\code{\link{build}()}
 }
+\concept{verbs}

@@ -16,6 +16,9 @@
 #'
 #' @returns Logical scalar.
 #'
+#' @family adjustment
+#' @concept adjustment
+#'
 #' @export
 d_separated <- function(cg,
                         X = NULL, Y = NULL, Z = NULL,
@@ -56,6 +59,9 @@ d_separated <- function(cg,
 #'
 #' @returns A tibble with a `name` column (possibly 0 rows).
 #'
+#' @family adjustment
+#' @concept adjustment
+#'
 #' @export
 adjustment_set <- function(cg,
                            X = NULL,
@@ -95,6 +101,10 @@ adjustment_set <- function(cg,
 #' @param X_index,Y_index,Z_index Optional 1-based indices.
 #'
 #' @returns Logical scalar.
+#'
+#' @family adjustment
+#' @concept adjustment
+#'
 #' @export
 is_valid_backdoor <- function(cg,
                               X = NULL,
@@ -132,6 +142,10 @@ is_valid_backdoor <- function(cg,
 #'
 #' @returns A list of character vectors, each an adjustment set
 #' (possibly empty).
+#'
+#' @family adjustment
+#' @concept adjustment
+#'
 #' @export
 all_backdoor_sets <- function(cg,
                               X = NULL,
@@ -163,6 +177,10 @@ all_backdoor_sets <- function(cg,
   nm <- cg@nodes$name
   lapply(sets_idx0, \(idx0) nm[idx0 + 1L])
 }
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────── Helpers ────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 #' @title Resolve node name or index to 0-based index.
 #'

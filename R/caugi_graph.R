@@ -42,6 +42,9 @@
 #' @returns A [`caugi_graph`] S7 object containing the nodes, edges, and a
 #' pointer to the underlying Rust graph structure.
 #'
+#' @family caugi_graph
+#' @concept caugi_graph
+#'
 #' @export
 caugi_graph <- S7::new_class(
   "caugi_graph",

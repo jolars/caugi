@@ -36,3 +36,10 @@ Types supported:
 \item \code{"optimal"}: O-set (only for single \code{x} and single \code{y})
 }
 }
+\seealso{
+Other adjustment: 
+\code{\link{all_backdoor_sets}()},
+\code{\link{d_separated}()},
+\code{\link{is_valid_backdoor}()}
+}
+\concept{adjustment}

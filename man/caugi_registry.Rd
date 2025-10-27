@@ -12,3 +12,10 @@ An \code{edge_registry} external pointer.
 \description{
 Access the global edge registry, creating it if needed.
 }
+\seealso{
+Other registry: 
+\code{\link{register_caugi_edge}()},
+\code{\link{reset_caugi_registry}()},
+\code{\link{seal_caugi_registry}()}
+}
+\concept{registry}

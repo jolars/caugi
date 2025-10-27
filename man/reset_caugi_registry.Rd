@@ -9,3 +9,10 @@ reset_caugi_registry()
 \description{
 Reset the global edge registry.
 }
+\seealso{
+Other registry: 
+\code{\link{caugi_registry}()},
+\code{\link{register_caugi_edge}()},
+\code{\link{seal_caugi_registry}()}
+}
+\concept{registry}

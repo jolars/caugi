@@ -13,8 +13,13 @@ build <- S7::new_generic("build", "cg")
 #' This function builds the graph using the Rust backend and updates the
 #' internal pointer to the graph. If the graph is already built, it is returned.
 #'
-#' @param cg A `caugi_graph` object with `cg@built = TRUE`.
+#' @param cg A `caugi_graph` object.
 #' @param ... Not used.
+#'
+#' @returns The built `caugi_graph` object.
+#'
+#' @family verbs
+#' @concept verbs
 #'
 #' @name build
 #' @export
@@ -94,8 +99,11 @@ S7::method(build, caugi_graph) <- function(cg, ...) {
 #' @param edge Character vector of edge types. Default is `NULL`.
 #' @param to Character vector of target node names. Default is `NULL`.
 #' @param name Character vector of node names. Default is `NULL`.
+#'
 #' @returns The updated `caugi_graph`.
-#' @seealso [caugi_graph()], [build()]
+#'
+#' @family verbs
+#' @concept verbs
 NULL
 
 #' @describeIn caugi_verbs Add edges.
@@ -196,79 +204,6 @@ remove_nodes <- function(cg, ..., name = NULL) {
   }
   .update_caugi_graph(cg, nodes = nodes, action = "remove")
 }
-
-# ──────────────────────────────────────────────────────────────────────────────
-# ───────────────────────────────── Subgraph ───────────────────────────────────
-# ──────────────────────────────────────────────────────────────────────────────
-
-#' @title Extract a subgraph induced by a set of nodes
-#'
-#' @description Extract a subgraph induced by a set of nodes.
-#'
-#' @param cg A `caugi_graph` object.
-#' @param ... Unquoted node names, vectors via `c()`, or `+` composition.
-#'
-#' @returns A `caugi_graph` object containing only the specified nodes and any
-#' edges between them.
-#'
-#' @export
-subgraph <- function(cg, ...) {
-  calls <- as.list(substitute(list(...)))[-1L]
-  nodes <- .get_nodes_tibble(NULL, calls)
-  if (!nrow(nodes)) {
-    stop("No nodes specified for subgraph.", call. = FALSE)
-  }
-  drop <- tibble::tibble(name = setdiff(cg@nodes$name, nodes$name))
-  if (nrow(drop)) {
-    cg <- .update_caugi_graph(cg, nodes = drop, action = "remove")
-  }
-  cg
-}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# ───────────────────────────────── Convert ────────────────────────────────────
-# ──────────────────────────────────────────────────────────────────────────────
-
-# #' @title Convert a `caugi_graph` to a specified graph type, if possible.
-# #'
-# #' @description
-# #' Convert a `caugi_graph` to a specified graph type, if possible. It throws an
-# #' error if the conversion is not possible. For example, a graph with undirected
-# #' edges cannot be converted to a DAG.
-# #'
-# #' @param cg A `caugi_graph` object.
-# #' @param class The target graph class. One of `"DAG"`, `"PDAG"`, `"Unknown"`.
-# #'
-# #' @returns The converted `caugi_graph` object.
-# #' @export
-# convert_graph_class <- function(cg, class) {
-#   class <- match.arg(class, c("DAG", "PDAG", "Unknown"))
-#
-#   cg <- build(cg)
-#
-#   if (identical(cg@class, class)) {
-#     return(cg)
-#   }
-#
-#   s <- cg@`.state`
-#
-#   # Check if conversion is possible
-#   if (identical(class, "DAG")) {
-#     if (!is_dag(cg, force_check = TRUE)) {
-#       stop("Cannot convert to DAG.", call. = FALSE)
-#     }
-#   } else if (identical(class, "PDAG")) {
-#     # Check for undirected edges
-#     if (any(s$edges$edge %in% c("---", "o-o"))) {
-#       stop("Cannot convert to PDAG: graph contains undirected edges.", call. = FALSE)
-#     }
-#   }
-#
-#   # Update class and mark as not built
-#   s$class <- class
-#   cg <- .mark_not_built(cg)
-#   cg
-# }
 
 # ──────────────────────────────────────────────────────────────────────────────
 # ───────────────────────────── Internal helpers ───────────────────────────────

@@ -36,3 +36,10 @@ The integer code assigned to the registered edge type.
 \description{
 Register a new edge type in the global registry.
 }
+\seealso{
+Other registry: 
+\code{\link{caugi_registry}()},
+\code{\link{reset_caugi_registry}()},
+\code{\link{seal_caugi_registry}()}
+}
+\concept{registry}

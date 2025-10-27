@@ -65,3 +65,4 @@ The following edge operators are supported by default:
 
 You can register additional edge types using \code{\link[=register_caugi_edge]{register_caugi_edge()}}.
 }
+\concept{caugi_graph}

@@ -33,3 +33,10 @@ A list of character vectors, each an adjustment set
 This function returns the backdoor sets up to size \code{max_size},
 which per default is set to 10.
 }
+\seealso{
+Other adjustment: 
+\code{\link{adjustment_set}()},
+\code{\link{d_separated}()},
+\code{\link{is_valid_backdoor}()}
+}
+\concept{adjustment}

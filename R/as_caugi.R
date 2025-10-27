@@ -40,6 +40,9 @@ Matrix_S4_class <- readRDS("inst/S4_class_definitions/Matrix_class.rds")
 #'
 #' @returns A `caugi_graph` object.
 #'
+#' @family conversion
+#' @concept conversion
+#'
 #' @export
 as_caugi <- S7::new_generic(
   "as_caugi",

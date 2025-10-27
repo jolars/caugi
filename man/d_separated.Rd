@@ -31,3 +31,10 @@ Logical scalar.
 Checks whether every node in \code{X} is d-separated from every node
 in \code{Y} given \code{Z} in a DAG.
 }
+\seealso{
+Other adjustment: 
+\code{\link{adjustment_set}()},
+\code{\link{all_backdoor_sets}()},
+\code{\link{is_valid_backdoor}()}
+}
+\concept{adjustment}

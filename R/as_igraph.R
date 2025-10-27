@@ -2,6 +2,12 @@
 #'
 #' @param x A `caugi_graph` object.
 #' @param ... Additional arguments passed to `igraph::graph_from_data_frame()`.
+#'
+#' @returns An `igraph` object representing the same graph structure.
+#'
+#' @family conversion
+#' @concept conversion
+#'
 #' @export
 as_igraph <- function(x, ...) {
   is_caugi(x, throw_error = TRUE)

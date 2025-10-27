@@ -20,3 +20,9 @@ An integer representing the SHD between the two graphs.
 Compute the Structural Hamming Distance (SHD) between two
 graphs.
 }
+\seealso{
+Other metrics: 
+\code{\link{aid}()},
+\code{\link{hd}()}
+}
+\concept{metrics}

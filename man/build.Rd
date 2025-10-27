@@ -7,9 +7,12 @@
 build(cg, ...)
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object with \code{cg@built = TRUE}.}
+\item{cg}{A \code{caugi_graph} object.}
 
 \item{...}{Not used.}
+}
+\value{
+The built \code{caugi_graph} object.
 }
 \description{
 If a \code{caugi_graph} has been modified (nodes or edges added or
@@ -17,3 +20,8 @@ removed), it is marked as \emph{not built}, i.e \code{cg@built = FALSE}.
 This function builds the graph using the Rust backend and updates the
 internal pointer to the graph. If the graph is already built, it is returned.
 }
+\seealso{
+Other verbs: 
+\code{\link{caugi_verbs}}
+}
+\concept{verbs}

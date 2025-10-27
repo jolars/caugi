@@ -16,6 +16,10 @@
 #' @param normalized Logical; if `TRUE`, returns the normalized SHD.
 #'
 #' @returns An integer representing the SHD between the two graphs.
+#'
+#' @family metrics
+#' @concept metrics
+#'
 #' @export
 shd <- function(cg1, cg2, normalized = FALSE) {
   is_caugi(cg1, throw_error = TRUE)
@@ -36,6 +40,10 @@ shd <- function(cg1, cg2, normalized = FALSE) {
 #' Distance.
 #'
 #' @returns An integer representing the Hamming Distance between the two graphs.
+#'
+#' @family metrics
+#' @concept metrics
+#'
 #' @export
 hd <- function(cg1, cg2, normalized = FALSE) {
   is_caugi(cg1, throw_error = TRUE)
@@ -57,6 +65,11 @@ hd <- function(cg1, cg2, normalized = FALSE) {
 #' Options are `"oset"` (default), `"ancestor"`, and `"parent"`.
 #'
 #' @returns A list containing the score (normalized) and the count.
+#'
+#' @family metrics
+#' @concept metrics
+#'
+#' @export
 aid <- function(truth, guess, type = c("oset", "ancestor", "parent")) {
   type <- match.arg(type)
   is_caugi(truth, throw_error = TRUE)

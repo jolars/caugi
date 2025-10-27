@@ -20,3 +20,9 @@ An integer representing the Hamming Distance between the two graphs.
 \description{
 Compute the Hamming Distance between two graphs.
 }
+\seealso{
+Other metrics: 
+\code{\link{aid}()},
+\code{\link{shd}()}
+}
+\concept{metrics}

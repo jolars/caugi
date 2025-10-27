@@ -8,6 +8,15 @@
 
 \item{...}{Not used.}
 }
+\value{
+The input \code{caugi_graph} object, invisibly.
+}
 \description{
 Print a \code{caugi_graph}
 }
+\seealso{
+Other caugi_graph methods: 
+\code{\link{length}()}
+}
+\concept{caugi_graph methods}
+\concept{methods}

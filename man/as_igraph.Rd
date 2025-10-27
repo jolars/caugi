@@ -11,6 +11,14 @@ as_igraph(x, ...)
 
 \item{...}{Additional arguments passed to \code{igraph::graph_from_data_frame()}.}
 }
+\value{
+An \code{igraph} object representing the same graph structure.
+}
 \description{
 Convert a caugi_graph to an igraph object
 }
+\seealso{
+Other conversion: 
+\code{\link{as_caugi}()}
+}
+\concept{conversion}

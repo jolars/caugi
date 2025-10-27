@@ -40,6 +40,7 @@ Other queries:
 \code{\link{markov_blanket}()},
 \code{\link{nodes}()},
 \code{\link{parents}()},
-\code{\link{same_nodes}()}
+\code{\link{same_nodes}()},
+\code{\link{subgraph}()}
 }
 \concept{queries}

@@ -7,5 +7,13 @@
 seal_caugi_registry()
 }
 \description{
-Seal the global edge registry.
+Seal the global edge registry to prevent further modifications. Can be used
+to ensure reproducability.
 }
+\seealso{
+Other registry: 
+\code{\link{caugi_registry}()},
+\code{\link{register_caugi_edge}()},
+\code{\link{reset_caugi_registry}()}
+}
+\concept{registry}

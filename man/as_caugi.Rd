@@ -54,3 +54,8 @@ For PAGs, the integer codes are as follows (as used in \code{pcalg}):
 \item 3: circle (e.g., \verb{A o-o B})
 }
 }
+\seealso{
+Other conversion: 
+\code{\link{as_igraph}()}
+}
+\concept{conversion}

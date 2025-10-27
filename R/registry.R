@@ -3,6 +3,10 @@
 # ──────────────────────────────────────────────────────────────────────────────
 
 #' @title Access the global edge registry, creating it if needed.
+#'
+#' @family registry
+#' @concept registry
+#'
 #' @returns An `edge_registry` external pointer.
 caugi_registry <- function() {
   if (!exists("reg", envir = .caugi_env, inherits = FALSE) ||
@@ -15,6 +19,10 @@ caugi_registry <- function() {
 }
 
 #' @title Reset the global edge registry.
+#'
+#' @family registry
+#' @concept registry
+#'
 #' @export
 reset_caugi_registry <- function() {
   .caugi_env$reg <- NULL
@@ -34,6 +42,10 @@ reset_caugi_registry <- function() {
 #' * "TRAVERSABLE_WHEN_CONDITIONED"
 #' * "LATENT_CONFOUNDING"
 #' @returns The integer code assigned to the registered edge type.
+#'
+#' @family registry
+#' @concept registry
+#'
 #' @export
 register_caugi_edge <- function(glyph,
                                 tail_mark,
@@ -77,6 +89,14 @@ register_caugi_edge <- function(glyph,
 }
 
 #' @title Seal the global edge registry.
+#'
+#' @description
+#' Seal the global edge registry to prevent further modifications. Can be used
+#' to ensure reproducability.
+#'
+#' @family registry
+#' @concept registry
+#'
 #' @export
 seal_caugi_registry <- function() {
   reg <- caugi_registry()

@@ -585,6 +585,37 @@ exogenous <- function(cg, undirected_as_parents = FALSE) {
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────── Subgraph ───────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+#' @title Extract a subgraph induced by a set of nodes
+#'
+#' @description Extract a subgraph induced by a set of nodes.
+#'
+#' @param cg A `caugi_graph` object.
+#' @param ... Unquoted node names, vectors via `c()`, or `+` composition.
+#'
+#' @returns A `caugi_graph` object containing only the specified nodes and any
+#' edges between them.
+#'
+#' @family queries
+#' @concept queries
+#'
+#' @export
+subgraph <- function(cg, ...) {
+  calls <- as.list(substitute(list(...)))[-1L]
+  nodes <- .get_nodes_tibble(NULL, calls)
+  if (!nrow(nodes)) {
+    stop("No nodes specified for subgraph.", call. = FALSE)
+  }
+  drop <- tibble::tibble(name = setdiff(cg@nodes$name, nodes$name))
+  if (nrow(drop)) {
+    cg <- .update_caugi_graph(cg, nodes = drop, action = "remove")
+  }
+  cg
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
 # ──────────────────────────── Relations helpers ───────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 

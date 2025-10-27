@@ -12,3 +12,9 @@ An integer representing the number of nodes.
 \description{
 Returns the number of nodes in the graph.
 }
+\seealso{
+Other caugi_graph methods: 
+\code{\link{print}()}
+}
+\concept{caugi_graph methods}
+\concept{methods}
