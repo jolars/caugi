@@ -197,7 +197,7 @@ caugi_graph <- S7::new_class(
     if (!is.null(state)) {
       return(S7::new_object(
         caugi_graph,
-        `.state` = state
+        `.state` = .freeze_state(state)
       ))
     }
     class <- toupper(class)
@@ -311,6 +311,70 @@ caugi_graph <- S7::new_class(
     )
   }
 )
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────── Helpers ────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+#' @title Convert a graph pointer to a `caugi_graph` S7 object
+#'
+#' @description Convert a graph pointer from Rust to a `caugi_graph` to a
+#' S7 object.
+#'
+#' @param ptr A pointer to the underlying Rust graph structure.
+#' @param node_names Optional character vector of node names. If `NULL`
+#' (default), nodes will be named `V1`, `V2`, ..., `Vn`.
+#'
+#' @returns A `caugi_graph` object representing the graph.
+#' @keywords internal
+.view_to_caugi_graph <- function(ptr, node_names = NULL) {
+  if (is.null(ptr)) stop("ptr is NULL", call. = FALSE)
+
+  n <- n_ptr(ptr)
+  if (is.null(node_names)) node_names <- sprintf("V%d", seq_len(n))
+  if (length(node_names) != n) {
+    stop("length(node_names) must equal n_ptr(ptr)",
+      call. = FALSE
+    )
+  }
+
+  edges_idx <- edges_ptr_df(ptr)
+
+  if (length(edges_idx$from0) == 0L) {
+    edges_tbl <- tibble::tibble(
+      from = character(),
+      edge = character(),
+      to = character()
+    )
+  } else {
+    edges_tbl <- tibble::tibble(
+      from = node_names[as.integer(edges_idx$from0) + 1L],
+      edge = as.character(edges_idx$glyph),
+      to   = node_names[as.integer(edges_idx$to0) + 1L]
+    )
+    edges_tbl <- dplyr::arrange(edges_tbl, from, to, edge)
+  }
+
+  nodes_tbl <- tibble::tibble(name = node_names)
+
+  name_index_map <- fastmap::fastmap()
+  do.call(name_index_map$mset, stats::setNames(
+    as.list(seq_len(n) - 1L),
+    node_names
+  ))
+
+  state <- .cg_state(
+    nodes = nodes_tbl,
+    edges = edges_tbl,
+    ptr = ptr,
+    built = TRUE,
+    simple = is_simple_ptr(ptr),
+    class = graph_class_ptr(ptr),
+    name_index_map = name_index_map
+  )
+  caugi_graph(state = state)
+}
+
 
 #' @title Internal: Create the state environment for a `caugi_graph`
 #'
