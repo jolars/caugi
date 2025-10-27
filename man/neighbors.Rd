@@ -17,6 +17,28 @@ node names, or an expression combining these with \code{+} and \code{c()}.}
 
 \item{index}{A vector of node indexes.}
 }
+\value{
+Either a character vector of node names (if a single node is
+requested) or a list of character vectors (if multiple nodes are requested).
+}
 \description{
 Get neighbors of nodes in a \code{caugi_graph}
 }
+\seealso{
+Other queries: 
+\code{\link{ancestors}()},
+\code{\link{children}()},
+\code{\link{descendants}()},
+\code{\link{edge_types}()},
+\code{\link{exogenous}()},
+\code{\link{is_acyclic}()},
+\code{\link{is_caugi}()},
+\code{\link{is_dag}()},
+\code{\link{is_empty_caugi}()},
+\code{\link{is_pdag}()},
+\code{\link{markov_blanket}()},
+\code{\link{nodes}()},
+\code{\link{parents}()},
+\code{\link{same_nodes}()}
+}
+\concept{queries}

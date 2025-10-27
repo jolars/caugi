@@ -13,9 +13,28 @@ exogenous(cg, undirected_as_parents = FALSE)
 as (possible) parents, if \code{FALSE} (default), undirected edges are ignored.}
 }
 \value{
-A tibble with a \code{name} column.
+Either a character vector of node names (if a single node is
+requested) or a list of character vectors (if multiple nodes are requested).
 }
 \description{
 Get all exogenous nodes (nodes with no parents) in a
 \code{caugi_graph}.
 }
+\seealso{
+Other queries: 
+\code{\link{ancestors}()},
+\code{\link{children}()},
+\code{\link{descendants}()},
+\code{\link{edge_types}()},
+\code{\link{is_acyclic}()},
+\code{\link{is_caugi}()},
+\code{\link{is_dag}()},
+\code{\link{is_empty_caugi}()},
+\code{\link{is_pdag}()},
+\code{\link{markov_blanket}()},
+\code{\link{neighbors}()},
+\code{\link{nodes}()},
+\code{\link{parents}()},
+\code{\link{same_nodes}()}
+}
+\concept{queries}

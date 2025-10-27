@@ -20,3 +20,21 @@ A logical indicating if the two graphs have the same nodes.
 \description{
 Check if two \code{caugi_graph} objects have the same nodes.
 }
+\seealso{
+Other queries: 
+\code{\link{ancestors}()},
+\code{\link{children}()},
+\code{\link{descendants}()},
+\code{\link{edge_types}()},
+\code{\link{exogenous}()},
+\code{\link{is_acyclic}()},
+\code{\link{is_caugi}()},
+\code{\link{is_dag}()},
+\code{\link{is_empty_caugi}()},
+\code{\link{is_pdag}()},
+\code{\link{markov_blanket}()},
+\code{\link{neighbors}()},
+\code{\link{nodes}()},
+\code{\link{parents}()}
+}
+\concept{queries}

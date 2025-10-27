@@ -15,6 +15,9 @@
 #' `caugi_graph`.
 #'
 #' @returns A logical value indicating whether the object is a `caugi_graph`.
+#'
+#' @family queries
+#'
 #' @export
 is_caugi <- function(x, throw_error = FALSE) {
   it_is <- inherits(x, caugi_graph)
@@ -32,6 +35,9 @@ is_caugi <- function(x, throw_error = FALSE) {
 #' @param cg A `caugi_graph` object.
 #'
 #' @returns A logical value indicating whether the graph is empty.
+#'
+#' @family queries
+#'
 #' @export
 is_empty_caugi <- function(cg) {
   is_caugi(cg, throw_error = TRUE)
@@ -48,6 +54,9 @@ is_empty_caugi <- function(cg) {
 #' have the same nodes.
 #'
 #' @returns A logical indicating if the two graphs have the same nodes.
+#'
+#' @family queries
+#'
 #' @export
 same_nodes <- function(cg1, cg2, throw_error = FALSE) {
   is_caugi(cg1, throw_error)
@@ -97,6 +106,9 @@ same_nodes <- function(cg1, cg2, throw_error = FALSE) {
 #'
 #'
 #' @returns A logical value indicating whether the graph is acyclic.
+#'
+#' @family queries
+#'
 #' @export
 is_acyclic <- function(cg, force_check = FALSE) {
   is_caugi(cg, throw_error = TRUE)
@@ -123,6 +135,9 @@ is_acyclic <- function(cg, force_check = FALSE) {
 #' it, if possible.
 #'
 #' @returns A logical value indicating whether the graph is a DAG.
+#'
+#' @family queries
+#'
 #' @export
 is_dag <- function(cg, force_check = FALSE) {
   is_caugi(cg, throw_error = TRUE)
@@ -147,6 +162,9 @@ is_dag <- function(cg, force_check = FALSE) {
 #' it, if possible.
 #'
 #' @returns A logical value indicating whether the graph is a PDAG.
+#'
+#' @family queries
+#'
 #' @export
 is_pdag <- function(cg, force_check = FALSE) {
   is_caugi(cg, throw_error = TRUE)
@@ -175,6 +193,8 @@ is_pdag <- function(cg, force_check = FALSE) {
 #' __edges__: A tibble with `from`, `edge`, and `to` columns.
 #'
 #' @rdname nodes_and_edges
+#' @family queries
+#'
 #' @export
 nodes <- function(cg) {
   is_caugi(cg, throw_error = TRUE)
@@ -191,6 +211,8 @@ vertices <- nodes
 V <- nodes # igraph notation
 
 #' @rdname nodes_and_edges
+#' @family queries
+#'
 #' @export
 edges <- function(cg) {
   is_caugi(cg, throw_error = TRUE)
@@ -205,7 +227,11 @@ E <- edges # igraph notation
 #' @title Get the edge types of a `caugi_graph`.
 #'
 #' @param cg A `caugi_graph` object.
+#'
 #' @returns A character vector of edge types.
+#'
+#' @family queries
+#'
 #' @export
 edge_types <- function(cg) {
   is_caugi(cg, throw_error = TRUE)
@@ -226,6 +252,11 @@ edge_types <- function(cg) {
 #' @param nodes A vector of node names, a vector of unquoted
 #' node names, or an expression combining these with `+` and `c()`.
 #' @param index A vector of node indexes.
+#'
+#' @returns Either a character vector of node names (if a single node is
+#' requested) or a list of character vectors (if multiple nodes are requested).
+#'
+#' @family queries
 #'
 #' @export
 parents <- function(cg, nodes = NULL, index = NULL) {
@@ -271,6 +302,11 @@ parents <- function(cg, nodes = NULL, index = NULL) {
 #' node names, or an expression combining these with `+` and `c()`.
 #' @param index A vector of node indexes.
 #'
+#' @returns Either a character vector of node names (if a single node is
+#' requested) or a list of character vectors (if multiple nodes are requested).
+#'
+#' @family queries
+#'
 #' @export
 children <- function(cg, nodes = NULL, index = NULL) {
   nodes_supplied <- !missing(nodes)
@@ -314,6 +350,11 @@ children <- function(cg, nodes = NULL, index = NULL) {
 #' @param nodes A vector of node names, a vector of unquoted
 #' node names, or an expression combining these with `+` and `c()`.
 #' @param index A vector of node indexes.
+#'
+#' @returns Either a character vector of node names (if a single node is
+#' requested) or a list of character vectors (if multiple nodes are requested).
+#'
+#' @family queries
 #'
 #' @export
 neighbors <- function(cg, nodes = NULL, index = NULL) {
@@ -363,6 +404,11 @@ neighbours <- neighbors
 #' node names, or an expression combining these with `+` and `c()`.
 #' @param index A vector of node indexes.
 #'
+#' @returns Either a character vector of node names (if a single node is
+#' requested) or a list of character vectors (if multiple nodes are requested).
+#'
+#' @family queries
+#'
 #' @export
 ancestors <- function(cg, nodes = NULL, index = NULL) {
   nodes_supplied <- !missing(nodes)
@@ -407,6 +453,11 @@ ancestors <- function(cg, nodes = NULL, index = NULL) {
 #' node names, or an expression combining these with `+` and `c()`.
 #' @param index A vector of node indexes.
 #'
+#' @returns Either a character vector of node names (if a single node is
+#' requested) or a list of character vectors (if multiple nodes are requested).
+#'
+#' @family queries
+#'
 #' @export
 descendants <- function(cg, nodes = NULL, index = NULL) {
   nodes_supplied <- !missing(nodes)
@@ -450,6 +501,11 @@ descendants <- function(cg, nodes = NULL, index = NULL) {
 #' @param nodes A vector of node names, a vector of unquoted
 #' node names, or an expression combining these with `+` and `c()`.
 #' @param index A vector of node indexes.
+#'
+#' @returns Either a character vector of node names (if a single node is
+#' requested) or a list of character vectors (if multiple nodes are requested).
+#'
+#' @family queries
 #'
 #' @export
 markov_blanket <- function(cg, nodes = NULL, index = NULL) {
@@ -497,7 +553,11 @@ markov_blanket <- function(cg, nodes = NULL, index = NULL) {
 #' @param undirected_as_parents Logical; if `TRUE`, undirected edges are treated
 #' as (possible) parents, if `FALSE` (default), undirected edges are ignored.
 #'
-#' @returns A tibble with a `name` column.
+#' @returns Either a character vector of node names (if a single node is
+#' requested) or a list of character vectors (if multiple nodes are requested).
+#'
+#' @family queries
+#'
 #' @export
 exogenous <- function(cg, undirected_as_parents = FALSE) {
   is_caugi(cg, throw_error = TRUE)

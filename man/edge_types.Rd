@@ -15,3 +15,21 @@ A character vector of edge types.
 \description{
 Get the edge types of a \code{caugi_graph}.
 }
+\seealso{
+Other queries: 
+\code{\link{ancestors}()},
+\code{\link{children}()},
+\code{\link{descendants}()},
+\code{\link{exogenous}()},
+\code{\link{is_acyclic}()},
+\code{\link{is_caugi}()},
+\code{\link{is_dag}()},
+\code{\link{is_empty_caugi}()},
+\code{\link{is_pdag}()},
+\code{\link{markov_blanket}()},
+\code{\link{neighbors}()},
+\code{\link{nodes}()},
+\code{\link{parents}()},
+\code{\link{same_nodes}()}
+}
+\concept{queries}

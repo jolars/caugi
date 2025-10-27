@@ -15,3 +15,21 @@ A logical value indicating whether the graph is empty.
 \description{
 Checks if the given \code{caugi} graph is empty (has no nodes).
 }
+\seealso{
+Other queries: 
+\code{\link{ancestors}()},
+\code{\link{children}()},
+\code{\link{descendants}()},
+\code{\link{edge_types}()},
+\code{\link{exogenous}()},
+\code{\link{is_acyclic}()},
+\code{\link{is_caugi}()},
+\code{\link{is_dag}()},
+\code{\link{is_pdag}()},
+\code{\link{markov_blanket}()},
+\code{\link{neighbors}()},
+\code{\link{nodes}()},
+\code{\link{parents}()},
+\code{\link{same_nodes}()}
+}
+\concept{queries}
