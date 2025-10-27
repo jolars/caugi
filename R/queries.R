@@ -197,10 +197,10 @@ is_pdag <- function(cg, force_check = FALSE) {
 #' @concept queries
 #'
 #' @export
-is_cpdag <- function(x) {
-  is_caugi(x, TRUE)
+is_cpdag <- function(cg) {
+  is_caugi(cg, TRUE)
   cg <- build(cg)
-  is_it <- is_cpdag_ptr(x@ptr)
+  is_it <- is_cpdag_ptr(cg@ptr)
   is_it
 }
 
