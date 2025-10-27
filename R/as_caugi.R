@@ -75,6 +75,7 @@ S7::method(
 
   n_edges <- igraph::ecount(x)
   directed <- igraph::is_directed(x)
+  has_names <- !is.null(igraph::V(x)$name)
   nm <- igraph::V(x)$name
   if (is.null(nm)) nm <- paste0("V", seq_len(igraph::vcount(x)))
 
@@ -93,11 +94,19 @@ S7::method(
     ))
   }
 
-  e <- igraph::ends(x, igraph::E(x), names = TRUE)
+  # Use names = FALSE when graph has no names to get numeric indices,
+  # then map to our generated names. This preserves vertex order.
+  e <- igraph::ends(x, igraph::E(x), names = has_names)
   glyph <- if (directed) "-->" else "---"
 
-  from <- e[, 1]
-  to <- e[, 2]
+  if (has_names) {
+    from <- e[, 1]
+    to <- e[, 2]
+  } else {
+    # Map numeric indices to our generated names
+    from <- nm[e[, 1]]
+    to <- nm[e[, 2]]
+  }
   edge <- rep_len(glyph, length.out = nrow(e))
 
   # collapse symmetrical edges

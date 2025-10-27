@@ -219,6 +219,18 @@ test_that("igraph with no edges, but with nodes, works", {
   expect_setequal(nodes(cg0)[["name"]], c("A", "B", "C"))
 })
 
+test_that("igraph with no edges and no names preserves order", {
+  skip_if_not_installed("igraph")
+  g0 <- igraph::make_empty_graph(n = 5, directed = TRUE)
+  # Verify no names
+  expect_null(igraph::V(g0)$name)
+  
+  cg0 <- as_caugi(g0, class = "DAG")
+  expect_equal(nrow(as.data.frame(edges(cg0))), 0L)
+  # Should generate V1, V2, V3, V4, V5 in order
+  expect_equal(cg0@nodes$name, paste0("V", 1:5))
+})
+
 test_that("igraph vertex order is preserved when converting to caugi", {
   skip_if_not_installed("igraph")
 
@@ -234,6 +246,30 @@ test_that("igraph vertex order is preserved when converting to caugi", {
   # Vertex order should be preserved
   expect_equal(V(cg)$name, igraph::V(g)$name)
   expect_equal(V(cg)$name, paste0("V", 1:10))
+})
+
+test_that("igraph without names: vertex order is preserved (issue #XX)", {
+  skip_if_not_installed("igraph")
+
+  # Create igraph WITHOUT names - this is the exact issue scenario
+  # When no name is given to igraph, the order should not be scrambled
+  set.seed(1023)
+  ig <- igraph::sample_gnm(100, 500) |> igraph::as_directed(mode = "acyclic")
+  # Verify the graph has no names
+  expect_null(igraph::V(ig)$name)
+
+  # Convert to caugi - names should be generated in order V1, V2, ..., V100
+  cg <- as_caugi(ig, class = "DAG")
+
+  # The nodes should be in sequential order V1, V2, ..., V100
+  expected_names <- paste0("V", 1:100)
+  expect_equal(cg@nodes$name, expected_names)
+
+  # Also verify edges use the correct node names
+  edges_df <- as.data.frame(edges(cg))
+  # All from/to values should be valid names from expected_names
+  expect_true(all(edges_df$from %in% expected_names))
+  expect_true(all(edges_df$to %in% expected_names))
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
