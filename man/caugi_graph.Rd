@@ -12,7 +12,8 @@ caugi_graph(
   nodes = NULL,
   simple = TRUE,
   build = TRUE,
-  class = c("UNKNOWN", "DAG", "PDAG")
+  class = c("UNKNOWN", "DAG", "PDAG"),
+  state = NULL
 )
 }
 \arguments{
@@ -44,6 +45,9 @@ nodes are provided, the graph will not be built and the pointer will be
 \code{NULL}.}
 
 \item{class}{Character; one of \code{"UNKNOWN"}, \code{"DAG"}, or \code{"PDAG"}.}
+
+\item{state}{For internal use. Build a graph by supplying a pre-constructed
+state environment.}
 }
 \value{
 A \code{\link{caugi_graph}} S7 object containing the nodes, edges, and a
