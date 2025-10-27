@@ -4,8 +4,6 @@
 \alias{nodes}
 \alias{vertices}
 \alias{V}
-\alias{edges}
-\alias{E}
 \title{Get nodes or edges of a \code{caugi_graph}}
 \usage{
 nodes(cg)
@@ -13,20 +11,15 @@ nodes(cg)
 vertices(cg)
 
 V(cg)
-
-edges(cg)
-
-E(cg)
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}
 }
 \value{
-\strong{nodes}: A tibble with a \code{name} column.
-\strong{edges}: A tibble with \code{from}, \code{edge}, and \code{to} columns.
+A tibble with a \code{name} column.
 }
 \description{
-Get nodes or edges of a \code{caugi_graph}.
+Get nodes or edges of a \code{caugi_graph}
 }
 \seealso{
 Other queries: 
@@ -34,22 +27,7 @@ Other queries:
 \code{\link{children}()},
 \code{\link{descendants}()},
 \code{\link{edge_types}()},
-\code{\link{exogenous}()},
-\code{\link{is_acyclic}()},
-\code{\link{is_caugi}()},
-\code{\link{is_dag}()},
-\code{\link{is_empty_caugi}()},
-\code{\link{is_pdag}()},
-\code{\link{markov_blanket}()},
-\code{\link{neighbors}()},
-\code{\link{parents}()},
-\code{\link{same_nodes}()}
-
-Other queries: 
-\code{\link{ancestors}()},
-\code{\link{children}()},
-\code{\link{descendants}()},
-\code{\link{edge_types}()},
+\code{\link{edges}()},
 \code{\link{exogenous}()},
 \code{\link{is_acyclic}()},
 \code{\link{is_caugi}()},

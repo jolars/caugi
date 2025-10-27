@@ -44,6 +44,7 @@ Other queries:
 \code{\link{children}()},
 \code{\link{descendants}()},
 \code{\link{edge_types}()},
+\code{\link{edges}()},
 \code{\link{exogenous}()},
 \code{\link{is_caugi}()},
 \code{\link{is_dag}()},

@@ -184,15 +184,11 @@ is_pdag <- function(cg, force_check = FALSE) {
 
 #' @title Get nodes or edges of a `caugi_graph`
 #'
-#' @description
-#' Get nodes or edges of a `caugi_graph`.
-#'
 #' @param cg A `caugi_graph` object.
 #'
-#' @returns __nodes__: A tibble with a `name` column.
-#' __edges__: A tibble with `from`, `edge`, and `to` columns.
+#' @returns A tibble with a `name` column.
 #'
-#' @rdname nodes_and_edges
+#' @rdname nodes
 #' @family queries
 #'
 #' @export
@@ -202,15 +198,20 @@ nodes <- function(cg) {
   cg@nodes
 }
 
-#' @rdname nodes_and_edges
+#' @rdname nodes
 #' @export
 vertices <- nodes
 
-#' @rdname nodes_and_edges
+#' @rdname nodes
 #' @export
 V <- nodes # igraph notation
 
-#' @rdname nodes_and_edges
+#' @title Get edges of a `caugi_graph`.
+#'
+#' @param cg A `caugi_graph` object.
+#'
+#' @rdname edges
+#'
 #' @family queries
 #'
 #' @export
@@ -220,7 +221,7 @@ edges <- function(cg) {
   cg@edges
 }
 
-#' @rdname nodes_and_edges
+#' @rdname edges
 #' @export
 E <- edges # igraph notation
 

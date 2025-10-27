@@ -26,6 +26,7 @@ Other queries:
 \code{\link{ancestors}()},
 \code{\link{children}()},
 \code{\link{edge_types}()},
+\code{\link{edges}()},
 \code{\link{exogenous}()},
 \code{\link{is_acyclic}()},
 \code{\link{is_caugi}()},
