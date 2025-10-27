@@ -341,3 +341,91 @@ test_that("subgraph selects nodes and errors with none", {
   expect_setequal(sg@nodes$name, c("A", "B"))
   expect_equal(sg@edges, tibble::tibble(from = "A", edge = "-->", to = "B"))
 })
+
+test_that("subgraph errors on invalid arg combos", {
+  g <- caugi_graph(
+    from = character(), edge = character(), to = character(),
+    nodes = c("A", "B"), class = "UNKNOWN"
+  )
+  expect_error(subgraph(g), "Supply one of `nodes` or `index`")
+  expect_error(subgraph(g, nodes = "A", index = 1), "not both")
+})
+
+test_that("subgraph validates index", {
+  g <- caugi_graph(
+    from = character(), edge = character(), to = character(),
+    nodes = c("A", "B"), class = "UNKNOWN"
+  )
+  expect_error(subgraph(g, index = "a"), "`index` must be numeric")
+  expect_error(subgraph(g, index = c(1, NA_integer_)), "numeric without NA")
+  expect_error(subgraph(g, index = 0), "out of range")
+  expect_error(subgraph(g, index = 3), "out of range")
+})
+
+test_that("subgraph validates nodes", {
+  skip_if_not_installed("data.table")
+  g <- caugi_graph(
+    from = character(), edge = character(), to = character(),
+    nodes = c("A", "B"), class = "UNKNOWN"
+  )
+  expect_error(subgraph(g, nodes = 1), "character vector")
+  expect_error(subgraph(g, nodes = c("A", NA_character_)), "contains NA")
+  expect_error(subgraph(g, nodes = c("A", "Z")), "Unknown node\\(s\\): Z")
+})
+
+test_that("subgraph catches duplicates (nodes and index)", {
+  g <- caugi_graph(
+    from = c("A", "B"), edge = c("-->", "-->"), to = c("C", "D"),
+    nodes = c("A", "B", "C", "D"), class = "DAG"
+  )
+  expect_error(subgraph(g, nodes = c("A", "A")), "contains duplicates")
+  expect_error(subgraph(g, index = c(1L, 1L)), "contains duplicates")
+})
+
+test_that("subgraph on graph without edges keeps nodes and empty edges", {
+  g <- caugi_graph(
+    from = character(), edge = character(), to = character(),
+    nodes = c("A", "B", "C"), class = "UNKNOWN"
+  )
+  s <- subgraph(g, nodes = c("C", "A"))
+  expect_identical(s@nodes$name, c("C", "A"))
+  expect_equal(nrow(s@edges), 0L)
+  expect_true(s@built)
+  expect_identical(s@graph_class, g@graph_class)
+  expect_identical(s@simple, g@simple)
+  expect_identical(s@name_index_map$get("C"), 0L)
+  expect_identical(s@name_index_map$get("A"), 1L)
+})
+
+test_that("subgraph filters edges to kept names and sorts", {
+  g <- caugi_graph(
+    from = c("A", "B", "C", "A"),
+    edge = c("-->", "-->", "---", "<->"),
+    to = c("B", "C", "A", "C"),
+    nodes = c("A", "B", "C", "D"),
+    class = "UNKNOWN",
+    simple = FALSE
+  )
+  # Keep C, A => should keep (A <-> C) and (C --- A), sorted by from,to,edge
+  s <- subgraph(g, nodes = c("C", "A"))
+  expect_identical(s@nodes$name, c("C", "A"))
+  expect_equal(nrow(s@edges), 2L)
+  expect_identical(s@edges$from, c("A", "C"))
+  expect_identical(s@edges$to, c("C", "A"))
+  expect_identical(s@edges$edge, c("<->", "---"))
+})
+
+test_that("subgraph with index matches nodes variant", {
+  g <- caugi_graph(
+    from = c("A", "B", "C", "A"),
+    edge = c("-->", "-->", "---", "-->"),
+    to = c("D", "E", "G", "F"),
+    nodes = c("A", "B", "C", "D", "E", "F", "G"),
+    class = "PDAG"
+  )
+  s1 <- subgraph(g, nodes = c("B", "A", "C"))
+  s2 <- subgraph(g, index = c(2L, 1L, 3L))
+  expect_identical(s1@nodes$name, s2@nodes$name)
+  expect_identical(s1@edges, s2@edges)
+  expect_true(s1@built && s2@built)
+})

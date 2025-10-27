@@ -240,4 +240,82 @@ mod tests {
         assert_eq!(core.n(), 3);
         assert_eq!(core.row_index.len(), 4);
     }
+
+    fn make_core(n: u32, edges: &[(u32, u32)]) -> CaugiGraph {
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let code = reg.code_of("-->").unwrap();
+        let mut b = GraphBuilder::new(n, true, &reg);
+        for &(u, v) in edges {
+            b.add_edge(u, v, code).unwrap();
+        }
+        b.finalize_in_place().unwrap()
+    }
+
+    #[test]
+    fn induced_subgraph_order_and_mapping() {
+        // 0->1, 1->2, 2->0, 2->3
+        let core = make_core(4, &[(0, 1), (1, 2), (2, 0), (2, 3)]);
+        // keep [2,0,3]
+        let (sub, new_to_old, old_to_new) = core.induced_subgraph(&[2, 0, 3]).unwrap();
+        assert_eq!(new_to_old, vec![2, 0, 3]);
+        assert_eq!(old_to_new[2], 0);
+        assert_eq!(old_to_new[0], 1);
+        assert_eq!(old_to_new[3], 2);
+        // edges among kept: 2->0 becomes 0->1, 2->3 becomes 0->2
+        // iterate CSR and collect edges
+        let mut got = Vec::new();
+        for u in 0..sub.n() {
+            for k in sub.row_range(u) {
+                got.push((u, sub.col_index[k]));
+            }
+        }
+        got.sort();
+        assert_eq!(got, vec![(0, 1), (0, 2), (1, 0), (2, 0)]);
+    }
+
+    #[test]
+    fn induced_subgraph_rejects_oob_and_dups() {
+        let core = make_core(3, &[(0, 1)]);
+        assert!(core.induced_subgraph(&[0, 3]).is_err());
+        assert!(core.induced_subgraph(&[0, 1, 1]).is_err());
+    }
+
+    #[test]
+    fn graphview_induced_subgraph_preserves_variant() {
+        // DAG
+        let core_dag = make_core(3, &[(0, 1), (1, 2)]);
+        let dag = crate::graph::dag::Dag::new(Arc::new(core_dag.clone())).unwrap();
+        let gv_dag = GraphView::Dag(Arc::new(dag));
+        let sub_dag = gv_dag.induced_subgraph(&[0, 2]).unwrap();
+        match sub_dag {
+            GraphView::Dag(_) => {}
+            _ => panic!("expected DAG"),
+        }
+
+        // RAW
+        let gv_raw = GraphView::Raw(Arc::new(core_dag.clone()));
+        let sub_raw = gv_raw.induced_subgraph(&[0, 2]).unwrap();
+        match sub_raw {
+            GraphView::Raw(_) => {}
+            _ => panic!("expected RAW"),
+        }
+
+        // PDAG on empty core
+        let core_empty = make_core(3, &[]);
+        let pdag = crate::graph::pdag::Pdag::new(Arc::new(core_empty.clone())).unwrap();
+        let gv_pdag = GraphView::Pdag(Arc::new(pdag));
+        let sub_pdag = gv_pdag.induced_subgraph(&[1, 2]).unwrap();
+        match sub_pdag {
+            GraphView::Pdag(_) => {}
+            _ => panic!("expected PDAG"),
+        }
+    }
+
+    #[test]
+    fn graphview_induced_subgraph_propagates_errors() {
+        let core = make_core(2, &[(0, 1)]);
+        let gv = GraphView::Raw(Arc::new(core));
+        assert!(gv.induced_subgraph(&[0, 2]).is_err());
+    }
 }
