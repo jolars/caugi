@@ -26,5 +26,5 @@ reference:
       - has_concept("metrics")
   - title: Edge Registry
     contents:
-      - has_concept("edge_registry")
+      - has_concept("registry")
 
