@@ -225,25 +225,6 @@ test_that("add_nodes, remove_nodes cover vector and expr paths", {
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
-# ───────────────────────────────── Subgraph ───────────────────────────────────
-# ──────────────────────────────────────────────────────────────────────────────
-
-test_that("subgraph selects nodes and errors with none", {
-  cg <- caugi_graph()
-  cg <- add_nodes(cg, name = c("A", "B", "C"))
-  cg <- add_edges(cg,
-    from = c("A", "B"),
-    edge = c("-->", "-->"),
-    to = c("B", "C")
-  )
-  expect_error(subgraph(cg), "No nodes specified")
-
-  sg <- subgraph(cg, A + B)
-  expect_setequal(sg@nodes$name, c("A", "B"))
-  expect_equal(sg@edges, tibble::tibble(from = "A", edge = "-->", to = "B"))
-})
-
-# ──────────────────────────────────────────────────────────────────────────────
 # ───────────────────────────── Internal getters ───────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 

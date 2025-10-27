@@ -6,7 +6,7 @@
 \usage{
 as_caugi(
   x,
-  class = c("DAG", "PDAG", "PAG", "Unknown"),
+  class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
   simple = TRUE,
   build = TRUE,
   collapse = FALSE,
@@ -17,7 +17,7 @@ as_caugi(
 \arguments{
 \item{x}{An object to convert to a \code{caugi_graph}.}
 
-\item{class}{"DAG", "PDAG", "PAG", or "Unknown".
+\item{class}{"DAG", "PDAG", "PAG", or "UNKNOWN".
 "PAG" is only supported for integer coded matrices.}
 
 \item{simple}{logical. If \code{TRUE} (default) the graph will be simple

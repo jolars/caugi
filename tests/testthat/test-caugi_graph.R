@@ -98,7 +98,7 @@ test_that("building a graph with duplicates will deduplicate on initial call", {
 # ─────────────────────────── Simple / non-simple ──────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
-test_that("building graph with simple = FALSE needs class = Unknown", {
+test_that("building graph with simple = FALSE needs class = UNKNOWN", {
   expect_error(
     caugi_graph(
       A %-->% B,
@@ -119,7 +119,7 @@ test_that("building graph with simple = FALSE needs class = Unknown", {
     caugi_graph(
       A %-->% B,
       B %---% C,
-      class = "Unknown",
+      class = "UNKNOWN",
       simple = FALSE
     ),
     caugi_graph
@@ -131,7 +131,7 @@ test_that("non-simple graphs allows self loops and parallel edges", {
     caugi_graph(
       A %-->% A,
       B %---% C,
-      class = "Unknown",
+      class = "UNKNOWN",
       simple = FALSE
     ),
     caugi_graph
@@ -140,7 +140,7 @@ test_that("non-simple graphs allows self loops and parallel edges", {
     caugi_graph(
       A %-->% B,
       A %<->% B,
-      class = "Unknown",
+      class = "UNKNOWN",
       simple = FALSE
     ),
     caugi_graph
@@ -150,7 +150,7 @@ test_that("non-simple graphs allows self loops and parallel edges", {
     caugi_graph(
       A %-->% B,
       A %o->% A,
-      class = "Unknown",
+      class = "UNKNOWN",
       simple = FALSE
     ),
     caugi_graph
@@ -162,7 +162,7 @@ test_that("building graph with simple = TRUE disallows parallel edges", {
     caugi_graph(
       A %-->% B,
       A %---% B,
-      class = "Unknown",
+      class = "UNKNOWN",
       simple = TRUE
     )
   )
@@ -170,7 +170,7 @@ test_that("building graph with simple = TRUE disallows parallel edges", {
     caugi_graph(
       A %-->% B,
       B %---% C,
-      class = "Unknown",
+      class = "UNKNOWN",
       simple = TRUE
     ),
     caugi_graph
@@ -345,13 +345,13 @@ test_that("caugi_graph(vector mode) respects class and simple rules", {
     )
   )
 
-  # simple = TRUE disallows parallel edges under Unknown
+  # simple = TRUE disallows parallel edges under UNKNOWN
   expect_error(
     caugi_graph(
       from = c("A", "A"),
       edge = c("-->", "<->"),
       to = c("B", "B"),
-      class = "Unknown",
+      class = "UNKNOWN",
       simple = TRUE
     )
   )

@@ -96,7 +96,7 @@ same_nodes <- function(cg1, cg2, throw_error = FALSE) {
 #'
 #' By the construction of the `caugi_graph`, if the graph class is "DAG" or
 #' "PDAG", the graph should be guaranteed to be acyclic. If the graph class is
-#' "Unknown", the graph may or may not be acyclic. If `force_check = TRUE`, the
+#' "UNKNOWN", the graph may or may not be acyclic. If `force_check = TRUE`, the
 #' function will check if the graph is acyclic using the Rust backend, no matter
 #' the class. If the graph class is not inherently acyclic, `is_acyclic` will
 #' run the check.
@@ -588,32 +588,78 @@ exogenous <- function(cg, undirected_as_parents = FALSE) {
 # ───────────────────────────────── Subgraph ───────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
-#' @title Extract a subgraph induced by a set of nodes
-#'
-#' @description Extract a subgraph induced by a set of nodes.
+
+#' @title Get the induced subgraph
 #'
 #' @param cg A `caugi_graph` object.
-#' @param ... Unquoted node names, vectors via `c()`, or `+` composition.
+#' @param nodes A vector of node names, a vector of unquoted
+#' node names, or an expression combining these with `+` and `c()`.
+#' @param index A vector of node indexes.
 #'
-#' @returns A `caugi_graph` object containing only the specified nodes and any
-#' edges between them.
+#' @returns A new `caugi_graph` that is a subgraph of the selected nodes.
 #'
 #' @family queries
 #' @concept queries
 #'
 #' @export
-subgraph <- function(cg, ...) {
-  calls <- as.list(substitute(list(...)))[-1L]
-  nodes <- .get_nodes_tibble(NULL, calls)
-  if (!nrow(nodes)) {
-    stop("No nodes specified for subgraph.", call. = FALSE)
+subgraph <- function(cg, nodes = NULL, index = NULL) {
+  is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
+
+  nodes_supplied <- !missing(nodes) && !is.null(nodes)
+  index_supplied <- !missing(index) && !is.null(index)
+  if (nodes_supplied && index_supplied) {
+    stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
   }
-  drop <- tibble::tibble(name = setdiff(cg@nodes$name, nodes$name))
-  if (nrow(drop)) {
-    cg <- .update_caugi_graph(cg, nodes = drop, action = "remove")
+  if (!nodes_supplied && !index_supplied) {
+    stop("Supply one of `nodes` or `index`.", call. = FALSE)
   }
-  cg
+
+  if (index_supplied) {
+    idx1 <- as.integer(index)
+    if (any(idx1 < 1L) || any(idx1 > nrow(cg@nodes))) {
+      stop("`index` out of range (1..n).", call. = FALSE)
+    }
+    keep_names <- cg@nodes$name[idx1]
+  } else {
+    if (!is.character(nodes)) {
+      stop("`nodes` must be a character vector.", call. = FALSE)
+    }
+    missing <- setdiff(nodes, cg@nodes$name)
+    if (length(missing)) {
+      stop("Unknown node(s): ", paste(missing, collapse = ", "), call. = FALSE)
+    }
+    keep_names <- nodes
+  }
+
+  if (any(duplicated(keep_names))) {
+    dups <- unique(keep_names[duplicated(keep_names)])
+    stop("`nodes`/`index` contains duplicates: ",
+      paste(dups, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  # filter edges to the kept nodes; keep constructor’s sort
+  keep_set <- fastmap::fastmap()
+  for (nm in keep_names) keep_set$set(nm, TRUE)
+  edges_sub <- cg@edges |>
+    dplyr::filter(keep_set$has(.data$from) & keep_set$has(.data$to)) |>
+    dplyr::arrange(.data$from, .data$to, .data$edge)
+
+  # rebuild via constructor: declared nodes contain all edge nodes
+  caugi_graph(
+    from   = edges_sub$from,
+    edge   = edges_sub$edge,
+    to     = edges_sub$to,
+    nodes  = keep_names,
+    simple = cg@simple,
+    build  = TRUE,
+    class  = cg@graph_class
+  )
 }
+
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # ──────────────────────────── Relations helpers ───────────────────────────────

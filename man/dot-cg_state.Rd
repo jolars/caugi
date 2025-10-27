@@ -28,7 +28,7 @@
 \item{simple}{Logical; whether the graph is simple
 (no parallel edges or self-loops).}
 
-\item{class}{Character; one of \code{"Unknown"}, \code{"DAG"}, or \code{"PDAG"}.}
+\item{class}{Character; one of \code{"UNKNOWN"}, \code{"DAG"}, or \code{"PDAG"}.}
 
 \item{name_index_map}{A \code{fastmap} mapping node names to their zero indexed
 indices.}

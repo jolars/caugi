@@ -27,7 +27,7 @@ If the graph is not built, the graph will be built before making the query.
 
 By the construction of the \code{caugi_graph}, if the graph class is "DAG" or
 "PDAG", the graph should be guaranteed to be acyclic. If the graph class is
-"Unknown", the graph may or may not be acyclic. If \code{force_check = TRUE}, the
+"UNKNOWN", the graph may or may not be acyclic. If \code{force_check = TRUE}, the
 function will check if the graph is acyclic using the Rust backend, no matter
 the class. If the graph class is not inherently acyclic, \code{is_acyclic} will
 run the check.

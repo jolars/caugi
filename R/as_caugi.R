@@ -26,7 +26,7 @@ Matrix_S4_class <- readRDS("inst/S4_class_definitions/Matrix_class.rds")
 #' - 3: circle (e.g., `A o-o B`)
 #'
 #' @param x An object to convert to a `caugi_graph`.
-#' @param class "DAG", "PDAG", "PAG", or "Unknown".
+#' @param class "DAG", "PDAG", "PAG", or "UNKNOWN".
 #' "PAG" is only supported for integer coded matrices.
 #' @param simple logical. If `TRUE` (default) the graph will be simple
 #' (no multiple edges or self-loops).
@@ -48,7 +48,7 @@ as_caugi <- S7::new_generic(
   "as_caugi",
   dispatch_args = "x",
   fun = function(x,
-                 class = c("DAG", "PDAG", "PAG", "Unknown"),
+                 class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
                  simple = TRUE,
                  build = TRUE,
                  collapse = FALSE,
@@ -65,7 +65,7 @@ S7::method(
   as_caugi,
   S7::new_S3_class("igraph")
 ) <- function(x,
-              class = c("DAG", "PDAG", "PAG", "Unknown"),
+              class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
               simple = TRUE,
               build = TRUE,
               collapse = FALSE,
@@ -140,7 +140,7 @@ S7::method(
 S7::method(
   as_caugi, graphNEL_S4_class
 ) <- function(x,
-              class = c("DAG", "PDAG", "PAG", "Unknown"),
+              class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
               simple = TRUE,
               build = TRUE,
               collapse = FALSE,
@@ -217,7 +217,7 @@ S7::method(
   as_caugi,
   S7::new_S3_class("integer")
 ) <- function(x,
-              class = c("DAG", "PDAG", "PAG", "Unknown"),
+              class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
               simple = TRUE,
               build = TRUE,
               collapse = FALSE,
@@ -322,7 +322,7 @@ S7::method(
         edge <- c(edge, glyph)
       }
     }
-  } else { # DAG / PDAG / Unknown: nonzero means directed i -> j
+  } else { # DAG / PDAG / UNKNOWN: nonzero means directed i -> j
     idx <- which(x != 0, arr.ind = TRUE)
     if (nrow(idx) == 0L) {
       return(caugi_graph(
@@ -361,7 +361,7 @@ S7::method(
 
   # todo:
   ### NEEDS TO BE FIXED ONCE PAG IS SUPPORTED IN CAUGI ###
-  class <- if (class == "PAG") "Unknown" else class
+  class <- if (class == "PAG") "UNKNOWN" else class
   ### NEEDS TO BE FIXED ONCE PAG IS SUPPORTED IN CAUGI ###
 
   caugi_graph(
@@ -382,7 +382,7 @@ S7::method(
   as_caugi,
   S7::new_S3_class("double")
 ) <- function(x,
-              class = c("DAG", "PDAG", "PAG", "Unknown"),
+              class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
               simple = TRUE,
               build = TRUE,
               collapse = FALSE,
@@ -415,7 +415,7 @@ S7::method(
   as_caugi,
   S7::new_S3_class("logical")
 ) <- function(x,
-              class = c("DAG", "PDAG", "PAG", "Unknown"),
+              class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
               simple = TRUE,
               build = TRUE,
               collapse = FALSE,
@@ -445,7 +445,7 @@ S7::method(
   as_caugi,
   Matrix_S4_class
 ) <- function(x,
-              class = c("DAG", "PDAG", "PAG", "Unknown"),
+              class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
               simple = TRUE,
               build = TRUE,
               collapse = FALSE,
@@ -470,7 +470,7 @@ S7::method(
   as_caugi,
   S7::new_S3_class("tidygraph")
 ) <- function(x,
-              class = c("DAG", "PDAG", "PAG", "Unknown"),
+              class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
               simple = TRUE,
               build = TRUE,
               collapse = FALSE,
@@ -497,7 +497,7 @@ S7::method(
   as_caugi,
   S7::new_S3_class("dagitty")
 ) <- function(x,
-              class = c("DAG", "PDAG", "PAG", "Unknown"),
+              class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
               simple = TRUE,
               build = TRUE,
               collapse = FALSE,
@@ -519,7 +519,7 @@ S7::method(
       nodes = nm,
       simple = isTRUE(simple),
       build = isTRUE(build),
-      class = if (class == "PAG") "Unknown" else class
+      class = if (class == "PAG") "UNKNOWN" else class
     ))
   }
 
@@ -569,7 +569,7 @@ S7::method(
 
   # todo:
   ### NEEDS TO BE FIXED ONCE PAG IS SUPPORTED IN CAUGI ###
-  class <- if (class == "PAG") "Unknown" else class
+  class <- if (class == "PAG") "UNKNOWN" else class
   ### NEEDS TO BE FIXED ONCE PAG IS SUPPORTED IN CAUGI ###
 
   if (collapse) {
@@ -607,7 +607,7 @@ S7::method(
   as_caugi,
   S7::new_S3_class("bn")
 ) <- function(x,
-              class = c("DAG", "PDAG", "PAG", "Unknown"),
+              class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
               simple = TRUE,
               build = TRUE,
               collapse = FALSE,

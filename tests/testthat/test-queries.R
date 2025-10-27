@@ -321,3 +321,23 @@ test_that(".getter_output returns tibble with name column", {
   out_null <- caugi:::.getter_output(cg, 0L, NULL)
   expect_equal(out_null, "A")
 })
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────── Subgraph ───────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("subgraph selects nodes and errors with none", {
+  cg <- caugi_graph()
+  cg <- add_nodes(cg, name = c("A", "B", "C"))
+  cg <- add_edges(cg,
+    from = c("A", "B"),
+    edge = c("-->", "-->"),
+    to = c("B", "C")
+  )
+  expect_error(subgraph(cg), "Supply one of `nodes` or `index`.")
+
+  sg <- subgraph(cg, nodes = c("A", "B"))
+  expect_setequal(sg@nodes$name, c("A", "B"))
+  expect_equal(sg@edges, tibble::tibble(from = "A", edge = "-->", to = "B"))
+})

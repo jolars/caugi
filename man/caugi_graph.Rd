@@ -12,7 +12,7 @@ caugi_graph(
   nodes = NULL,
   simple = TRUE,
   build = TRUE,
-  class = c("Unknown", "DAG", "PDAG")
+  class = c("UNKNOWN", "DAG", "PDAG")
 )
 }
 \arguments{
@@ -43,7 +43,7 @@ if calling \code{\link[=build]{build()}}. \strong{Note}: Even if \code{build = T
 nodes are provided, the graph will not be built and the pointer will be
 \code{NULL}.}
 
-\item{class}{Character; one of \code{"Unknown"}, \code{"DAG"}, or \code{"PDAG"}.}
+\item{class}{Character; one of \code{"UNKNOWN"}, \code{"DAG"}, or \code{"PDAG"}.}
 }
 \value{
 A \code{\link{caugi_graph}} S7 object containing the nodes, edges, and a

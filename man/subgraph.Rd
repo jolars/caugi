@@ -2,21 +2,23 @@
 % Please edit documentation in R/queries.R
 \name{subgraph}
 \alias{subgraph}
-\title{Extract a subgraph induced by a set of nodes}
+\title{Get the induced subgraph}
 \usage{
-subgraph(cg, ...)
+subgraph(cg, nodes = NULL, index = NULL)
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}
 
-\item{...}{Unquoted node names, vectors via \code{c()}, or \code{+} composition.}
+\item{nodes}{A vector of node names, a vector of unquoted
+node names, or an expression combining these with \code{+} and \code{c()}.}
+
+\item{index}{A vector of node indexes.}
 }
 \value{
-A \code{caugi_graph} object containing only the specified nodes and any
-edges between them.
+A new \code{caugi_graph} that is a subgraph of the selected nodes.
 }
 \description{
-Extract a subgraph induced by a set of nodes.
+Get the induced subgraph
 }
 \seealso{
 Other queries: 
