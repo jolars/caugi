@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.R
 \name{generate_graph}
 \alias{generate_graph}
-\title{Random caugi graph with exactly \code{n} nodes and \code{m} edges.}
+\title{Generate a \code{caugi_graph} using Erdős-Rényi.}
 \usage{
 generate_graph(n, m = NULL, p = NULL, mode = c("DAG", "CPDAG"))
 }

@@ -1,4 +1,4 @@
-#' @title Random caugi graph with exactly `n` nodes and `m` edges.
+#' @title Generate a `caugi_graph` using Erdős-Rényi.
 #'
 #' @description Sample a random DAG or CPDAG using
 #' Erdős-Rényi for random graph generation.
