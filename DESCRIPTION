@@ -13,7 +13,8 @@ Imports:
     tibble,
     dplyr,
     data.table,
-    S7
+    S7,
+    stats
 Suggests: 
     bench,
     bnlearn,
