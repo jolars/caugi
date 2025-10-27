@@ -184,6 +184,26 @@ is_pdag <- function(cg, force_check = FALSE) {
   is_it
 }
 
+#' @title Is the `caugi` graph a CPDAG?
+#'
+#' @description Checks if the given `caugi` graph is a
+#' Complete Partially Directed Acyclic Graph (CPDAG).
+#'
+#' @param cg A `caugi_graph` object.
+#'
+#' @returns A logical value indicating whether the graph is a CPDAG.
+#'
+#' @family queries
+#' @concept queries
+#'
+#' @export
+is_cpdag <- function(x) {
+  is_caugi(x, TRUE)
+  cg <- build(cg)
+  is_it <- is_cpdag_ptr(x@ptr)
+  is_it
+}
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ───────────────────────────── Nodes and edges ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────

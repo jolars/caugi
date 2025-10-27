@@ -683,6 +683,16 @@ fn to_cpdag_ptr(g: ExternalPtr<GraphView>) -> ExternalPtr<GraphView> {
     ExternalPtr::new(out)
 }
 
+#[extendr]
+fn is_cpdag_ptr(g: ExternalPtr<GraphView>) -> bool {
+    let core = g.as_ref().core();
+    match Pdag::new(Arc::new(core.clone())) {
+        Ok(p) => p.is_cpdag(),
+        Err(_) => false,
+    }
+}
+
+
 extendr_module! {
     mod caugi;
     // registry
@@ -719,6 +729,7 @@ extendr_module! {
     // acyclicity test and conversion
     fn is_acyclic_ptr;
     fn to_cpdag_ptr;
+    fn is_cpdag_ptr;
 
     // class tests + validator
     fn is_dag_type_ptr;
