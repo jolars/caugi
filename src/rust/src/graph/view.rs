@@ -149,6 +149,19 @@ impl GraphView {
     }
 }
 
+impl GraphView {
+    pub fn to_cpdag(&self) -> Result<GraphView, String> {
+        match self {
+            GraphView::Dag(d) => {
+                let p = d.to_cpdag()?;
+                Ok(GraphView::Pdag(std::sync::Arc::new(p)))
+            }
+            GraphView::Pdag(_) => Ok(self.clone()),
+            _ => Err("to_cpdag is only defined for DAGs".into()),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

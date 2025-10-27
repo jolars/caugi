@@ -638,6 +638,51 @@ fn induced_subgraph_ptr(g: ExternalPtr<GraphView>, keep: Integers) -> Robj {
     sub_ptr.into_robj()
 }
 
+// ── View dataframe ──────────────────────────────────────────────────────────
+#[extendr]
+fn n_ptr(g: ExternalPtr<GraphView>) -> i32 {
+    g.as_ref().n() as i32
+}
+
+#[extendr]
+fn edges_ptr_df(g: ExternalPtr<GraphView>) -> Robj {
+    let core = g.as_ref().core();
+    let n = core.n();
+    let mut from0: Vec<i32> = Vec::new();
+    let mut to0: Vec<i32> = Vec::new();
+    let mut code: Vec<i32> = Vec::new();
+    let mut glyph: Vec<String> = Vec::new();
+
+    for u in 0..n {
+        for k in core.row_range(u) {
+            let v = core.col_index[k];
+            let ecode = core.etype[k];
+            let spec = &core.registry.specs[ecode as usize];
+            if spec.symmetric {
+                if u < v {
+                    from0.push(u as i32);
+                    to0.push(v as i32);
+                    code.push(ecode as i32);
+                    glyph.push(spec.glyph.clone());
+                }
+            } else if core.side[k] == 0 {
+                // emit once per asymmetric edge, from the tail side
+                from0.push(u as i32);
+                to0.push(v as i32);
+                code.push(ecode as i32);
+                glyph.push(spec.glyph.clone());
+            }
+        }
+    }
+    list!(from0 = from0, to0 = to0, code = code, glyph = glyph).into_robj() // data.frame()
+}
+
+#[extendr]
+fn to_cpdag_ptr(g: ExternalPtr<GraphView>) -> ExternalPtr<GraphView> {
+    let out = g.as_ref().to_cpdag().unwrap_or_else(|e| throw_r_error(e));
+    ExternalPtr::new(out)
+}
+
 extendr_module! {
     mod caugi;
     // registry
@@ -671,8 +716,9 @@ extendr_module! {
     fn is_simple_ptr;
     fn graph_class_ptr;
 
-    // acyclicity test
+    // acyclicity test and conversion
     fn is_acyclic_ptr;
+    fn to_cpdag_ptr;
 
     // class tests + validator
     fn is_dag_type_ptr;
@@ -693,4 +739,8 @@ extendr_module! {
     fn adjustment_set_optimal_ptr;
     fn is_valid_backdoor_set_ptr;
     fn all_backdoor_sets_ptr;
+
+    // view df
+    fn n_ptr;
+    fn edges_ptr_df;
 }
