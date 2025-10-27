@@ -70,8 +70,6 @@ We generate a random tree graph with 1000 nodes for the comparison.
 ```{r generate-graph}
 set.seed(1)
 ig <- igraph::sample_gnm(100, 500) |> igraph::as_directed(mode = "acyclic")
-cg <- caugi::as_caugi(ig, class = "DAG")
-ig <- igraph::sample_gnm(100, 500) |> igraph::as_directed(mode = "acyclic")
 igraph::V(ig)$name <- paste0("V", 1:length(igraph::V(ig)))
 cg <- caugi::as_caugi(ig, class = "DAG")
 forms <- lapply(igraph::V(ig)$name, function(v) {

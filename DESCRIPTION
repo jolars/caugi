@@ -12,6 +12,7 @@ Imports:
     fastmap,
     tibble,
     dplyr,
+    data.table,
     S7
 Suggests: 
     bench,
