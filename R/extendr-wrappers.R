@@ -20,7 +20,7 @@ edge_registry_len <- function(reg) .Call(wrap__edge_registry_len, reg)
 
 edge_registry_register <- function(reg, glyph, tail_mark, head_mark, class, symmetric, flags) .Call(wrap__edge_registry_register, reg, glyph, tail_mark, head_mark, class, symmetric, flags)
 
-edge_registry_code_of <- function(reg, glyph) .Call(wrap__edge_registry_code_of, reg, glyph)
+edge_registry_code_of <- function(reg, glyphs) .Call(wrap__edge_registry_code_of, reg, glyphs)
 
 edge_registry_spec_of_code <- function(reg, code) .Call(wrap__edge_registry_spec_of_code, reg, code)
 

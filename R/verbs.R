@@ -70,7 +70,7 @@ S7::method(build, caugi_graph) <- function(cg, ...) {
   name_index_map <- fastmap::fastmap()
   do.call(
     name_index_map$mset,
-    setNames(as.list(seq_len(nrow(s$nodes)) - 1L), s$nodes$name)
+    stats::setNames(as.list(seq_len(nrow(s$nodes)) - 1L), s$nodes$name)
   )
   s$name_index_map <- name_index_map
 
