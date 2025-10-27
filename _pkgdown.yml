@@ -3,13 +3,28 @@ template:
   bootstrap: 5
 
 reference:
+  - title: Caugi Graph
+    contents:
+      - has_concept("caugi_graph")
   - title: Queries
     contents:
       - has_concept("queries")
+  - title: Verbs
+    contents:
+      - has_concept("verbs")
   - title: Adjustment and d-separation
     contents:
       - has_concept("adjustment")
   - title: Conversions
     contents:
       - has_concept("conversion")
+  - title: Methods
+    contents:
+      - has_concept("methods")
+  - title: Metrics
+    contents:
+      - has_concept("metrics")
+  - title: Edge Registry
+    contents:
+      - has_concept("edge_registry")
 
