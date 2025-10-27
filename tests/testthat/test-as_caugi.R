@@ -219,6 +219,18 @@ test_that("igraph with no edges, but with nodes, works", {
   expect_setequal(nodes(cg0)[["name"]], c("A", "B", "C"))
 })
 
+test_that("igraph with no edges and no names preserves order", {
+  skip_if_not_installed("igraph")
+  g0 <- igraph::make_empty_graph(n = 5, directed = TRUE)
+  # Verify no names
+  expect_null(igraph::V(g0)$name)
+  
+  cg0 <- as_caugi(g0, class = "DAG")
+  expect_equal(nrow(as.data.frame(edges(cg0))), 0L)
+  # Should generate V1, V2, V3, V4, V5 in order
+  expect_equal(cg0@nodes$name, paste0("V", 1:5))
+})
+
 test_that("igraph vertex order is preserved when converting to caugi", {
   skip_if_not_installed("igraph")
 
