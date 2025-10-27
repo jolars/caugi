@@ -4,7 +4,7 @@
 \alias{is_cpdag}
 \title{Is the \code{caugi} graph a CPDAG?}
 \usage{
-is_cpdag(x)
+is_cpdag(cg)
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}
