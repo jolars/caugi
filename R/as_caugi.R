@@ -514,7 +514,7 @@ S7::method(
               ...) {
   class <- match.arg(class)
 
-  nm <- names(x) |> as.vector()
+  nm <- names(x)
 
   # edges() returns data frame with columns v, w, e
   ed <- as.data.frame(dagitty::edges(x), stringsAsFactors = FALSE)
