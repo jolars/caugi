@@ -15,6 +15,22 @@ A logical value indicating whether the graph is empty.
 \description{
 Checks if the given \code{caugi} graph is empty (has no nodes).
 }
+\examples{
+cg_empty <- caugi_graph(class = "DAG")
+is_empty_caugi(cg_empty) # TRUE
+cg_non_empty <- caugi_graph(
+  A \%-->\% B,
+  class = "DAG"
+)
+is_empty_caugi(cg_non_empty) # FALSE
+
+cg_no_edges_but_has_nodes <- caugi_graph(
+  A, B,
+  class = "DAG"
+)
+is_empty_caugi(cg_no_edges_but_has_nodes) # FALSE
+
+}
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},

@@ -69,4 +69,52 @@ The following edge operators are supported by default:
 
 You can register additional edge types using \code{\link[=register_caugi_edge]{register_caugi_edge()}}.
 }
+\examples{
+# create a simple DAG (using NSE)
+cg <- caugi_graph(
+  A \%-->\% B + C,
+  B \%-->\% D,
+  class = "DAG"
+)
+
+# create a PDAG with undirected edges (using NSE)
+cg2 <- caugi_graph(
+  A \%-->\% B + C,
+  B \%---\% D,
+  E, # no neighbors for this node
+  class = "PDAG"
+)
+
+# create a DAG (using SE)
+cg3 <- caugi_graph(
+  from = c("A", "A", "B"),
+  edge = c("-->", "-->", "-->"),
+  to = c("B", "C", "D"),
+  nodes = c("A", "B", "C", "D", "E"),
+  class = "DAG"
+)
+
+# create a non-simple graph
+cg4 <- caugi_graph(
+  A \%-->\% B,
+  B \%-->\% A,
+  class = "UNKNOWN",
+  simple = FALSE
+)
+
+cg4@simple # FALSE
+cg4@built # TRUE
+cg4@graph_class # "UNKNOWN"
+
+# create graph, but don't built Rust object yet, which is needed for queries
+cg5 <- caugi_graph(
+  A \%-->\% B + C,
+  B \%-->\% D,
+  class = "DAG",
+  build = FALSE
+)
+
+cg@built # FALSE
+
+}
 \concept{caugi_graph}

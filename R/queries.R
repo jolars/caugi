@@ -8,7 +8,8 @@
 
 #' @title Is it a `caugi` graph?
 #'
-#' @description Checks if the given object is a `caugi_graph`.
+#' @description Checks if the given object is a `caugi_graph`. Mostly used
+#' internally to validate inputs.
 #'
 #' @param x An object to check.
 #' @param throw_error Logical; if `TRUE`, throws an error if `x` is not a
@@ -16,17 +17,25 @@
 #'
 #' @returns A logical value indicating whether the object is a `caugi_graph`.
 #'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B,
+#'   class = "DAG"
+#' )
+#'
+#' is_caugi(cg) # TRUE
+#'
 #' @family queries
 #' @concept queries
 #'
 #' @export
 is_caugi <- function(x, throw_error = FALSE) {
-  it_is <- inherits(x, caugi_graph)
+  is_it <- inherits(x, caugi_graph)
 
-  if (!it_is && throw_error) {
+  if (!is_it && throw_error) {
     stop("Input must be a caugi_graph", call. = FALSE)
   }
-  it_is
+  is_it
 }
 
 #' @title Is the `caugi` graph empty?
@@ -36,6 +45,21 @@ is_caugi <- function(x, throw_error = FALSE) {
 #' @param cg A `caugi_graph` object.
 #'
 #' @returns A logical value indicating whether the graph is empty.
+#'
+#' @examples
+#' cg_empty <- caugi_graph(class = "DAG")
+#' is_empty_caugi(cg_empty) # TRUE
+#' cg_non_empty <- caugi_graph(
+#'   A %-->% B,
+#'   class = "DAG"
+#' )
+#' is_empty_caugi(cg_non_empty) # FALSE
+#'
+#' cg_no_edges_but_has_nodes <- caugi_graph(
+#'   A, B,
+#'   class = "DAG"
+#' )
+#' is_empty_caugi(cg_no_edges_but_has_nodes) # FALSE
 #'
 #' @family queries
 #' @concept queries
@@ -57,6 +81,17 @@ is_empty_caugi <- function(cg) {
 #'
 #' @returns A logical indicating if the two graphs have the same nodes.
 #'
+#' @examples
+#' cg1 <- caugi_graph(
+#'   A %-->% B,
+#'   class = "DAG"
+#' )
+#' cg2 <- caugi_graph(
+#'   A %-->% B + C,
+#'   class = "DAG"
+#' )
+#' same_nodes(cg1, cg2) # FALSE
+#'
 #' @family queries
 #' @concept queries
 #'
@@ -65,18 +100,20 @@ same_nodes <- function(cg1, cg2, throw_error = FALSE) {
   is_caugi(cg1, throw_error)
   is_caugi(cg2, throw_error)
   if (!setequal(cg1@nodes$name, cg2@nodes$name)) {
-    differing_nodes <- setdiff(
-      union(cg1@nodes$name, cg2@nodes$name),
-      intersect(cg1@nodes$name, cg2@nodes$name)
-    )
-
-    stop(
-      "Graphs must have the same nodes.\n",
-      "Differing nodes are: [", paste(differing_nodes, collapse = ", "),
-      "]."
-    )
+    if (throw_error) {
+      differing_nodes <- setdiff(
+        union(cg1@nodes$name, cg2@nodes$name),
+        intersect(cg1@nodes$name, cg2@nodes$name)
+      )
+      stop(
+        "Graphs must have the same nodes.\n",
+        "Differing nodes are: [", paste(differing_nodes, collapse = ", "),
+        "]."
+      )
+    }
+    return(FALSE)
   }
-  TRUE
+  return(TRUE)
 }
 
 #' @title Is the `caugi` acyclic?
@@ -85,30 +122,31 @@ same_nodes <- function(cg1, cg2, throw_error = FALSE) {
 #'
 #' @param cg A `caugi_graph` object.
 #' @param force_check Logical; if `TRUE`, the function will test if the graph is
-#' acyclic, if `FALSE` (default), it will look at the graph class.
+#' acyclic, if `FALSE` (default), it will look at the graph class and match
+#' it, if possible.
 #'
 #' @details
-#' __Lazy building__
-#'
-#' If the graph is not built, the graph will be built before making the query.
-#'
-#' __Check logic__
-#'
-#' By the construction of the `caugi_graph`, if the graph class is "DAG" or
-#' "PDAG", the graph should be guaranteed to be acyclic. If the graph class is
-#' "UNKNOWN", the graph may or may not be acyclic. If `force_check = TRUE`, the
-#' function will check if the graph is acyclic using the Rust backend, no matter
-#' the class. If the graph class is not inherently acyclic, `is_acyclic` will
-#' run the check.
-#'
-#' __Note__
-#'
-#' We do not think that it is possible to introduce a cycle in a `caugi_graph`
-#' on acyclic classes without the package throwing errors. We might be wrong,
-#' though, so `force_check` is e a feature that is there for peace of mind.
-#'
+#' Logically, it should not be possible to have a graph class of "DAG" or "PDAG"
+#' that has cycles, but in case the user modified the graph after creation in
+#' some unforeseen way that could have introduced cycles, this function allows
+#' to force a check of acyclicity, if needed.
 #'
 #' @returns A logical value indicating whether the graph is acyclic.
+#'
+#' @examples
+#' cg_acyclic <- caugi_graph(
+#'   A %-->% B,
+#'   B %-->% C,
+#'   class = "DAG"
+#' )
+#' is_acyclic(cg_acyclic) # TRUE
+#' cg_cyclic <- caugi_graph(
+#'   A %-->% B,
+#'   B %-->% C,
+#'   C %-->% A,
+#'   class = "UNKNOWN"
+#' )
+#' is_acyclic(cg_cyclic) # FALSE
 #'
 #' @family queries
 #' @concept queries
@@ -140,6 +178,32 @@ is_acyclic <- function(cg, force_check = FALSE) {
 #'
 #' @returns A logical value indicating whether the graph is a DAG.
 #'
+#' @examples
+#' cg_dag_class <- caugi_graph(
+#'   A %-->% B,
+#'   class = "DAG"
+#' )
+#' is_dag(cg_dag_class) # TRUE
+#' cg_dag_but_pdag_class <- caugi_graph(
+#'   A %-->% B,
+#'   class = "PDAG"
+#' )
+#' is_dag(cg_dag_but_pdag_class) # TRUE
+#' cg_cyclic <- caugi_graph(
+#'   A %-->% B,
+#'   B %-->% C,
+#'   C %-->% A,
+#'   class = "UNKNOWN",
+#'   simple = FALSE
+#' )
+#' is_dag(cg_cyclic) # FALSE
+#'
+#' cg_undirected <- caugi_graph(
+#'   A %---% B,
+#'   class = "UNKNOWN"
+#' )
+#' is_dag(cg_undirected) # FALSE
+#'
 #' @family queries
 #' @concept queries
 #'
@@ -167,6 +231,38 @@ is_dag <- function(cg, force_check = FALSE) {
 #' it, if possible.
 #'
 #' @returns A logical value indicating whether the graph is a PDAG.
+#' @examples
+#' cg_dag_class <- caugi_graph(
+#'   A %-->% B,
+#'   class = "DAG"
+#' )
+#' is_pdag(cg_dag_class) # TRUE
+#' cg_dag_but_pdag_class <- caugi_graph(
+#'   A %-->% B,
+#'   class = "PDAG"
+#' )
+#' is_pdag(cg_dag_but_pdag_class) # TRUE
+#' cg_cyclic <- caugi_graph(
+#'   A %-->% B,
+#'   B %-->% C,
+#'   C %-->% A,
+#'   D %---% A,
+#'   class = "UNKNOWN",
+#'   simple = FALSE
+#' )
+#' is_pdag(cg_cyclic) # FALSE
+#'
+#' cg_undirected <- caugi_graph(
+#'   A %---% B,
+#'   class = "UNKNOWN"
+#' )
+#' is_pdag(cg_undirected) # TRUE
+#'
+#' cg_pag <- caugi_graph(
+#'   A %o->% B,
+#'   class = "UNKNOWN"
+#' )
+#' is_pdag(cg_pag) # FALSE
 #'
 #' @family queries
 #' @concept queries
@@ -193,6 +289,23 @@ is_pdag <- function(cg, force_check = FALSE) {
 #'
 #' @returns A logical value indicating whether the graph is a CPDAG.
 #'
+#' @examples
+#' cg_cpdag <- caugi_graph(
+#'   A %---% B,
+#'   A %-->% C,
+#'   B %-->% C,
+#'   class = "PDAG"
+#' )
+#' is_cpdag(cg_cpdag) # TRUE
+#'
+#' cg_not_cpdag <- caugi_graph(
+#'   A %---% B,
+#'   A %---% C,
+#'   B %-->% C,
+#'   class = "PDAG"
+#' )
+#' is_cpdag(cg_not_cpdag) # FALSE
+#'
 #' @family queries
 #' @concept queries
 #'
@@ -215,6 +328,16 @@ is_cpdag <- function(cg) {
 #' @returns A tibble with a `name` column.
 #'
 #' @rdname nodes
+#'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B,
+#'   B %-->% C,
+#'   D,
+#'   class = "DAG"
+#' )
+#' nodes(cg) # returns the tibble with nodes A, B, C, D
+#'
 #' @family queries
 #' @concept queries
 #'
@@ -238,7 +361,15 @@ V <- nodes # igraph notation
 #' @param cg A `caugi_graph` object.
 #'
 #' @rdname edges
-#' @concept queries
+#'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B,
+#'   B %-->% C,
+#'   D,
+#'   class = "DAG"
+#' )
+#' edges(cg) # returns the tibble with columns from, edge, to
 #'
 #' @family queries
 #' @concept queries
@@ -259,6 +390,17 @@ E <- edges # igraph notation
 #' @param cg A `caugi_graph` object.
 #'
 #' @returns A character vector of edge types.
+#'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B,
+#'   B %--o% C,
+#'   C %<->% D,
+#'   D %---% E,
+#'   A %o-o% E,
+#'   class = "UNKNOWN"
+#' )
+#' edge_types(cg) # returns c("-->", "o-o", "--o", "<->", "---")
 #'
 #' @family queries
 #' @concept queries

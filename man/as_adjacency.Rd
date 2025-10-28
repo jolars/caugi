@@ -15,6 +15,14 @@ An integer 0/1 adjacency matrix with row/col names.
 \description{
 Does not take other edge types than the one found in a PDAG.
 }
+\examples{
+cg <- caugi_graph(
+  A \%-->\% B,
+  class = "DAG"
+)
+adj <- as_adjacency(cg)
+
+}
 \seealso{
 Other conversion: 
 \code{\link{as_bnlearn}()},

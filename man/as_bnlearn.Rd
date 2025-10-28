@@ -15,6 +15,14 @@ A \code{bnlearn} DAG.
 \description{
 Convert a caugi_graph to a bnlearn network
 }
+\examples{
+cg <- caugi_graph(
+  A \%-->\% B,
+  class = "DAG"
+)
+g_bn <- as_bnlearn(cg)
+
+}
 \seealso{
 Other conversion: 
 \code{\link{as_adjacency}()},

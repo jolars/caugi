@@ -33,6 +33,47 @@ A list of character vectors, each an adjustment set
 This function returns the backdoor sets up to size \code{max_size},
 which per default is set to 10.
 }
+\examples{
+cg <- caugi_graph(
+  C \%-->\% X,
+  X \%-->\% F,
+  X \%-->\% D,
+  A \%-->\% X,
+  A \%-->\% K,
+  K \%-->\% Y,
+  D \%-->\% Y,
+  D \%-->\% G,
+  Y \%-->\% H,
+  class = "DAG"
+)
+
+all_backdoor_sets(cg, X = "X", Y = "Y", max_size = 3L, minimal = FALSE)
+#> [[1]]
+#> [1] "A"
+#>
+#> [[2]]
+#> [1] "K"
+#>
+#> [[3]]
+#> [1] "C" "A"
+#>
+#> [[4]]
+#> [1] "C" "K"
+#>
+#> [[5]]
+#> [1] "A" "K"
+#>
+#> [[6]]
+#> [1] "C" "A" "K"
+
+all_backdoor_sets(cg, X = "X", Y = "Y", max_size = 3L, minimal = TRUE)
+#> [[1]]
+#> [1] "A"
+#>
+#> [[2]]
+#> [1] "K"
+
+}
 \seealso{
 Other adjustment: 
 \code{\link{adjustment_set}()},

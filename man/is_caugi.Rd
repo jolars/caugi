@@ -16,7 +16,17 @@ is_caugi(x, throw_error = FALSE)
 A logical value indicating whether the object is a \code{caugi_graph}.
 }
 \description{
-Checks if the given object is a \code{caugi_graph}.
+Checks if the given object is a \code{caugi_graph}. Mostly used
+internally to validate inputs.
+}
+\examples{
+cg <- caugi_graph(
+  A \%-->\% B,
+  class = "DAG"
+)
+
+is_caugi(cg) # TRUE
+
 }
 \seealso{
 Other queries: 

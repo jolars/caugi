@@ -16,6 +16,23 @@
 #'
 #' @returns Logical scalar.
 #'
+#' @examples
+#' cg <- caugi_graph(
+#'   C %-->% X,
+#'   X %-->% F,
+#'   X %-->% D,
+#'   A %-->% X,
+#'   A %-->% K,
+#'   K %-->% Y,
+#'   D %-->% Y,
+#'   D %-->% G,
+#'   Y %-->% H,
+#'   class = "DAG"
+#' )
+#'
+#' d_separated(cg, "X", "Y", Z = c("A", "D")) # TRUE
+#' d_separated(cg, "X", "Y", Z = NULL) # FALSE
+#'
 #' @family adjustment
 #' @concept adjustment
 #'
@@ -56,8 +73,27 @@ d_separated <- function(cg,
 #' @param X,Y Node names.
 #' @param X_index,Y_index Optional numeric 1-based indices.
 #' @param type One of `"parents"`, `"backdoor"`, `"optimal"`.
+#' The `optimal` option computes the O-set.
 #'
 #' @returns A tibble with a `name` column (possibly 0 rows).
+#'
+#' @examples
+#' cg <- caugi_graph(
+#'   C %-->% X,
+#'   X %-->% F,
+#'   X %-->% D,
+#'   A %-->% X,
+#'   A %-->% K,
+#'   K %-->% Y,
+#'   D %-->% Y,
+#'   D %-->% G,
+#'   Y %-->% H,
+#'   class = "DAG"
+#' )
+#'
+#' adjustment_set(cg, "X", "Y", type = "parents") # C, A
+#' adjustment_set(cg, "X", "Y", type = "backdoor") # C, A
+#' adjustment_set(cg, "X", "Y", type = "optimal") # K
 #'
 #' @family adjustment
 #' @concept adjustment
@@ -68,7 +104,7 @@ adjustment_set <- function(cg,
                            Y = NULL,
                            X_index = NULL,
                            Y_index = NULL,
-                           type = c("parents", "backdoor", "optimal")) {
+                           type = c("optimal", "parents", "backdoor")) {
   is_caugi(cg, TRUE)
   if (length(X) > 1 || length(Y) > 1 ||
     length(X_index) > 1 || length(Y_index) > 1) {
@@ -100,7 +136,25 @@ adjustment_set <- function(cg,
 #' @param Z Optional node set for conditioning
 #' @param X_index,Y_index,Z_index Optional 1-based indices.
 #'
-#' @returns Logical scalar.
+#' @returns Logical value indicating if backdoor is valid or not.
+#'
+#' @examples
+#' cg <- caugi_graph(
+#'   C %-->% X,
+#'   X %-->% F,
+#'   X %-->% D,
+#'   A %-->% X,
+#'   A %-->% K,
+#'   K %-->% Y,
+#'   D %-->% Y,
+#'   D %-->% G,
+#'   Y %-->% H,
+#'   class = "DAG"
+#' )
+#'
+#' is_valid_backdoor(cg, X = "X", Y = "Y", Z = NULL) # FALSE
+#' is_valid_backdoor(cg, X = "X", Y = "Y", Z = "K") # TRUE
+#' is_valid_backdoor(cg, X = "X", Y = "Y", Z = c("A", "C")) # TRUE
 #'
 #' @family adjustment
 #' @concept adjustment
@@ -142,6 +196,46 @@ is_valid_backdoor <- function(cg,
 #'
 #' @returns A list of character vectors, each an adjustment set
 #' (possibly empty).
+#'
+#' @examples
+#' cg <- caugi_graph(
+#'   C %-->% X,
+#'   X %-->% F,
+#'   X %-->% D,
+#'   A %-->% X,
+#'   A %-->% K,
+#'   K %-->% Y,
+#'   D %-->% Y,
+#'   D %-->% G,
+#'   Y %-->% H,
+#'   class = "DAG"
+#' )
+#'
+#' all_backdoor_sets(cg, X = "X", Y = "Y", max_size = 3L, minimal = FALSE)
+#' #> [[1]]
+#' #> [1] "A"
+#' #>
+#' #> [[2]]
+#' #> [1] "K"
+#' #>
+#' #> [[3]]
+#' #> [1] "C" "A"
+#' #>
+#' #> [[4]]
+#' #> [1] "C" "K"
+#' #>
+#' #> [[5]]
+#' #> [1] "A" "K"
+#' #>
+#' #> [[6]]
+#' #> [1] "C" "A" "K"
+#'
+#' all_backdoor_sets(cg, X = "X", Y = "Y", max_size = 3L, minimal = TRUE)
+#' #> [[1]]
+#' #> [1] "A"
+#' #>
+#' #> [[2]]
+#' #> [1] "K"
 #'
 #' @family adjustment
 #' @concept adjustment

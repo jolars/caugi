@@ -15,6 +15,18 @@ A character vector of edge types.
 \description{
 Get the edge types of a \code{caugi_graph}.
 }
+\examples{
+cg <- caugi_graph(
+  A \%-->\% B,
+  B \%--o\% C,
+  C \%<->\% D,
+  D \%---\% E,
+  A \%o-o\% E,
+  class = "UNKNOWN"
+)
+edge_types(cg) # returns c("-->", "o-o", "--o", "<->", "---")
+
+}
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},

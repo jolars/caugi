@@ -15,6 +15,14 @@ A \code{dagitty} object.
 \description{
 Convert a caugi_graph to a dagitty graph
 }
+\examples{
+cg <- caugi_graph(
+  A \%-->\% B,
+  class = "DAG"
+)
+g_dg <- as_dagitty(cg)
+
+}
 \seealso{
 Other conversion: 
 \code{\link{as_adjacency}()},

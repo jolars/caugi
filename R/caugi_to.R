@@ -5,6 +5,13 @@
 #'
 #' @returns An `igraph` object representing the same graph structure.
 #'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B,
+#'   class = "DAG"
+#' )
+#' ig <- as_igraph(cg)
+#'
 #' @family conversion
 #' @concept conversion
 #'
@@ -106,6 +113,13 @@ as_igraph <- function(x, ...) {
 #'
 #' @returns An integer 0/1 adjacency matrix with row/col names.
 #'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B,
+#'   class = "DAG"
+#' )
+#' adj <- as_adjacency(cg)
+#'
 #' @family conversion
 #' @concept conversion
 #'
@@ -155,6 +169,13 @@ as_adjacency <- function(x) {
 #'
 #' @returns A `bnlearn` DAG.
 #'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B,
+#'   class = "DAG"
+#' )
+#' g_bn <- as_bnlearn(cg)
+#'
 #' @family conversion
 #' @concept conversion
 #'
@@ -185,6 +206,13 @@ as_bnlearn <- function(x) {
 #' @param x A `caugi_graph` object.
 #'
 #' @returns A `dagitty` object.
+#'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B,
+#'   class = "DAG"
+#' )
+#' g_dg <- as_dagitty(cg)
 #'
 #' @family conversion
 #' @concept conversion

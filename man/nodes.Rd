@@ -21,6 +21,16 @@ A tibble with a \code{name} column.
 \description{
 Get nodes or edges of a \code{caugi_graph}
 }
+\examples{
+cg <- caugi_graph(
+  A \%-->\% B,
+  B \%-->\% C,
+  D,
+  class = "DAG"
+)
+nodes(cg) # returns the tibble with nodes A, B, C, D
+
+}
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},

@@ -14,6 +14,15 @@ The input \code{caugi_graph} object, invisibly.
 \description{
 Print a \code{caugi_graph}
 }
+\examples{
+cg <- caugi_graph(
+  A \%-->\% B + C,
+  nodes = LETTERS[1:5],
+  class = "DAG"
+)
+print(cg)
+
+}
 \seealso{
 Other caugi_graph methods: 
 \code{\link{length}()}

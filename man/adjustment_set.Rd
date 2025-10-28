@@ -10,7 +10,7 @@ adjustment_set(
   Y = NULL,
   X_index = NULL,
   Y_index = NULL,
-  type = c("parents", "backdoor", "optimal")
+  type = c("optimal", "parents", "backdoor")
 )
 }
 \arguments{
@@ -20,7 +20,8 @@ adjustment_set(
 
 \item{X_index, Y_index}{Optional numeric 1-based indices.}
 
-\item{type}{One of \code{"parents"}, \code{"backdoor"}, \code{"optimal"}.}
+\item{type}{One of \code{"parents"}, \code{"backdoor"}, \code{"optimal"}.
+The \code{optimal} option computes the O-set.}
 }
 \value{
 A tibble with a \code{name} column (possibly 0 rows).
@@ -35,6 +36,25 @@ Types supported:
 \item \code{"backdoor"}: Pearl backdoor formula
 \item \code{"optimal"}: O-set (only for single \code{x} and single \code{y})
 }
+}
+\examples{
+cg <- caugi_graph(
+  C \%-->\% X,
+  X \%-->\% F,
+  X \%-->\% D,
+  A \%-->\% X,
+  A \%-->\% K,
+  K \%-->\% Y,
+  D \%-->\% Y,
+  D \%-->\% G,
+  Y \%-->\% H,
+  class = "DAG"
+)
+
+adjustment_set(cg, "X", "Y", type = "parents") # C, A
+adjustment_set(cg, "X", "Y", type = "backdoor") # C, A
+adjustment_set(cg, "X", "Y", type = "optimal") # K
+
 }
 \seealso{
 Other adjustment: 

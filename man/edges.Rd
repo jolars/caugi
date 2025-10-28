@@ -15,6 +15,16 @@ E(cg)
 \description{
 Get edges of a \code{caugi_graph}.
 }
+\examples{
+cg <- caugi_graph(
+  A \%-->\% B,
+  B \%-->\% C,
+  D,
+  class = "DAG"
+)
+edges(cg) # returns the tibble with columns from, edge, to
+
+}
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},

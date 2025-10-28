@@ -12,6 +12,20 @@
 #'
 #' @returns An integer representing the number of nodes.
 #'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B,
+#'   class = "DAG"
+#' )
+#' length(cg) # 2
+#'
+#' cg2 <- caugi_graph(
+#'   A %-->% B + C,
+#'   nodes = LETTERS[1:5],
+#'   class = "DAG"
+#' )
+#' length(cg2) # 5
+#'
 #' @family caugi_graph methods
 #' @concept methods
 #'
@@ -28,6 +42,14 @@ S7::method(length, caugi_graph) <- function(x) {
 #' @name print
 #'
 #' @returns The input `caugi_graph` object, invisibly.
+#'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B + C,
+#'   nodes = LETTERS[1:5],
+#'   class = "DAG"
+#' )
+#' print(cg)
 #'
 #' @family caugi_graph methods
 #' @concept methods

@@ -10,7 +10,8 @@ is_acyclic(cg, force_check = FALSE)
 \item{cg}{A \code{caugi_graph} object.}
 
 \item{force_check}{Logical; if \code{TRUE}, the function will test if the graph is
-acyclic, if \code{FALSE} (default), it will look at the graph class.}
+acyclic, if \code{FALSE} (default), it will look at the graph class and match
+it, if possible.}
 }
 \value{
 A logical value indicating whether the graph is acyclic.
@@ -19,24 +20,26 @@ A logical value indicating whether the graph is acyclic.
 Checks if the given \code{caugi} graph is acyclic.
 }
 \details{
-\strong{Lazy building}
+Logically, it should not be possible to have a graph class of "DAG" or "PDAG"
+that has cycles, but in case the user modified the graph after creation in
+some unforeseen way that could have introduced cycles, this function allows
+to force a check of acyclicity, if needed.
+}
+\examples{
+cg_acyclic <- caugi_graph(
+  A \%-->\% B,
+  B \%-->\% C,
+  class = "DAG"
+)
+is_acyclic(cg_acyclic) # TRUE
+cg_cyclic <- caugi_graph(
+  A \%-->\% B,
+  B \%-->\% C,
+  C \%-->\% A,
+  class = "UNKNOWN"
+)
+is_acyclic(cg_cyclic) # FALSE
 
-If the graph is not built, the graph will be built before making the query.
-
-\strong{Check logic}
-
-By the construction of the \code{caugi_graph}, if the graph class is "DAG" or
-"PDAG", the graph should be guaranteed to be acyclic. If the graph class is
-"UNKNOWN", the graph may or may not be acyclic. If \code{force_check = TRUE}, the
-function will check if the graph is acyclic using the Rust backend, no matter
-the class. If the graph class is not inherently acyclic, \code{is_acyclic} will
-run the check.
-
-\strong{Note}
-
-We do not think that it is possible to introduce a cycle in a \code{caugi_graph}
-on acyclic classes without the package throwing errors. We might be wrong,
-though, so \code{force_check} is e a feature that is there for peace of mind.
 }
 \seealso{
 Other queries: 

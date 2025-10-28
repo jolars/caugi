@@ -17,6 +17,14 @@ An \code{igraph} object representing the same graph structure.
 \description{
 Convert a caugi_graph to an igraph object
 }
+\examples{
+cg <- caugi_graph(
+  A \%-->\% B,
+  class = "DAG"
+)
+ig <- as_igraph(cg)
+
+}
 \seealso{
 Other conversion: 
 \code{\link{as_adjacency}()},

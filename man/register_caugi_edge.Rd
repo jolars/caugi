@@ -31,15 +31,36 @@ register_caugi_edge(
 }}
 }
 \value{
-The integer code assigned to the registered edge type.
+TRUE, invisibly.
 }
 \description{
 Register a new edge type in the global registry.
 }
+\examples{
+# first, for reproducability, we reset the registry to default
+reset_caugi_registry()
+
+# create a new registry
+reg <- caugi_registry()
+
+# register an edge
+register_caugi_edge(
+  glyph = "<--",
+  tail_mark = "arrow",
+  head_mark = "tail",
+  class = "directed",
+  symmetric = FALSE
+)
+
+# now, this edge is available for caugi graphs:
+cg <- caugi_graph(A \%-->\% B, B \%<--\% C, class = "DAG")
+
+# reset the registry to default
+reset_caugi_registry()
+
+}
 \seealso{
 Other registry: 
-\code{\link{caugi_registry}()},
-\code{\link{reset_caugi_registry}()},
-\code{\link{seal_caugi_registry}()}
+\code{\link{registry}}
 }
 \concept{registry}

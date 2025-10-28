@@ -20,6 +20,40 @@ A logical value indicating whether the graph is a PDAG.
 Checks if the given \code{caugi} graph is a
 Partially Directed Acyclic Graph (PDAG).
 }
+\examples{
+cg_dag_class <- caugi_graph(
+  A \%-->\% B,
+  class = "DAG"
+)
+is_pdag(cg_dag_class) # TRUE
+cg_dag_but_pdag_class <- caugi_graph(
+  A \%-->\% B,
+  class = "PDAG"
+)
+is_pdag(cg_dag_but_pdag_class) # TRUE
+cg_cyclic <- caugi_graph(
+  A \%-->\% B,
+  B \%-->\% C,
+  C \%-->\% A,
+  D \%---\% A,
+  class = "UNKNOWN",
+  simple = FALSE
+)
+is_pdag(cg_cyclic) # FALSE
+
+cg_undirected <- caugi_graph(
+  A \%---\% B,
+  class = "UNKNOWN"
+)
+is_pdag(cg_undirected) # TRUE
+
+cg_pag <- caugi_graph(
+  A \%o->\% B,
+  class = "UNKNOWN"
+)
+is_pdag(cg_pag) # FALSE
+
+}
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},

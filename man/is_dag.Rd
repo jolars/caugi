@@ -20,6 +20,33 @@ A logical value indicating whether the graph is a DAG.
 Checks if the given \code{caugi} graph is a
 Directed Acyclic Graph (DAG).
 }
+\examples{
+cg_dag_class <- caugi_graph(
+  A \%-->\% B,
+  class = "DAG"
+)
+is_dag(cg_dag_class) # TRUE
+cg_dag_but_pdag_class <- caugi_graph(
+  A \%-->\% B,
+  class = "PDAG"
+)
+is_dag(cg_dag_but_pdag_class) # TRUE
+cg_cyclic <- caugi_graph(
+  A \%-->\% B,
+  B \%-->\% C,
+  C \%-->\% A,
+  class = "UNKNOWN",
+  simple = FALSE
+)
+is_dag(cg_cyclic) # FALSE
+
+cg_undirected <- caugi_graph(
+  A \%---\% B,
+  class = "UNKNOWN"
+)
+is_dag(cg_undirected) # FALSE
+
+}
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},

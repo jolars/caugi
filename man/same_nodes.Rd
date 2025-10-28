@@ -20,6 +20,18 @@ A logical indicating if the two graphs have the same nodes.
 \description{
 Check if two \code{caugi_graph} objects have the same nodes.
 }
+\examples{
+cg1 <- caugi_graph(
+  A \%-->\% B,
+  class = "DAG"
+)
+cg2 <- caugi_graph(
+  A \%-->\% B + C,
+  class = "DAG"
+)
+same_nodes(cg1, cg2) # FALSE
+
+}
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},

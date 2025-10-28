@@ -24,11 +24,30 @@ is_valid_backdoor(
 \item{X_index, Y_index, Z_index}{Optional 1-based indices.}
 }
 \value{
-Logical scalar.
+Logical value indicating if backdoor is valid or not.
 }
 \description{
 Checks whether \code{Z} is a valid backdoor adjustment set for
 \verb{X --> Y}.
+}
+\examples{
+cg <- caugi_graph(
+  C \%-->\% X,
+  X \%-->\% F,
+  X \%-->\% D,
+  A \%-->\% X,
+  A \%-->\% K,
+  K \%-->\% Y,
+  D \%-->\% Y,
+  D \%-->\% G,
+  Y \%-->\% H,
+  class = "DAG"
+)
+
+is_valid_backdoor(cg, X = "X", Y = "Y", Z = NULL) # FALSE
+is_valid_backdoor(cg, X = "X", Y = "Y", Z = "K") # TRUE
+is_valid_backdoor(cg, X = "X", Y = "Y", Z = c("A", "C")) # TRUE
+
 }
 \seealso{
 Other adjustment: 

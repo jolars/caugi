@@ -2,12 +2,57 @@
 # ─────────────────────────────── Registry API ─────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
-#' @title Access the global edge registry, creating it if needed.
+#' @title caugi edge registry
+#'
+#' @description
+#' The `caugi` edge registry stores information about the different edge types
+#' that can be used in `caugi` graphs. It maps edge glyphs (e.g., `"-->"`,
+#' `"<->"`, `"o->"`, etc.) to their specifications, including tail and head
+#' marks, class, and symmetry. The registry allows for dynamic registration of
+#' new edge types, enabling users to extend the set of supported edges in
+#' `caugi.` It is implemented as a singleton, ensuring that there is a single
+#' global instance of the registry throughout the R session.
+#'
+#' @details
+#' The intented use of the `caugi` registry is mostly for advanced users and
+#' developers. The registry enables users who need to define their own custom
+#' edge types in `caugi` directly. . It currently mostly supports the
+#' _representation_ of new edges, but for users that might want to represent
+#' reverse edges, this preserves correctness of reason over these edges.
+#'
+#' @name registry
+#'
+#' @examples
+#' # first, for reproducability, we reset the registry to default
+#' reset_caugi_registry()
+#'
+#' # create a new registry
+#' reg <- caugi_registry()
+#'
+#' # register an edge
+#' register_caugi_edge(
+#'   glyph = "<--",
+#'   tail_mark = "arrow",
+#'   head_mark = "tail",
+#'   class = "directed",
+#'   symmetric = FALSE
+#' )
+#'
+#' # now, this edge is available for caugi graphs:
+#' cg <- caugi_graph(A %-->% B, B %<--% C, class = "DAG")
+#'
+#' # reset the registry to default
+#' reset_caugi_registry()
 #'
 #' @family registry
 #' @concept registry
+NULL
+
+#' @describeIn registry Access the global edge registry, creating it if needed.
 #'
 #' @returns An `edge_registry` external pointer.
+#'
+#' @export
 caugi_registry <- function() {
   if (!exists("reg", envir = .caugi_env, inherits = FALSE) ||
     is.null(.caugi_env$reg)) {
@@ -18,16 +63,23 @@ caugi_registry <- function() {
   .caugi_env$reg
 }
 
-#' @title Reset the global edge registry.
-#'
-#' @family registry
-#' @concept registry
+#' @describeIn registry Reset the global edge registry to its default state.
 #'
 #' @export
 reset_caugi_registry <- function() {
   .caugi_env$reg <- NULL
   .caugi_env$edge_ops <- .caugi_defaults_edge_ops
   .caugi_env$glyph_map <- .caugi_defaults_glyph_map
+  invisible(TRUE)
+}
+
+#' @describeIn registry Seal the global edge registry to prevent further
+#' modifications.
+#'
+#' @export
+seal_caugi_registry <- function() {
+  reg <- caugi_registry()
+  edge_registry_seal(reg)
   invisible(TRUE)
 }
 
@@ -41,7 +93,29 @@ reset_caugi_registry <- function() {
 #' @param flags A character vector of flags. Currently supported:
 #' * "TRAVERSABLE_WHEN_CONDITIONED"
 #' * "LATENT_CONFOUNDING"
-#' @returns The integer code assigned to the registered edge type.
+#' @returns TRUE, invisibly.
+#'
+#' @examples
+#' # first, for reproducability, we reset the registry to default
+#' reset_caugi_registry()
+#'
+#' # create a new registry
+#' reg <- caugi_registry()
+#'
+#' # register an edge
+#' register_caugi_edge(
+#'   glyph = "<--",
+#'   tail_mark = "arrow",
+#'   head_mark = "tail",
+#'   class = "directed",
+#'   symmetric = FALSE
+#' )
+#'
+#' # now, this edge is available for caugi graphs:
+#' cg <- caugi_graph(A %-->% B, B %<--% C, class = "DAG")
+#'
+#' # reset the registry to default
+#' reset_caugi_registry()
 #'
 #' @family registry
 #' @concept registry
@@ -85,22 +159,6 @@ register_caugi_edge <- function(glyph,
     flags
   )
   .register_edge(glyph)
-  invisible(TRUE)
-}
-
-#' @title Seal the global edge registry.
-#'
-#' @description
-#' Seal the global edge registry to prevent further modifications. Can be used
-#' to ensure reproducability.
-#'
-#' @family registry
-#' @concept registry
-#'
-#' @export
-seal_caugi_registry <- function() {
-  reg <- caugi_registry()
-  edge_registry_seal(reg)
   invisible(TRUE)
 }
 

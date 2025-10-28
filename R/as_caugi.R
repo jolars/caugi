@@ -40,6 +40,68 @@ Matrix_S4_class <- readRDS("inst/S4_class_definitions/Matrix_class.rds")
 #'
 #' @returns A `caugi_graph` object.
 #'
+#' @examples
+#' # igraph
+#' ig <- igraph::graph_from_literal(A - +B, B - +C)
+#' cg_ig <- as_caugi(ig, class = "DAG")
+#'
+#' # graphNEL
+#' gn <- graph::graphNEL(nodes = c("A", "B", "C"), edgemode = "directed")
+#' gn <- graph::addEdge("A", "B", gn)
+#' gn <- graph::addEdge("B", "C", gn)
+#' cg_gn <- as_caugi(gn, class = "DAG")
+#'
+#' # adjacency matrix
+#' m <- matrix(0L, 3, 3, dimnames = list(LETTERS[1:3], LETTERS[1:3]))
+#' m["A", "B"] <- 1L
+#' m["B", "C"] <- 1L
+#' cg_adj <- as_caugi(m, class = "DAG")
+#'
+#' # bnlearn
+#' bn <- bnlearn::model2network("[A][B|A][C|B]")
+#' cg_bn <- as_caugi(bn, class = "DAG")
+#'
+#' # dagitty
+#' dg <- dagitty::dagitty("dag {
+#'  A -> B
+#'  B -> C
+#'  }")
+#' cg_dg <- as_caugi(dg, class = "DAG")
+#'
+#' cg <- caugi_graph(A %-->% B %-->% C, class = "DAG")
+#'
+#' # check that all nodes are equal in all graph objects
+#' for (cg_converted in list(cg_ig, cg_gn, cg_adj, cg_bn, cg_dg)) {
+#'   stopifnot(identical(nodes(cg), nodes(cg_converted)))
+#'   stopifnot(identical(edges(cg), edges(cg_converted)))
+#' }
+#'
+#' # collapse mutual edges
+#' ig2 <- igraph::graph_from_literal(A - +B, B - +A, C - +D)
+#' cg2 <- as_caugi(ig2, class = "PDAG", collapse = TRUE, collapse_to = "---")
+#'
+#' # coded integer matrix for PAGs (pcalg style)
+#' nm <- c("A", "B", "C", "D")
+#' M <- matrix(0L, 4, 4, dimnames = list(nm, nm))
+#'
+#' # A --> B
+#' M["A", "B"] <- 2L # mark at B end
+#' M["B", "A"] <- 3L # mark at A end
+#'
+#' # A --- C
+#' M["A", "C"] <- 3L
+#' M["C", "A"] <- 3L
+#'
+#' # B o-> C
+#' M["B", "C"] <- 2L
+#' M["C", "B"] <- 1L
+#'
+#' # C o-o D
+#' M["C", "D"] <- 1L
+#' M["D", "C"] <- 1L
+#'
+#' cg <- as_caugi(M, class = "PAG")
+#'
 #' @family conversion
 #' @concept conversion
 #'

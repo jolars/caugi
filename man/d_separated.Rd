@@ -31,6 +31,24 @@ Logical scalar.
 Checks whether every node in \code{X} is d-separated from every node
 in \code{Y} given \code{Z} in a DAG.
 }
+\examples{
+cg <- caugi_graph(
+  C \%-->\% X,
+  X \%-->\% F,
+  X \%-->\% D,
+  A \%-->\% X,
+  A \%-->\% K,
+  K \%-->\% Y,
+  D \%-->\% Y,
+  D \%-->\% G,
+  Y \%-->\% H,
+  class = "DAG"
+)
+
+d_separated(cg, "X", "Y", Z = c("A", "D")) # TRUE
+d_separated(cg, "X", "Y", Z = NULL) # FALSE
+
+}
 \seealso{
 Other adjustment: 
 \code{\link{adjustment_set}()},

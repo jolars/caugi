@@ -44,6 +44,53 @@
 #' @returns A [`caugi_graph`] S7 object containing the nodes, edges, and a
 #' pointer to the underlying Rust graph structure.
 #'
+#' @examples
+#' # create a simple DAG (using NSE)
+#' cg <- caugi_graph(
+#'   A %-->% B + C,
+#'   B %-->% D,
+#'   class = "DAG"
+#' )
+#'
+#' # create a PDAG with undirected edges (using NSE)
+#' cg2 <- caugi_graph(
+#'   A %-->% B + C,
+#'   B %---% D,
+#'   E, # no neighbors for this node
+#'   class = "PDAG"
+#' )
+#'
+#' # create a DAG (using SE)
+#' cg3 <- caugi_graph(
+#'   from = c("A", "A", "B"),
+#'   edge = c("-->", "-->", "-->"),
+#'   to = c("B", "C", "D"),
+#'   nodes = c("A", "B", "C", "D", "E"),
+#'   class = "DAG"
+#' )
+#'
+#' # create a non-simple graph
+#' cg4 <- caugi_graph(
+#'   A %-->% B,
+#'   B %-->% A,
+#'   class = "UNKNOWN",
+#'   simple = FALSE
+#' )
+#'
+#' cg4@simple # FALSE
+#' cg4@built # TRUE
+#' cg4@graph_class # "UNKNOWN"
+#'
+#' # create graph, but don't built Rust object yet, which is needed for queries
+#' cg5 <- caugi_graph(
+#'   A %-->% B + C,
+#'   B %-->% D,
+#'   class = "DAG",
+#'   build = FALSE
+#' )
+#'
+#' cg@built # FALSE
+#'
 #' @family caugi_graph
 #' @concept caugi_graph
 #'

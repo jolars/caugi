@@ -12,6 +12,21 @@ An integer representing the number of nodes.
 \description{
 Returns the number of nodes in the graph.
 }
+\examples{
+cg <- caugi_graph(
+  A \%-->\% B,
+  class = "DAG"
+)
+length(cg) # 2
+
+cg2 <- caugi_graph(
+  A \%-->\% B + C,
+  nodes = LETTERS[1:5],
+  class = "DAG"
+)
+length(cg2) # 5
+
+}
 \seealso{
 Other caugi_graph methods: 
 \code{\link{print}()}
