@@ -4,7 +4,7 @@
 \alias{as_dagitty}
 \title{Convert a caugi_graph to a dagitty graph}
 \usage{
-as_dagitty(x, ...)
+as_dagitty(x)
 }
 \arguments{
 \item{x}{A \code{caugi_graph} object.}

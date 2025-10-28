@@ -190,7 +190,7 @@ as_bnlearn <- function(x) {
 #' @concept conversion
 #'
 #' @export
-as_dagitty <- function(x, ...) {
+as_dagitty <- function(x) {
   is_caugi(x, throw_error = TRUE)
 
   nm <- nodes(x)$name
