@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml)
 [![Code coverage](https://codecov.io/gh/frederikfabriciusbjerre/caugi/graph/badge.svg)](https://app.codecov.io/gh/frederikfabriciusbjerre/caugi)
+[![extendr](https://img.shields.io/badge/extendr-^0.8.1-276DC2)](https://extendr.github.io/extendr/extendr_api/)
 <!-- badges: end -->
 
 > **Causal Graph Interface (for R)** — a fast, tidy toolbox for building, coercing and analysing causal graphs.
@@ -53,11 +54,11 @@ print(cg)
 You can query it:
 
 ```{r query}
-neighbors(cg, D)
-parents(cg, D)
-children(cg, A)
-ancestors(cg, D)
-descendants(cg, A)
+neighbors(cg, "D")
+parents(cg, "D")
+children(cg, "A")
+ancestors(cg, "D")
+descendants(cg, "A")
 ```
 
 ## Key features

@@ -1,9 +1,9 @@
 Package: caugi
 Title: Causal Graph Interface 
 Version: 0.0.0.9000
-Authors@R: 
-    person("Frederik", "Fabricius-Bjerre", , "frederik@fabriciusbjerre.dk", role = c("aut", "cre"))
-Description: A causal graph interface for R using a Rust backend.
+Author: Frederik Fabricius-Bjerre [aut, cre]
+Maintainer: Frederik Fabricius-Bjerre <frederik@fabriciusbjerre.dk>
+Description: caugi is a package for creating, querying, and processing causal graphs.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

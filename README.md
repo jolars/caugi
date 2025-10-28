@@ -8,6 +8,7 @@
 [![R-CMD-check](https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml)
 [![Code
 coverage](https://codecov.io/gh/frederikfabriciusbjerre/caugi/graph/badge.svg)](https://app.codecov.io/gh/frederikfabriciusbjerre/caugi)
+[![extendr](https://img.shields.io/badge/extendr-%5E0.8.1-276DC2)](https://extendr.github.io/extendr/extendr_api/)
 <!-- badges: end -->
 
 > **Causal Graph Interface (for R)** — a fast, tidy toolbox for
@@ -64,38 +65,16 @@ print(cg)
 You can query it:
 
 ``` r
-neighbors(cg, D)
-#> # A tibble: 2 × 1
-#>   name 
-#>   <chr>
-#> 1 B    
-#> 2 C
-parents(cg, D)
-#> # A tibble: 2 × 1
-#>   name 
-#>   <chr>
-#> 1 B    
-#> 2 C
-children(cg, A)
-#> # A tibble: 2 × 1
-#>   name 
-#>   <chr>
-#> 1 B    
-#> 2 C
-ancestors(cg, D)
-#> # A tibble: 3 × 1
-#>   name 
-#>   <chr>
-#> 1 A    
-#> 2 B    
-#> 3 C
-descendants(cg, A)
-#> # A tibble: 3 × 1
-#>   name 
-#>   <chr>
-#> 1 B    
-#> 2 C    
-#> 3 D
+neighbors(cg, "D")
+#> [1] "B" "C"
+parents(cg, "D")
+#> [1] "B" "C"
+children(cg, "A")
+#> [1] "B" "C"
+ancestors(cg, "D")
+#> [1] "A" "B" "C"
+descendants(cg, "A")
+#> [1] "B" "C" "D"
 ```
 
 ## Key features
