@@ -692,7 +692,6 @@ fn is_cpdag_ptr(g: ExternalPtr<GraphView>) -> bool {
     }
 }
 
-
 extendr_module! {
     mod caugi;
     // registry
