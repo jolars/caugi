@@ -56,6 +56,9 @@ For PAGs, the integer codes are as follows (as used in \code{pcalg}):
 }
 \seealso{
 Other conversion: 
+\code{\link{as_adjacency}()},
+\code{\link{as_bnlearn}()},
+\code{\link{as_dagitty}()},
 \code{\link{as_igraph}()}
 }
 \concept{conversion}
