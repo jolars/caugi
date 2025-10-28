@@ -784,7 +784,6 @@ impl Dag {
             for a in 0..n {
                 let uab: Vec<u32> = und[a].clone().into_iter().collect();
                 for b_u in uab {
-                    let b = b_u as usize;
                     if has_dir_path(&ch, a as u32, b_u) {
                         orient(a as u32, b_u, &mut und, &mut pa, &mut ch);
                         changed = true;
