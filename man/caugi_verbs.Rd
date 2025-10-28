@@ -58,6 +58,24 @@ Caugi graph verbs
 \item \code{remove_nodes()}: Remove nodes.
 
 }}
+\examples{
+# initialize empty graph and build slowly
+cg <- caugi_graph(class = "PDAG")
+
+cg <- cg |>
+  add_nodes(c("A", "B", "C", "D", "E")) |> # A, B, C, D, E
+  add_edges(A \%-->\% B \%-->\% C) |> # A --> B --> C, D, E
+  set_edges(B \%---\% C) # A --> B --- C, D, E
+
+cg <- remove_edges(cg, B \%---\% C) |> # A --> B, C, D, E
+  remove_nodes(c("C", "D", "E")) # A --> B
+
+# verbs do not build the Rust backend
+cg@built # FALSE
+build(cg)
+cg@built # TRUE
+
+}
 \seealso{
 Other verbs: 
 \code{\link{build}()}
