@@ -224,6 +224,20 @@ caugi_graph <- S7::new_class(
       terms <- .collect_edges_nodes(calls)
       edges <- terms$edges
       declared <- terms$declared
+      if (!is.null(nodes)) {
+        edge_node_names <- unique(c(edges$from, edges$to))
+        if (all(edge_node_names %in% nodes)) {
+          # declared nodes contain all edge nodes: preserve their order
+          declared <- nodes
+        } else {
+          stop("nodes must contain all nodes. ",
+            "Edge nodes not in nodes: ",
+            paste(setdiff(edge_node_names, nodes), collapse = ", "),
+            call. = FALSE
+          )
+        }
+        declared <- unique(c(declared, nodes))
+      }
     } else if (has_vec) {
       edges <- .get_edges_tibble(from, edge, to, calls = list())
       declared <- nodes
@@ -236,19 +250,15 @@ caugi_graph <- S7::new_class(
       declared <- character()
     }
 
-    # All unique nodes
-    # When declared nodes are provided and contain ALL edge nodes,
-    # preserve their order (important for igraph conversion)
     edge_node_names <- unique(c(edges$from, edges$to))
     if (length(declared) > 0L && all(edge_node_names %in% declared)) {
       # Declared contains all edge nodes: preserve declared order
       all_node_names <- unique(declared)
     } else if (length(declared) > 0L) {
-      # Declared exists but doesn't contain all edge nodes:
-      # use edge order first, then add declared isolates (old behavior)
+      # use edge order first, then add declared isolates
       all_node_names <- unique(c(edge_node_names, declared))
     } else {
-      # No declared nodes: use edge order (old behavior)
+      # No declared nodes: use edge order
       all_node_names <- edge_node_names
     }
     nodes <- tibble::tibble(name = all_node_names)
