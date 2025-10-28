@@ -12,6 +12,13 @@
 #'
 #' @returns The sampled `caugi_graph` object.
 #'
+#' @examples
+#' # generate a random DAG with 5 nodes and 4 edges
+#' dag <- generate_graph(n = 5, m = 4, mode = "DAG")
+#'
+#' # generate a random CPDAG with 5 nodes and edge probability 0.3
+#' cpdag <- generate_graph(n = 5, p = 0.3, mode = "CPDAG")
+#'
 #' @family simulation functions
 #' @concept simulation
 #'
@@ -40,10 +47,9 @@ generate_graph <- function(n, m = NULL, p = NULL, mode = c("DAG", "CPDAG")) {
     }
   }
 
-  reg <- edge_registry_new()
-  edge_registry_register_builtins(reg)
+  reg <- caugi_registry()
+  code_dir <- edge_registry_code_of(reg, "-->")
   b <- graph_builder_new(reg, n, simple = TRUE)
-  code_dir <- as.integer(edge_registry_code_of(reg, "-->"))[1L]
 
   ord <- sample.int(n) - 1L
 

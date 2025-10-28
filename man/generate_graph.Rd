@@ -24,5 +24,13 @@ The sampled \code{caugi_graph} object.
 Sample a random DAG or CPDAG using
 Erdős-Rényi for random graph generation.
 }
+\examples{
+# generate a random DAG with 5 nodes and 4 edges
+dag <- generate_graph(n = 5, m = 4, mode = "DAG")
+
+# generate a random CPDAG with 5 nodes and edge probability 0.3
+cpdag <- generate_graph(n = 5, p = 0.3, mode = "CPDAG")
+
+}
 \concept{simulation}
 \concept{simulation functions}
