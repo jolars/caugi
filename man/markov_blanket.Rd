@@ -21,6 +21,23 @@ requested) or a list of character vectors (if multiple nodes are requested).
 \description{
 Get Markov blanket of nodes in a \code{caugi_graph}
 }
+\examples{
+cg <- caugi_graph(
+  A \%-->\% B,
+  B \%-->\% C,
+  class = "DAG"
+)
+markov_blanket(cg, "A") # "B"
+markov_blanket(cg, index = 2) # "A" "C"
+markov_blanket(cg, "B") # "A" "C"
+markov_blanket(cg, c("B", "C"))
+#> $B
+#> [1] "A" "C"
+#>
+#> $C
+#> [1] "B"
+
+}
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},

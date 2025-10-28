@@ -429,6 +429,22 @@ edge_types <- function(cg) {
 #' @returns Either a character vector of node names (if a single node is
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B,
+#'   B %-->% C,
+#'   class = "DAG"
+#' )
+#' parents(cg, "A") # NULL
+#' parents(cg, index = 2) # "A"
+#' parents(cg, "B") # "A"
+#' parents(cg, c("B", "C"))
+#' #> $B
+#' #> [1] "A"
+#' #>
+#' #> $C
+#' #> [1] "B"
+#'
 #' @family queries
 #' @concept queries
 #'
@@ -479,6 +495,22 @@ parents <- function(cg, nodes = NULL, index = NULL) {
 #' @returns Either a character vector of node names (if a single node is
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B,
+#'   B %-->% C,
+#'   class = "DAG"
+#' )
+#' children(cg, "A") # "B"
+#' children(cg, index = 2) # "C"
+#' children(cg, "B") # "C"
+#' children(cg, c("B", "C"))
+#' #> $B
+#' #> [1] "C"
+#' #>
+#' #> $C
+#' #> NULL
+#'
 #' @family queries
 #' @concept queries
 #'
@@ -528,6 +560,22 @@ children <- function(cg, nodes = NULL, index = NULL) {
 #'
 #' @returns Either a character vector of node names (if a single node is
 #' requested) or a list of character vectors (if multiple nodes are requested).
+#'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B,
+#'   B %-->% C,
+#'   class = "DAG"
+#' )
+#' neighbors(cg, "A") # "B"
+#' neighbors(cg, index = 2) # "A" "C"
+#' neighbors(cg, "B") # "A" "C"
+#' neighbors(cg, c("B", "C"))
+#' #> $B
+#' #> [1] "A" "C"
+#' #>
+#' #> $C
+#' #> [1] "B"
 #'
 #' @family queries
 #' @concept queries
@@ -583,6 +631,22 @@ neighbours <- neighbors
 #' @returns Either a character vector of node names (if a single node is
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B,
+#'   B %-->% C,
+#'   class = "DAG"
+#' )
+#' ancestors(cg, "A") # NULL
+#' ancestors(cg, index = 2) # "A"
+#' ancestors(cg, "B") # "A"
+#' ancestors(cg, c("B", "C"))
+#' #> $B
+#' #> [1] "A"
+#' #>
+#' #> $C
+#' #> [1] "A" "B"
+#'
 #' @family queries
 #' @concept queries
 #'
@@ -633,6 +697,22 @@ ancestors <- function(cg, nodes = NULL, index = NULL) {
 #' @returns Either a character vector of node names (if a single node is
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B,
+#'   B %-->% C,
+#'   class = "DAG"
+#' )
+#' descendants(cg, "A") # "B" "C"
+#' descendants(cg, index = 2) # "C"
+#' descendants(cg, "B") # "C"
+#' descendants(cg, c("B", "C"))
+#' #> $B
+#' #> [1] "C"
+#' #>
+#' #> $C
+#' #> NULL
+#'
 #' @family queries
 #' @concept queries
 #'
@@ -682,6 +762,22 @@ descendants <- function(cg, nodes = NULL, index = NULL) {
 #'
 #' @returns Either a character vector of node names (if a single node is
 #' requested) or a list of character vectors (if multiple nodes are requested).
+#'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B,
+#'   B %-->% C,
+#'   class = "DAG"
+#' )
+#' markov_blanket(cg, "A") # "B"
+#' markov_blanket(cg, index = 2) # "A" "C"
+#' markov_blanket(cg, "B") # "A" "C"
+#' markov_blanket(cg, c("B", "C"))
+#' #> $B
+#' #> [1] "A" "C"
+#' #>
+#' #> $C
+#' #> [1] "B"
 #'
 #' @family queries
 #' @concept queries
@@ -735,6 +831,14 @@ markov_blanket <- function(cg, nodes = NULL, index = NULL) {
 #' @returns Either a character vector of node names (if a single node is
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B,
+#'   B %-->% C,
+#'   class = "DAG"
+#' )
+#' exogenous(cg) # "A"
+#'
 #' @family queries
 #' @concept queries
 #'
@@ -759,6 +863,17 @@ exogenous <- function(cg, undirected_as_parents = FALSE) {
 #' @param index A vector of node indexes.
 #'
 #' @returns A new `caugi_graph` that is a subgraph of the selected nodes.
+#'
+#' @examples
+#' cg <- caugi_graph(
+#'   A %-->% B,
+#'   B %-->% C,
+#'   class = "DAG"
+#' )
+#' sub_cg <- subgraph(cg, c("B", "C"))
+#' cg2 <- caugi_graph(B %-->% C, class = "DAG")
+#' all(nodes(sub_cg) == nodes(cg2)) # TRUE
+#' all(edges(sub_cg) == edges(cg2)) # TRUE
 #'
 #' @family queries
 #' @concept queries

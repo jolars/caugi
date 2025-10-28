@@ -22,6 +22,23 @@ requested) or a list of character vectors (if multiple nodes are requested).
 Get parents of node in a graph. Note that not both nodes and index can be
 given.
 }
+\examples{
+cg <- caugi_graph(
+  A \%-->\% B,
+  B \%-->\% C,
+  class = "DAG"
+)
+parents(cg, "A") # NULL
+parents(cg, index = 2) # "A"
+parents(cg, "B") # "A"
+parents(cg, c("B", "C"))
+#> $B
+#> [1] "A"
+#>
+#> $C
+#> [1] "B"
+
+}
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},

@@ -20,6 +20,18 @@ A new \code{caugi_graph} that is a subgraph of the selected nodes.
 \description{
 Get the induced subgraph
 }
+\examples{
+cg <- caugi_graph(
+  A \%-->\% B,
+  B \%-->\% C,
+  class = "DAG"
+)
+sub_cg <- subgraph(cg, c("B", "C"))
+cg2 <- caugi_graph(B \%-->\% C, class = "DAG")
+all(nodes(sub_cg) == nodes(cg2)) # TRUE
+all(edges(sub_cg) == edges(cg2)) # TRUE
+
+}
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},

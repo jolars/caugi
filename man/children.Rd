@@ -21,6 +21,23 @@ requested) or a list of character vectors (if multiple nodes are requested).
 \description{
 Get children of nodes in a \code{caugi_graph}
 }
+\examples{
+cg <- caugi_graph(
+  A \%-->\% B,
+  B \%-->\% C,
+  class = "DAG"
+)
+children(cg, "A") # "B"
+children(cg, index = 2) # "C"
+children(cg, "B") # "C"
+children(cg, c("B", "C"))
+#> $B
+#> [1] "C"
+#>
+#> $C
+#> NULL
+
+}
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},

@@ -24,6 +24,23 @@ requested) or a list of character vectors (if multiple nodes are requested).
 \description{
 Get neighbors of nodes in a \code{caugi_graph}
 }
+\examples{
+cg <- caugi_graph(
+  A \%-->\% B,
+  B \%-->\% C,
+  class = "DAG"
+)
+neighbors(cg, "A") # "B"
+neighbors(cg, index = 2) # "A" "C"
+neighbors(cg, "B") # "A" "C"
+neighbors(cg, c("B", "C"))
+#> $B
+#> [1] "A" "C"
+#>
+#> $C
+#> [1] "B"
+
+}
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},

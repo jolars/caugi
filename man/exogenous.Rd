@@ -20,6 +20,15 @@ requested) or a list of character vectors (if multiple nodes are requested).
 Get all exogenous nodes (nodes with no parents) in a
 \code{caugi_graph}.
 }
+\examples{
+cg <- caugi_graph(
+  A \%-->\% B,
+  B \%-->\% C,
+  class = "DAG"
+)
+exogenous(cg) # "A"
+
+}
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},
