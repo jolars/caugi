@@ -87,6 +87,32 @@ test_that("is_pdag works", {
   expect_false(is_pdag(cg))
 })
 
+test_that("is_cpdag works", {
+  cg <- caugi_graph(A %-->% C, B %-->% C, A %---% B, class = "PDAG")
+  expect_true(is_cpdag(cg))
+
+  cg <- caugi_graph(A %-->% B, B %-->% C, C %-->% D, class = "DAG")
+  expect_true(is_cpdag(cg))
+
+  cg <- caugi_graph(A %-->% B, B %-->% C, C %o->% D, class = "Unknown")
+  expect_false(is_cpdag(cg))
+
+  cg <- caugi_graph(A %-->% B, B %-->% C, C %---% D + E %o->% F,
+    class = "Unknown"
+  )
+  expect_false(is_cpdag(cg))
+})
+
+test_that("same_nodes works", {
+  cg1 <- caugi_graph(A %-->% B, B %-->% C, class = "DAG")
+  cg2 <- caugi_graph(B %-->% C, A %-->% B, class = "DAG")
+  cg3 <- caugi_graph(A %-->% B, C %-->% D, class = "DAG")
+
+  expect_true(same_nodes(cg1, cg2))
+  expect_false(same_nodes(cg1, cg3))
+  expect_error(same_nodes(cg1, cg3, throw_error = TRUE))
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ────────────────────────────── Getter queries ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
