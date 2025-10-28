@@ -215,6 +215,14 @@ caugi_graph <- S7::new_class(
       )
     }
 
+    if (!is.null(nodes)) {
+      if (!is.character(nodes)) {
+        stop("`nodes` must be a character vector of node names.",
+          call. = FALSE
+        )
+      }
+    }
+
     if (!simple && class != "UNKNOWN") {
       stop("If simple = FALSE, class must be 'UNKNOWN'", call. = FALSE)
     }
@@ -230,11 +238,8 @@ caugi_graph <- S7::new_class(
           # declared nodes contain all edge nodes: preserve their order
           declared <- nodes
         } else {
-          stop("nodes must contain all nodes. ",
-            "Edge nodes not in nodes: ",
-            paste(setdiff(edge_node_names, nodes), collapse = ", "),
-            call. = FALSE
-          )
+          # use edge order first, then add declared isolates
+          declared <- unique(c(edge_node_names, nodes))
         }
         declared <- unique(c(declared, nodes))
       }
@@ -242,6 +247,11 @@ caugi_graph <- S7::new_class(
       edges <- .get_edges_tibble(from, edge, to, calls = list())
       declared <- nodes
     } else {
+      if (build == TRUE && !missing(build)) {
+        warning("No edges or nodes provided; graph will not be built.",
+          call. = FALSE
+        )
+      }
       edges <- tibble::tibble(
         from = character(),
         edge = character(),

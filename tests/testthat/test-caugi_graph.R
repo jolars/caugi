@@ -392,8 +392,9 @@ test_that("caugi_graph preserves node order from nodes parameter", {
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
-# ────────────────────────────────────── Errors ────────────────────────────────
+# ─────────────────────────── Errors and warnings ──────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 test_that("caugi_graph errors with trailing commas", {
   expect_error(
@@ -403,4 +404,83 @@ test_that("caugi_graph errors with trailing commas", {
     ),
     "Argument 3 is missing"
   )
+})
+
+test_that("caugi_graph warns when build = TRUE for empty graph", {
+  expect_warning(
+    caugi_graph(build = TRUE),
+    "No edges or nodes provided; graph will not be built."
+  )
+})
+
+test_that("caugi_graph with wrong node input errors", {
+  expect_error(
+    caugi_graph(
+      from = c("A", "B"),
+      edge = c("-->", "---"),
+      to = c("B", "C"),
+      nodes = list("D", "E")
+    ),
+    "`nodes` must be a character vector"
+  )
+})
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────── .view_to_caugi_graph ─────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that(".view_to_caugi_graph works as expected", {
+  cg <- caugi_graph(
+    A %-->% B,
+    B %---% C,
+    C %<->% D
+  )
+
+  cg2 <- .view_to_caugi_graph(cg@ptr)
+  expect_s7_class(cg2, caugi_graph)
+  expect_equal(cg, cg2)
+})
+
+test_that(".view_to_caugi_graph fails on NULL ptr", {
+  expect_error(
+    .view_to_caugi_graph(NULL),
+    "ptr is NULL"
+  )
+})
+
+test_that(".view_to_caugi_graph fails on faulty node_names", {
+  cg <- caugi_graph(
+    A %-->% B
+  )
+  expect_error(
+    .view_to_caugi_graph(cg@ptr, node_names = c("A")),
+    "length"
+  )
+})
+
+test_that(".view_to_caugi_graph works for empty cg", {
+  cg <- caugi_graph(A, B, build = TRUE)
+  expect_equal(cg, .view_to_caugi_graph(cg@ptr))
+})
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────── Freezing and unfreezing ────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("freeze / unfreeze works as expected", {
+  cg <- caugi_graph(
+    A %-->% B,
+    B %---% C
+  )
+
+  # test if built is TRUE
+  expect_true(cg@built)
+  # currently frozen
+  s <- cg@.state
+  expect_error(s$built <- FALSE)
+
+  s <- caugi:::.unfreeze_state(cg@.state)
+  s$built <- FALSE
+  expect_false(s$built)
+  expect_false(cg@.state$built)
 })
