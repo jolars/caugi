@@ -52,7 +52,7 @@ We are limiting ourselves to comparing graphs up to size $n = 1000$, as the conv
 
 ```{r generate-graph}
 generate_graphs <- function(n, p) {
-  cg <- generate_graph(n = n, p = p, class = "DAG")
+  cg <- caugi::generate_graph(n = n, p = p, class = "DAG")
   ig <- as_igraph(cg)
   ggmg <- as_adjacency(cg)
   bng <- as_bnlearn(cg)
