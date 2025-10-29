@@ -53,10 +53,10 @@ We are limiting ourselves to comparing graphs up to size $n = 1000$, as the conv
 ```{r generate-graph}
 generate_graphs <- function(n, p) {
   cg <- caugi::generate_graph(n = n, p = p, class = "DAG")
-  ig <- as_igraph(cg)
-  ggmg <- as_adjacency(cg)
-  bng <- as_bnlearn(cg)
-  dg <- as_dagitty(cg)
+  ig <- caugi::as_igraph(cg)
+  ggmg <- caugi::as_adjacency(cg)
+  bng <- caugi::as_bnlearn(cg)
+  dg <- caugi::as_dagitty(cg)
   list(cg = cg, ig = ig, ggmg = ggmg, bng = bng, dg = dg)
 }
 ```
@@ -103,8 +103,8 @@ bench::mark(
 `bnlearn` is fastest here, but is only able to handle smaller graphs, whereas `caugi` and `igraph` can handle very large graph objects with almost no time increase:
 
 ```{r benchmark-parents-children-large-graph}
-large_cg <- generate_graph(n = 40000, m = 1000000, class = "DAG")
-large_ig <- as_igraph(large_cg)
+large_cg <- caugi::generate_graph(n = 40000, m = 1000000, class = "DAG")
+large_ig <- caugi::as_igraph(large_cg)
 test_node_index <- sample.int(40000, 1)
 test_node_name <- paste0("V", test_node_index)
 bench::mark(
@@ -183,7 +183,6 @@ bench::mark(
   iterations = 10,
   check = FALSE
 )
-
 ```
 
 
