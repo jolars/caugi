@@ -4,7 +4,7 @@
 \alias{generate_graph}
 \title{Generate a \code{caugi_graph} using Erdős-Rényi.}
 \usage{
-generate_graph(n, m = NULL, p = NULL, mode = c("DAG", "CPDAG"))
+generate_graph(n, m = NULL, p = NULL, class = c("DAG", "CPDAG"))
 }
 \arguments{
 \item{n}{Integer >= 0. Number of nodes in the graph.}
@@ -15,7 +15,7 @@ of \code{m} or \code{p} must be supplied.}
 \item{p}{Numeric in \verb{[0,1]}. Probability of edge creation. Exactly one of
 \code{m} or \code{p} must be supplied.}
 
-\item{mode}{"DAG" or "CPDAG".}
+\item{class}{"DAG" or "CPDAG".}
 }
 \value{
 The sampled \code{caugi_graph} object.
@@ -26,10 +26,10 @@ Erdős-Rényi for random graph generation.
 }
 \examples{
 # generate a random DAG with 5 nodes and 4 edges
-dag <- generate_graph(n = 5, m = 4, mode = "DAG")
+dag <- generate_graph(n = 5, m = 4, class = "DAG")
 
 # generate a random CPDAG with 5 nodes and edge probability 0.3
-cpdag <- generate_graph(n = 5, p = 0.3, mode = "CPDAG")
+cpdag <- generate_graph(n = 5, p = 0.3, class = "CPDAG")
 
 }
 \concept{simulation}

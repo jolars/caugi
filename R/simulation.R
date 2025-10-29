@@ -8,23 +8,23 @@
 #' of `m` or `p` must be supplied.
 #' @param p Numeric in `[0,1]`. Probability of edge creation. Exactly one of
 #' `m` or `p` must be supplied.
-#' @param mode "DAG" or "CPDAG".
+#' @param class "DAG" or "CPDAG".
 #'
 #' @returns The sampled `caugi_graph` object.
 #'
 #' @examples
 #' # generate a random DAG with 5 nodes and 4 edges
-#' dag <- generate_graph(n = 5, m = 4, mode = "DAG")
+#' dag <- generate_graph(n = 5, m = 4, class = "DAG")
 #'
 #' # generate a random CPDAG with 5 nodes and edge probability 0.3
-#' cpdag <- generate_graph(n = 5, p = 0.3, mode = "CPDAG")
+#' cpdag <- generate_graph(n = 5, p = 0.3, class = "CPDAG")
 #'
 #' @family simulation functions
 #' @concept simulation
 #'
 #' @export
-generate_graph <- function(n, m = NULL, p = NULL, mode = c("DAG", "CPDAG")) {
-  mode <- match.arg(mode)
+generate_graph <- function(n, m = NULL, p = NULL, class = c("DAG", "CPDAG")) {
+  class <- match.arg(class)
   n <- as.integer(n)
   if (length(n) != 1L || n <= 0L) {
     stop("n must be a single integer > 0", call. = FALSE)
@@ -55,23 +55,22 @@ generate_graph <- function(n, m = NULL, p = NULL, mode = c("DAG", "CPDAG")) {
 
   if (m > 0L) {
     ranks <- sample.int(tot, m) - 1L
-    from <- integer(m)
-    to <- integer(m)
-    for (k in seq_len(m)) {
-      r <- ranks[[k]]
-      i <- 0L
-      while (r >= (n - 1L - i)) {
-        r <- r - (n - 1L - i)
-        i <- i + 1L
-      }
-      j <- i + 1L + r
-      from[k] <- ord[i + 1L]
-      to[k] <- ord[j + 1L]
-    }
+    row_len <- (n - 1L):1L
+    cum <- cumsum(row_len)
+    i <- as.integer(findInterval(ranks, cum))
+    cum0 <- c(0L, cum)
+    offset <- ranks - cum0[i + 1L]
+    j <- i + 1L + offset
+
+    ord <- sample.int(n) - 1L
+    from <- ord[i + 1L]
+    to <- ord[j + 1L]
+
     graph_builder_add_edges(b, from, to, rep.int(code_dir, m))
   }
 
+
   ptr <- graph_builder_build_view(b, "DAG")
-  if (mode == "CPDAG") ptr <- to_cpdag_ptr(ptr)
+  if (class == "CPDAG") ptr <- to_cpdag_ptr(ptr)
   .view_to_caugi_graph(ptr)
 }
