@@ -140,7 +140,6 @@ bench::mark(
     dagitty::ancestors(dg, "V500")
     dagitty::descendants(dg, "V500")
   },
-  iterations = 10,
   check = FALSE # dagitty returns V500 as well and igraph returns an igraph
 )
 ```
@@ -150,7 +149,7 @@ bench::mark(
 Using the graph from before, we obtain a valid adjustment set and then check for d-separation.
 
 ```{r benchmark-d-sep-setup}
-valid_adjustment_set <- adjustment_set(cg, "V500", "V681", type = "backdoor")
+valid_adjustment_set <- caugi::adjustment_set(cg, "V500", "V681", type = "backdoor")
 valid_adjustment_set
 ```
 
@@ -158,8 +157,7 @@ valid_adjustment_set
 bench::mark(
   caugi = caugi::d_separated(cg, "V500", "V681", valid_adjustment_set),
   bnlearn = bnlearn::dsep(bng, "V500", "V681", valid_adjustment_set),
-  dagitty = dagitty::dseparated(dg, "V500", "V681", valid_adjustment_set),
-  iterations = 10
+  dagitty = dagitty::dseparated(dg, "V500", "V681", valid_adjustment_set)
 )
 ```
 
@@ -180,7 +178,6 @@ bench::mark(
   bnlearn = {
     bnlearn::subgraph(bng, subgraph_nodes)
   },
-  iterations = 10,
   check = FALSE
 )
 ```
