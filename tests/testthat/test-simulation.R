@@ -23,17 +23,17 @@ test_that("errors: m invalid", {
   expect_error(generate_graph(n, m = c(1L, 2L)), "m must be in 0..")
 })
 
-test_that("DAG mode with m = 0 yields 0 edges and correct nodes", {
+test_that("DAG class with m = 0 yields 0 edges and correct nodes", {
   n <- 5
-  g <- generate_graph(n, m = 0L, mode = "DAG")
+  g <- generate_graph(n, m = 0L, class = "DAG")
   expect_equal(g@graph_class, "DAG")
   expect_equal(nrow(nodes(g)), n)
   expect_equal(nrow(edges(g)), 0L)
   expect_identical(nodes(g)$name, paste0("V", seq_len(n)))
 })
 
-test_that("DAG mode with p = 0 yields 0 edges", {
-  g <- generate_graph(6, p = 0, mode = "DAG")
+test_that("DAG class with p = 0 yields 0 edges", {
+  g <- generate_graph(6, p = 0, class = "DAG")
   expect_identical(nrow(edges(g)), 0L)
   expect_true(all(edge_types(g) %in% character()))
 })
@@ -42,7 +42,7 @@ test_that("m = tot yields a tournament DAG of size n", {
   n <- 6
   tot <- n * (n - 1) / 2
   set.seed(11)
-  g <- generate_graph(n, m = tot, mode = "DAG")
+  g <- generate_graph(n, m = tot, class = "DAG")
   expect_equal(nrow(edges(g)), tot)
   expect_true(all(edge_types(g) %in% "-->"))
   # no duplicate undirected pairs
@@ -53,9 +53,9 @@ test_that("m = tot yields a tournament DAG of size n", {
 
 test_that("reproducible with same seed", {
   set.seed(42)
-  g1 <- generate_graph(7, m = 8, mode = "DAG")
+  g1 <- generate_graph(7, m = 8, class = "DAG")
   set.seed(42)
-  g2 <- generate_graph(7, m = 8, mode = "DAG")
+  g2 <- generate_graph(7, m = 8, class = "DAG")
   expect_identical(nodes(g1), nodes(g2))
   expect_identical(
     dplyr::arrange(edges(g1), from, to),
@@ -70,12 +70,12 @@ test_that("p branch draws edges via rbinom", {
   set.seed(123)
   expected_m <- stats::rbinom(1L, tot, p)
   set.seed(123)
-  g <- generate_graph(n, p = p, mode = "DAG")
+  g <- generate_graph(n, p = p, class = "DAG")
   expect_identical(nrow(edges(g)), expected_m)
 })
 
-test_that("CPDAG mode returns PDAG class and same nodes", {
-  g <- generate_graph(6, m = 5, mode = "CPDAG")
+test_that("CPDAG class returns PDAG class and same nodes", {
+  g <- generate_graph(6, m = 5, class = "CPDAG")
   expect_identical(g@graph_class, "PDAG")
   expect_identical(nrow(nodes(g)), 6L)
 })
