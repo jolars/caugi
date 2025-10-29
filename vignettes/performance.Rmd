@@ -63,7 +63,9 @@ generate_graphs <- function(n, p) {
 
 #### Relational queries
 
-```{r bench-press}
+We start with parents/children:
+
+```{r benchmark-parents-children}
 graphs <- generate_graphs(1000, p = 0.25) # dense graph
 cg <- graphs$cg
 ig <- graphs$ig
@@ -94,31 +96,41 @@ bench::mark(
     dagitty::parents(dg, test_node_name)
     dagitty::children(dg, test_node_name)
   },
-  check = FALSE # rust output are indexes, so check fails
+  check = FALSE # igraph returns igraph object
 )
 ```
 
-`bnlearn` is fastest here, but is only able to handle smaller graphs, whereas `caugi` can handle very large graph objects with almost no time increase:
+`bnlearn` is fastest here, but is only able to handle smaller graphs, whereas `caugi` and `igraph` can handle very large graph objects with almost no time increase:
 
 ```{r benchmark-parents-children-large-graph}
 large_cg <- generate_graph(n = 40000, m = 1000000, class = "DAG")
+large_ig <- as_igraph(large_cg)
 test_node_index <- sample.int(40000, 1)
 test_node_name <- paste0("V", test_node_index)
 bench::mark(
-  caugi_named = {
+  caugi = {
     caugi::parents(large_cg, test_node_name)
     caugi::children(large_cg, test_node_name)
-  }
+  },
+  igraph = {
+    igraph::neighbors(large_ig, test_node_name, mode = "in")
+    igraph::neighbors(large_ig, test_node_name, mode = "out")
+  },
+  check = FALSE
 )
 ```
 
-For ancestors and descendants, we see that `caugi` outperforms all other packages by a large margin:
+For ancestors and descendants, we see that `caugi` outperforms all other packages by a several magnitudes, expect for `igraph`, which it still beats, but by a smaller margin::
 
-```{r an-de-an}
+```{r benchmark-an-de}
 bench::mark(
   caugi = {
     caugi::ancestors(cg, "V500")
     caugi::descendants(cg, "V500")
+  },
+  igraph = {
+    igraph::subcomponent(ig, "V500", mode = "in")
+    igraph::subcomponent(ig, "V500", mode = "out")
   },
   bnlearn = {
     bnlearn::ancestors(bng, "V500")
@@ -129,7 +141,7 @@ bench::mark(
     dagitty::descendants(dg, "V500")
   },
   iterations = 10,
-  check = FALSE # dagitty returns V500 as well.
+  check = FALSE # dagitty returns V500 as well and igraph returns an igraph
 )
 ```
 
@@ -156,7 +168,6 @@ bench::mark(
 Here we see an example of where the frontloading hurts performance. When we build a subgraph, we have to rebuild the entire `caugi` graph object. Here, we see that while `caugi` outperforms other packages for queries (except for parents/children for `bnlearn`), it is slower for building the graph objects themselves, which shows for the subgraph benchmark:
 
 ```{r benchmark-subgraph}
-
 subgraph_nodes_index <- sample.int(1000, 500)
 subgraph_nodes <- paste0("V", subgraph_nodes_index)
 bench::mark(

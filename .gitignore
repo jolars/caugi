@@ -17,3 +17,5 @@ inst/doc
 
 docs
 tools/coding-helpers.R
+target/rust-analyzer/flycheck0/stderr
+target/rust-analyzer/flycheck0/stdout
