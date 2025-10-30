@@ -11,79 +11,124 @@ coverage](https://codecov.io/gh/frederikfabriciusbjerre/caugi/graph/badge.svg)](
 [![extendr](https://img.shields.io/badge/extendr-%5E0.8.1-276DC2)](https://extendr.github.io/extendr/extendr_api/)
 <!-- badges: end -->
 
-> **Causal Graph Interface (for R)** — a fast, tidy toolbox for
-> building, coercing and analysing causal graphs.
-
-*caugi* (pronounced **“corgi”**) wraps a high‑performance Rust core in a
-pipe‑friendly R interface. Convert between many graph formats, compose
-graphs with expressive infix operators, and run algorithms on large
-graphs. *caugi* aims to be the go‑to package for causal graphs in R.
-
-## Installation
-
-You can install the development version of caugi from
-[GitHub](https://github.com/) with:
-
-``` r
-# install.packages("pak")
-pak::pak("frederikfabriciusbjerre/caugi")
-
-# ... or wait for the first CRAN release
-# install.packages("caugi")
-```
-
-## Example
-
-The `caugi` syntax is very close to how you would draw a graph on a
-whiteboard. Here is a tiny DAG:
+> **Causal Graph Interface (for R)** — a blazingly fast, tidy toolbox
+> for building, coercing and analyzing causal graphs.
 
 ``` r
 library(caugi)
+```
 
-cg <- caugi_graph(A %-->% B + C,
+## What is `caugi`?
+
+`caugi` (pronounced “corgi”) stands for **Causal Graph Interface**. It
+is a *causality-first* graph package that focuses on performance and
+flexibility. If you are developing scripts or algorithms in the field of
+causality or if you are learning about causal graphs for the first time,
+`caugi` is made for you.
+
+## The basic object: `caugi_graph`
+
+A `caugi_graph` is the bread and butter of `caugi`. It is easy to
+create, query, and modify.
+
+You can create simple graphs as well as a number of predefined graph
+classes. Currently, we only support `"UNKNOWN"`, `"DAG"`, or `"PDAG"`.
+We plan on supporting several other causal graph types in future
+releases, such as `"PAG"`, `"CPDAG"`, `"MAG"`, `"SWIG"`, and `"ADMG"`.
+
+``` r
+# a tiny DAG
+cg <- caugi_graph(
+  A %-->% B + C,
   B %-->% D,
   C %-->% D,
   class = "DAG"
-) # optional, guarantees acyclicity by construction
-print(cg)
-#> # A tibble: 4 × 1
+)
+```
+
+### Edge operators
+
+The available edges in `caugi` are listed below:
+
+- `%-->%` (directed)
+- `%---%` (undirected)
+- `%<->%` (bidirected)
+- `%o->%` (partially directed)
+- `%o--%` (partially undirected)
+- `%o-o%` (partial)
+
+You can register more types with `register_caugi_edge()`, if you find
+that you need a more expressive set of edges. For example, if you want
+to represent a directed edge in the reverse direction, you can do so
+like this:
+
+``` r
+register_caugi_edge(
+  glyph = "<--",
+  tail_mark = "arrow",
+  head_mark = "tail",
+  class = "directed",
+  symmetric = FALSE
+)
+
+caugi_graph(A %-->% B, B %<--% C, class = "DAG")
+#> # A tibble: 3 × 1
 #>   name 
 #>   <chr>
 #> 1 A    
 #> 2 B    
 #> 3 C    
-#> 4 D    
-#> # A tibble: 4 × 3
+#> # A tibble: 2 × 3
 #>   from  edge  to   
 #>   <chr> <chr> <chr>
 #> 1 A     -->   B    
-#> 2 A     -->   C    
-#> 3 B     -->   D    
-#> 4 C     -->   D
+#> 2 B     <--   C
+
+# reset the registry to default with original edges
+reset_caugi_registry()
 ```
 
-You can query it:
+We expect this feature to be needing further polishing in future
+releases, and we would love your input if you use this feature!
 
-``` r
-neighbors(cg, "D")
-#> [1] "B" "C"
-parents(cg, "D")
-#> [1] "B" "C"
-children(cg, "A")
-#> [1] "B" "C"
-ancestors(cg, "D")
-#> [1] "A" "B" "C"
-descendants(cg, "A")
-#> [1] "B" "C" "D"
-```
+## Querying and metrics
 
-## Key features
+`caugi` provides a number of functions to query and analyze
+`caugi_graph` objects. Some of the available functions are: \*
+Relational queries, such as `parents()`, `ancestors()`, `neighbors()`,
+and more. \* Structural queries, such as `is_acyclic()`, `is_cpdag`, and
+more. \* Graph manipulations, such as `add_edge()`, `remove_node()`, and
+more. \* Graph metrics, such as `shd()` and `aid()`.
 
-| :rocket: | What | Why it matters |
-|----|----|----|
-| **Flexible coercion & formats** | `as_caugi()` ingests **igraph**, **graphNEL**, **pcalg** `amat` (CPDAG *and* PAG), and sparse or dense (binary/integer‑coded) matrices. | Re‑use existing data structures; no tedious re‑encoding. |
-| **PAG & mixed‑graph support** | Native edge codes for PAGs (`o->`, `o-o`, `--o`) and bidirected/undirected edges. | Analyse outputs of discovery algorithms like FCI or RFCI out‑of‑the‑box. |
-| **Readable syntax** | `A %-->% B`, `B %<->% C` … | Write graphs exactly as you draw them on a whiteboard. |
-| **Blazing speed** | Core implemented in Rust in a Compressed Sparse Row (CSR) representation. | Millions of edges? No problem. |
-| **Frontloading computation** | The CSR format is build to be immutable by design. You can add edges/nodes, but the graph is only rebuilt when you call `build()` or query the graph. | Avoids unnecessary recomputation; keeps your code snappy (and keeps you happy). |
-| **S7** | Modern S7 classes and methods. Made to be hard to break by mistake. | Future‑proof, safe, and extensible. |
+## How it works
+
+`caugi` graphs are represented in a compact Compressed Sparse Row (CSR)
+format in Rust. `caugi` works with a front-loading philosophy. Since the
+`caugi` graph is stored in a CSR format, mutations of the graph is
+computationally expensive compared to other graph storage systems, *but*
+it allows for very fast querying. Additionally to the storage format of
+the graph itself, `caugi` also stores additional information about node
+relations in such a way that it allows for faster queries without
+blowing up the object too much.
+
+To accommodate for the cost of mutations, `caugi` graphs are built
+lazily. This means that when you mutate the graph, for example by adding
+edges to it, the graph edits are stored in R, but not in Rust. When you
+then need to query the graphs, the graph will rebuild itself in Rust,
+and the query will be executed on the newly built graph. You can also
+use the `build(cg)` function to force building the graph in Rust at any
+time.
+
+## Why?
+
+It’s fast, *dawg* 🐶 See the [vignette on
+performance](vignette(%22performance%22)) for benchmarks.
+
+## Contribution
+
+Would you like to contribute? Great! Please follow the tidyverse style
+guide for R code. Before opening a PR, run `styler::style_pkg()` for R
+and `cargo fmt` for Rust, and make sure to write tests for new features.
+
+Did you find an issue? That’s paw-ful! Please report an
+[issue](https://github.com/frederikfabriciusbjerre/caugi/issues)
