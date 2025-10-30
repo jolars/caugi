@@ -28,13 +28,13 @@ causality or if you are learning about causal graphs for the first time,
 
 ## The basic object: `caugi`
 
-A `caugi` is the bread and butter of `caugi`. It is easy to create,
-query, and modify.
+A `caugi` graph object is the bread and butter of the `caugi` package.
+It is easy to create, query, and modify.
 
 You can create simple graphs as well as a number of predefined graph
 classes. Currently, we only support `"UNKNOWN"`, `"DAG"`, or `"PDAG"`.
 We plan on supporting several other causal graph types in future
-releases, such as `"PAG"`, `"CPDAG"`, `"MAG"`, `"SWIG"`, and `"ADMG"`.
+releases, such as `"PAG"`, `"MAG"`, `"SWIG"`, and `"ADMG"`.
 
 ``` r
 # a tiny DAG
