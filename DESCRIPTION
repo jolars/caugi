@@ -25,6 +25,7 @@ Suggests:
     graph,
     gRbase,
     knitr,
+    MASS,
     Matrix,
     rextendr,
     rmarkdown,

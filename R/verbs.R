@@ -117,6 +117,8 @@ S7::method(build, caugi_graph) <- function(cg, ...) {
 #' @param edge Character vector of edge types. Default is `NULL`.
 #' @param to Character vector of target node names. Default is `NULL`.
 #' @param name Character vector of node names. Default is `NULL`.
+#' @param inplace Logical, whether to modify the graph inplace or not.
+#' If `FALSE` (default), a copy of the `caugi_graph` is made and modified.
 #'
 #' @returns The updated `caugi_graph`.
 #'
