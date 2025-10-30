@@ -321,10 +321,11 @@ test_that(".update_caugi_graph add/remove paths and validations", {
       tibble::tibble(from = "A", edge = "-->", to = "B"),
       tibble::tibble(from = "A", edge = "-->", to = "B")
     ),
-    action = "add"
+    action = "add",
+    inplace = FALSE
   )
   expect_equal(nrow(cg2@edges), 1L)
-  expect_setequal(cg@nodes$name, c("A", "B"))
+  expect_setequal(cg2@nodes$name, c("A", "B"))
 
   cg3 <- caugi_graph()
   cg3 <- add_nodes(cg3, name = c("A", "B", "C"))

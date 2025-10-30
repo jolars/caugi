@@ -89,7 +89,8 @@ So for each parent of `C` we have a named vector in the list that represents the
 Let's try to modify the graph from before, so we get a new DAG.
 
 ```{r}
-cg_modified <- cg |> remove_edges(A %-->% B, B %-->% C + D) |>
+cg_modified <- cg |>
+  remove_edges(A %-->% B, B %-->% C + D) |>
   add_edges(B %-->% A, D %-->% C)
 cg_modified
 ```

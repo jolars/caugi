@@ -216,7 +216,7 @@ set_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL,
     edges = pairs, action = "remove",
     inplace = inplace
   )
-  cg_mod <- .update_caugi_graph(cg,
+  cg_mod <- .update_caugi_graph(cg_mod,
     edges = edges, action = "add",
     inplace = TRUE
   )
