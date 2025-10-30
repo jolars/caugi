@@ -92,11 +92,12 @@ We expect this feature to be needing further polishing in future releases, and w
 To accommodate for the cost of mutations, `caugi` graphs are built lazily. This means that when you mutate the graph, for example by adding edges to it, the graph edits are stored in R, but not in Rust. When you then need to query the graphs, the graph will rebuild itself in Rust, and the query will be executed on the newly built graph. You can also use the `build(cg)` function to force building the graph in Rust at any time.
 
 ## Why?
-It's fast, _dawg_ 🐶 See the [vignette on performance](vignette("performance")) for benchmarks.
+It's fast, _dawg_ 🐶 See the [vignette on performance](https://frederikfabriciusbjerre.github.io/caugi/articles/performance.html) for benchmarks.
 
 ## Contribution
 Would you like to contribute? Great! Please follow the tidyverse style guide for R code. Before opening a PR, run `styler::style_pkg()` for R and `cargo fmt` for Rust, and make sure to write tests for new features.
 
 
-Did you find an issue? That's paw-ful! Please report an [issue](https://github.com/frederikfabriciusbjerre/caugi/issues)
+Did you find run into problems? That's _paw-ful_! 
+Please report an [issue](https://github.com/frederikfabriciusbjerre/caugi/issues).
 

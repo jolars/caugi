@@ -122,7 +122,8 @@ time.
 ## Why?
 
 It’s fast, *dawg* 🐶 See the [vignette on
-performance](vignette(%22performance%22)) for benchmarks.
+performance](https://frederikfabriciusbjerre.github.io/caugi/articles/performance.html)
+for benchmarks.
 
 ## Contribution
 
@@ -130,5 +131,5 @@ Would you like to contribute? Great! Please follow the tidyverse style
 guide for R code. Before opening a PR, run `styler::style_pkg()` for R
 and `cargo fmt` for Rust, and make sure to write tests for new features.
 
-Did you find an issue? That’s paw-ful! Please report an
-[issue](https://github.com/frederikfabriciusbjerre/caugi/issues)
+Did you find run into problems? That’s *paw-ful*! Please report an
+[issue](https://github.com/frederikfabriciusbjerre/caugi/issues).
