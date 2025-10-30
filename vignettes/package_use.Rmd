@@ -4,7 +4,7 @@ output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{How to use caugi in a package}
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+  %\VignetteEncoding{UTF-8} 
 ---
 
 ```{r, include = FALSE}
@@ -16,4 +16,182 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(caugi)
+set.seed(42)
 ```
+
+Now, let's see how you can use `caugi` in your own R package. We will work through an example to illustrate how you could approach this.
+
+## The setup
+Imagine that you want to build a causal discovery function that utilizes `caugi` for graph representation and manipulation. While seemingly not a very good idea, let's pretend your algorithmic idea is to measure the correlation between variables and then drawing causal conclusions based on this^[Note that correlation does not imply causation!]. We don't know if the graph is a DAG, PDAG, or something else, so we will create an `"UNKNOWN"` graph.
+
+```{r first-iteration}
+#' @title Correlation implies causation!
+#'
+#' @param df A `data.frame` with numeric columns
+#'
+#' @returns A `caugi` representing the causal graph that is totally true!
+correlation_implies_causation <- function(df) {
+  NULL # not developed yet!
+}
+```
+
+Let's assume we have a named data frame:
+
+```{r df-creation}
+# create correlated data using MASS
+df <- MASS::mvrnorm(
+  n = 100,
+  mu = c(0, 0, 0),
+  Sigma = matrix(c(
+    1, 0.8, 0.3,
+    0.8, 1, 0.4,
+    0.3, 0.4, 1
+  ), nrow = 3)
+) |> as.data.frame()
+head(df)
+```
+
+## We know the nodes!
+
+Now, we _know_ that the `caugi` should include all variables in the `df`. We can begin with that, as a start:
+
+```{r second-iteration}
+#' @title Correlation implies causation!
+#'
+#' @param df A `data.frame` with numeric columns
+#'
+#' @returns A `caugi` representing the causal graph that is totally true!
+correlation_implies_causation <- function(df) {
+  cg <- caugi_graph(nodes = names(df))
+  return(NULL)
+}
+```
+
+## Adding edges based on correlation
+
+We can now compute the correlation matrix and add edges based on some arbitrary threshold:
+
+```{r third-iteration}
+#' @title Correlation implies causation!
+#'
+#' @param df A `data.frame` with numeric columns
+#'
+#' @returns A `caugi` representing the causal graph that is totally true!
+correlation_implies_causation <- function(df) {
+  cg <- caugi_graph(nodes = names(df))
+  cor_matrix <- cor(df)
+  # Add edges for correlations above 0.5
+  for (i in seq_len(ncol(cor_matrix))) {
+    for (j in 1:i) {
+      if (i != j && abs(cor_matrix[i, j]) > 0.5) {
+        from <- names(df)[j]
+        to <- names(df)[i]
+        cg <- add_edges(cg, from = from, edge = "-->", to = to) # add edge to caugi
+      }
+    }
+  }
+  return(cg)
+}
+```
+
+Now, when you call `correlation_implies_causation(df)`, it will return a `caugi` graph with edges based on the correlation threshold.
+
+## Trying it out
+
+Let's try it out!
+
+```{r try-it-out}
+cg <- correlation_implies_causation(df)
+cg
+```
+
+## Something is up!
+
+Let's inspect the object:
+
+```{r cg-inspection}
+cg@built
+```
+
+We can see that the object is not built yet. So, we have to include that as well. Building is important in `caugi`, as it finalizes the graph structure and prepares it for analysis. It also makes sure that the graph class agrees with the input graph.  
+
+```{r fourth-iteration}
+#' @title Correlation implies causation!
+#'
+#' @param df A `data.frame` with numeric columns
+#'
+#' @returns A `caugi` representing the causal graph that is totally true!
+correlation_implies_causation <- function(df) {
+  cg <- caugi_graph(nodes = names(df))
+  cor_matrix <- cor(df)
+  # Add edges for correlations above 0.5
+  for (i in seq_len(ncol(cor_matrix))) {
+    for (j in 1:i) {
+      if (i != j && abs(cor_matrix[i, j]) > 0.5) {
+        from <- names(df)[j]
+        to <- names(df)[i]
+        cg <- add_edges(cg, from = from, edge = "-->", to = to) # add edge to caugi
+      }
+    }
+  }
+  build(cg)
+  return(cg)
+}
+```
+
+**Hold on, it doesn't check every iteration?** No, `caugi` is designed to be efficient, so it only checks the graph's validity when you explicitly call `build()`. This allows you to add multiple edges without incurring the overhead of validation after each addition. 
+You _can_ ensure that your algorithm breaks, when introducing a faulty edge by building at each step. This is computationally expensive, but sometimes necessary for debugging. 
+
+## Class of the output
+
+Now, you might want to specify the class of the output graph. Let's say that _if possible_ the output should be a DAG (which is advantageous for several reasons), but you don't want to enforce acyclicity in the algorithm, as that could sometimes make your function error. You would rather have it return a graph in any case, but if it _is_ a DAG, then we return a DAG. 
+
+This is not ideal in `caugi`. Because of the way `caugi` works, this is a bit slower, but we can still do it! 
+
+```{r fifth-iteration}
+#' @title Correlation implies causation!
+#'
+#' @param df A `data.frame` with numeric columns
+#'
+#' @returns A `caugi` representing the causal graph that is totally true!
+correlation_implies_causation <- function(df) {
+  cg <- caugi_graph(nodes = names(df))
+  cor_matrix <- cor(df)
+  # Add edges for correlations above 0.5
+  cg <- caugi_graph(nodes = names(df))
+  cor_matrix <- cor(df)
+  # Add edges for correlations above 0.5
+  for (i in seq_len(ncol(cor_matrix))) {
+    for (j in 1:i) {
+      if (i != j && abs(cor_matrix[i, j]) > 0.5) {
+        from <- names(df)[j]
+        to <- names(df)[i]
+        cg <- add_edges(cg, from = from, edge = "-->", to = to) # add edge to caugi
+      }
+    }
+  }
+  it_is <- is_dag(cg) # this builds, since it is a query
+  if (it_is) {
+    cg <- caugi_graph(
+      from = edges(cg)$from,
+      edge = edges(cg)$edge,
+      to = edges(cg)$to,
+      nodes = nodes(cg)$name,
+      class = "DAG"
+    )
+  }
+  return(cg)
+}
+```
+
+Now, when you call `correlation_implies_causation(df)`, it will return a `caugi` graph that is a DAG if possible, otherwise an `"UNKNOWN"` graph.
+
+```{r try-it-out-2}
+cg <- correlation_implies_causation(df)
+cg
+cg@graph_class
+```
+
+## That's it!
+
+You have now successfully integrated `caugi` into your own R package function! Good luck and happy coding!
