@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 library(caugi)
 ```
 
-In this vignette, you will be walked through on how to create a `caugi_graph`, query it, and modify it.
+In this vignette, we will walk you through on how to create a `caugi_graph`, query it, modify it, and then compare it to other `caugi`s. 
 
 ## The `caugi` object
 
@@ -35,7 +35,7 @@ cg <- caugi_graph(
 cg
 ```
 
-First, notice that the graph prints two `tibbles`. The first is equivalent to `cg@nodes` and the second `cg@edges`. Besides that the `caugi` holds other _properties_. Let's check the other properties. 
+You might scratch your head a bit, when looking at the call above. To clarify, `A %-->% B` creates the edge `-->` from `A` to `B`. The syntax `B %-->% C + D` is equivalent to `B %--> C` _and_ `B %-->% D`. Notice that the graph prints two `tibbles`. The first is equivalent to `cg@nodes` and the second `cg@edges`. Besides that the `caugi` holds other _properties_. Let's check the other properties. 
 
 ### Properties
 
@@ -53,23 +53,13 @@ This is the pointer to the Rust object that `caugi` utilizes for performance.
 cg@simple
 ```
 
-This indicates whether the graph is simple or not. Let's try to create a non-simple graph:
+This indicates whether the graph is _simple_ or not. Let's try to create a non-simple graph:
 
-```{r}
-try(
-  caugi_graph(A %-->% B, B %-->% A)
-)
+```{r, error=TRUE}
+caugi_graph(A %-->% B, B %-->% A)
 ```
 
-This cannot be done unless you initialize the graph with `simple = FALSE`.
-
-#### `built`
-
-```{r}
-cg@built
-```
-
-This indicates whether the graph has been "built" or not on the Rust side. 
+This cannot be done unless you initialize the graph with `simple = FALSE`. Note that, currently, all of the supported graph classes only support `simple = TRUE` unless the class is `UNKNOWN`. 
 
 #### `graph_class`
 
@@ -79,21 +69,20 @@ cg@graph_class
 
 This is the graph's class. As you can see here, it is a DAG.
 
-#### `name_index_map`
+## Querying the `caugi`
 
-```{r, eval=FALSE}
-cg@name_index_map
-```
-
-The `name_index_map` is a hashmap that takes node names as keys and output zero-based indexes. You don't need to worry about this, as it is mostly used internally. 
-
-#### `.state`
+We can query the `caugi` graph object with the built-in queries provided in the package. Let's try to find the descendants of all the parents of the node `C`:
 
 ```{r}
-cg@.state
+descendants(cg, parents(cg, "C"))
 ```
 
-This is the internal state of the `caugi` graph object. It is used to ensure that the `caugi` object can be modifying in R and, so to say, _safes_ the modifications you might make to the graph in R without having to rebuild the graph in Rust each time. The most important takeaways about the state is that you should _avoid_ modifying the state directly. Instead, you should use the _verbs_. 
+First note that the output is a list of named character vectors. How come? Since the parents of `C` is `c(A, B)`:
+```{r}
+parents(cg, "C")
+```
+
+So for each parent of `C` we have a named vector in the list that represents the descendants of that parent node. 
 
 ## Modifying the `caugi`
 
@@ -118,4 +107,33 @@ shd(cg, cg_modified, normalized = TRUE)
 
 ## There you go!
 
-You have now created a graph, inspected it, modified it, and measured the difference between the two graphs -- both structurally and interventionally. 
+You have now created a graph, inspected it, modified it, and measured the difference between the two graphs -- both structurally and interventionally. For further reading, we recommend the vignettes `vignette("package_use")` and `vignette("performance")` to see how to use `caugi` in your own packages, and to see how `caugi` performs compared to other graph packages in R. For the interested reader, we also recommend `vignette("motivation")`, which goes deeper into the motivation behind `caugi` and what we aspire to do with `caugi`.
+
+## Appendix
+
+### Advanced properties
+
+#### `built`
+
+```{r}
+cg@built
+```
+
+This indicates whether the graph has been "built" or not on the Rust side. This is important, as the Rust object may not agree with the R object if `built = FALSE`. 
+
+#### `name_index_map`
+
+```{r, eval=FALSE}
+cg@name_index_map
+```
+
+The `name_index_map` is a hashmap that takes node names as keys and output zero-based indices. This is use to access nodes' zero-based indices,, when converting node names to indices for Rust calls, as the Rust backend uses zero-based indices. 
+
+#### `.state`
+
+```{r}
+cg@.state
+```
+
+This is the internal state of the `caugi` graph object. It is used to ensure that the `caugi` object can be modifying in R and, so to say, _safes_ the modifications you might make to the graph in R without having to rebuild the graph in Rust each time. The most important takeaways about the state is that you should _avoid_ modifying the state directly. Instead, you should use the verbs.  
+

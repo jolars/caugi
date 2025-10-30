@@ -94,11 +94,13 @@ releases, and we would love your input if you use this feature!
 ## Querying and metrics
 
 `caugi` provides a number of functions to query and analyze
-`caugi_graph` objects. Some of the available functions are: \*
-Relational queries, such as `parents()`, `ancestors()`, `neighbors()`,
-and more. \* Structural queries, such as `is_acyclic()`, `is_cpdag`, and
-more. \* Graph manipulations, such as `add_edge()`, `remove_node()`, and
-more. \* Graph metrics, such as `shd()` and `aid()`.
+`caugi_graph` objects. Some of the available functions are:
+
+- Relational queries, such as `parents()`, `ancestors()`, `neighbors()`,
+  and more.
+- Structural queries, such as `is_acyclic()`, `is_cpdag`, and more.
+- Graph manipulations, such as `add_edge()`, `remove_node()`, and more.
+- Graph metrics, such as `shd()` and `aid()`.
 
 ## How it works
 
