@@ -1278,4 +1278,26 @@ mod tests {
         assert_eq!(adj[0], vec![2]);
         assert!(adj[1].is_empty());
     }
+
+    // test to_cpdag
+    #[test]
+    fn dag_to_cpdag_basic() {
+        // Graph: 0 -> 1, 2 -> 1
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(2, 1, d).unwrap();
+        let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        let cpdag = dag.to_cpdag().unwrap();
+
+        // Check edges in CPDAG
+        // Expect directed edges: 0 -> 1, 2 -> 1
+        assert_eq!(cpdag.parents_of(1), vec![0, 2]);
+        assert_eq!(cpdag.children_of(0), vec![1]);
+        assert_eq!(cpdag.children_of(2), vec![1]);
+    }
 }
