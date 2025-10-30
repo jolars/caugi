@@ -7,7 +7,7 @@
 is_empty_caugi(cg)
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 }
 \value{
 A logical value indicating whether the graph is empty.
@@ -16,15 +16,15 @@ A logical value indicating whether the graph is empty.
 Checks if the given \code{caugi} graph is empty (has no nodes).
 }
 \examples{
-cg_empty <- caugi_graph(class = "DAG")
+cg_empty <- caugi(class = "DAG")
 is_empty_caugi(cg_empty) # TRUE
-cg_non_empty <- caugi_graph(
+cg_non_empty <- caugi(
   A \%-->\% B,
   class = "DAG"
 )
 is_empty_caugi(cg_non_empty) # FALSE
 
-cg_no_edges_but_has_nodes <- caugi_graph(
+cg_no_edges_but_has_nodes <- caugi(
   A, B,
   class = "DAG"
 )

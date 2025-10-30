@@ -7,7 +7,7 @@
 #' @description Checks whether every node in `X` is d-separated from every node
 #' in `Y` given `Z` in a DAG.
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #' @param X,Y,Z Node selectors: character vector of names, unquoted expression
 #'   (supports `+` and `c()`), or `NULL`. Use `*_index` to pass 1-based indices.
 #'   If `Z` is `NULL` or missing, no nodes are conditioned on.
@@ -17,7 +17,7 @@
 #' @returns Logical scalar.
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   C %-->% X,
 #'   X %-->% F,
 #'   X %-->% D,
@@ -69,7 +69,7 @@ d_separated <- function(cg,
 #' - `"backdoor"`: Pearl backdoor formula
 #' - `"optimal"`: O-set (only for single `x` and single `y`)
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #' @param X,Y Node names.
 #' @param X_index,Y_index Optional numeric 1-based indices.
 #' @param type One of `"parents"`, `"backdoor"`, `"optimal"`.
@@ -78,7 +78,7 @@ d_separated <- function(cg,
 #' @returns A tibble with a `name` column (possibly 0 rows).
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   C %-->% X,
 #'   X %-->% F,
 #'   X %-->% D,
@@ -130,7 +130,7 @@ adjustment_set <- function(cg,
 #'
 #' @description Checks whether `Z` is a valid backdoor adjustment set for
 #' `X --> Y`.
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #'
 #' @param X,Y Single node names.
 #' @param Z Optional node set for conditioning
@@ -139,7 +139,7 @@ adjustment_set <- function(cg,
 #' @returns Logical value indicating if backdoor is valid or not.
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   C %-->% X,
 #'   X %-->% F,
 #'   X %-->% D,
@@ -188,7 +188,7 @@ is_valid_backdoor <- function(cg,
 #' @description This function returns the backdoor sets up to size `max_size`,
 #' which per default is set to 10.
 #'
-#' @param cg A `caugi_graph`.
+#' @param cg A `caugi`.
 #' @param X,Y Single node name.
 #' @param X_index,Y_index Optional 1-based indices (exclusive with name args).
 #' @param minimal Logical; if `TRUE` (default), only minimal sets are returned.
@@ -198,7 +198,7 @@ is_valid_backdoor <- function(cg,
 #' (possibly empty).
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   C %-->% X,
 #'   X %-->% F,
 #'   X %-->% D,
@@ -284,7 +284,7 @@ all_backdoor_sets <- function(cg,
 #' while `.resolve_idx0_mget` uses `mget` and can return multiple values.
 #'
 #' @param nm_idx_map A `fastmap` mapping node names to 0-based indices from
-#' a `caugi_graph`.
+#' a `caugi`.
 #' @param node_name Optional character vector of node names.
 #' @param node_index Optional numeric vector of 1-based node indices.
 #'

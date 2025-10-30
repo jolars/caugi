@@ -1,4 +1,4 @@
-#' @title Generate a `caugi_graph` using Erdős-Rényi.
+#' @title Generate a `caugi` using Erdős-Rényi.
 #'
 #' @description Sample a random DAG or CPDAG using
 #' Erdős-Rényi for random graph generation.
@@ -10,7 +10,7 @@
 #' `m` or `p` must be supplied.
 #' @param class "DAG" or "CPDAG".
 #'
-#' @returns The sampled `caugi_graph` object.
+#' @returns The sampled `caugi` object.
 #'
 #' @examples
 #' # generate a random DAG with 5 nodes and 4 edges
@@ -72,5 +72,5 @@ generate_graph <- function(n, m = NULL, p = NULL, class = c("DAG", "CPDAG")) {
 
   ptr <- graph_builder_build_view(b, "DAG")
   if (class == "CPDAG") ptr <- to_cpdag_ptr(ptr)
-  .view_to_caugi_graph(ptr)
+  .view_to_caugi(ptr)
 }

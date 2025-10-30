@@ -7,22 +7,22 @@
 build(cg, ...)
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 
 \item{...}{Not used.}
 }
 \value{
-The built \code{caugi_graph} object.
+The built \code{caugi} object.
 }
 \description{
-If a \code{caugi_graph} has been modified (nodes or edges added or
+If a \code{caugi} has been modified (nodes or edges added or
 removed), it is marked as \emph{not built}, i.e \code{cg@built = FALSE}.
 This function builds the graph using the Rust backend and updates the
 internal pointer to the graph. If the graph is already built, it is returned.
 }
 \examples{
 # initialize empty graph and build slowly
-cg <- caugi_graph(class = "PDAG")
+cg <- caugi(class = "PDAG")
 
 cg <- cg |>
   add_nodes(c("A", "B", "C", "D", "E")) |> # A, B, C, D, E

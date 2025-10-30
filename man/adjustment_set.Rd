@@ -14,7 +14,7 @@ adjustment_set(
 )
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 
 \item{X, Y}{Node names.}
 
@@ -38,7 +38,7 @@ Types supported:
 }
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   C \%-->\% X,
   X \%-->\% F,
   X \%-->\% D,

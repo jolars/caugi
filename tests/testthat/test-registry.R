@@ -134,7 +134,7 @@ test_that("reset_caugi_registry does not allow overwriting builtin edges", {
 test_that("reverse edge, <--, behaves correctly, when initalized in a cg", {
   reset_caugi_registry()
   register_caugi_edge("<--", "arrow", "tail", "directed", FALSE)
-  cg <- caugi_graph(A %-->% B, B %<--% C, class = "DAG")
+  cg <- caugi(A %-->% B, B %<--% C, class = "DAG")
   expect_identical(parents_of_ptr(cg@ptr, 0L), list(integer(0)))
   expect_identical(children_of_ptr(cg@ptr, 0L), list(1L))
   expect_identical(parents_of_ptr(cg@ptr, 1L), list(c(0L, 2L)))
@@ -148,7 +148,7 @@ test_that("reverse edge, <--, behaves correctly, when initalized in a cg", {
 test_that("reverse edge, <--, cannot create cycles", {
   reset_caugi_registry()
   register_caugi_edge("<--", "arrow", "tail", "directed", FALSE)
-  expect_error(caugi_graph(A %-->% B, B %-->% C, A %<--% C, class = "DAG"))
+  expect_error(caugi(A %-->% B, B %-->% C, A %<--% C, class = "DAG"))
   reset_caugi_registry()
 })
 
@@ -157,13 +157,13 @@ test_that("new edge type, x-x, cannot create duplicate or parallel edges", {
   register_caugi_edge("x-x", "other", "other", "undirected", TRUE)
 
   # duplicate edges
-  expect_error(caugi_graph(A %x-x% B, B %x-x% A, class = "Unknown"))
+  expect_error(caugi(A %x-x% B, B %x-x% A, class = "Unknown"))
 
   # self loop
-  expect_error(caugi_graph(A %x-x% A, class = "Unknown"))
+  expect_error(caugi(A %x-x% A, class = "Unknown"))
 
   # parallel edges
-  expect_error(caugi_graph(A %---% B, A %x-x% B, class = "Unknown"))
+  expect_error(caugi(A %---% B, A %x-x% B, class = "Unknown"))
 
   reset_caugi_registry()
 })

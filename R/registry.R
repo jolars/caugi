@@ -39,7 +39,7 @@
 #' )
 #'
 #' # now, this edge is available for caugi graphs:
-#' cg <- caugi_graph(A %-->% B, B %<--% C, class = "DAG")
+#' cg <- caugi(A %-->% B, B %<--% C, class = "DAG")
 #'
 #' # reset the registry to default
 #' reset_caugi_registry()
@@ -112,7 +112,7 @@ seal_caugi_registry <- function() {
 #' )
 #'
 #' # now, this edge is available for caugi graphs:
-#' cg <- caugi_graph(A %-->% B, B %<--% C, class = "DAG")
+#' cg <- caugi(A %-->% B, B %<--% C, class = "DAG")
 #'
 #' # reset the registry to default
 #' reset_caugi_registry()
@@ -168,7 +168,7 @@ register_caugi_edge <- function(glyph,
 
 #' @title Register a new edge operator
 #'
-#' @description Register a new edge operator for use in `caugi_graph()`.
+#' @description Register a new edge operator for use in `caugi()`.
 #'
 #' @param glyph A string representing the edge glyph (e.g., `"-->"`, `"<->"`).
 #'

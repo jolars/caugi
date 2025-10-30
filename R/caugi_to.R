@@ -1,12 +1,12 @@
-#' @title Convert a caugi_graph to an igraph object
+#' @title Convert a caugi to an igraph object
 #'
-#' @param x A `caugi_graph` object.
+#' @param x A `caugi` object.
 #' @param ... Additional arguments passed to `igraph::graph_from_data_frame()`.
 #'
 #' @returns An `igraph` object representing the same graph structure.
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   A %-->% B,
 #'   class = "DAG"
 #' )
@@ -104,17 +104,17 @@ as_igraph <- function(x, ...) {
   }
 }
 
-#' @title Convert a caugi_graph to an adjacency matrix
+#' @title Convert a caugi to an adjacency matrix
 #'
 #' @description
 #' Does not take other edge types than the one found in a PDAG.
 #'
-#' @param x A `caugi_graph` object.
+#' @param x A `caugi` object.
 #'
 #' @returns An integer 0/1 adjacency matrix with row/col names.
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   A %-->% B,
 #'   class = "DAG"
 #' )
@@ -163,14 +163,14 @@ as_adjacency <- function(x) {
   out
 }
 
-#' @title Convert a caugi_graph to a bnlearn network
+#' @title Convert a caugi to a bnlearn network
 #'
-#' @param x A `caugi_graph` object.
+#' @param x A `caugi` object.
 #'
 #' @returns A `bnlearn` DAG.
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   A %-->% B,
 #'   class = "DAG"
 #' )
@@ -201,14 +201,14 @@ as_bnlearn <- function(x) {
   g
 }
 
-#' @title Convert a caugi_graph to a dagitty graph
+#' @title Convert a caugi to a dagitty graph
 #'
-#' @param x A `caugi_graph` object.
+#' @param x A `caugi` object.
 #'
 #' @returns A `dagitty` object.
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   A %-->% B,
 #'   class = "DAG"
 #' )

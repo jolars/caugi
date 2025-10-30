@@ -19,6 +19,6 @@ A tibble with columns \code{from}, \code{to}, and \code{edge}.
 }
 \description{
 These infix operators are used to specify edges in
-\code{caugi_graph()}. This function helps build infix operators.
+\code{caugi()}. This function helps build infix operators.
 }
 \keyword{internal}

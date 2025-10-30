@@ -15,7 +15,7 @@ all_backdoor_sets(
 )
 }
 \arguments{
-\item{cg}{A \code{caugi_graph}.}
+\item{cg}{A \code{caugi}.}
 
 \item{X, Y}{Single node name.}
 
@@ -34,7 +34,7 @@ This function returns the backdoor sets up to size \code{max_size},
 which per default is set to 10.
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   C \%-->\% X,
   X \%-->\% F,
   X \%-->\% D,

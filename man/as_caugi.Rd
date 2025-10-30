@@ -2,7 +2,7 @@
 % Please edit documentation in R/as_caugi.R
 \name{as_caugi}
 \alias{as_caugi}
-\title{Convert to a \code{caugi_graph}}
+\title{Convert to a \code{caugi}}
 \usage{
 as_caugi(
   x,
@@ -15,7 +15,7 @@ as_caugi(
 )
 }
 \arguments{
-\item{x}{An object to convert to a \code{caugi_graph}.}
+\item{x}{An object to convert to a \code{caugi}.}
 
 \item{class}{"DAG", "PDAG", "PAG", or "UNKNOWN".
 "PAG" is only supported for integer coded matrices.}
@@ -35,10 +35,10 @@ Should be a registered symmetrical edge glyph. Default is \code{"---"}.}
 \item{...}{Additional arguments passed to specific methods.}
 }
 \value{
-A \code{caugi_graph} object.
+A \code{caugi} object.
 }
 \description{
-Convert an object to a \code{caugi_graph}. The object can be a
+Convert an object to a \code{caugi}. The object can be a
 \code{graphNEL}, ``matrix\verb{, or a data frame with }from`, `to`, and
 `edge_type` columns.
 }
@@ -82,7 +82,7 @@ dg <- dagitty::dagitty("dag {
  }")
 cg_dg <- as_caugi(dg, class = "DAG")
 
-cg <- caugi_graph(A \%-->\% B \%-->\% C, class = "DAG")
+cg <- caugi(A \%-->\% B \%-->\% C, class = "DAG")
 
 # check that all nodes are equal in all graph objects
 for (cg_converted in list(cg_ig, cg_gn, cg_adj, cg_bn, cg_dg)) {

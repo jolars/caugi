@@ -3,7 +3,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 
 test_that("cg --> as_igraph --> as_caugi --> as_igraph works for directed", {
-  cg <- caugi_graph(
+  cg <- caugi(
     A %-->% B + C,
     B %-->% D,
     C %-->% D,
@@ -27,7 +27,7 @@ test_that("errors on non-caugi input", {
 
 
 test_that("Unknown graph with undirected edges become undirected igraph", {
-  cg <- caugi_graph(A %---% B + C,
+  cg <- caugi(A %---% B + C,
     C %---% D,
     class = "Unknown"
   )
@@ -36,13 +36,13 @@ test_that("Unknown graph with undirected edges become undirected igraph", {
 })
 
 test_that("Unknown with PAG edges fails", {
-  cg <- caugi_graph(A %o-o% B %o->% C, class = "Unknown")
+  cg <- caugi(A %o-o% B %o->% C, class = "Unknown")
   expect_error(as_igraph(cg))
 })
 
 test_that("empty graph handled with given vertices", {
   # Only nodes, no edges
-  cg <- caugi_graph(A, B, C, class = "DAG")
+  cg <- caugi(A, B, C, class = "DAG")
   ig <- as_igraph(cg)
   expect_true(all(sort(igraph::V(ig)$name) == sort(nodes(cg)$name)))
   expect_equal(nrow(igraph::as_data_frame(ig)), 0L)
@@ -51,7 +51,7 @@ test_that("empty graph handled with given vertices", {
 })
 
 test_that("all undirected edge types yield undirected igraph", {
-  cg <- caugi_graph(A %---% B %<->% C, class = "Unknown")
+  cg <- caugi(A %---% B %<->% C, class = "Unknown")
   ig <- as_igraph(cg)
   expect_false(igraph::is_directed(ig))
   ed <- igraph::as_data_frame(ig)
@@ -63,7 +63,7 @@ test_that("all undirected edge types yield undirected igraph", {
 })
 
 test_that("all directed edges yield directed igraph", {
-  cg <- caugi_graph(
+  cg <- caugi(
     A %-->% B,
     B %-->% C,
     D %-->% C,
@@ -78,7 +78,7 @@ test_that("all directed edges yield directed igraph", {
 })
 
 test_that("mixed edges: directed kept, undirected duplicated as bidirected", {
-  cg <- caugi_graph(
+  cg <- caugi(
     A %-->% B,
     B %---% C,
     C %---% D,
@@ -104,7 +104,7 @@ test_that("mixed edges: directed kept, undirected duplicated as bidirected", {
 # ──────────────────────────────────────────────────────────────────────────────
 
 test_that("cg --> adj --> cg --> adj round-trip (DAG)", {
-  cg <- caugi_graph(
+  cg <- caugi(
     A %-->% B + C,
     B %-->% D,
     C %-->% D,
@@ -128,7 +128,7 @@ test_that("cg --> adj --> cg --> adj round-trip (DAG)", {
 })
 
 test_that("cg --> adj (PDAG)", {
-  cg <- caugi_graph(
+  cg <- caugi(
     A %-->% B + C,
     B %-->% D,
     C %---% D,
@@ -150,17 +150,17 @@ test_that("as_adjacency errors on non-caugi input", {
 })
 
 test_that("as_adjacency returns 0-matrix for nodes-only graph", {
-  cg <- caugi_graph(A, B, C, class = "DAG")
+  cg <- caugi(A, B, C, class = "DAG")
   adj <- as_adjacency(cg)
   expect_identical(dimnames(adj), list(c("A", "B", "C"), c("A", "B", "C")))
   expect_true(all(adj == 0L))
 })
 
 test_that("as_adjacency errors on unsupported glyphs", {
-  cg1 <- caugi_graph(A %<->% B, class = "UNKNOWN")
+  cg1 <- caugi(A %<->% B, class = "UNKNOWN")
   expect_error(as_adjacency(cg1), "Unsupported edge glyphs")
 
-  cg2 <- caugi_graph(A %o->% B, class = "UNKNOWN")
+  cg2 <- caugi(A %o->% B, class = "UNKNOWN")
   expect_error(as_adjacency(cg2), "Unsupported edge glyphs")
 })
 
@@ -171,7 +171,7 @@ test_that("as_adjacency errors on unsupported glyphs", {
 test_that("cg -> bn -> cg -> bn round-trip (DAG)", {
   testthat::skip_if_not_installed("bnlearn")
 
-  cg <- caugi_graph(
+  cg <- caugi(
     A %-->% B + C,
     D %-->% C,
     class = "DAG"
@@ -198,13 +198,13 @@ test_that("cg -> bn -> cg -> bn round-trip (DAG)", {
 
 test_that("as_bnlearn errors for non-DAG or non-directed", {
   testthat::skip_if_not_installed("bnlearn")
-  expect_error(as_bnlearn(caugi_graph(A %---% B, class = "UNKNOWN")))
+  expect_error(as_bnlearn(caugi(A %---% B, class = "UNKNOWN")))
   expect_error(as_bnlearn("not-a-caugi"))
 })
 
 test_that("as_bnlearn returns empty DAG when no arcs", {
   testthat::skip_if_not_installed("bnlearn")
-  cg <- caugi_graph(A, B, C, class = "DAG")
+  cg <- caugi(A, B, C, class = "DAG")
   bn <- as_bnlearn(cg)
   expect_setequal(bnlearn::nodes(bn), c("A", "B", "C"))
   expect_identical(nrow(bnlearn::arcs(bn)), 0L)
@@ -217,7 +217,7 @@ test_that("as_bnlearn returns empty DAG when no arcs", {
 test_that("cg --> dagitty --> cg --> dagitty round-trip", {
   testthat::skip_if_not_installed("dagitty")
 
-  cg <- caugi_graph(
+  cg <- caugi(
     A %-->% B,
     B %<->% C,
     D %---% E,
@@ -254,7 +254,7 @@ test_that("as_dagitty errors on non-caugi input", {
 
 test_that("as_dagitty preserves isolates for empty edge set", {
   testthat::skip_if_not_installed("dagitty")
-  cg <- caugi_graph(A, B, C, class = "DAG")
+  cg <- caugi(A, B, C, class = "DAG")
   dg <- as_dagitty(cg)
   expect_setequal(names(dg), c("A", "B", "C"))
   expect_identical(nrow(as.data.frame(dagitty::edges(dg))), 0L)
@@ -262,7 +262,7 @@ test_that("as_dagitty preserves isolates for empty edge set", {
 
 test_that("as_dagitty picks dag type for only directed edges", {
   testthat::skip_if_not_installed("dagitty")
-  cg <- caugi_graph(A %-->% B, class = "DAG")
+  cg <- caugi(A %-->% B, class = "DAG")
   dg <- as_dagitty(cg)
   gt <- get("graphType", asNamespace("dagitty"))
   expect_identical(gt(dg), "dag")
@@ -270,7 +270,7 @@ test_that("as_dagitty picks dag type for only directed edges", {
 
 test_that("as_dagitty picks pdag for --> and ---", {
   testthat::skip_if_not_installed("dagitty")
-  cg <- caugi_graph(A %-->% B, B %---% C, class = "PDAG")
+  cg <- caugi(A %-->% B, B %---% C, class = "PDAG")
   dg <- as_dagitty(cg)
   gt <- get("graphType", asNamespace("dagitty"))
   expect_identical(gt(dg), "pdag")
@@ -278,7 +278,7 @@ test_that("as_dagitty picks pdag for --> and ---", {
 
 test_that("as_dagitty picks mag for --> and <->", {
   testthat::skip_if_not_installed("dagitty")
-  cg <- caugi_graph(A %-->% B, B %<->% C, class = "UNKNOWN")
+  cg <- caugi(A %-->% B, B %<->% C, class = "UNKNOWN")
   dg <- as_dagitty(cg)
   gt <- get("graphType", asNamespace("dagitty"))
   expect_identical(gt(dg), "mag")
@@ -286,7 +286,7 @@ test_that("as_dagitty picks mag for --> and <->", {
 
 test_that("as_dagitty picks pag when any circle endpoints present", {
   testthat::skip_if_not_installed("dagitty")
-  cg <- caugi_graph(A %o->% B, class = "UNKNOWN")
+  cg <- caugi(A %o->% B, class = "UNKNOWN")
   dg <- as_dagitty(cg)
   gt <- get("graphType", asNamespace("dagitty"))
   expect_identical(gt(dg), "pag")
@@ -294,7 +294,7 @@ test_that("as_dagitty picks pag when any circle endpoints present", {
 
 test_that("as_dagitty encodes circle endpoints with @ in edges()", {
   testthat::skip_if_not_installed("dagitty")
-  cg <- caugi_graph(
+  cg <- caugi(
     A %o->% B,
     C %o-o% D,
     E %--o% F,
@@ -320,7 +320,7 @@ test_that("as_dagitty errors on unsupported edge types", {
     symmetric = FALSE,
     flags = c("TRAVERSABLE_WHEN_CONDITIONED")
   )
-  cg1 <- caugi_graph(A %<--% B, class = "UNKNOWN")
+  cg1 <- caugi(A %<--% B, class = "UNKNOWN")
   expect_error(as_dagitty(cg1), "Unsupported edge type for dagitty")
   reset_caugi_registry()
 })

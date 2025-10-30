@@ -45,7 +45,7 @@ amat
 represents the graph
 
 ```{r caugi-pag, eval=FALSE}
-caugi_graph(
+caugi(
   A %-->% B %o->% C %---% E,
   B %o-o% D %---% E,
   A %--o% E

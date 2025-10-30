@@ -15,7 +15,7 @@ is_valid_backdoor(
 )
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 
 \item{X, Y}{Single node names.}
 
@@ -31,7 +31,7 @@ Checks whether \code{Z} is a valid backdoor adjustment set for
 \verb{X --> Y}.
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   C \%-->\% X,
   X \%-->\% F,
   X \%-->\% D,

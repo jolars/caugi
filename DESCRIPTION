@@ -1,6 +1,6 @@
 Package: caugi
 Title: Causal Graph Interface
-Version: 0.0.0.9000
+Version: 0.0.1.0
 Author: Frederik Fabricius-Bjerre [aut, cre]
 Maintainer: Frederik Fabricius-Bjerre <frederik@fabriciusbjerre.dk>
 Description: caugi is a package for creating, querying, and processing

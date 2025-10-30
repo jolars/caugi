@@ -13,6 +13,6 @@
 The operator name (e.g., \code{"\%-->\%"}), invisibly.
 }
 \description{
-Register a new edge operator for use in \code{caugi_graph()}.
+Register a new edge operator for use in \code{caugi()}.
 }
 \keyword{internal}

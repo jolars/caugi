@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.R
 \name{generate_graph}
 \alias{generate_graph}
-\title{Generate a \code{caugi_graph} using Erdős-Rényi.}
+\title{Generate a \code{caugi} using Erdős-Rényi.}
 \usage{
 generate_graph(n, m = NULL, p = NULL, class = c("DAG", "CPDAG"))
 }
@@ -18,7 +18,7 @@ of \code{m} or \code{p} must be supplied.}
 \item{class}{"DAG" or "CPDAG".}
 }
 \value{
-The sampled \code{caugi_graph} object.
+The sampled \code{caugi} object.
 }
 \description{
 Sample a random DAG or CPDAG using

@@ -26,10 +26,10 @@ flexibility. If you are developing scripts or algorithms in the field of
 causality or if you are learning about causal graphs for the first time,
 `caugi` is made for you.
 
-## The basic object: `caugi_graph`
+## The basic object: `caugi`
 
-A `caugi_graph` is the bread and butter of `caugi`. It is easy to
-create, query, and modify.
+A `caugi` is the bread and butter of `caugi`. It is easy to create,
+query, and modify.
 
 You can create simple graphs as well as a number of predefined graph
 classes. Currently, we only support `"UNKNOWN"`, `"DAG"`, or `"PDAG"`.
@@ -38,7 +38,7 @@ releases, such as `"PAG"`, `"CPDAG"`, `"MAG"`, `"SWIG"`, and `"ADMG"`.
 
 ``` r
 # a tiny DAG
-cg <- caugi_graph(
+cg <- caugi(
   A %-->% B + C,
   B %-->% D,
   C %-->% D,
@@ -71,7 +71,7 @@ register_caugi_edge(
   symmetric = FALSE
 )
 
-caugi_graph(A %-->% B, B %<--% C, class = "DAG")
+caugi(A %-->% B, B %<--% C, class = "DAG")
 #> # A tibble: 3 × 1
 #>   name 
 #>   <chr>
@@ -93,8 +93,8 @@ releases, and we would love your input if you use this feature!
 
 ## Querying and metrics
 
-`caugi` provides a number of functions to query and analyze
-`caugi_graph` objects. Some of the available functions are:
+`caugi` provides a number of functions to query and analyze `caugi`
+objects. Some of the available functions are:
 
 - Relational queries, such as `parents()`, `ancestors()`, `neighbors()`,
   and more.

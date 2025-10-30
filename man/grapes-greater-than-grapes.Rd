@@ -15,7 +15,7 @@ lhs \%-->\% rhs
 A tibble with columns \code{from}, \code{to}, and \code{edge}.
 }
 \description{
-These operators are used to specify edges in \code{caugi_graph()}.
-Should be used internally in \code{caugi_graph()} calls.
+These operators are used to specify edges in \code{caugi()}.
+Should be used internally in \code{caugi()} calls.
 }
 \keyword{internal}

@@ -33,7 +33,7 @@ cg_from_rc_pd <- function(A) {
     }
   }
 
-  caugi_graph(from = from, edge = edge, to = to, nodes = nm, class = "PDAG")
+  caugi(from = from, edge = edge, to = to, nodes = nm, class = "PDAG")
 }
 
 cg_from_rc_dag <- function(A) {
@@ -44,7 +44,7 @@ cg_from_rc_dag <- function(A) {
   idx <- which(A != 0L, arr.ind = TRUE)
   from <- nm[idx[, 1]]
   to <- nm[idx[, 2]]
-  caugi_graph(from = from, edge = rep("-->", length(from)), to = to, nodes = nm, class = "DAG")
+  caugi(from = from, edge = rep("-->", length(from)), to = to, nodes = nm, class = "DAG")
 }
 
 

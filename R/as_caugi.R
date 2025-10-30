@@ -9,9 +9,9 @@
 graphNEL_S4_class <- readRDS("inst/S4_class_definitions/graphNEL_class.rds")
 Matrix_S4_class <- readRDS("inst/S4_class_definitions/Matrix_class.rds")
 
-#' @title Convert to a `caugi_graph`
+#' @title Convert to a `caugi`
 #'
-#' @description Convert an object to a `caugi_graph`. The object can be a
+#' @description Convert an object to a `caugi`. The object can be a
 #' `graphNEL`, ``matrix`, or a data frame with `from`, `to`, and
 #' `edge_type` columns.
 #'
@@ -25,7 +25,7 @@ Matrix_S4_class <- readRDS("inst/S4_class_definitions/Matrix_class.rds")
 #' - 2: arrowhead (e.g., `A --> B` or `A o-> B`)
 #' - 3: circle (e.g., `A o-o B`)
 #'
-#' @param x An object to convert to a `caugi_graph`.
+#' @param x An object to convert to a `caugi`.
 #' @param class "DAG", "PDAG", "PAG", or "UNKNOWN".
 #' "PAG" is only supported for integer coded matrices.
 #' @param simple logical. If `TRUE` (default) the graph will be simple
@@ -38,7 +38,7 @@ Matrix_S4_class <- readRDS("inst/S4_class_definitions/Matrix_class.rds")
 #' Should be a registered symmetrical edge glyph. Default is `"---"`.
 #' @param ... Additional arguments passed to specific methods.
 #'
-#' @returns A `caugi_graph` object.
+#' @returns A `caugi` object.
 #'
 #' @examples
 #' # igraph
@@ -68,7 +68,7 @@ Matrix_S4_class <- readRDS("inst/S4_class_definitions/Matrix_class.rds")
 #'  }")
 #' cg_dg <- as_caugi(dg, class = "DAG")
 #'
-#' cg <- caugi_graph(A %-->% B %-->% C, class = "DAG")
+#' cg <- caugi(A %-->% B %-->% C, class = "DAG")
 #'
 #' # check that all nodes are equal in all graph objects
 #' for (cg_converted in list(cg_ig, cg_gn, cg_adj, cg_bn, cg_dg)) {
@@ -145,7 +145,7 @@ S7::method(
     stop("PAG class is not supported for igraph objects.", call. = FALSE)
   }
   if (n_edges == 0L) {
-    return(caugi_graph(
+    return(caugi(
       from = character(),
       edge = character(),
       to = character(),
@@ -195,7 +195,7 @@ S7::method(
     to <- ifelse(has_rev & keep, canon_to, to)[keep]
     edge <- ifelse(has_rev & keep, collapse_to, edge)[keep]
   }
-  caugi_graph(
+  caugi(
     from = from,
     edge = edge,
     to = to,
@@ -238,7 +238,7 @@ S7::method(
 
   # no edges
   if (length(from) == 0L) {
-    return(caugi_graph(
+    return(caugi(
       from = character(),
       edge = character(),
       to = character(),
@@ -270,7 +270,7 @@ S7::method(
     edge <- ifelse(has_rev & keep, collapse_to, edge)[keep]
   }
 
-  caugi_graph(
+  caugi(
     from = from,
     edge = edge,
     to = to,
@@ -396,7 +396,7 @@ S7::method(
   } else { # DAG / PDAG / UNKNOWN: nonzero means directed i -> j
     idx <- which(x != 0, arr.ind = TRUE)
     if (nrow(idx) == 0L) {
-      return(caugi_graph(
+      return(caugi(
         from = character(),
         edge = character(),
         to = character(),
@@ -435,7 +435,7 @@ S7::method(
   class <- if (class == "PAG") "UNKNOWN" else class
   ### NEEDS TO BE FIXED ONCE PAG IS SUPPORTED IN CAUGI ###
 
-  caugi_graph(
+  caugi(
     from = from,
     edge = edge,
     to = to,
@@ -583,7 +583,7 @@ S7::method(
   if (nrow(ed) == 0L) {
     # collect declared nodes, including isolates if available
     nm <- names(x)
-    return(caugi_graph(
+    return(caugi(
       from = character(),
       edge = character(),
       to = character(),
@@ -661,7 +661,7 @@ S7::method(
     edge <- ifelse(has_rev & keep, collapse_to, edge)[keep]
   }
 
-  caugi_graph(
+  caugi(
     from = from,
     edge = edge,
     to = to,
@@ -694,7 +694,7 @@ S7::method(
   ar <- bnlearn::arcs(x)
 
   if (nrow(ar) == 0L) {
-    return(caugi_graph(
+    return(caugi(
       from = character(),
       edge = character(),
       to = character(),
@@ -728,7 +728,7 @@ S7::method(
     edge <- ifelse(has_rev & keep, collapse_to, edge)[keep]
   }
 
-  caugi_graph(
+  caugi(
     from = from,
     edge = edge,
     to = to,

@@ -7,7 +7,7 @@
 \alias{set_edges}
 \alias{add_nodes}
 \alias{remove_nodes}
-\title{Manipulate nodes and edges of a \code{caugi_graph}}
+\title{Manipulate nodes and edges of a \code{caugi}}
 \usage{
 add_edges(cg, ..., from = NULL, edge = NULL, to = NULL, inplace = FALSE)
 
@@ -20,7 +20,7 @@ add_nodes(cg, ..., name = NULL, inplace = FALSE)
 remove_nodes(cg, ..., name = NULL, inplace = FALSE)
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 
 \item{...}{Expressions specifying edges to add using the infix operators,
 or nodes to add using unquoted names, vectors via \code{c()}, or \code{+} composition.}
@@ -32,15 +32,15 @@ or nodes to add using unquoted names, vectors via \code{c()}, or \code{+} compos
 \item{to}{Character vector of target node names. Default is \code{NULL}.}
 
 \item{inplace}{Logical, whether to modify the graph inplace or not.
-If \code{FALSE} (default), a copy of the \code{caugi_graph} is made and modified.}
+If \code{FALSE} (default), a copy of the \code{caugi} is made and modified.}
 
 \item{name}{Character vector of node names. Default is \code{NULL}.}
 }
 \value{
-The updated \code{caugi_graph}.
+The updated \code{caugi}.
 }
 \description{
-Add, remove, or and set nodes or edges to / from a \code{caugi_graph}
+Add, remove, or and set nodes or edges to / from a \code{caugi}
 object. Edges can be specified using expressions with the infix operators.
 Alternatively, the edges to be added are specified using the
 \code{from}, \code{edge}, and \code{to} arguments.
@@ -63,7 +63,7 @@ Caugi graph verbs
 }}
 \examples{
 # initialize empty graph and build slowly
-cg <- caugi_graph(class = "PDAG")
+cg <- caugi(class = "PDAG")
 
 cg <- cg |>
   add_nodes(c("A", "B", "C", "D", "E")) |> # A, B, C, D, E

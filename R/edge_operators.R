@@ -5,7 +5,7 @@
 #' @title Edge specification infix operators
 #'
 #' @description These infix operators are used to specify edges in
-#' `caugi_graph()`. This function helps build infix operators.
+#' `caugi()`. This function helps build infix operators.
 #'
 #' @param from_sym A symbol representing the source node.
 #' @param to_expr An expression representing the target node(s).
@@ -61,8 +61,8 @@
 
 #' @title Infix operators for edge specifications
 #'
-#' @description These operators are used to specify edges in `caugi_graph()`.
-#' Should be used internally in `caugi_graph()` calls.
+#' @description These operators are used to specify edges in `caugi()`.
+#' Should be used internally in `caugi()` calls.
 #'
 #' @param lhs The left-hand side node expression.
 #' @param rhs The right-hand side node expression.

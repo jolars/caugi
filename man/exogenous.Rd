@@ -2,12 +2,12 @@
 % Please edit documentation in R/queries.R
 \name{exogenous}
 \alias{exogenous}
-\title{Get all exogenous nodes in a \code{caugi_graph}}
+\title{Get all exogenous nodes in a \code{caugi}}
 \usage{
 exogenous(cg, undirected_as_parents = FALSE)
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 
 \item{undirected_as_parents}{Logical; if \code{TRUE}, undirected edges are treated
 as (possible) parents, if \code{FALSE} (default), undirected edges are ignored.}
@@ -18,10 +18,10 @@ requested) or a list of character vectors (if multiple nodes are requested).
 }
 \description{
 Get all exogenous nodes (nodes with no parents) in a
-\code{caugi_graph}.
+\code{caugi}.
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   A \%-->\% B,
   B \%-->\% C,
   class = "DAG"

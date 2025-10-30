@@ -7,9 +7,9 @@
 aid(truth, guess, type = c("oset", "ancestor", "parent"), normalized = TRUE)
 }
 \arguments{
-\item{truth}{A \code{caugi_graph} object.}
+\item{truth}{A \code{caugi} object.}
 
-\item{guess}{A \code{caugi_graph} object.}
+\item{guess}{A \code{caugi} object.}
 
 \item{type}{A character string specifying the type of AID to compute.
 Options are \code{"oset"} (default), \code{"ancestor"}, and \code{"parent"}.}

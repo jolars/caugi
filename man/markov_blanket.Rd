@@ -2,12 +2,12 @@
 % Please edit documentation in R/queries.R
 \name{markov_blanket}
 \alias{markov_blanket}
-\title{Get Markov blanket of nodes in a \code{caugi_graph}}
+\title{Get Markov blanket of nodes in a \code{caugi}}
 \usage{
 markov_blanket(cg, nodes = NULL, index = NULL)
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 
 \item{nodes}{A vector of node names, a vector of unquoted
 node names, or an expression combining these with \code{+} and \code{c()}.}
@@ -19,10 +19,10 @@ Either a character vector of node names (if a single node is
 requested) or a list of character vectors (if multiple nodes are requested).
 }
 \description{
-Get Markov blanket of nodes in a \code{caugi_graph}
+Get Markov blanket of nodes in a \code{caugi}
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   A \%-->\% B,
   B \%-->\% C,
   class = "DAG"

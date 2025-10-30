@@ -9,7 +9,7 @@ test_that("integer adjacency → DAG works and preserves names", {
 
   cg <- as_caugi(m, class = "DAG")
 
-  expect_true(S7::S7_inherits(cg, class = caugi_graph))
+  expect_true(S7::S7_inherits(cg, class = caugi))
   # nodes() should expose vertex names
   expect_setequal(nodes(cg)[["name"]], c("A", "B", "C"))
 

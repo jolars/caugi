@@ -7,9 +7,9 @@
 shd(cg1, cg2, normalized = FALSE)
 }
 \arguments{
-\item{cg1}{A \code{caugi_graph} object.}
+\item{cg1}{A \code{caugi} object.}
 
-\item{cg2}{A \code{caugi_graph} object.}
+\item{cg2}{A \code{caugi} object.}
 
 \item{normalized}{Logical; if \code{TRUE}, returns the normalized SHD.}
 }

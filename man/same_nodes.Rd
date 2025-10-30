@@ -7,9 +7,9 @@
 same_nodes(cg1, cg2, throw_error = FALSE)
 }
 \arguments{
-\item{cg1}{A \code{caugi_graph} object.}
+\item{cg1}{A \code{caugi} object.}
 
-\item{cg2}{A \code{caugi_graph} object.}
+\item{cg2}{A \code{caugi} object.}
 
 \item{throw_error}{Logical; if \code{TRUE}, throws an error if the graphs do not
 have the same nodes.}
@@ -18,14 +18,14 @@ have the same nodes.}
 A logical indicating if the two graphs have the same nodes.
 }
 \description{
-Check if two \code{caugi_graph} objects have the same nodes.
+Check if two \code{caugi} objects have the same nodes.
 }
 \examples{
-cg1 <- caugi_graph(
+cg1 <- caugi(
   A \%-->\% B,
   class = "DAG"
 )
-cg2 <- caugi_graph(
+cg2 <- caugi(
   A \%-->\% B + C,
   class = "DAG"
 )

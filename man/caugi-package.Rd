@@ -2,7 +2,6 @@
 % Please edit documentation in R/caugi-package.R
 \docType{package}
 \name{caugi-package}
-\alias{caugi}
 \alias{caugi-package}
 \title{caugi: A tidy interface to causal graphs}
 \description{

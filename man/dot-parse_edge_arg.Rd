@@ -2,7 +2,7 @@
 % Please edit documentation in R/DSL-parser.R
 \name{.parse_edge_arg}
 \alias{.parse_edge_arg}
-\title{Parse one caugi_graph(...) argument}
+\title{Parse one caugi(...) argument}
 \usage{
 .parse_edge_arg(expr)
 }
@@ -13,6 +13,6 @@
 A list of edge units, each with lhs, rhs, and glyph.
 }
 \description{
-Parse one caugi_graph(...) argument into edge units
+Parse one caugi(...) argument into edge units
 }
 \keyword{internal}

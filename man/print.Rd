@@ -2,20 +2,20 @@
 % Please edit documentation in R/methods.R
 \name{print}
 \alias{print}
-\title{Print a \code{caugi_graph}}
+\title{Print a \code{caugi}}
 \arguments{
-\item{x}{A \code{caugi_graph} object.}
+\item{x}{A \code{caugi} object.}
 
 \item{...}{Not used.}
 }
 \value{
-The input \code{caugi_graph} object, invisibly.
+The input \code{caugi} object, invisibly.
 }
 \description{
-Print a \code{caugi_graph}
+Print a \code{caugi}
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   A \%-->\% B + C,
   nodes = LETTERS[1:5],
   class = "DAG"
@@ -24,8 +24,8 @@ print(cg)
 
 }
 \seealso{
-Other caugi_graph methods: 
+Other caugi methods: 
 \code{\link{length}()}
 }
-\concept{caugi_graph methods}
+\concept{caugi methods}
 \concept{methods}

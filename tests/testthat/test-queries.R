@@ -7,7 +7,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 
 test_that("is_caugi works", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %---% D, class = "PDAG")
+  cg <- caugi(A %-->% B, B %-->% C, C %---% D, class = "PDAG")
   expect_true(is_caugi(cg))
 
   not_cg <- list(a = 1, b = 2)
@@ -20,7 +20,7 @@ test_that("is_caugi works", {
 # ──────────────────────────────── Acyclicity ──────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 test_that("acyclicity check works", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %-->% A)
+  cg <- caugi(A %-->% B, B %-->% C, C %-->% A)
 
   expect_false(is_acyclic(cg))
 
@@ -29,14 +29,14 @@ test_that("acyclicity check works", {
 })
 
 test_that("is_acyclic forces check when requested", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %-->% D, class = "DAG")
+  cg <- caugi(A %-->% B, B %-->% C, C %-->% D, class = "DAG")
 
   expect_true(is_acyclic(cg))
   expect_true(is_acyclic(cg, force_check = TRUE))
 })
 
 test_that("query builds", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %---% D, class = "PDAG")
+  cg <- caugi(A %-->% B, B %-->% C, C %---% D, class = "PDAG")
   expect_true(cg@built)
 
   cg <- cg |> add_edges(D %-->% E)
@@ -53,16 +53,16 @@ test_that("query builds", {
 # ──────────────────────────────────────────────────────────────────────────────
 
 test_that("is_dag works", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %-->% D, class = "DAG")
+  cg <- caugi(A %-->% B, B %-->% C, C %-->% D, class = "DAG")
   expect_true(is_dag(cg))
 
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %---% D, class = "PDAG")
+  cg <- caugi(A %-->% B, B %-->% C, C %---% D, class = "PDAG")
   expect_false(is_dag(cg))
 
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %-->% D, class = "PDAG")
+  cg <- caugi(A %-->% B, B %-->% C, C %-->% D, class = "PDAG")
   expect_true(is_dag(cg))
 
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %---% D, class = "Unknown")
+  cg <- caugi(A %-->% B, B %-->% C, C %---% D, class = "Unknown")
   expect_false(is_dag(cg))
 
   cg <- cg |> set_edges(C %-->% D)
@@ -70,43 +70,43 @@ test_that("is_dag works", {
 })
 
 test_that("is_pdag works", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %---% D, class = "PDAG")
+  cg <- caugi(A %-->% B, B %-->% C, C %---% D, class = "PDAG")
   expect_true(is_pdag(cg))
 
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %-->% D, class = "DAG")
+  cg <- caugi(A %-->% B, B %-->% C, C %-->% D, class = "DAG")
   expect_true(is_pdag(cg))
 
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %---% D, class = "Unknown")
+  cg <- caugi(A %-->% B, B %-->% C, C %---% D, class = "Unknown")
   expect_true(is_pdag(cg))
 
   cg <- cg |> set_edges(C %o->% D)
   expect_false(is_pdag(cg))
 
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %o->% D, class = "Unknown")
+  cg <- caugi(A %-->% B, B %-->% C, C %o->% D, class = "Unknown")
 
   expect_false(is_pdag(cg))
 })
 
 test_that("is_cpdag works", {
-  cg <- caugi_graph(A %-->% C, B %-->% C, A %---% B, class = "PDAG")
+  cg <- caugi(A %-->% C, B %-->% C, A %---% B, class = "PDAG")
   expect_true(is_cpdag(cg))
 
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %-->% D, class = "DAG")
+  cg <- caugi(A %-->% B, B %-->% C, C %-->% D, class = "DAG")
   expect_true(is_cpdag(cg))
 
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %o->% D, class = "Unknown")
+  cg <- caugi(A %-->% B, B %-->% C, C %o->% D, class = "Unknown")
   expect_false(is_cpdag(cg))
 
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %---% D + E %o->% F,
+  cg <- caugi(A %-->% B, B %-->% C, C %---% D + E %o->% F,
     class = "Unknown"
   )
   expect_false(is_cpdag(cg))
 })
 
 test_that("same_nodes works", {
-  cg1 <- caugi_graph(A %-->% B, B %-->% C, class = "DAG")
-  cg2 <- caugi_graph(B %-->% C, A %-->% B, class = "DAG")
-  cg3 <- caugi_graph(A %-->% B, C %-->% D, class = "DAG")
+  cg1 <- caugi(A %-->% B, B %-->% C, class = "DAG")
+  cg2 <- caugi(B %-->% C, A %-->% B, class = "DAG")
+  cg3 <- caugi(A %-->% B, C %-->% D, class = "DAG")
 
   expect_true(same_nodes(cg1, cg2))
   expect_false(same_nodes(cg1, cg3))
@@ -118,7 +118,7 @@ test_that("same_nodes works", {
 # ──────────────────────────────────────────────────────────────────────────────
 
 test_that("parents returns expected nodes for names, indices, and expr", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, A %---% D, D %-->% B, class = "PDAG")
+  cg <- caugi(A %-->% B, B %-->% C, A %---% D, D %-->% B, class = "PDAG")
   expect_identical(parents(cg, "B"), c("A", "D"))
   expect_identical(parents(cg, "B"), c("A", "D"))
   pa_AB <- parents(cg, c("A", "B"))
@@ -131,7 +131,7 @@ test_that("parents returns expected nodes for names, indices, and expr", {
 })
 
 test_that("children returns expected nodes", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %---% D, D %-->% E, class = "PDAG")
+  cg <- caugi(A %-->% B, B %-->% C, C %---% D, D %-->% E, class = "PDAG")
   expect_identical(children(cg, "A")[[1]], "B")
   expect_identical(children(cg, c("B", "D"))[[1]], "C")
   expect_identical(children(cg, c("C", "D"))[[2]], "E")
@@ -140,7 +140,7 @@ test_that("children returns expected nodes", {
 })
 
 test_that("neighbors returns undirected and directed adjacency", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, B %---% D, C %---% E, class = "PDAG")
+  cg <- caugi(A %-->% B, B %-->% C, B %---% D, C %---% E, class = "PDAG")
   # B has neighbors A (incoming), C (outgoing), D (undirected)
   expect_setequal(neighbors(cg, "B"), c("A", "C", "D"))
   # C has neighbors B and E
@@ -148,14 +148,14 @@ test_that("neighbors returns undirected and directed adjacency", {
 })
 
 test_that("queries match with nodes and indexes", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, B %---% D, C %---% E, class = "PDAG")
+  cg <- caugi(A %-->% B, B %-->% C, B %---% D, C %---% E, class = "PDAG")
   expect_identical(children(cg, "A"), children(cg, index = 1))
   expect_identical(parents(cg, "B"), parents(cg, index = 2))
   expect_identical(neighbors(cg, "C"), neighbors(cg, index = 3))
 })
 
 test_that("queries fail with bad input", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, B %---% D, C %---% E, class = "PDAG")
+  cg <- caugi(A %-->% B, B %-->% C, B %---% D, C %---% E, class = "PDAG")
   expect_error(children(cg, A, index = 1), "Supply either `nodes` or `index`")
   expect_error(children(cg), "Supply one of `nodes` or `index`")
   expect_error(parents(cg, A, index = 1), "Supply either `nodes` or `index`")
@@ -171,7 +171,7 @@ test_that("queries fail with bad input", {
 })
 
 test_that("getter queries handle missing relations and duplicates", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, class = "DAG")
+  cg <- caugi(A %-->% B, B %-->% C, class = "DAG")
   # node with no parents
   expect_identical(length(parents(cg, "A")[[1]]), 0L)
   # node with no children
@@ -182,19 +182,19 @@ test_that("getter queries handle missing relations and duplicates", {
 })
 
 test_that("getter queries error on bad nodes or indices", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, class = "DAG")
+  cg <- caugi(A %-->% B, B %-->% C, class = "DAG")
   expect_error(parents(cg, "Z"), "Non-existant node name: Z")
   expect_error(children(cg, index = 0), "must be >= 0")
   expect_error(children(cg, index = 100), "out of bounds")
 })
 
 test_that("aliases route correctly", {
-  cg <- caugi_graph(A %-->% B, B %---% C, class = "PDAG")
+  cg <- caugi(A %-->% B, B %---% C, class = "PDAG")
   expect_identical(neighbours(cg, "B")[[1]], neighbors(cg, "B")[[1]])
 })
 
 test_that("public getters trigger lazy build", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, class = "PDAG")
+  cg <- caugi(A %-->% B, B %-->% C, class = "PDAG")
   cg <- cg |> add_edges(C %---% D)
   expect_false(cg@built)
   parents(cg, "B")
@@ -202,7 +202,7 @@ test_that("public getters trigger lazy build", {
 })
 
 test_that("nodes and edges getters work", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, class = "PDAG")
+  cg <- caugi(A %-->% B, B %-->% C, class = "PDAG")
   nodes_out <- cg@nodes
   edges_out <- cg@edges
 
@@ -217,14 +217,14 @@ test_that("nodes and edges getters work", {
   expect_equal(nrow(nodes(cg)), 3L)
   expect_equal(nrow(edges(cg)), 2L)
 
-  cg <- caugi_graph()
+  cg <- caugi()
 
   expect_equal(nrow(nodes(cg)), 0L)
   expect_equal(nrow(edges(cg)), 0L)
 })
 
 test_that("an and de works", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, C %---% D, class = "PDAG")
+  cg <- caugi(A %-->% B, B %-->% C, C %---% D, class = "PDAG")
   expect_identical(ancestors(cg, "C"), c("A", "B"))
   expect_identical(descendants(cg, "A"), c("B", "C"))
   expect_identical(sort(ancestors(cg, c("C", "D"))[[1]]), c("A", "B"))
@@ -236,14 +236,14 @@ test_that("an and de works", {
   expect_identical(sort(ancestors(cg, index = c(3, 4))[[1]]), c("A", "B"))
   expect_identical(sort(descendants(cg, index = c(1, 4))[[1]]), c("B", "C"))
 
-  cg <- caugi_graph(A, B, class = "DAG")
+  cg <- caugi(A, B, class = "DAG")
 
   expect_equal(length(ancestors(cg, "A")), 0L)
   expect_equal(length(descendants(cg, "A")), 0L)
 })
 
 test_that("markov_blanket works on DAGs (parents, children, spouses)", {
-  cg <- caugi_graph(
+  cg <- caugi(
     A %-->% B + C,
     D %-->% B,
     B %-->% E,
@@ -268,7 +268,7 @@ test_that("markov_blanket works on DAGs (parents, children, spouses)", {
 })
 
 test_that("markov_blanket includes undirected neighbors in PDAGs", {
-  cg <- caugi_graph(
+  cg <- caugi(
     A %-->% B,
     B %---% C,
     D %-->% B,
@@ -279,7 +279,7 @@ test_that("markov_blanket includes undirected neighbors in PDAGs", {
 })
 
 test_that("markov_blanket argument validation", {
-  cg <- caugi_graph(A %-->% B)
+  cg <- caugi(A %-->% B)
   expect_error(markov_blanket(cg), "Supply one of `nodes` or `index`")
   expect_error(
     markov_blanket(cg, nodes = "A", index = 1),
@@ -288,7 +288,7 @@ test_that("markov_blanket argument validation", {
 })
 
 test_that("exogenous works", {
-  cg <- caugi_graph(
+  cg <- caugi(
     A %-->% B + C,
     D %-->% B,
     B %-->% E,
@@ -299,15 +299,15 @@ test_that("exogenous works", {
   e <- exogenous(cg)
   expect_setequal(e, c("A", "D", "F"))
 
-  cg <- caugi_graph(A %---% B, C %-->% A, class = "PDAG")
+  cg <- caugi(A %---% B, C %-->% A, class = "PDAG")
   e <- exogenous(cg)
   expect_setequal(e, c("B", "C"))
 
-  expect_error(exogenous("not a graph"), "Input must be a caugi_graph")
+  expect_error(exogenous("not a graph"), "Input must be a caugi")
 })
 
 test_that("exogenous works on PDAGs", {
-  cg <- caugi_graph(A %---% B, C %-->% D, class = "PDAG")
+  cg <- caugi(A %---% B, C %-->% D, class = "PDAG")
   e <- exogenous(cg)
   expect_setequal(e, c("A", "B", "C"))
 
@@ -316,7 +316,7 @@ test_that("exogenous works on PDAGs", {
 })
 
 test_that("getter queries errors on non-character input", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, class = "DAG")
+  cg <- caugi(A %-->% B, B %-->% C, class = "DAG")
   expect_error(parents(cg, 1), "must be a character vector")
   expect_error(children(cg, 2), "must be a character vector")
   expect_error(neighbors(cg, 3), "must be a character vector")
@@ -328,7 +328,7 @@ test_that("getter queries errors on non-character input", {
 test_that("getter queries builds", {
   getter_queries <- c(parents, children, neighbors, ancestors, descendants, markov_blanket)
   for (getter in getter_queries) {
-    cg <- caugi_graph(A %-->% B, B %-->% C, class = "DAG", build = FALSE)
+    cg <- caugi(A %-->% B, B %-->% C, class = "DAG", build = FALSE)
     getter(cg, "B")
     expect_true(cg@built)
   }
@@ -339,7 +339,7 @@ test_that("getter queries builds", {
 # ──────────────────────────────────────────────────────────────────────────────
 
 test_that(".getter_output returns tibble with name column", {
-  cg <- caugi_graph(A %-->% B, B %-->% C, class = "DAG")
+  cg <- caugi(A %-->% B, B %-->% C, class = "DAG")
   out <- caugi:::.getter_output(cg, c(0L, 2L), c("A", "C"))
   expect_identical(out[["A"]], "A")
   expect_identical(out[["C"]], "C")
@@ -354,7 +354,7 @@ test_that(".getter_output returns tibble with name column", {
 # ──────────────────────────────────────────────────────────────────────────────
 
 test_that("subgraph selects nodes and errors with none", {
-  cg <- caugi_graph()
+  cg <- caugi()
   cg <- add_nodes(cg, name = c("A", "B", "C"))
   cg <- add_edges(cg,
     from = c("A", "B"),
@@ -369,7 +369,7 @@ test_that("subgraph selects nodes and errors with none", {
 })
 
 test_that("subgraph errors on invalid arg combos", {
-  g <- caugi_graph(
+  g <- caugi(
     from = character(), edge = character(), to = character(),
     nodes = c("A", "B"), class = "UNKNOWN"
   )
@@ -378,7 +378,7 @@ test_that("subgraph errors on invalid arg combos", {
 })
 
 test_that("subgraph validates index", {
-  g <- caugi_graph(
+  g <- caugi(
     from = character(), edge = character(), to = character(),
     nodes = c("A", "B"), class = "UNKNOWN"
   )
@@ -390,7 +390,7 @@ test_that("subgraph validates index", {
 
 test_that("subgraph validates nodes", {
   skip_if_not_installed("data.table")
-  g <- caugi_graph(
+  g <- caugi(
     from = character(), edge = character(), to = character(),
     nodes = c("A", "B"), class = "UNKNOWN"
   )
@@ -400,7 +400,7 @@ test_that("subgraph validates nodes", {
 })
 
 test_that("subgraph catches duplicates (nodes and index)", {
-  g <- caugi_graph(
+  g <- caugi(
     from = c("A", "B"), edge = c("-->", "-->"), to = c("C", "D"),
     nodes = c("A", "B", "C", "D"), class = "DAG"
   )
@@ -409,7 +409,7 @@ test_that("subgraph catches duplicates (nodes and index)", {
 })
 
 test_that("subgraph on graph without edges keeps nodes and empty edges", {
-  g <- caugi_graph(
+  g <- caugi(
     from = character(), edge = character(), to = character(),
     nodes = c("A", "B", "C"), class = "UNKNOWN"
   )
@@ -424,7 +424,7 @@ test_that("subgraph on graph without edges keeps nodes and empty edges", {
 })
 
 test_that("subgraph filters edges to kept names and sorts", {
-  g <- caugi_graph(
+  g <- caugi(
     from = c("A", "B", "C", "A"),
     edge = c("-->", "-->", "---", "<->"),
     to = c("B", "C", "A", "C"),
@@ -442,7 +442,7 @@ test_that("subgraph filters edges to kept names and sorts", {
 })
 
 test_that("subgraph with index matches nodes variant", {
-  g <- caugi_graph(
+  g <- caugi(
     from = c("A", "B", "C", "A"),
     edge = c("-->", "-->", "---", "-->"),
     to = c("D", "E", "G", "F"),

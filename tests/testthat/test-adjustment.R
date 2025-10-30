@@ -1,5 +1,5 @@
 # example seen in Elements of Causal Inference, Figure 6.5, p. 115
-adjustment_set_cg <- caugi_graph(
+adjustment_set_cg <- caugi(
   C %-->% X,
   X %-->% F,
   X %-->% D,
@@ -75,7 +75,7 @@ test_that("all_backdoor_sets respects max_size and minimal", {
 })
 
 test_that("all_backdoor_sets includes empty set, if valid", {
-  adjustment_set_cg <- caugi_graph(
+  adjustment_set_cg <- caugi(
     C %-->% X,
     X %-->% F,
     X %-->% D,

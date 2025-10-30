@@ -7,7 +7,7 @@
 .collect_edges_nodes(calls)
 }
 \arguments{
-\item{calls}{A list of expressions from caugi_graph(...)}
+\item{calls}{A list of expressions from caugi(...)}
 }
 \value{
 A list with two elements:

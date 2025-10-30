@@ -2,21 +2,21 @@
 % Please edit documentation in R/queries.R
 \name{edge_types}
 \alias{edge_types}
-\title{Get the edge types of a \code{caugi_graph}.}
+\title{Get the edge types of a \code{caugi}.}
 \usage{
 edge_types(cg)
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 }
 \value{
 A character vector of edge types.
 }
 \description{
-Get the edge types of a \code{caugi_graph}.
+Get the edge types of a \code{caugi}.
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   A \%-->\% B,
   B \%--o\% C,
   C \%<->\% D,

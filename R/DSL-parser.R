@@ -183,9 +183,9 @@
   out
 }
 
-#' @title Parse one caugi_graph(...) argument
+#' @title Parse one caugi(...) argument
 #'
-#' @description Parse one caugi_graph(...) argument into edge units
+#' @description Parse one caugi(...) argument into edge units
 #'
 #' @param expr An expression representing an edge with nodes
 #'
@@ -312,7 +312,7 @@
 #' @description Collect edges (via .parse_edge_arg) and explicitly declared
 #' nodes (no edges).
 #'
-#' @param calls A list of expressions from caugi_graph(...)
+#' @param calls A list of expressions from caugi(...)
 #'
 #' @returns A list with two elements:
 #' * edges: a tibble with columns `from`, `edge`, `to`
@@ -326,7 +326,7 @@
   for (ex in calls) {
     i <- i + 1L
     if (missing(ex)) {
-      stop("Argument ", i, " is missing in `caugi_graph`.", call. = FALSE)
+      stop("Argument ", i, " is missing in `caugi`.", call. = FALSE)
     }
     if (.contains_edge(ex)) {
       units <- c(units, .parse_edge_arg(ex))

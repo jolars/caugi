@@ -7,7 +7,7 @@
 is_cpdag(cg)
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 }
 \value{
 A logical value indicating whether the graph is a CPDAG.
@@ -17,7 +17,7 @@ Checks if the given \code{caugi} graph is a
 Complete Partially Directed Acyclic Graph (CPDAG).
 }
 \examples{
-cg_cpdag <- caugi_graph(
+cg_cpdag <- caugi(
   A \%---\% B,
   A \%-->\% C,
   B \%-->\% C,
@@ -25,7 +25,7 @@ cg_cpdag <- caugi_graph(
 )
 is_cpdag(cg_cpdag) # TRUE
 
-cg_not_cpdag <- caugi_graph(
+cg_not_cpdag <- caugi(
   A \%---\% B,
   A \%---\% C,
   B \%-->\% C,

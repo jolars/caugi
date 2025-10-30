@@ -2,21 +2,21 @@
 % Please edit documentation in R/verbs.R
 \name{.mark_not_built}
 \alias{.mark_not_built}
-\title{Mark a \code{caugi_graph} as \emph{not built}.}
+\title{Mark a \code{caugi} as \emph{not built}.}
 \usage{
 .mark_not_built(cg)
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 }
 \value{
-The same \code{caugi_graph} object, but with the \code{built} attribute set to
+The same \code{caugi} object, but with the \code{built} attribute set to
 \code{FALSE}.
 }
 \description{
-When a \code{caugi_graph} is modified, it should be marked as not
+When a \code{caugi} is modified, it should be marked as not
 built. This function sets the \code{built} attribute to \code{FALSE}. Thereby, the Rust
 backend and the R frontend does not match, and at one point, the
-\code{caugi_graph} will need to be rebuild for it to be queried.
+\code{caugi} will need to be rebuild for it to be queried.
 }
 \keyword{internal}

@@ -10,17 +10,17 @@ is_caugi(x, throw_error = FALSE)
 \item{x}{An object to check.}
 
 \item{throw_error}{Logical; if \code{TRUE}, throws an error if \code{x} is not a
-\code{caugi_graph}.}
+\code{caugi}.}
 }
 \value{
-A logical value indicating whether the object is a \code{caugi_graph}.
+A logical value indicating whether the object is a \code{caugi}.
 }
 \description{
-Checks if the given object is a \code{caugi_graph}. Mostly used
+Checks if the given object is a \code{caugi}. Mostly used
 internally to validate inputs.
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   A \%-->\% B,
   class = "DAG"
 )

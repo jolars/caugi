@@ -8,17 +8,17 @@
 
 #' @title Is it a `caugi` graph?
 #'
-#' @description Checks if the given object is a `caugi_graph`. Mostly used
+#' @description Checks if the given object is a `caugi`. Mostly used
 #' internally to validate inputs.
 #'
 #' @param x An object to check.
 #' @param throw_error Logical; if `TRUE`, throws an error if `x` is not a
-#' `caugi_graph`.
+#' `caugi`.
 #'
-#' @returns A logical value indicating whether the object is a `caugi_graph`.
+#' @returns A logical value indicating whether the object is a `caugi`.
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   A %-->% B,
 #'   class = "DAG"
 #' )
@@ -30,10 +30,10 @@
 #'
 #' @export
 is_caugi <- function(x, throw_error = FALSE) {
-  is_it <- inherits(x, caugi_graph)
+  is_it <- inherits(x, caugi)
 
   if (!is_it && throw_error) {
-    stop("Input must be a caugi_graph", call. = FALSE)
+    stop("Input must be a caugi", call. = FALSE)
   }
   is_it
 }
@@ -42,20 +42,20 @@ is_caugi <- function(x, throw_error = FALSE) {
 #'
 #' @description Checks if the given `caugi` graph is empty (has no nodes).
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #'
 #' @returns A logical value indicating whether the graph is empty.
 #'
 #' @examples
-#' cg_empty <- caugi_graph(class = "DAG")
+#' cg_empty <- caugi(class = "DAG")
 #' is_empty_caugi(cg_empty) # TRUE
-#' cg_non_empty <- caugi_graph(
+#' cg_non_empty <- caugi(
 #'   A %-->% B,
 #'   class = "DAG"
 #' )
 #' is_empty_caugi(cg_non_empty) # FALSE
 #'
-#' cg_no_edges_but_has_nodes <- caugi_graph(
+#' cg_no_edges_but_has_nodes <- caugi(
 #'   A, B,
 #'   class = "DAG"
 #' )
@@ -72,21 +72,21 @@ is_empty_caugi <- function(cg) {
 
 #' @title Same nodes?
 #'
-#' @description Check if two `caugi_graph` objects have the same nodes.
+#' @description Check if two `caugi` objects have the same nodes.
 #'
-#' @param cg1 A `caugi_graph` object.
-#' @param cg2 A `caugi_graph` object.
+#' @param cg1 A `caugi` object.
+#' @param cg2 A `caugi` object.
 #' @param throw_error Logical; if `TRUE`, throws an error if the graphs do not
 #' have the same nodes.
 #'
 #' @returns A logical indicating if the two graphs have the same nodes.
 #'
 #' @examples
-#' cg1 <- caugi_graph(
+#' cg1 <- caugi(
 #'   A %-->% B,
 #'   class = "DAG"
 #' )
-#' cg2 <- caugi_graph(
+#' cg2 <- caugi(
 #'   A %-->% B + C,
 #'   class = "DAG"
 #' )
@@ -120,7 +120,7 @@ same_nodes <- function(cg1, cg2, throw_error = FALSE) {
 #'
 #' @description Checks if the given `caugi` graph is acyclic.
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #' @param force_check Logical; if `TRUE`, the function will test if the graph is
 #' acyclic, if `FALSE` (default), it will look at the graph class and match
 #' it, if possible.
@@ -134,13 +134,13 @@ same_nodes <- function(cg1, cg2, throw_error = FALSE) {
 #' @returns A logical value indicating whether the graph is acyclic.
 #'
 #' @examples
-#' cg_acyclic <- caugi_graph(
+#' cg_acyclic <- caugi(
 #'   A %-->% B,
 #'   B %-->% C,
 #'   class = "DAG"
 #' )
 #' is_acyclic(cg_acyclic) # TRUE
-#' cg_cyclic <- caugi_graph(
+#' cg_cyclic <- caugi(
 #'   A %-->% B,
 #'   B %-->% C,
 #'   C %-->% A,
@@ -171,7 +171,7 @@ is_acyclic <- function(cg, force_check = FALSE) {
 #' @description Checks if the given `caugi` graph is a
 #' Directed Acyclic Graph (DAG).
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #' @param force_check Logical; if `TRUE`, the function will test if the graph is
 #' a DAG, if `FALSE` (default), it will look at the graph class and match
 #' it, if possible.
@@ -179,17 +179,17 @@ is_acyclic <- function(cg, force_check = FALSE) {
 #' @returns A logical value indicating whether the graph is a DAG.
 #'
 #' @examples
-#' cg_dag_class <- caugi_graph(
+#' cg_dag_class <- caugi(
 #'   A %-->% B,
 #'   class = "DAG"
 #' )
 #' is_dag(cg_dag_class) # TRUE
-#' cg_dag_but_pdag_class <- caugi_graph(
+#' cg_dag_but_pdag_class <- caugi(
 #'   A %-->% B,
 #'   class = "PDAG"
 #' )
 #' is_dag(cg_dag_but_pdag_class) # TRUE
-#' cg_cyclic <- caugi_graph(
+#' cg_cyclic <- caugi(
 #'   A %-->% B,
 #'   B %-->% C,
 #'   C %-->% A,
@@ -198,7 +198,7 @@ is_acyclic <- function(cg, force_check = FALSE) {
 #' )
 #' is_dag(cg_cyclic) # FALSE
 #'
-#' cg_undirected <- caugi_graph(
+#' cg_undirected <- caugi(
 #'   A %---% B,
 #'   class = "UNKNOWN"
 #' )
@@ -225,24 +225,24 @@ is_dag <- function(cg, force_check = FALSE) {
 #' @description Checks if the given `caugi` graph is a
 #' Partially Directed Acyclic Graph (PDAG).
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #' @param force_check Logical; if `TRUE`, the function will test if the graph is
 #' a PDAG, if `FALSE` (default), it will look at the graph class and match
 #' it, if possible.
 #'
 #' @returns A logical value indicating whether the graph is a PDAG.
 #' @examples
-#' cg_dag_class <- caugi_graph(
+#' cg_dag_class <- caugi(
 #'   A %-->% B,
 #'   class = "DAG"
 #' )
 #' is_pdag(cg_dag_class) # TRUE
-#' cg_dag_but_pdag_class <- caugi_graph(
+#' cg_dag_but_pdag_class <- caugi(
 #'   A %-->% B,
 #'   class = "PDAG"
 #' )
 #' is_pdag(cg_dag_but_pdag_class) # TRUE
-#' cg_cyclic <- caugi_graph(
+#' cg_cyclic <- caugi(
 #'   A %-->% B,
 #'   B %-->% C,
 #'   C %-->% A,
@@ -252,13 +252,13 @@ is_dag <- function(cg, force_check = FALSE) {
 #' )
 #' is_pdag(cg_cyclic) # FALSE
 #'
-#' cg_undirected <- caugi_graph(
+#' cg_undirected <- caugi(
 #'   A %---% B,
 #'   class = "UNKNOWN"
 #' )
 #' is_pdag(cg_undirected) # TRUE
 #'
-#' cg_pag <- caugi_graph(
+#' cg_pag <- caugi(
 #'   A %o->% B,
 #'   class = "UNKNOWN"
 #' )
@@ -285,12 +285,12 @@ is_pdag <- function(cg, force_check = FALSE) {
 #' @description Checks if the given `caugi` graph is a
 #' Complete Partially Directed Acyclic Graph (CPDAG).
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #'
 #' @returns A logical value indicating whether the graph is a CPDAG.
 #'
 #' @examples
-#' cg_cpdag <- caugi_graph(
+#' cg_cpdag <- caugi(
 #'   A %---% B,
 #'   A %-->% C,
 #'   B %-->% C,
@@ -298,7 +298,7 @@ is_pdag <- function(cg, force_check = FALSE) {
 #' )
 #' is_cpdag(cg_cpdag) # TRUE
 #'
-#' cg_not_cpdag <- caugi_graph(
+#' cg_not_cpdag <- caugi(
 #'   A %---% B,
 #'   A %---% C,
 #'   B %-->% C,
@@ -321,16 +321,16 @@ is_cpdag <- function(cg) {
 # ───────────────────────────── Nodes and edges ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
-#' @title Get nodes or edges of a `caugi_graph`
+#' @title Get nodes or edges of a `caugi`
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #'
 #' @returns A tibble with a `name` column.
 #'
 #' @rdname nodes
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   A %-->% B,
 #'   B %-->% C,
 #'   D,
@@ -356,14 +356,14 @@ vertices <- nodes
 #' @export
 V <- nodes # igraph notation
 
-#' @title Get edges of a `caugi_graph`.
+#' @title Get edges of a `caugi`.
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #'
 #' @rdname edges
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   A %-->% B,
 #'   B %-->% C,
 #'   D,
@@ -385,14 +385,14 @@ edges <- function(cg) {
 #' @export
 E <- edges # igraph notation
 
-#' @title Get the edge types of a `caugi_graph`.
+#' @title Get the edge types of a `caugi`.
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #'
 #' @returns A character vector of edge types.
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   A %-->% B,
 #'   B %--o% C,
 #'   C %<->% D,
@@ -415,13 +415,13 @@ edge_types <- function(cg) {
 # ──────────────────────────────── Relations ───────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
-#' @title Get parents of nodes in a `caugi_graph`
+#' @title Get parents of nodes in a `caugi`
 #'
 #' @description
 #' Get parents of node in a graph. Note that not both nodes and index can be
 #' given.
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #' @param nodes A vector of node names, a vector of unquoted
 #' node names, or an expression combining these with `+` and `c()`.
 #' @param index A vector of node indexes.
@@ -430,7 +430,7 @@ edge_types <- function(cg) {
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   A %-->% B,
 #'   B %-->% C,
 #'   class = "DAG"
@@ -485,9 +485,9 @@ parents <- function(cg, nodes = NULL, index = NULL) {
   .getter_output(cg, parents_of_ptr(cg@ptr, as.integer(index)), nodes)
 }
 
-#' @title Get children of nodes in a `caugi_graph`
+#' @title Get children of nodes in a `caugi`
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #' @param nodes A vector of node names, a vector of unquoted
 #' node names, or an expression combining these with `+` and `c()`.
 #' @param index A vector of node indexes.
@@ -496,7 +496,7 @@ parents <- function(cg, nodes = NULL, index = NULL) {
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   A %-->% B,
 #'   B %-->% C,
 #'   class = "DAG"
@@ -551,9 +551,9 @@ children <- function(cg, nodes = NULL, index = NULL) {
   .getter_output(cg, children_of_ptr(cg@ptr, as.integer(index)), nodes)
 }
 
-#' @title Get neighbors of nodes in a `caugi_graph`
+#' @title Get neighbors of nodes in a `caugi`
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #' @param nodes A vector of node names, a vector of unquoted
 #' node names, or an expression combining these with `+` and `c()`.
 #' @param index A vector of node indexes.
@@ -562,7 +562,7 @@ children <- function(cg, nodes = NULL, index = NULL) {
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   A %-->% B,
 #'   B %-->% C,
 #'   class = "DAG"
@@ -621,9 +621,9 @@ neighbors <- function(cg, nodes = NULL, index = NULL) {
 #' @export
 neighbours <- neighbors
 
-#' @title Get ancestors of nodes in a `caugi_graph`
+#' @title Get ancestors of nodes in a `caugi`
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #' @param nodes A vector of node names, a vector of unquoted
 #' node names, or an expression combining these with `+` and `c()`.
 #' @param index A vector of node indexes.
@@ -632,7 +632,7 @@ neighbours <- neighbors
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   A %-->% B,
 #'   B %-->% C,
 #'   class = "DAG"
@@ -687,9 +687,9 @@ ancestors <- function(cg, nodes = NULL, index = NULL) {
   .getter_output(cg, ancestors_of_ptr(cg@ptr, as.integer(index)), nodes)
 }
 
-#' @title Get descendants of nodes in a `caugi_graph`
+#' @title Get descendants of nodes in a `caugi`
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #' @param nodes A vector of node names, a vector of unquoted
 #' node names, or an expression combining these with `+` and `c()`.
 #' @param index A vector of node indexes.
@@ -698,7 +698,7 @@ ancestors <- function(cg, nodes = NULL, index = NULL) {
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   A %-->% B,
 #'   B %-->% C,
 #'   class = "DAG"
@@ -753,9 +753,9 @@ descendants <- function(cg, nodes = NULL, index = NULL) {
   .getter_output(cg, descendants_of_ptr(cg@ptr, as.integer(index)), nodes)
 }
 
-#' @title Get Markov blanket of nodes in a `caugi_graph`
+#' @title Get Markov blanket of nodes in a `caugi`
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #' @param nodes A vector of node names, a vector of unquoted
 #' node names, or an expression combining these with `+` and `c()`.
 #' @param index A vector of node indexes.
@@ -764,7 +764,7 @@ descendants <- function(cg, nodes = NULL, index = NULL) {
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   A %-->% B,
 #'   B %-->% C,
 #'   class = "DAG"
@@ -819,12 +819,12 @@ markov_blanket <- function(cg, nodes = NULL, index = NULL) {
   .getter_output(cg, markov_blanket_of_ptr(cg@ptr, as.integer(index)), nodes)
 }
 
-#' @title Get all exogenous nodes in a `caugi_graph`
+#' @title Get all exogenous nodes in a `caugi`
 #'
 #' @description Get all exogenous nodes (nodes with no parents) in a
-#' `caugi_graph`.
+#' `caugi`.
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #' @param undirected_as_parents Logical; if `TRUE`, undirected edges are treated
 #' as (possible) parents, if `FALSE` (default), undirected edges are ignored.
 #'
@@ -832,7 +832,7 @@ markov_blanket <- function(cg, nodes = NULL, index = NULL) {
 #' requested) or a list of character vectors (if multiple nodes are requested).
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   A %-->% B,
 #'   B %-->% C,
 #'   class = "DAG"
@@ -857,21 +857,21 @@ exogenous <- function(cg, undirected_as_parents = FALSE) {
 
 #' @title Get the induced subgraph
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #' @param nodes A vector of node names, a vector of unquoted
 #' node names, or an expression combining these with `+` and `c()`.
 #' @param index A vector of node indexes.
 #'
-#' @returns A new `caugi_graph` that is a subgraph of the selected nodes.
+#' @returns A new `caugi` that is a subgraph of the selected nodes.
 #'
 #' @examples
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   A %-->% B,
 #'   B %-->% C,
 #'   class = "DAG"
 #' )
 #' sub_cg <- subgraph(cg, c("B", "C"))
-#' cg2 <- caugi_graph(B %-->% C, class = "DAG")
+#' cg2 <- caugi(B %-->% C, class = "DAG")
 #' all(nodes(sub_cg) == nodes(cg2)) # TRUE
 #' all(edges(sub_cg) == edges(cg2)) # TRUE
 #'
@@ -967,7 +967,7 @@ subgraph <- function(cg, nodes = NULL, index = NULL) {
     class = cg@graph_class,
     name_index_map = name_index_map_sub
   )
-  caugi_graph(state = state_sub)
+  caugi(state = state_sub)
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -978,7 +978,7 @@ subgraph <- function(cg, nodes = NULL, index = NULL) {
 #'
 #' @description Helper to format the output of getter queries.
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #' @param idx0 A vector of zero-based node indices.
 #' @param nodes A vector of node names.
 #'

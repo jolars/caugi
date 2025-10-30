@@ -10,8 +10,8 @@ test_that("build() generic dispatches", {
   expect_error(build(1), "Can't find method")
 })
 
-test_that("build.caugi_graph builds with and without edges", {
-  cg <- caugi_graph()
+test_that("build.caugi builds with and without edges", {
+  cg <- caugi()
   cg <- add_nodes(cg, name = c("A", "B"))
   cg0 <- build(cg) # no edges
   expect_true(cg0@built)
@@ -27,14 +27,14 @@ test_that("build.caugi_graph builds with and without edges", {
 })
 
 test_that("build() errors when breaking simple graph assumptions", {
-  cg <- caugi_graph()
+  cg <- caugi()
   cg <- add_edges(cg,
     from = c("A", "A"),
     edge = c("o->", "-->"),
     to = c("B", "B")
   )
   expect_error(build(cg), "parallel")
-  cg <- caugi_graph()
+  cg <- caugi()
   cg <- add_edges(cg,
     from = c("A", "A"),
     edge = c("-->", "<->"),
@@ -45,7 +45,7 @@ test_that("build() errors when breaking simple graph assumptions", {
 
 test_that("build updates name_index_map", {
   # start with a built graph
-  cg <- caugi_graph(from = "A", edge = "-->", to = "B")
+  cg <- caugi(from = "A", edge = "-->", to = "B")
   expect_true(cg@built)
   expect_identical(cg@name_index_map$get("A"), 0L)
   expect_identical(cg@name_index_map$get("B"), 1L)
@@ -68,7 +68,7 @@ test_that("build updates name_index_map", {
 # ──────────────────────────────────────────────────────────────────────────────
 
 test_that("add_edges validates inputs and updates graph", {
-  cg <- caugi_graph()
+  cg <- caugi()
   expect_identical(add_edges(cg), cg)
 
   expect_error(
@@ -98,7 +98,7 @@ test_that("add_edges validates inputs and updates graph", {
 })
 
 test_that("add_edges makes built = FALSE, build(cg) makes it TRUE (back and forth)", {
-  cg <- caugi_graph()
+  cg <- caugi()
 
   cg1 <- add_edges(cg, from = "A", edge = "-->", to = "B")
   expect_false(cg1@built)
@@ -115,7 +115,7 @@ test_that("add_edges makes built = FALSE, build(cg) makes it TRUE (back and fort
 })
 
 test_that("add_edges expression path works", {
-  cg <- caugi_graph()
+  cg <- caugi()
   cg <- add_edges(
     cg,
     A %-->% B,
@@ -137,7 +137,7 @@ test_that("add_edges expression path works", {
 })
 
 test_that("add_edges expression path (DSL) works (also some + notation)", {
-  cg <- caugi_graph()
+  cg <- caugi()
   cg <- add_nodes(cg, A + B)
   cg <- add_edges(cg, A %-->% B + C)
   expect_setequal(cg@nodes$name, c("A", "B", "C"))
@@ -149,7 +149,7 @@ test_that("add_edges expression path (DSL) works (also some + notation)", {
 })
 
 test_that("remove_edges works and keeps other edges", {
-  cg <- caugi_graph()
+  cg <- caugi()
   cg <- add_edges(cg,
     from = c("A", "A"),
     edge = c("-->", "-->"),
@@ -167,7 +167,7 @@ test_that("remove_edges works and keeps other edges", {
 })
 
 test_that("set_edges replaces any existing edges for pairs", {
-  cg <- caugi_graph()
+  cg <- caugi()
   cg <- add_edges(cg,
     from = c("A", "A"),
     edge = c("o->", "-->"),
@@ -179,7 +179,7 @@ test_that("set_edges replaces any existing edges for pairs", {
 })
 
 test_that("set_edges errors whwn both vector and expr paths are given", {
-  cg <- caugi_graph()
+  cg <- caugi()
   cg <- add_edges(cg,
     from = c("A", "A"),
     edge = c("o->", "-->"),
@@ -192,7 +192,7 @@ test_that("set_edges errors whwn both vector and expr paths are given", {
 })
 
 test_that("set_edges returns cg if nothing given", {
-  cg <- caugi_graph(A %-->% B, B %-->% C)
+  cg <- caugi(A %-->% B, B %-->% C)
   cg2 <- set_edges(cg)
 
   expect_equal(cg, cg2)
@@ -203,14 +203,14 @@ test_that("set_edges returns cg if nothing given", {
 # ──────────────────────────────────────────────────────────────────────────────
 
 test_that("add_nodes, remove_nodes cover vector and expr paths", {
-  cg <- caugi_graph()
+  cg <- caugi()
   expect_identical(add_nodes(cg), cg)
 
   cg1 <- add_nodes(cg, name = c("A", "B"))
   expect_false(cg1@built)
   expect_setequal(cg1@nodes$name, c("A", "B"))
 
-  cg2 <- add_nodes(caugi_graph(), A + B + C)
+  cg2 <- add_nodes(caugi(), A + B + C)
   expect_setequal(cg2@nodes$name, c("A", "B", "C"))
 
   cg3 <- add_edges(cg1, from = "A", edge = "-->", to = "B")
@@ -294,7 +294,7 @@ test_that(".get_edges_tibble works with empty input", {
 # ──────────────────────────────────────────────────────────────────────────────
 
 test_that(".mark_not_built flips flag", {
-  cg <- caugi_graph()
+  cg <- caugi()
   cg <- add_nodes(cg, name = "A")
   cg <- build(cg)
   out <- caugi:::.mark_not_built(cg)
@@ -305,9 +305,9 @@ test_that(".mark_not_built flips flag", {
 # ───────────────────────────── Internal updater ───────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
-test_that(".update_caugi_graph add/remove paths and validations", {
-  cg <- caugi_graph()
-  cg1 <- caugi:::.update_caugi_graph(cg,
+test_that(".update_caugi add/remove paths and validations", {
+  cg <- caugi()
+  cg1 <- caugi:::.update_caugi(cg,
     nodes = tibble::tibble(
       name = c("A", "B", "B")
     ),
@@ -316,7 +316,7 @@ test_that(".update_caugi_graph add/remove paths and validations", {
   expect_false(cg1@built)
   expect_setequal(cg1@nodes$name, c("A", "B"))
 
-  cg2 <- caugi:::.update_caugi_graph(cg1,
+  cg2 <- caugi:::.update_caugi(cg1,
     edges = dplyr::bind_rows(
       tibble::tibble(from = "A", edge = "-->", to = "B"),
       tibble::tibble(from = "A", edge = "-->", to = "B")
@@ -327,14 +327,14 @@ test_that(".update_caugi_graph add/remove paths and validations", {
   expect_equal(nrow(cg2@edges), 1L)
   expect_setequal(cg2@nodes$name, c("A", "B"))
 
-  cg3 <- caugi_graph()
+  cg3 <- caugi()
   cg3 <- add_nodes(cg3, name = c("A", "B", "C"))
   cg3 <- add_edges(cg3,
     from = c("A", "B", "A"),
     edge = c("-->", "<->", "o->"),
     to = c("B", "C", "C")
   )
-  cg4 <- caugi:::.update_caugi_graph(cg3,
+  cg4 <- caugi:::.update_caugi(cg3,
     edges = tibble::tibble(
       from = "A",
       to = "B"
@@ -344,7 +344,7 @@ test_that(".update_caugi_graph add/remove paths and validations", {
   expect_false(any(cg4@edges$from == "A" & cg4@edges$to == "B"))
 
   expect_error(
-    caugi:::.update_caugi_graph(cg4,
+    caugi:::.update_caugi(cg4,
       edges = tibble::tibble(from = "B"),
       action = "remove"
     ),

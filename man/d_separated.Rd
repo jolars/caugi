@@ -15,7 +15,7 @@ d_separated(
 )
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 
 \item{X, Y, Z}{Node selectors: character vector of names, unquoted expression
 (supports \code{+} and \code{c()}), or \code{NULL}. Use \verb{*_index} to pass 1-based indices.
@@ -32,7 +32,7 @@ Checks whether every node in \code{X} is d-separated from every node
 in \code{Y} given \code{Z} in a DAG.
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   C \%-->\% X,
   X \%-->\% F,
   X \%-->\% D,

@@ -7,7 +7,7 @@
 subgraph(cg, nodes = NULL, index = NULL)
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 
 \item{nodes}{A vector of node names, a vector of unquoted
 node names, or an expression combining these with \code{+} and \code{c()}.}
@@ -15,19 +15,19 @@ node names, or an expression combining these with \code{+} and \code{c()}.}
 \item{index}{A vector of node indexes.}
 }
 \value{
-A new \code{caugi_graph} that is a subgraph of the selected nodes.
+A new \code{caugi} that is a subgraph of the selected nodes.
 }
 \description{
 Get the induced subgraph
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   A \%-->\% B,
   B \%-->\% C,
   class = "DAG"
 )
 sub_cg <- subgraph(cg, c("B", "C"))
-cg2 <- caugi_graph(B \%-->\% C, class = "DAG")
+cg2 <- caugi(B \%-->\% C, class = "DAG")
 all(nodes(sub_cg) == nodes(cg2)) # TRUE
 all(edges(sub_cg) == edges(cg2)) # TRUE
 

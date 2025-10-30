@@ -2,21 +2,21 @@
 % Please edit documentation in R/caugi_to.R
 \name{as_bnlearn}
 \alias{as_bnlearn}
-\title{Convert a caugi_graph to a bnlearn network}
+\title{Convert a caugi to a bnlearn network}
 \usage{
 as_bnlearn(x)
 }
 \arguments{
-\item{x}{A \code{caugi_graph} object.}
+\item{x}{A \code{caugi} object.}
 }
 \value{
 A \code{bnlearn} DAG.
 }
 \description{
-Convert a caugi_graph to a bnlearn network
+Convert a caugi to a bnlearn network
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   A \%-->\% B,
   class = "DAG"
 )

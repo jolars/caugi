@@ -2,12 +2,12 @@
 % Please edit documentation in R/queries.R
 \name{parents}
 \alias{parents}
-\title{Get parents of nodes in a \code{caugi_graph}}
+\title{Get parents of nodes in a \code{caugi}}
 \usage{
 parents(cg, nodes = NULL, index = NULL)
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 
 \item{nodes}{A vector of node names, a vector of unquoted
 node names, or an expression combining these with \code{+} and \code{c()}.}
@@ -23,7 +23,7 @@ Get parents of node in a graph. Note that not both nodes and index can be
 given.
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   A \%-->\% B,
   B \%-->\% C,
   class = "DAG"

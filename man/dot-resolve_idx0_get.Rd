@@ -11,7 +11,7 @@
 }
 \arguments{
 \item{nm_idx_map}{A \code{fastmap} mapping node names to 0-based indices from
-a \code{caugi_graph}.}
+a \code{caugi}.}
 
 \item{node_name}{Optional character vector of node names.}
 

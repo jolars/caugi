@@ -3,9 +3,9 @@ template:
   bootstrap: 5
 
 reference:
-  - title: Caugi Graph
+  - title: The caugi object
     contents:
-      - has_concept("caugi_graph")
+      - has_concept("caugi")
   - title: Queries
     contents:
       - has_concept("queries")

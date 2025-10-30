@@ -2,9 +2,9 @@
 # ───────────────────────────── caugi graph API ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
-#' Create a `caugi_graph` from edge expressions.
+#' Create a `caugi` from edge expressions.
 #'
-#' @description Create a `caugi_graph` from a series of edge expressions using
+#' @description Create a `caugi` from a series of edge expressions using
 #' infix operators. Nodes can be specified as symbols, strings, or numbers.
 #'
 #' The following edge operators are supported by default:
@@ -41,19 +41,19 @@
 #' @param state For internal use. Build a graph by supplying a pre-constructed
 #' state environment.
 #'
-#' @returns A [`caugi_graph`] S7 object containing the nodes, edges, and a
+#' @returns A [`caugi`] S7 object containing the nodes, edges, and a
 #' pointer to the underlying Rust graph structure.
 #'
 #' @examples
 #' # create a simple DAG (using NSE)
-#' cg <- caugi_graph(
+#' cg <- caugi(
 #'   A %-->% B + C,
 #'   B %-->% D,
 #'   class = "DAG"
 #' )
 #'
 #' # create a PDAG with undirected edges (using NSE)
-#' cg2 <- caugi_graph(
+#' cg2 <- caugi(
 #'   A %-->% B + C,
 #'   B %---% D,
 #'   E, # no neighbors for this node
@@ -61,7 +61,7 @@
 #' )
 #'
 #' # create a DAG (using SE)
-#' cg3 <- caugi_graph(
+#' cg3 <- caugi(
 #'   from = c("A", "A", "B"),
 #'   edge = c("-->", "-->", "-->"),
 #'   to = c("B", "C", "D"),
@@ -70,7 +70,7 @@
 #' )
 #'
 #' # create a non-simple graph
-#' cg4 <- caugi_graph(
+#' cg4 <- caugi(
 #'   A %-->% B,
 #'   B %-->% A,
 #'   class = "UNKNOWN",
@@ -82,7 +82,7 @@
 #' cg4@graph_class # "UNKNOWN"
 #'
 #' # create graph, but don't built Rust object yet, which is needed for queries
-#' cg5 <- caugi_graph(
+#' cg5 <- caugi(
 #'   A %-->% B + C,
 #'   B %-->% D,
 #'   class = "DAG",
@@ -91,12 +91,12 @@
 #'
 #' cg@built # FALSE
 #'
-#' @family caugi_graph
-#' @concept caugi_graph
+#' @family caugi
+#' @concept caugi
 #'
 #' @export
-caugi_graph <- S7::new_class(
-  "caugi_graph",
+caugi <- S7::new_class(
+  "caugi",
   parent = S7::S7_object,
   properties = list(
     `.state` = S7::new_property(S7::class_environment),
@@ -243,7 +243,7 @@ caugi_graph <- S7::new_class(
                          state = NULL) {
     if (!is.null(state)) {
       return(S7::new_object(
-        caugi_graph,
+        caugi,
         `.state` = .freeze_state(state)
       ))
     }
@@ -377,7 +377,7 @@ caugi_graph <- S7::new_class(
     )
 
     S7::new_object(
-      caugi_graph,
+      caugi,
       `.state` = .freeze_state(state)
     )
   }
@@ -387,18 +387,18 @@ caugi_graph <- S7::new_class(
 # ───────────────────────────────── Helpers ────────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
-#' @title Convert a graph pointer to a `caugi_graph` S7 object
+#' @title Convert a graph pointer to a `caugi` S7 object
 #'
-#' @description Convert a graph pointer from Rust to a `caugi_graph` to a
+#' @description Convert a graph pointer from Rust to a `caugi` to a
 #' S7 object.
 #'
 #' @param ptr A pointer to the underlying Rust graph structure.
 #' @param node_names Optional character vector of node names. If `NULL`
 #' (default), nodes will be named `V1`, `V2`, ..., `Vn`.
 #'
-#' @returns A `caugi_graph` object representing the graph.
+#' @returns A `caugi` object representing the graph.
 #' @keywords internal
-.view_to_caugi_graph <- function(ptr, node_names = NULL) {
+.view_to_caugi <- function(ptr, node_names = NULL) {
   if (is.null(ptr)) stop("ptr is NULL", call. = FALSE)
 
   n <- n_ptr(ptr)
@@ -443,14 +443,14 @@ caugi_graph <- S7::new_class(
     class = graph_class_ptr(ptr),
     name_index_map = name_index_map
   )
-  caugi_graph(state = state)
+  caugi(state = state)
 }
 
 
-#' @title Internal: Create the state environment for a `caugi_graph`
+#' @title Internal: Create the state environment for a `caugi`
 #'
 #' @description Internal function to create the state environment for a
-#' `caugi_graph`. This function is not intended to be used directly by users.
+#' `caugi`. This function is not intended to be used directly by users.
 #'
 #' @param nodes A tibble of nodes with a `name` column.
 #' @param edges A tibble of edges with `from`, `edge`, and `to` columns.
@@ -478,10 +478,10 @@ caugi_graph <- S7::new_class(
   e
 }
 
-#' @title Internal: Freeze the state environment of a `caugi_graph`
+#' @title Internal: Freeze the state environment of a `caugi`
 #'
-#' @description Internal functions to freeze and unfreezethe state environment
-#' of a `caugi_graph`, preventing further modifications. These functions are not
+#' @description Internal functions to freeze and unfreeze the state environment
+#' of a `caugi`, preventing further modifications. These functions are not
 #' intended to be used directly by users.
 #'
 #' @param e The state environment to freeze/unfreeze.

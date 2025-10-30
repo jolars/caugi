@@ -8,19 +8,19 @@ build <- S7::new_generic("build", "cg")
 
 #' @title Build the graph now
 #'
-#' @description If a `caugi_graph` has been modified (nodes or edges added or
+#' @description If a `caugi` has been modified (nodes or edges added or
 #' removed), it is marked as _not built_, i.e `cg@built = FALSE`.
 #' This function builds the graph using the Rust backend and updates the
 #' internal pointer to the graph. If the graph is already built, it is returned.
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #' @param ... Not used.
 #'
-#' @returns The built `caugi_graph` object.
+#' @returns The built `caugi` object.
 #'
 #' @examples
 #' # initialize empty graph and build slowly
-#' cg <- caugi_graph(class = "PDAG")
+#' cg <- caugi(class = "PDAG")
 #'
 #' cg <- cg |>
 #'   add_nodes(c("A", "B", "C", "D", "E")) |> # A, B, C, D, E
@@ -40,7 +40,7 @@ build <- S7::new_generic("build", "cg")
 #'
 #' @name build
 #' @export
-S7::method(build, caugi_graph) <- function(cg, ...) {
+S7::method(build, caugi) <- function(cg, ...) {
   if (length(list(...)) > 0L) {
     stop("`build()` does not take any arguments other than `cg`.",
       call. = FALSE
@@ -103,14 +103,14 @@ S7::method(build, caugi_graph) <- function(cg, ...) {
 
 #' Caugi graph verbs
 #'
-#' @title Manipulate nodes and edges of a `caugi_graph`
+#' @title Manipulate nodes and edges of a `caugi`
 #' @name caugi_verbs
-#' @description Add, remove, or and set nodes or edges to / from a `caugi_graph`
+#' @description Add, remove, or and set nodes or edges to / from a `caugi`
 #' object. Edges can be specified using expressions with the infix operators.
 #' Alternatively, the edges to be added are specified using the
 #' `from`, `edge`, and `to` arguments.
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #' @param ... Expressions specifying edges to add using the infix operators,
 #' or nodes to add using unquoted names, vectors via `c()`, or `+` composition.
 #' @param from Character vector of source node names. Default is `NULL`.
@@ -118,13 +118,13 @@ S7::method(build, caugi_graph) <- function(cg, ...) {
 #' @param to Character vector of target node names. Default is `NULL`.
 #' @param name Character vector of node names. Default is `NULL`.
 #' @param inplace Logical, whether to modify the graph inplace or not.
-#' If `FALSE` (default), a copy of the `caugi_graph` is made and modified.
+#' If `FALSE` (default), a copy of the `caugi` is made and modified.
 #'
-#' @returns The updated `caugi_graph`.
+#' @returns The updated `caugi`.
 #'
 #' @examples
 #' # initialize empty graph and build slowly
-#' cg <- caugi_graph(class = "PDAG")
+#' cg <- caugi(class = "PDAG")
 #'
 #' cg <- cg |>
 #'   add_nodes(c("A", "B", "C", "D", "E")) |> # A, B, C, D, E
@@ -165,7 +165,7 @@ add_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL,
   edges <- .get_edges_tibble(from, edge, to, calls)
 
   # update via helper and return
-  .update_caugi_graph(cg, edges = edges, action = "add", inplace = inplace)
+  .update_caugi(cg, edges = edges, action = "add", inplace = inplace)
 }
 
 #' @describeIn caugi_verbs Remove edges.
@@ -190,7 +190,7 @@ remove_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL,
   edges <- .get_edges_tibble(from, edge, to, calls)
 
   # update via helper and return
-  .update_caugi_graph(cg, edges = edges, action = "remove", inplace = inplace)
+  .update_caugi(cg, edges = edges, action = "remove", inplace = inplace)
 }
 
 #' @describeIn caugi_verbs Set edge type for given pair(s).
@@ -214,11 +214,11 @@ set_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL,
   edges <- .get_edges_tibble(from, edge, to, calls)
 
   pairs <- dplyr::distinct(dplyr::select(edges, from, to))
-  cg_mod <- .update_caugi_graph(cg,
+  cg_mod <- .update_caugi(cg,
     edges = pairs, action = "remove",
     inplace = inplace
   )
-  cg_mod <- .update_caugi_graph(cg_mod,
+  cg_mod <- .update_caugi(cg_mod,
     edges = edges, action = "add",
     inplace = TRUE
   )
@@ -237,7 +237,7 @@ add_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
   if (!nrow(nodes)) {
     return(cg)
   }
-  .update_caugi_graph(cg, nodes = nodes, action = "add", inplace = inplace)
+  .update_caugi(cg, nodes = nodes, action = "add", inplace = inplace)
 }
 
 #' @describeIn caugi_verbs Remove nodes.
@@ -248,7 +248,7 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
   if (!nrow(nodes)) {
     return(cg)
   }
-  .update_caugi_graph(cg, nodes = nodes, action = "remove", inplace = inplace)
+  .update_caugi(cg, nodes = nodes, action = "remove", inplace = inplace)
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -327,16 +327,16 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
   edges
 }
 
-#' @title Mark a `caugi_graph` as _not built_.
+#' @title Mark a `caugi` as _not built_.
 #'
-#' @description When a `caugi_graph` is modified, it should be marked as not
+#' @description When a `caugi` is modified, it should be marked as not
 #' built. This function sets the `built` attribute to `FALSE`. Thereby, the Rust
 #' backend and the R frontend does not match, and at one point, the
-#' `caugi_graph` will need to be rebuild for it to be queried.
+#' `caugi` will need to be rebuild for it to be queried.
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #'
-#' @returns The same `caugi_graph` object, but with the `built` attribute set to
+#' @returns The same `caugi` object, but with the `built` attribute set to
 #' `FALSE`.
 #'
 #' @keywords internal
@@ -352,23 +352,23 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
   cg
 }
 
-#' @title Update nodes and edges of a `caugi_graph`
+#' @title Update nodes and edges of a `caugi`
 #'
 #' @description Internal helper to add or remove nodes/edges and mark graph as
 #' not built.
 #'
-#' @param cg A `caugi_graph` object.
+#' @param cg A `caugi` object.
 #' @param nodes A tibble with column `name` for node names to add/remove.
 #' @param edges A tibble with columns `from`, `edge`, `to` for edges to
 #' add/remove.
 #' @param action One of `"add"` or `"remove"`.
 #' @param inplace Logical, whether to modify the graph inplace or not.
 #'
-#' @returns The updated `caugi_graph` object.
+#' @returns The updated `caugi` object.
 #' @keywords internal
-.update_caugi_graph <- function(cg, nodes = NULL, edges = NULL,
-                                action = c("add", "remove"),
-                                inplace = FALSE) {
+.update_caugi <- function(cg, nodes = NULL, edges = NULL,
+                          action = c("add", "remove"),
+                          inplace = FALSE) {
   action <- match.arg(action)
 
   # copy-on-write: default is NOT in-place
@@ -386,10 +386,10 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
       name_index_map = s$name_index_map
     )
 
-    cg_copy <- caugi_graph(state = .freeze_state(state_copy))
+    cg_copy <- caugi(state = .freeze_state(state_copy))
 
     # reuse the in-place path on the copy
-    return(.update_caugi_graph(
+    return(.update_caugi(
       cg_copy,
       nodes = nodes, edges = edges, action = action, inplace = TRUE
     ))

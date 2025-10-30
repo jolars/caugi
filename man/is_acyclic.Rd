@@ -7,7 +7,7 @@
 is_acyclic(cg, force_check = FALSE)
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 
 \item{force_check}{Logical; if \code{TRUE}, the function will test if the graph is
 acyclic, if \code{FALSE} (default), it will look at the graph class and match
@@ -26,13 +26,13 @@ some unforeseen way that could have introduced cycles, this function allows
 to force a check of acyclicity, if needed.
 }
 \examples{
-cg_acyclic <- caugi_graph(
+cg_acyclic <- caugi(
   A \%-->\% B,
   B \%-->\% C,
   class = "DAG"
 )
 is_acyclic(cg_acyclic) # TRUE
-cg_cyclic <- caugi_graph(
+cg_cyclic <- caugi(
   A \%-->\% B,
   B \%-->\% C,
   C \%-->\% A,

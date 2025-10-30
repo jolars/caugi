@@ -2,12 +2,12 @@
 % Please edit documentation in R/caugi_to.R
 \name{as_igraph}
 \alias{as_igraph}
-\title{Convert a caugi_graph to an igraph object}
+\title{Convert a caugi to an igraph object}
 \usage{
 as_igraph(x, ...)
 }
 \arguments{
-\item{x}{A \code{caugi_graph} object.}
+\item{x}{A \code{caugi} object.}
 
 \item{...}{Additional arguments passed to \code{igraph::graph_from_data_frame()}.}
 }
@@ -15,10 +15,10 @@ as_igraph(x, ...)
 An \code{igraph} object representing the same graph structure.
 }
 \description{
-Convert a caugi_graph to an igraph object
+Convert a caugi to an igraph object
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   A \%-->\% B,
   class = "DAG"
 )

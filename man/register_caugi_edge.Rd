@@ -53,7 +53,7 @@ register_caugi_edge(
 )
 
 # now, this edge is available for caugi graphs:
-cg <- caugi_graph(A \%-->\% B, B \%<--\% C, class = "DAG")
+cg <- caugi(A \%-->\% B, B \%<--\% C, class = "DAG")
 
 # reset the registry to default
 reset_caugi_registry()

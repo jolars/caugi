@@ -2,12 +2,12 @@
 % Please edit documentation in R/caugi_to.R
 \name{as_adjacency}
 \alias{as_adjacency}
-\title{Convert a caugi_graph to an adjacency matrix}
+\title{Convert a caugi to an adjacency matrix}
 \usage{
 as_adjacency(x)
 }
 \arguments{
-\item{x}{A \code{caugi_graph} object.}
+\item{x}{A \code{caugi} object.}
 }
 \value{
 An integer 0/1 adjacency matrix with row/col names.
@@ -16,7 +16,7 @@ An integer 0/1 adjacency matrix with row/col names.
 Does not take other edge types than the one found in a PDAG.
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   A \%-->\% B,
   class = "DAG"
 )

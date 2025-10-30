@@ -4,7 +4,7 @@
 \alias{nodes}
 \alias{vertices}
 \alias{V}
-\title{Get nodes or edges of a \code{caugi_graph}}
+\title{Get nodes or edges of a \code{caugi}}
 \usage{
 nodes(cg)
 
@@ -13,16 +13,16 @@ vertices(cg)
 V(cg)
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 }
 \value{
 A tibble with a \code{name} column.
 }
 \description{
-Get nodes or edges of a \code{caugi_graph}
+Get nodes or edges of a \code{caugi}
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   A \%-->\% B,
   B \%-->\% C,
   D,

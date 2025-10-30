@@ -3,20 +3,20 @@
 \name{edges}
 \alias{edges}
 \alias{E}
-\title{Get edges of a \code{caugi_graph}.}
+\title{Get edges of a \code{caugi}.}
 \usage{
 edges(cg)
 
 E(cg)
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 }
 \description{
-Get edges of a \code{caugi_graph}.
+Get edges of a \code{caugi}.
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   A \%-->\% B,
   B \%-->\% C,
   D,

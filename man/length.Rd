@@ -2,9 +2,9 @@
 % Please edit documentation in R/methods.R
 \name{length}
 \alias{length}
-\title{Length of a \code{caugi_graph}}
+\title{Length of a \code{caugi}}
 \arguments{
-\item{x}{A \code{caugi_graph} object.}
+\item{x}{A \code{caugi} object.}
 }
 \value{
 An integer representing the number of nodes.
@@ -13,13 +13,13 @@ An integer representing the number of nodes.
 Returns the number of nodes in the graph.
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   A \%-->\% B,
   class = "DAG"
 )
 length(cg) # 2
 
-cg2 <- caugi_graph(
+cg2 <- caugi(
   A \%-->\% B + C,
   nodes = LETTERS[1:5],
   class = "DAG"
@@ -28,8 +28,8 @@ length(cg2) # 5
 
 }
 \seealso{
-Other caugi_graph methods: 
+Other caugi methods: 
 \code{\link{print}()}
 }
-\concept{caugi_graph methods}
+\concept{caugi methods}
 \concept{methods}

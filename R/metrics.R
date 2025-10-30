@@ -11,8 +11,8 @@
 #' @description Compute the Structural Hamming Distance (SHD) between two
 #' graphs.
 #'
-#' @param cg1 A `caugi_graph` object.
-#' @param cg2 A `caugi_graph` object.
+#' @param cg1 A `caugi` object.
+#' @param cg2 A `caugi` object.
 #' @param normalized Logical; if `TRUE`, returns the normalized SHD.
 #'
 #' @returns An integer representing the SHD between the two graphs.
@@ -36,8 +36,8 @@ shd <- function(cg1, cg2, normalized = FALSE) {
 #'
 #' @description Compute the Hamming Distance between two graphs.
 #'
-#' @param cg1 A `caugi_graph` object.
-#' @param cg2 A `caugi_graph` object.
+#' @param cg1 A `caugi` object.
+#' @param cg2 A `caugi` object.
 #' @param normalized Logical; if `TRUE`, returns the normalized Hamming
 #' Distance.
 #'
@@ -63,8 +63,8 @@ hd <- function(cg1, cg2, normalized = FALSE) {
 #' @description Compute the Adjustment Identification Distance (AID) between two
 #' graphs using the `gadjid` Rust package.
 #'
-#' @param truth A `caugi_graph` object.
-#' @param guess A `caugi_graph` object.
+#' @param truth A `caugi` object.
+#' @param guess A `caugi` object.
 #' @param type A character string specifying the type of AID to compute.
 #' Options are `"oset"` (default), `"ancestor"`, and `"parent"`.
 #' @param normalized Logical; if `TRUE`, returns the normalized AID. If `FALSE`,

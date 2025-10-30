@@ -2,21 +2,21 @@
 % Please edit documentation in R/caugi_to.R
 \name{as_dagitty}
 \alias{as_dagitty}
-\title{Convert a caugi_graph to a dagitty graph}
+\title{Convert a caugi to a dagitty graph}
 \usage{
 as_dagitty(x)
 }
 \arguments{
-\item{x}{A \code{caugi_graph} object.}
+\item{x}{A \code{caugi} object.}
 }
 \value{
 A \code{dagitty} object.
 }
 \description{
-Convert a caugi_graph to a dagitty graph
+Convert a caugi to a dagitty graph
 }
 \examples{
-cg <- caugi_graph(
+cg <- caugi(
   A \%-->\% B,
   class = "DAG"
 )

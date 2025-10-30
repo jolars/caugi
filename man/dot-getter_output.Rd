@@ -7,7 +7,7 @@
 .getter_output(cg, idx0, nodes)
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 
 \item{idx0}{A vector of zero-based node indices.}
 

@@ -7,7 +7,7 @@
 is_dag(cg, force_check = FALSE)
 }
 \arguments{
-\item{cg}{A \code{caugi_graph} object.}
+\item{cg}{A \code{caugi} object.}
 
 \item{force_check}{Logical; if \code{TRUE}, the function will test if the graph is
 a DAG, if \code{FALSE} (default), it will look at the graph class and match
@@ -21,17 +21,17 @@ Checks if the given \code{caugi} graph is a
 Directed Acyclic Graph (DAG).
 }
 \examples{
-cg_dag_class <- caugi_graph(
+cg_dag_class <- caugi(
   A \%-->\% B,
   class = "DAG"
 )
 is_dag(cg_dag_class) # TRUE
-cg_dag_but_pdag_class <- caugi_graph(
+cg_dag_but_pdag_class <- caugi(
   A \%-->\% B,
   class = "PDAG"
 )
 is_dag(cg_dag_but_pdag_class) # TRUE
-cg_cyclic <- caugi_graph(
+cg_cyclic <- caugi(
   A \%-->\% B,
   B \%-->\% C,
   C \%-->\% A,
@@ -40,7 +40,7 @@ cg_cyclic <- caugi_graph(
 )
 is_dag(cg_cyclic) # FALSE
 
-cg_undirected <- caugi_graph(
+cg_undirected <- caugi(
   A \%---\% B,
   class = "UNKNOWN"
 )
