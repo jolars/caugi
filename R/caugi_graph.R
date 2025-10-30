@@ -264,9 +264,13 @@ caugi_graph <- S7::new_class(
 
     if (!is.null(nodes)) {
       if (!is.character(nodes)) {
-        stop("`nodes` must be a character vector of node names.",
-          call. = FALSE
-        )
+        if (is.data.frame(nodes) && "name" %in% colnames(nodes)) {
+          nodes <- as.character(nodes$name)
+        } else {
+          stop("`nodes` must be a character vector of node names.",
+            call. = FALSE
+          )
+        }
       }
     }
 
@@ -304,7 +308,7 @@ caugi_graph <- S7::new_class(
         edge = character(),
         to = character()
       )
-      declared <- character()
+      declared <- nodes
     }
 
     edge_node_names <- unique(c(edges$from, edges$to))
