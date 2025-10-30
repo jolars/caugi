@@ -4,7 +4,7 @@
 \alias{aid}
 \title{Adjustment Identification Distance}
 \usage{
-aid(truth, guess, type = c("oset", "ancestor", "parent"))
+aid(truth, guess, type = c("oset", "ancestor", "parent"), normalized = TRUE)
 }
 \arguments{
 \item{truth}{A \code{caugi_graph} object.}
@@ -13,6 +13,9 @@ aid(truth, guess, type = c("oset", "ancestor", "parent"))
 
 \item{type}{A character string specifying the type of AID to compute.
 Options are \code{"oset"} (default), \code{"ancestor"}, and \code{"parent"}.}
+
+\item{normalized}{Logical; if \code{TRUE}, returns the normalized AID. If \code{FALSE},
+returns the count.}
 }
 \value{
 A list containing the score (normalized) and the count.
