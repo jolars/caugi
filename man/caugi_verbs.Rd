@@ -9,15 +9,15 @@
 \alias{remove_nodes}
 \title{Manipulate nodes and edges of a \code{caugi_graph}}
 \usage{
-add_edges(cg, ..., from = NULL, edge = NULL, to = NULL)
+add_edges(cg, ..., from = NULL, edge = NULL, to = NULL, inplace = FALSE)
 
-remove_edges(cg, ..., from = NULL, edge = NULL, to = NULL)
+remove_edges(cg, ..., from = NULL, edge = NULL, to = NULL, inplace = FALSE)
 
-set_edges(cg, ..., from = NULL, edge = NULL, to = NULL)
+set_edges(cg, ..., from = NULL, edge = NULL, to = NULL, inplace = FALSE)
 
-add_nodes(cg, ..., name = NULL)
+add_nodes(cg, ..., name = NULL, inplace = FALSE)
 
-remove_nodes(cg, ..., name = NULL)
+remove_nodes(cg, ..., name = NULL, inplace = FALSE)
 }
 \arguments{
 \item{cg}{A \code{caugi_graph} object.}

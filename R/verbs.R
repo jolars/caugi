@@ -143,7 +143,8 @@ NULL
 
 #' @describeIn caugi_verbs Add edges.
 #' @export
-add_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL) {
+add_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL,
+                      inplace = FALSE) {
   calls <- as.list(substitute(list(...)))[-1L]
   has_expr <- length(calls) > 0L
   has_vec <- !(is.null(from) && is.null(edge) && is.null(to))
@@ -162,12 +163,13 @@ add_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL) {
   edges <- .get_edges_tibble(from, edge, to, calls)
 
   # update via helper and return
-  .update_caugi_graph(cg, edges = edges, action = "add")
+  .update_caugi_graph(cg, edges = edges, action = "add", inplace = inplace)
 }
 
 #' @describeIn caugi_verbs Remove edges.
 #' @export
-remove_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL) {
+remove_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL,
+                         inplace = FALSE) {
   calls <- as.list(substitute(list(...)))[-1L]
   has_expr <- length(calls) > 0L
   has_vec <- !(is.null(from) && is.null(edge) && is.null(to))
@@ -186,12 +188,13 @@ remove_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL) {
   edges <- .get_edges_tibble(from, edge, to, calls)
 
   # update via helper and return
-  .update_caugi_graph(cg, edges = edges, action = "remove")
+  .update_caugi_graph(cg, edges = edges, action = "remove", inplace = inplace)
 }
 
 #' @describeIn caugi_verbs Set edge type for given pair(s).
 #' @export
-set_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL) {
+set_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL,
+                      inplace = FALSE) {
   calls <- as.list(substitute(list(...)))[-1L]
   has_expr <- length(calls) > 0L
   has_vec <- !(is.null(from) && is.null(edge) && is.null(to))
@@ -209,9 +212,15 @@ set_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL) {
   edges <- .get_edges_tibble(from, edge, to, calls)
 
   pairs <- dplyr::distinct(dplyr::select(edges, from, to))
-  cg <- .update_caugi_graph(cg, edges = pairs, action = "remove")
-  cg <- .update_caugi_graph(cg, edges = edges, action = "add")
-  cg
+  cg_mod <- .update_caugi_graph(cg,
+    edges = pairs, action = "remove",
+    inplace = inplace
+  )
+  cg_mod <- .update_caugi_graph(cg,
+    edges = edges, action = "add",
+    inplace = TRUE
+  )
+  cg_mod
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -220,24 +229,24 @@ set_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL) {
 
 #' @describeIn caugi_verbs Add nodes.
 #' @export
-add_nodes <- function(cg, ..., name = NULL) {
+add_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
   calls <- as.list(substitute(list(...)))[-1L]
   nodes <- .get_nodes_tibble(name, calls)
   if (!nrow(nodes)) {
     return(cg)
   }
-  .update_caugi_graph(cg, nodes = nodes, action = "add")
+  .update_caugi_graph(cg, nodes = nodes, action = "add", inplace = inplace)
 }
 
 #' @describeIn caugi_verbs Remove nodes.
 #' @export
-remove_nodes <- function(cg, ..., name = NULL) {
+remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
   calls <- as.list(substitute(list(...)))[-1L]
   nodes <- .get_nodes_tibble(name, calls)
   if (!nrow(nodes)) {
     return(cg)
   }
-  .update_caugi_graph(cg, nodes = nodes, action = "remove")
+  .update_caugi_graph(cg, nodes = nodes, action = "remove", inplace = inplace)
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -351,12 +360,39 @@ remove_nodes <- function(cg, ..., name = NULL) {
 #' @param edges A tibble with columns `from`, `edge`, `to` for edges to
 #' add/remove.
 #' @param action One of `"add"` or `"remove"`.
+#' @param inplace Logical, whether to modify the graph inplace or not.
 #'
 #' @returns The updated `caugi_graph` object.
 #' @keywords internal
 .update_caugi_graph <- function(cg, nodes = NULL, edges = NULL,
-                                action = c("add", "remove")) {
+                                action = c("add", "remove"),
+                                inplace = FALSE) {
   action <- match.arg(action)
+
+  # copy-on-write: default is NOT in-place
+  if (!inplace) {
+    s <- cg@`.state`
+
+    # clone state (no unlocking of the original)
+    state_copy <- .cg_state(
+      nodes = s$nodes,
+      edges = s$edges,
+      ptr = NULL,
+      built = FALSE,
+      simple = s$simple,
+      class = s$class,
+      name_index_map = s$name_index_map
+    )
+
+    cg_copy <- caugi_graph(state = .freeze_state(state_copy))
+
+    # reuse the in-place path on the copy
+    return(.update_caugi_graph(
+      cg_copy,
+      nodes = nodes, edges = edges, action = action, inplace = TRUE
+    ))
+  }
+
   s <- .unfreeze_state(cg@`.state`)
 
   if (identical(action, "add")) {

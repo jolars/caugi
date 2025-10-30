@@ -8,7 +8,8 @@
   cg,
   nodes = NULL,
   edges = NULL,
-  action = c("add", "remove")
+  action = c("add", "remove"),
+  inplace = FALSE
 )
 }
 \arguments{
@@ -20,6 +21,8 @@
 add/remove.}
 
 \item{action}{One of \code{"add"} or \code{"remove"}.}
+
+\item{inplace}{Logical, whether to modify the graph inplace or not.}
 }
 \value{
 The updated \code{caugi_graph} object.
