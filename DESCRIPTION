@@ -1,38 +1,40 @@
 Package: caugi
-Title: Causal Graph Interface 
+Title: Causal Graph Interface
 Version: 0.0.0.9000
 Author: Frederik Fabricius-Bjerre [aut, cre]
 Maintainer: Frederik Fabricius-Bjerre <frederik@fabriciusbjerre.dk>
-Description: caugi is a package for creating, querying, and processing causal graphs.
+Description: caugi is a package for creating, querying, and processing
+    causal graphs.
 License: MIT + file LICENSE
-Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
+URL: https://frederikfabriciusbjerre.github.io/caugi/
+Depends: 
+    R (>= 4.2)
 Imports:
-    fastmap,
-    tibble,
-    dplyr,
     data.table,
+    dplyr,
+    fastmap,
     S7,
-    stats
+    stats,
+    tibble
 Suggests: 
     bench,
     bnlearn,
     dagitty,
     devtools,
-    igraph,
     ggm,
     graph,
     gRbase,
+    igraph,
     knitr,
     MASS,
     Matrix,
     rextendr,
     rmarkdown,
     testthat
+VignetteBuilder: 
+    knitr
 Config/rextendr/version: 0.4.2
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
 SystemRequirements: Cargo (Rust's package manager), rustc >= 1.65.0, xz
-Depends: 
-    R (>= 4.2)
-VignetteBuilder: knitr
-URL: https://frederikfabriciusbjerre.github.io/caugi/
