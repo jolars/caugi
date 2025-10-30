@@ -20,4 +20,102 @@ knitr::opts_chunk$set(
 library(caugi)
 ```
 
+In this vignette, you will be walked through on how to create a `caugi_graph`, query it, and modify it.
 
+## The `caugi` object
+
+You can create a `caugi` graph object using the `caugi_graph()` function along with infix operators to define edges. Let's create a directed acyclic graph (DAG) with 5 nodes and 5 edges.
+
+```{r define-cg}
+cg <- caugi_graph(
+  A %-->% B %-->% C + D,
+  A %-->% C,
+  class = "DAG"
+)
+cg
+```
+
+First, notice that the graph prints two `tibbles`. The first is equivalent to `cg@nodes` and the second `cg@edges`. Besides that the `caugi` holds other _properties_. Let's check the other properties. 
+
+### Properties
+
+#### `ptr`
+
+```{r}
+cg@ptr
+```
+
+This is the pointer to the Rust object that `caugi` utilizes for performance. 
+
+#### `simple`
+
+```{r}
+cg@simple
+```
+
+This indicates whether the graph is simple or not. Let's try to create a non-simple graph:
+
+```{r}
+try(
+  caugi_graph(A %-->% B, B %-->% A)
+)
+```
+
+This cannot be done unless you initialize the graph with `simple = FALSE`.
+
+#### `built`
+
+```{r}
+cg@built
+```
+
+This indicates whether the graph has been "built" or not on the Rust side. 
+
+#### `graph_class`
+
+```{r}
+cg@graph_class
+```
+
+This is the graph's class. As you can see here, it is a DAG.
+
+#### `name_index_map`
+
+```{r, eval=FALSE}
+cg@name_index_map
+```
+
+The `name_index_map` is a hashmap that takes node names as keys and output zero-based indexes. You don't need to worry about this, as it is mostly used internally. 
+
+#### `.state`
+
+```{r}
+cg@.state
+```
+
+This is the internal state of the `caugi` graph object. It is used to ensure that the `caugi` object can be modifying in R and, so to say, _safes_ the modifications you might make to the graph in R without having to rebuild the graph in Rust each time. The most important takeaways about the state is that you should _avoid_ modifying the state directly. Instead, you should use the _verbs_. 
+
+## Modifying the `caugi`
+
+Let's try to modify the graph from before, so we get a new DAG.
+
+```{r}
+cg_modified <- cg |> remove_edges(A %-->% B, B %-->% C + D) |>
+  add_edges(B %-->% A, D %-->% C)
+cg_modified
+```
+
+Would you like to add nodes? Then use `add_nodes()`. 
+
+## Graph metrics
+
+Now that we have two different graphs, we can use different metrics to measure the difference between the two graphs. Here, we use the adjustment identification distance (AID) and the structural Hamming distance (SHD): 
+
+```{r}
+aid(cg, cg_modified)
+shd(cg, cg_modified, normalized = TRUE)
+```
+
+## There you go!
+
+You have now created a graph, inspected it, modified it, and measured the difference between the two graphs -- both structurally and interventionally. 
