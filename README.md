@@ -98,7 +98,7 @@ objects. Some of the available functions are:
 
 - Relational queries, such as `parents()`, `ancestors()`, `neighbors()`,
   and more.
-- Structural queries, such as `is_acyclic()`, `is_cpdag`, and more.
+- Structural queries, such as `is_acyclic()`, `is_cpdag()`, and more.
 - Graph manipulations, such as `add_edge()`, `remove_node()`, and more.
 - Graph metrics, such as `shd()` and `aid()`.
 
