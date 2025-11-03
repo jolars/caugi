@@ -114,8 +114,10 @@ caugi/
 
 ### System Requirements
 - Cargo (Rust package manager)
-- rustc >= 1.75.0
+- rustc >= 1.75.0 (as specified in DESCRIPTION)
 - xz compression library
+
+**Note**: The Cargo.toml specifies `rust-version = '1.85'` and `edition = '2024'`, but these appear to be non-standard values. The authoritative requirement is in the DESCRIPTION file.
 
 ## Contribution Guidelines
 
