@@ -5,7 +5,7 @@ use extendr_api::prelude::*;
 pub mod edges;
 pub mod graph;
 
-use edges::{EdgeClass, EdgeRegistry, EdgeSpec, Mark, QueryFlags};
+use edges::{EdgeClass, EdgeRegistry, EdgeSpec, Mark};
 use graph::builder::GraphBuilder;
 
 #[cfg(feature = "gadjid")]
@@ -80,22 +80,7 @@ fn edge_registry_register(
     head_mark: &str,
     class: &str,
     symmetric: bool,
-    flags: Vec<String>,
 ) -> i32 {
-    use QueryFlags as F;
-    fn parse_flags(v: &[String]) -> F {
-        let mut out = F::empty();
-        for raw in v {
-            match raw.trim().to_ascii_uppercase().as_str() {
-                "TRAVERSABLE_WHEN_CONDITIONED" | "TRAVERSABLE" => {
-                    out |= F::TRAVERSABLE_WHEN_CONDITIONED
-                }
-                "LATENT_CONFOUNDING" => out |= F::LATENT_CONFOUNDING,
-                other => throw_r_error(format!("Unknown flag '{other}'")),
-            }
-        }
-        out
-    }
     let tail = tail_mark
         .parse::<Mark>()
         .unwrap_or_else(|e| throw_r_error(e));
@@ -111,7 +96,6 @@ fn edge_registry_register(
         head,
         symmetric,
         class,
-        flags: parse_flags(&flags),
     };
     match reg.as_mut().register(spec) {
         Ok(c) => c as i32,

@@ -317,8 +317,7 @@ test_that("as_dagitty errors on unsupported edge types", {
     tail_mark = "arrow",
     head_mark = "tail",
     class = "directed",
-    symmetric = FALSE,
-    flags = c("TRAVERSABLE_WHEN_CONDITIONED")
+    symmetric = FALSE
   )
   cg1 <- caugi(A %<--% B, class = "UNKNOWN")
   expect_error(as_dagitty(cg1), "Unsupported edge type for dagitty")

@@ -5,15 +5,14 @@ test_that("graph builder works for directed edge in reverse direction", {
   edge_registry_register_builtins(reg)
   expect_equal(edge_registry_len(reg), 6L)
 
-  # Custom undirected edge without POSS flags so possible_* stay empty
+  # Custom directed edge in reverse direction
   code_und <- edge_registry_register(
     reg,
     glyph = "<--",
     tail_mark = "arrow",
     head_mark = "tail",
     class = "directed",
-    symmetric = FALSE,
-    flags = c("TRAVERSABLE_WHEN_CONDITIONED")
+    symmetric = FALSE
   )
   expect_true(is.integer(code_und) || is.double(code_und))
 
@@ -81,8 +80,7 @@ test_that("edge registry seal works", {
     tail_mark = "other",
     head_mark = "other",
     class = "undirected",
-    symmetric = TRUE,
-    flags = c("TRAVERSABLE_WHEN_CONDITIONED")
+    symmetric = TRUE
   )
   expect_true(is.integer(code_und) || is.double(code_und))
   expect_equal(edge_registry_len(reg), 7L)
@@ -95,8 +93,7 @@ test_that("edge registry seal works", {
     tail_mark = "other",
     head_mark = "other",
     class = "undirected",
-    symmetric = TRUE,
-    flags = c("TRAVERSABLE_WHEN_CONDITIONED")
+    symmetric = TRUE
   ))
 
   expect_equal(edge_registry_code_of(reg, "x-x"), as.integer(code_und))
