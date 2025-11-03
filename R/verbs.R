@@ -83,14 +83,6 @@ S7::method(build, caugi) <- function(cg, ...) {
   ) |>
     dplyr::arrange(from, to, edge)
 
-  # fastmap bulk fill
-  name_index_map <- fastmap::fastmap()
-  do.call(
-    name_index_map$mset,
-    stats::setNames(as.list(seq_len(nrow(s$nodes)) - 1L), s$nodes$name)
-  )
-  s$name_index_map <- name_index_map
-
   s$ptr <- p
   s$built <- TRUE
   .freeze_state(cg@`.state`)
@@ -409,6 +401,15 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
       )))
       s$edges <- dplyr::distinct(dplyr::bind_rows(s$edges, edges))
     }
+    # update fastmap
+    new_ids <- setdiff(s$nodes$name, s$name_index_map$keys())
+    if (length(new_ids) > 0L) {
+      new_id_values <- seq_len(length(new_ids)) - 1L + nrow(s$nodes) - length(new_ids)
+      do.call(
+        s$name_index_map$mset,
+        stats::setNames(as.list(new_id_values), new_ids)
+      )
+    }
   } else {
     if (!is.null(edges)) {
       keys <- intersect(c("from", "edge", "to"), names(edges))
@@ -429,6 +430,15 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
     }
     s$nodes <- tibble::tibble(name = unique(s$nodes$name))
     s$edges <- dplyr::distinct(s$edges)
+
+    # update fastmap
+    drop_ids <- intersect(nodes$name, s$name_index_map$keys())
+    if (length(drop_ids) > 0L) {
+      do.call(
+        s$name_index_map$remove,
+        as.list(drop_ids)
+      )
+    }
   }
   .freeze_state(cg@`.state`)
   .mark_not_built(cg)
