@@ -43,26 +43,6 @@ test_that("build() errors when breaking simple graph assumptions", {
   expect_error(build(cg), "self-loop")
 })
 
-test_that("build updates name_index_map", {
-  # start with a built graph
-  cg <- caugi(from = "A", edge = "-->", to = "B")
-  expect_true(cg@built)
-  expect_identical(cg@name_index_map$get("A"), 0L)
-  expect_identical(cg@name_index_map$get("B"), 1L)
-
-  # mutate graph → not built, fastmap still stale
-  cg <- add_nodes(cg, name = "C")
-  expect_false(cg@built)
-  expect_null(cg@name_index_map$get("C"))
-
-  # rebuild → fastmap must include the new node with correct index
-  cg <- build(cg)
-  expect_true(cg@built)
-  expect_identical(cg@name_index_map$get("A"), 0L)
-  expect_identical(cg@name_index_map$get("B"), 1L)
-  expect_identical(cg@name_index_map$get("C"), 2L)
-})
-
 # ──────────────────────────────────────────────────────────────────────────────
 # ────────────────────────────────── Edges ─────────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
@@ -222,6 +202,36 @@ test_that("add_nodes, remove_nodes cover vector and expr paths", {
   cg5 <- add_edges(cg2, A %-->% B, B %-->% C)
   cg6 <- remove_nodes(cg5)
   expect_equal(cg5, cg6) # no-op if no nodes given
+})
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────── Hashmap updating ───────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("name_to_index_map updates when using verbs", {
+  cg <- caugi()
+  expect_equal(cg@name_index_map$size(), 0L)
+
+  # adding nodes
+  cg1 <- add_nodes(cg, name = c("A", "B"))
+  expect_equal(cg1@name_index_map$size(), 2L)
+  expect_identical(cg1@name_index_map$get("A"), 0L)
+  expect_identical(cg1@name_index_map$get("B"), 1L)
+
+  cg2 <- add_nodes(cg1, name = "C")
+  expect_equal(cg2@name_index_map$size(), 3L)
+  expect_equal(cg2@name_index_map$size(), 3L)
+  expect_identical(cg2@name_index_map$get("C"), 2L)
+
+  # removing nodes
+  cg3 <- remove_nodes(cg2, name = "B")
+  expect_equal(cg3@name_index_map$size(), 2L)
+  expect_null(cg3@name_index_map$get("B"))
+
+  # adding edges (should add nodes if missing)
+  cg4 <- add_edges(cg3, from = "A", edge = "-->", to = "D")
+  expect_equal(cg4@name_index_map$size(), 3L)
+  expect_identical(cg4@name_index_map$get("D"), 2L)
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
