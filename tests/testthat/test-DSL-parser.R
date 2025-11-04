@@ -54,8 +54,7 @@ test_that(".glyph_of returns correct glyph", {
     tail_mark = "arrow",
     head_mark = "tail",
     class = "directed",
-    symmetric = FALSE,
-    flags = "TRAVERSABLE_WHEN_CONDITIONED"
+    symmetric = FALSE
   )
   expect_equal(.glyph_of(as.symbol("%<--%")), "<--")
   reset_caugi_registry()
@@ -212,8 +211,7 @@ test_that(".parse_edge_arg handles multiple edge units with context", {
     tail_mark = "arrow",
     head_mark = "tail",
     class = "directed",
-    symmetric = FALSE,
-    flags = "TRAVERSABLE_WHEN_CONDITIONED"
+    symmetric = FALSE
   )
   # Build: X + (A %-->% B) + Y + (C %<--% D) + Z
   e1 <- call("%-->%", quote(A), quote(B))

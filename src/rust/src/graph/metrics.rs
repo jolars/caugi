@@ -351,7 +351,7 @@ mod tests {
 
     #[test]
     fn shd_custom_glyph_opposite_same_direction_is_zero() {
-        use crate::edges::{EdgeClass, EdgeRegistry, EdgeSpec, Mark, QueryFlags};
+        use crate::edges::{EdgeClass, EdgeRegistry, EdgeSpec, Mark};
         use crate::graph::builder::GraphBuilder;
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
@@ -361,7 +361,6 @@ mod tests {
             head: Mark::Tail,
             symmetric: false,
             class: EdgeClass::Directed,
-            flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
         })
         .unwrap();
         let dir = reg.code_of("-->").unwrap();

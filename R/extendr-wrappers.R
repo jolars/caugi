@@ -18,7 +18,7 @@ edge_registry_seal <- function(reg) invisible(.Call(wrap__edge_registry_seal, re
 
 edge_registry_len <- function(reg) .Call(wrap__edge_registry_len, reg)
 
-edge_registry_register <- function(reg, glyph, tail_mark, head_mark, class, symmetric, flags) .Call(wrap__edge_registry_register, reg, glyph, tail_mark, head_mark, class, symmetric, flags)
+edge_registry_register <- function(reg, glyph, tail_mark, head_mark, class, symmetric) .Call(wrap__edge_registry_register, reg, glyph, tail_mark, head_mark, class, symmetric)
 
 edge_registry_code_of <- function(reg, glyphs) .Call(wrap__edge_registry_code_of, reg, glyphs)
 

@@ -90,9 +90,6 @@ seal_caugi_registry <- function() {
 #' @param head_mark One of "arrow", "tail", "circle", "other".
 #' @param class One of "directed","undirected","bidirected","partial".
 #' @param symmetric Logical.
-#' @param flags A character vector of flags. Currently supported:
-#' * "TRAVERSABLE_WHEN_CONDITIONED"
-#' * "LATENT_CONFOUNDING"
 #' @returns TRUE, invisibly.
 #'
 #' @examples
@@ -125,8 +122,7 @@ register_caugi_edge <- function(glyph,
                                 tail_mark,
                                 head_mark,
                                 class,
-                                symmetric = FALSE,
-                                flags = NULL) {
+                                symmetric = FALSE) {
   if (!is.character(glyph) || length(glyph) != 1L) {
     stop("glyph must be a single string")
   }
@@ -143,10 +139,6 @@ register_caugi_edge <- function(glyph,
   if (class %in% c("undirected", "bidirected", "partial") && !symmetric) {
     stop("This class must be symmetric")
   }
-  if (missing(flags) || is.null(flags)) {
-    flags <- character(0)
-  }
-  flags <- as.character(flags)
 
   reg <- caugi_registry()
   edge_registry_register(
@@ -155,8 +147,7 @@ register_caugi_edge <- function(glyph,
     tail_mark,
     head_mark,
     class,
-    symmetric,
-    flags
+    symmetric
   )
   .register_edge(glyph)
   invisible(TRUE)

@@ -3,8 +3,7 @@
 
 use std::{collections::HashMap, error::Error, fmt, result::Result, str::FromStr};
 
-mod query_flags;
-pub use query_flags::QueryFlags;
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mark {
@@ -85,7 +84,6 @@ pub struct EdgeSpec {
     pub head: Mark,
     pub symmetric: bool,
     pub class: EdgeClass,
-    pub flags: QueryFlags,
 }
 
 impl EdgeSpec {
@@ -205,14 +203,12 @@ impl EdgeRegistry {
     pub fn register_builtins(&mut self) -> Result<(), RegistryError> {
         use EdgeClass as C;
         use Mark as M;
-        use QueryFlags as F;
 
         let mut add = |glyph: &str,
                        tail: M,
                        head: M,
                        symmetric: bool,
-                       class: C,
-                       flags: F|
+                       class: C|
          -> Result<(), RegistryError> {
             self.register(EdgeSpec {
                 glyph: glyph.to_string(),
@@ -220,19 +216,17 @@ impl EdgeRegistry {
                 head,
                 symmetric,
                 class,
-                flags,
             })
             .map(|_| ())
         };
 
-        // Built-in mappings with retained flags
+        // Built-in mappings
         add(
             "-->",
             M::Tail,
             M::Arrow,
             false,
             C::Directed,
-            F::TRAVERSABLE_WHEN_CONDITIONED,
         )?;
         add(
             "---",
@@ -240,7 +234,6 @@ impl EdgeRegistry {
             M::Tail,
             true,
             C::Undirected,
-            F::TRAVERSABLE_WHEN_CONDITIONED,
         )?;
         add(
             "<->",
@@ -248,7 +241,6 @@ impl EdgeRegistry {
             M::Arrow,
             true,
             C::Bidirected,
-            F::TRAVERSABLE_WHEN_CONDITIONED | F::LATENT_CONFOUNDING,
         )?;
         add(
             "o-o",
@@ -256,7 +248,6 @@ impl EdgeRegistry {
             M::Circle,
             true,
             C::Partial,
-            F::TRAVERSABLE_WHEN_CONDITIONED,
         )?;
         add(
             "--o",
@@ -264,7 +255,6 @@ impl EdgeRegistry {
             M::Circle,
             false,
             C::PartiallyUndirected,
-            F::TRAVERSABLE_WHEN_CONDITIONED,
         )?;
         add(
             "o->",
@@ -272,7 +262,6 @@ impl EdgeRegistry {
             M::Arrow,
             false,
             C::PartiallyDirected,
-            F::TRAVERSABLE_WHEN_CONDITIONED,
         )?;
         Ok(())
     }
@@ -307,7 +296,6 @@ mod tests {
             head: Mark::Arrow,
             symmetric: false,
             class: EdgeClass::Directed,
-            flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
         };
         let code = r.register(spec.clone()).unwrap();
         assert_eq!(r.len(), before + 1);
@@ -324,7 +312,6 @@ mod tests {
             head: Mark::Other,
             symmetric: false,
             class: EdgeClass::Partial,
-            flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
         };
         let c1 = r.register(spec.clone()).unwrap();
         let c2 = r.register(spec).unwrap();
@@ -341,7 +328,6 @@ mod tests {
             head: Mark::Tail,
             symmetric: true,
             class: EdgeClass::Undirected,
-            flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
         };
         assert!(matches!(
             r.register(bad),
@@ -356,7 +342,6 @@ mod tests {
             head: Mark::Other,
             symmetric: true,
             class: EdgeClass::Undirected,
-            flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
         };
         assert!(matches!(r.register(new), Err(RegistryError::Sealed)));
     }
@@ -416,7 +401,6 @@ mod tests {
             head: Mark::Arrow,
             symmetric: false,
             class: EdgeClass::Directed,
-            flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
         }
         .glyph("x->");
         let c = r.register(s.clone()).unwrap();
@@ -436,12 +420,7 @@ mod tests {
         assert!(!r.is_empty());
     }
 
-    #[test]
-    fn flags_bitops_compose() {
-        let f = QueryFlags::TRAVERSABLE_WHEN_CONDITIONED | QueryFlags::LATENT_CONFOUNDING;
-        assert!(f.contains(QueryFlags::TRAVERSABLE_WHEN_CONDITIONED));
-        assert!(f.contains(QueryFlags::LATENT_CONFOUNDING));
-    }
+
 
     #[test]
     fn display_errors_text() {
@@ -469,7 +448,6 @@ mod tests {
                 head: Mark::Other,
                 symmetric: true,
                 class: EdgeClass::Undirected,
-                flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
             };
             r.register(spec).unwrap();
         }
@@ -481,7 +459,6 @@ mod tests {
             head: Mark::Other,
             symmetric: true,
             class: EdgeClass::Undirected,
-            flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
         };
         assert!(matches!(
             r.register(overflow),
@@ -507,7 +484,6 @@ mod tests {
                 head: Mark::Tail,
                 symmetric: true,
                 class: EdgeClass::Undirected,
-                flags: QueryFlags::TRAVERSABLE_WHEN_CONDITIONED,
             })
             .unwrap_err();
         let msg = err.to_string();

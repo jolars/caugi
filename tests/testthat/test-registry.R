@@ -54,15 +54,7 @@ test_that("duplicate glyph triggers operator registration error on second call",
   reset_caugi_registry()
 })
 
-test_that("flags are accepted and mapped", {
-  reset_caugi_registry()
-  expect_silent(register_caugi_edge(
-    "--^", "tail", "arrow", "directed", FALSE,
-    c("TRAVERSABLE", "LATENT_CONFOUNDING")
-  ))
 
-  reset_caugi_registry()
-})
 
 
 test_that("glyph validation", {
