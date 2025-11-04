@@ -4,14 +4,7 @@
 \alias{register_caugi_edge}
 \title{Register a new edge type in the global registry.}
 \usage{
-register_caugi_edge(
-  glyph,
-  tail_mark,
-  head_mark,
-  class,
-  symmetric = FALSE,
-  flags = NULL
-)
+register_caugi_edge(glyph, tail_mark, head_mark, class, symmetric = FALSE)
 }
 \arguments{
 \item{glyph}{A string representing the edge glyph (e.g., \code{"-->"}, \code{"<->"}).}
@@ -23,12 +16,6 @@ register_caugi_edge(
 \item{class}{One of "directed","undirected","bidirected","partial".}
 
 \item{symmetric}{Logical.}
-
-\item{flags}{A character vector of flags. Currently supported:
-\itemize{
-\item "TRAVERSABLE_WHEN_CONDITIONED"
-\item "LATENT_CONFOUNDING"
-}}
 }
 \value{
 TRUE, invisibly.
