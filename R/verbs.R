@@ -434,10 +434,10 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
     # update fastmap
     drop_ids <- intersect(nodes$name, s$name_index_map$keys())
     if (length(drop_ids) > 0L) {
-      do.call(
-        s$name_index_map$remove,
-        as.list(drop_ids)
-      )
+      s$name_index_map$remove(keys = drop_ids)
+      for (i in seq_len(nrow(s$nodes))) {
+        s$name_index_map$set(s$nodes$name[i], i - 1L)
+      }
     }
   }
   .freeze_state(cg@`.state`)

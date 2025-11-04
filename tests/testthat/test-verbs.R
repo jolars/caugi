@@ -232,6 +232,11 @@ test_that("name_to_index_map updates when using verbs", {
   cg4 <- add_edges(cg3, from = "A", edge = "-->", to = "D")
   expect_equal(cg4@name_index_map$size(), 3L)
   expect_identical(cg4@name_index_map$get("D"), 2L)
+
+  # remove several nodes
+  cg5 <- remove_nodes(cg4, name = c("A", "C"))
+  expect_equal(cg5@name_index_map$size(), 1L)
+  expect_identical(cg5@name_index_map$get("D"), 0L)
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
