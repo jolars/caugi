@@ -378,6 +378,21 @@ S7::method(
           li <- lj
           lj <- tmp
         }
+        if (lf == "o" && rt == "-") {
+          lf <- "-"
+          rt <- "o"
+          tmp <- li
+          li <- lj
+          lj <- tmp
+        }
+        # <-o   : >o
+        if (lf == ">" && rt == "o") {
+          lf <- "o"
+          rt <- ">"
+          tmp <- li
+          li <- lj
+          lj <- tmp
+        }
 
         glyph <- switch(paste0(lf, rt),
           "--" = "---",
