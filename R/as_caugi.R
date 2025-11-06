@@ -323,10 +323,12 @@ S7::method(
         call. = FALSE
       )
     }
-    if (class != "PAG" && any(!(x %in% 0:1))) {
-      stop("Only 0 and 1 integer codes are supported for non-PAG matrices.",
-        call. = FALSE
-      )
+    if (class != "PAG" && (any(!(x %in% 0:1)))) {
+      if (any(!(x %in% c(0, 2, 3)))) {
+        stop("Only either 0:1 are allowed or 0,2,3 for PAG edge codes.",
+          call. = FALSE
+        )
+      }
     }
   } else {
     stop("`x` must be logical or numeric matrix.", call. = FALSE)
