@@ -325,7 +325,8 @@ S7::method(
     }
     if (class != "PAG" && (any(!(x %in% 0:1)))) {
       if (any(!(x %in% c(0, 2, 3)))) {
-        stop("Only either 0:1 are allowed or 0,2,3 for PAG edge codes.",
+        stop("Only either 0:1 are allowed or 0,2,3 for PAG edge codes in a ",
+          "non-PAG matrix.",
           call. = FALSE
         )
       }
