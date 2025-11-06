@@ -58,9 +58,7 @@ test_that("matrix validation errors", {
   y <- matrix(0L, 2, 2)
   y[1, 2] <- 1L # circle endpoints
   y[2, 1] <- 2L # arrow endpoint
-  expect_error(as_caugi(y, class = "DAG"), "Only either 0:1 are allowed or 0,2,3",
-    fixed = TRUE
-  )
+  expect_error(as_caugi(y, class = "DAG"), "Only either 0:1 are allowed or 0,2,3")
 
   # invalid codes for PAG
   z <- matrix(0L, 2, 2)
