@@ -39,8 +39,7 @@ A \code{caugi} object.
 }
 \description{
 Convert an object to a \code{caugi}. The object can be a
-\code{graphNEL}, ``matrix\verb{, or a data frame with }from`, `to`, and
-`edge_type` columns.
+\code{graphNEL}, \code{matrix}, \code{tidygraph}, \code{daggity}, \code{bn}, or \code{igraph}.
 }
 \details{
 For matrices, \code{as_caugi} assumes that the rows are the \code{from} nodes

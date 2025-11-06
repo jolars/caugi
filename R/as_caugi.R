@@ -12,8 +12,7 @@ Matrix_S4_class <- readRDS("inst/S4_class_definitions/Matrix_class.rds")
 #' @title Convert to a `caugi`
 #'
 #' @description Convert an object to a `caugi`. The object can be a
-#' `graphNEL`, ``matrix`, or a data frame with `from`, `to`, and
-#' `edge_type` columns.
+#' `graphNEL`, `matrix`, `tidygraph`, `daggity`, `bn`, or `igraph`.
 #'
 #' @details
 #' For matrices, `as_caugi` assumes that the rows are the `from` nodes
