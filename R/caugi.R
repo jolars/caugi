@@ -28,6 +28,9 @@
 #' @param to Character vector of target node names.
 #' Optional; mutually exclusive with `...`.
 #' @param nodes Character vector of node names to declare as isolated nodes.
+#' An optional, but recommended, option is to provide all node names in the
+#' graph, including those that appear in edges. If `nodes` is provided, the
+#' order of nodes in the graph will follow the order in `nodes`.
 #' @param simple Logical; if `TRUE` (default), the graph is a simple graph, and
 #' the function will throw an error if the input contains parallel edges or
 #' self-loops.
