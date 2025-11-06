@@ -16,13 +16,11 @@
 ### R Code
 
 - **Follow tidyverse style guide**: Use `styler::style_pkg()` before committing R code
-- **Roxygen2 documentation**: All exported functions must have comprehensive documentation with `@param`, `@returns`, and `@examples`
-- **Line separators**: Use decorative comment lines (`# ────────`) to separate major sections in files
+- **Roxygen2 documentation**: All exported functions must have comprehensive documentation with `@title`, `@description`, `@param`, `@returns`, and `@examples`
 - **Naming conventions**:
   - Functions: `snake_case`
-  - S7 classes: `PascalCase` or `snake_case`
+  - S7 classes: `snake_case`
   - Internal functions: prefix with `.` (e.g., `.internal_function`)
-- **Edge operators**: The package defines custom infix operators like `%-->%`, `%---%`, `%<->%`, etc.
 
 ### Rust Code
 
@@ -110,14 +108,13 @@ caugi/
 ### Rust Dependencies
 - `extendr-api = "0.8.1"` - R bindings
 - `bitflags = "2.9.3"` - Bitflag operations
-- `gadjid` (optional) - Additional graph algorithms
+- `gadjid` (optional) - For adjustment identification distance
 
 ### System Requirements
 - Cargo (Rust package manager)
-- rustc >= 1.75.0 (as specified in DESCRIPTION)
-- xz compression library
+- rustc >= 1.85.0 (as specified in DESCRIPTION)
 
-**Note**: The Cargo.toml specifies `rust-version = '1.85'` and `edition = '2024'`, but these appear to be non-standard values. The authoritative requirement is in the DESCRIPTION file.
+**Note**: The Cargo.toml specifies `rust-version = '1.85'` and `edition = '2024'`.
 
 ## Contribution Guidelines
 
@@ -156,7 +153,6 @@ test_that("feature description", {
 ```
 
 ## Resources
-
 - [Package documentation](https://frederikfabriciusbjerre.github.io/caugi/)
 - [Performance vignette](https://frederikfabriciusbjerre.github.io/caugi/articles/performance.html)
 - [Issue tracker](https://github.com/frederikfabriciusbjerre/caugi/issues)
