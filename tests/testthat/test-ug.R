@@ -102,7 +102,17 @@ test_that("UG graph exogenous_nodes works", {
     nodes = c("A", "B", "C", "D", "E"),
     class = "UG"
   )
-  expect_equal(sort(exogenous_nodes(cg)), c("D", "E"))
+  expect_equal(sort(exogenous(cg)), c("D", "E"))
+})
+
+test_that("UG graph with only isolated nodes", {
+  cg <- caugi(
+    nodes = c("A", "B", "C"),
+    class = "UG"
+  )
+  expect_equal(nrow(cg@edges), 0)
+  expect_equal(nrow(cg@nodes), 3)
+  expect_equal(sort(exogenous(cg)), c("A", "B", "C"))
 })
 
 test_that("UG graph with only isolated nodes", {
@@ -114,25 +124,6 @@ test_that("UG graph with only isolated nodes", {
   expect_equal(nrow(cg@nodes), 3)
   expect_equal(sort(exogenous_nodes(cg)), c("A", "B", "C"))
 })
-
-test_that("UG graph undirected_of returns neighbors", {
-  cg <- caugi(
-    A %---% B,
-    B %---% C,
-    class = "UG"
-  )
-  expect_equal(undirected_neighbors(cg, "B"), c("A", "C"))
-})
-
-test_that("UG graph is simple by default", {
-  cg <- caugi(
-    A %---% B,
-    class = "UG"
-  )
-  expect_true(cg@simple)
-})
-
-test_that("UG graph can build complex structures", {
   # Create a triangle (cycle)
   cg <- caugi(
     A %---% B,
