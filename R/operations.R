@@ -15,6 +15,9 @@
 #'
 #' @param cg A `caugi` object (DAG).
 #'
+#' @family operations
+#' @concept operations
+#'
 #' @returns A `caugi` object representing the moralized graph (UG).
 moralize <- function(cg) {
   is_caugi(cg, TRUE)
@@ -39,6 +42,9 @@ moralize <- function(cg) {
 #' as a Markov Graph.
 #'
 #' @param cg A `caugi` object. Either a DAG or PDAG.
+#'
+#' @family operations
+#' @concept operations
 #'
 #' @returns A `caugi` object representing the skeleton of the graph (UG).
 skeleton <- function(cg) {
