@@ -3,8 +3,6 @@
 
 use std::{collections::HashMap, error::Error, fmt, result::Result, str::FromStr};
 
-
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mark {
     Arrow,
@@ -221,48 +219,12 @@ impl EdgeRegistry {
         };
 
         // Built-in mappings
-        add(
-            "-->",
-            M::Tail,
-            M::Arrow,
-            false,
-            C::Directed,
-        )?;
-        add(
-            "---",
-            M::Tail,
-            M::Tail,
-            true,
-            C::Undirected,
-        )?;
-        add(
-            "<->",
-            M::Arrow,
-            M::Arrow,
-            true,
-            C::Bidirected,
-        )?;
-        add(
-            "o-o",
-            M::Circle,
-            M::Circle,
-            true,
-            C::Partial,
-        )?;
-        add(
-            "--o",
-            M::Tail,
-            M::Circle,
-            false,
-            C::PartiallyUndirected,
-        )?;
-        add(
-            "o->",
-            M::Circle,
-            M::Arrow,
-            false,
-            C::PartiallyDirected,
-        )?;
+        add("-->", M::Tail, M::Arrow, false, C::Directed)?;
+        add("---", M::Tail, M::Tail, true, C::Undirected)?;
+        add("<->", M::Arrow, M::Arrow, true, C::Bidirected)?;
+        add("o-o", M::Circle, M::Circle, true, C::Partial)?;
+        add("--o", M::Tail, M::Circle, false, C::PartiallyUndirected)?;
+        add("o->", M::Circle, M::Arrow, false, C::PartiallyDirected)?;
         Ok(())
     }
 }
@@ -419,8 +381,6 @@ mod tests {
         assert_eq!(r.len(), len1);
         assert!(!r.is_empty());
     }
-
-
 
     #[test]
     fn display_errors_text() {

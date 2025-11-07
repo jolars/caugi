@@ -24,7 +24,7 @@ pub fn mask_from(nodes: &[u32], n: u32) -> Vec<bool> {
 }
 
 /// Ancestors mask of a seed set. `a[v] == true` iff `v ∈ An(seeds) ∪ seeds`.
-/// 
+///
 /// # Arguments
 /// * `seeds` - Initial seed nodes
 /// * `parents_of` - Function that returns parents of a given node
@@ -55,7 +55,7 @@ where
 }
 
 /// Descendants mask of a seed set. `d[v] == true` iff `v ∈ De(seeds) ∪ seeds`.
-/// 
+///
 /// # Arguments
 /// * `seeds` - Initial seed nodes
 /// * `children_of` - Function that returns children of a given node

@@ -180,8 +180,7 @@ fn graphview_new(core: ExternalPtr<CaugiGraph>, class: &str) -> ExternalPtr<Grap
             ExternalPtr::new(GraphView::Pdag(Arc::new(pdag)))
         }
         "UG" => {
-            let ug =
-                Ug::new(Arc::new(core.as_ref().clone())).unwrap_or_else(|e| throw_r_error(e));
+            let ug = Ug::new(Arc::new(core.as_ref().clone())).unwrap_or_else(|e| throw_r_error(e));
             ExternalPtr::new(GraphView::Ug(Arc::new(ug)))
         }
         _ => ExternalPtr::new(GraphView::Raw(Arc::new(core.as_ref().clone()))),

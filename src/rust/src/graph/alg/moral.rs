@@ -3,7 +3,7 @@
 
 /// Moralized adjacency within mask. Undirected edges among ancestors.
 /// Output adjacency lists are sorted and deduplicated.
-/// 
+///
 /// # Arguments
 /// * `n` - Total number of nodes
 /// * `parents_of` - Function returning parents of a given node

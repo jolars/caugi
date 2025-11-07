@@ -5,14 +5,11 @@ use crate::edges::EdgeClass;
 use crate::graph::CaugiGraph;
 
 /// Build an undirected graph core from adjacency lists.
-/// 
+///
 /// # Arguments
 /// * `core` - Original core for registry and metadata
 /// * `adj` - Adjacency lists (assumes symmetric undirected edges)
-pub fn build_ug_core_from_adj(
-    core: &CaugiGraph,
-    adj: &[Vec<u32>],
-) -> Result<CaugiGraph, String> {
+pub fn build_ug_core_from_adj(core: &CaugiGraph, adj: &[Vec<u32>]) -> Result<CaugiGraph, String> {
     let n = adj.len();
     let registry = core.registry.clone();
 
@@ -29,7 +26,7 @@ pub fn build_ug_core_from_adj(
     // Allocate edge arrays
     let nnz = *row_index.last().unwrap() as usize;
     let mut col_index = vec![0u32; nnz];
-    let mut etype = vec![und_code; nnz];
+    let etype = vec![und_code; nnz];
     let side = vec![0u8; nnz];
 
     // Fill arrays
@@ -64,13 +61,13 @@ pub fn undirected_code(registry: &crate::graph::RegistrySnapshot) -> Result<u8, 
 }
 
 /// Filter edges from a graph based on a predicate.
-/// 
+///
 /// # Arguments
 /// * `core` - Source graph
 /// * `keep` - Predicate function: `(row_u, edge_index, core) -> bool`
-pub fn filter_edges<F>(core: &CaugiGraph, keep: F) -> Result<CaugiGraph, String>
+pub fn filter_edges<F>(core: &CaugiGraph, mut keep: F) -> Result<CaugiGraph, String>
 where
-    F: Fn(u32, usize, &CaugiGraph) -> bool,
+    F: FnMut(u32, usize, &CaugiGraph) -> bool,
 {
     let n = core.n() as usize;
 
@@ -115,7 +112,6 @@ mod tests {
     use super::*;
     use crate::edges::EdgeRegistry;
     use crate::graph::builder::GraphBuilder;
-    use std::sync::Arc;
 
     fn make_test_core() -> CaugiGraph {
         let mut reg = EdgeRegistry::new();
@@ -157,9 +153,9 @@ mod tests {
 
         assert_eq!(filtered.n(), 3);
         // Node 0 should have 1 edge, others 0
-        assert_eq!(filtered.row_index[1], 1); // node 0 has 1 edge
-        assert_eq!(filtered.row_index[2], 1); // node 1 has 0 new edges
-        assert_eq!(filtered.row_index[3], 2); // node 2 has 1 edge (from row 1)
+        assert_eq!(filtered.row_index[1], 1); // cumulative after row 0
+        assert_eq!(filtered.row_index[2], 1); // no edges in row 1
+        assert_eq!(filtered.row_index[3], 1); // no edges in row 2
     }
 
     #[test]

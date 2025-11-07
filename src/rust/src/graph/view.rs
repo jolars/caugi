@@ -249,7 +249,7 @@ impl GraphView {
 
     /// Export all edges as a list.
     /// Returns (from, to, edge_class, side) tuples.
-    /// 
+    ///
     /// Note: Each edge is represented by its CSR entries. For directed edges,
     /// this means both (u, v, Directed, 0) and (v, u, Directed, 1) will appear.
     /// For undirected edges, both (u, v, Undirected, 0) and (v, u, Undirected, 0).
@@ -620,7 +620,9 @@ mod tests {
         let mut bd = GraphBuilder::new_with_registry(3, true, &r);
         bd.add_edge(0, 1, d).unwrap();
         bd.add_edge(1, 2, d).unwrap();
-        let v_dag = GraphView::Dag(Arc::new(Dag::new(Arc::new(bd.finalize().unwrap())).unwrap()));
+        let v_dag = GraphView::Dag(Arc::new(
+            Dag::new(Arc::new(bd.finalize().unwrap())).unwrap(),
+        ));
         let ug = match v_dag.skeleton().unwrap() {
             GraphView::Ug(g) => g,
             _ => panic!("expected UG"),
@@ -633,8 +635,9 @@ mod tests {
         let mut bp = GraphBuilder::new_with_registry(3, true, &r);
         bp.add_edge(0, 1, d).unwrap();
         bp.add_edge(1, 2, u).unwrap();
-        let v_pdag =
-            GraphView::Pdag(Arc::new(Pdag::new(Arc::new(bp.finalize().unwrap())).unwrap()));
+        let v_pdag = GraphView::Pdag(Arc::new(
+            Pdag::new(Arc::new(bp.finalize().unwrap())).unwrap(),
+        ));
         let ug2 = match v_pdag.skeleton().unwrap() {
             GraphView::Ug(g) => g,
             _ => panic!("expected UG"),
@@ -677,8 +680,9 @@ mod tests {
         // PDAG: moralize() must error
         let mut bp = GraphBuilder::new_with_registry(2, true, &r);
         bp.add_edge(0, 1, d).unwrap();
-        let v_pdag =
-            GraphView::Pdag(Arc::new(Pdag::new(Arc::new(bp.finalize().unwrap())).unwrap()));
+        let v_pdag = GraphView::Pdag(Arc::new(
+            Pdag::new(Arc::new(bp.finalize().unwrap())).unwrap(),
+        ));
         assert_eq!(
             v_pdag.moralize().unwrap_err(),
             "moralize is only defined for DAGs"
@@ -716,4 +720,3 @@ mod tests {
         assert_eq!(edge_pairs, vec![(0, 1), (1, 0), (1, 2), (2, 1)]);
     }
 }
-
