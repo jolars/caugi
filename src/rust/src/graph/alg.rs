@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 //! Graph algorithms.
 
+pub mod bitset;
+pub mod csr;
+pub mod moral;
+
 use crate::edges::EdgeClass;
 use crate::graph::CaugiGraph;
 

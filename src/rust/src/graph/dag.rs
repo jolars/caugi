@@ -3,7 +3,10 @@
 
 use super::CaugiGraph;
 use crate::edges::EdgeClass;
+use crate::graph::alg::bitset;
+use crate::graph::alg::csr;
 use crate::graph::alg::directed_part_is_acyclic;
+use crate::graph::alg::moral;
 use crate::graph::pdag::Pdag;
 use std::collections::{HashSet, VecDeque};
 
@@ -145,7 +148,7 @@ impl Dag {
             }
             stack.extend_from_slice(self.parents_of(u));
         }
-        Self::collect_from_mask(&seen)
+        bitset::collect_from_mask(&seen)
     }
 
     /// All descendants of `i`, returned in ascending order.
@@ -163,7 +166,7 @@ impl Dag {
             }
             stack.extend_from_slice(self.children_of(u));
         }
-        Self::collect_from_mask(&seen)
+        bitset::collect_from_mask(&seen)
     }
 
     /// Markov blanket of `i`: `Pa(i) ∪ Ch(i) ∪ (⋃ Pa(c) \ {i : c∈Ch(i)})`.
@@ -183,7 +186,7 @@ impl Dag {
             }
         }
         m[i as usize] = false; // exclude self
-        Self::collect_from_mask(&m)
+        bitset::collect_from_mask(&m)
     }
 
     /// Nodes with no parents.
@@ -202,92 +205,30 @@ impl Dag {
 
 impl Dag {
     // -------- helpers for masks and small sets --------
+    // These now delegate to the bitset and moral modules for reusability
 
     /// Collect ascending indices where `mask[i]` is `true`.
     #[inline]
     fn collect_from_mask(mask: &[bool]) -> Vec<u32> {
-        let mut out = Vec::with_capacity(mask.len().min(64));
-        for (i, &b) in mask.iter().enumerate() {
-            if b {
-                out.push(i as u32);
-            }
-        }
-        out
+        bitset::collect_from_mask(mask)
     }
 
     /// Build a boolean membership mask for `nodes` over domain `[0, n)`.
     #[inline]
     fn mask_from(nodes: &[u32], n: u32) -> Vec<bool> {
-        let mut m = vec![false; n as usize];
-        for &v in nodes {
-            m[v as usize] = true;
-        }
-        m
+        bitset::mask_from(nodes, n)
     }
 
     /// Ancestors mask of a seed set. `a[v] == true` iff `v ∈ An(seeds) ∪ seeds`.
     /// Used by d-separation and backdoor routines.
     fn ancestors_mask(&self, seeds: &[u32]) -> Vec<bool> {
-        let mut a = vec![false; self.n() as usize];
-        let mut st = Vec::new();
-        // Seed the stack with parents of unseen seeds.
-        for &s in seeds {
-            if !a[s as usize] {
-                a[s as usize] = true;
-                st.extend_from_slice(self.parents_of(s));
-            }
-        }
-        // Climb parents until fixed point.
-        while let Some(u) = st.pop() {
-            let ui = u as usize;
-            if a[ui] {
-                continue;
-            }
-            a[ui] = true;
-            st.extend_from_slice(self.parents_of(u));
-        }
-        a
+        bitset::ancestors_mask(seeds, |u| self.parents_of(u), self.n())
     }
 
     /// Moralized adjacency within mask. Undirected edges among ancestors.
     /// Output adjacency lists are sorted and deduplicated.
     fn moral_adj(&self, mask: &[bool]) -> Vec<Vec<u32>> {
-        let n = self.n() as usize;
-        let mut adj = vec![Vec::<u32>::new(); n];
-        for v in 0..self.n() {
-            if !mask[v as usize] {
-                continue;
-            }
-            let pa = self.parents_of(v);
-            // Connect child with each included parent.
-            for &p in pa {
-                if mask[p as usize] {
-                    adj[v as usize].push(p);
-                    adj[p as usize].push(v);
-                }
-            }
-            // Marry included parents.
-            for i in 0..pa.len() {
-                let pi = pa[i] as usize;
-                if !mask[pi] {
-                    continue;
-                }
-                for j in i + 1..pa.len() {
-                    let pj = pa[j] as usize;
-                    if !mask[pj] {
-                        continue;
-                    }
-                    adj[pi].push(pa[j]);
-                    adj[pj].push(pa[i]);
-                }
-            }
-        }
-        // Dedup neighbors per node.
-        for v in &mut adj {
-            v.sort_unstable();
-            v.dedup();
-        }
-        adj
+        moral::moral_adj(self.n(), |u| self.parents_of(u), mask)
     }
 
     /// BFS over moral graph to check reachability from `src` to any `tgt`
@@ -415,43 +356,8 @@ impl Dag {
         &self,
         mut drop: F,
     ) -> Result<CaugiGraph, String> {
-        let c = self.core_ref();
-        let n = self.n() as usize;
-
-        // First pass: count edges kept per row to form row_index.
-        let mut idx = vec![0u32; n + 1];
-        for u in 0..self.n() {
-            let mut keep = 0u32;
-            for k in c.row_range(u) {
-                if !drop(u, k) {
-                    keep += 1;
-                }
-            }
-            idx[u as usize + 1] = idx[u as usize] + keep;
-        }
-
-        // Allocate exact sizes.
-        let nnz = idx[n] as usize;
-        let mut col = vec![0u32; nnz];
-        let mut ety = vec![0u8; nnz];
-        let mut side = vec![0u8; nnz];
-
-        // Second pass: scatter kept edges.
-        let mut cur = idx[..n].to_vec();
-        for u in 0..self.n() {
-            for k in c.row_range(u) {
-                if drop(u, k) {
-                    continue;
-                }
-                let p = cur[u as usize] as usize;
-                col[p] = c.col_index[k];
-                ety[p] = c.etype[k];
-                side[p] = c.side[k];
-                cur[u as usize] += 1;
-            }
-        }
-
-        CaugiGraph::from_csr(idx, col, ety, side, c.simple, c.registry.clone())
+        // Use the CSR filter_edges utility with inverted logic
+        csr::filter_edges(self.core_ref(), |u, k, _c| !drop(u, k))
     }
 }
 
@@ -647,6 +553,39 @@ impl Dag {
         self.proper_backdoor_graph(xs, ys)
             .map(|g| g.d_separated(xs, ys, z))
             .unwrap_or(false)
+    }
+
+    /// Build the proper backdoor graph core for `Xs → Ys`.
+    /// This is the internal implementation used by public APIs.
+    pub fn proper_backdoor_core(&self, xs: &[u32], ys: &[u32]) -> Result<CaugiGraph, String> {
+        let reach = self.can_reach_any_y(ys);
+        let xs_mask = Self::mask_from(xs, self.n());
+        self.rebuild_filtered(|u, k| self.drop_first_edge(&xs_mask, &reach, u, k))
+    }
+
+    /// Build the moral graph of the entire DAG as an undirected graph core.
+    pub fn moralize_core(&self) -> Result<CaugiGraph, String> {
+        let mask = vec![true; self.n() as usize];
+        let adj = self.moral_adj(&mask);
+        csr::build_ug_core_from_adj(self.core_ref(), &adj)
+    }
+
+    /// Build the skeleton (undirected version) of the DAG as an undirected graph core.
+    pub fn skeleton_core(&self) -> Result<CaugiGraph, String> {
+        let n = self.n() as usize;
+        let mut adj = vec![Vec::<u32>::new(); n];
+        for u in 0..self.n() {
+            for &v in self.children_of(u) {
+                adj[u as usize].push(v);
+                adj[v as usize].push(u);
+            }
+        }
+        // Sort and dedup
+        for v in &mut adj {
+            v.sort_unstable();
+            v.dedup();
+        }
+        csr::build_ug_core_from_adj(self.core_ref(), &adj)
     }
 }
 

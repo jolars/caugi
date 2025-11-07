@@ -176,6 +176,69 @@ impl GraphView {
             _ => Err("to_cpdag is only defined for DAGs".into()),
         }
     }
+
+    /// Proper backdoor graph for Xs → Ys. Defined for DAG only.
+    pub fn proper_backdoor_graph(&self, xs: &[u32], ys: &[u32]) -> Result<GraphView, String> {
+        match self {
+            GraphView::Dag(d) => {
+                let core = d.proper_backdoor_core(xs, ys)?;
+                let dag = super::dag::Dag::new(Arc::new(core))?;
+                Ok(GraphView::Dag(Arc::new(dag)))
+            }
+            _ => Err("proper_backdoor_graph is only defined for DAGs".into()),
+        }
+    }
+
+    /// Moral graph of the ancestral subgraph of seeds. Defined for DAG only.
+    pub fn moral_of_ancestors(&self, seeds: &[u32]) -> Result<GraphView, String> {
+        match self {
+            GraphView::Dag(d) => {
+                use crate::graph::alg::{bitset, csr, moral};
+                let mask = bitset::ancestors_mask(seeds, |u| d.parents_of(u), d.n());
+                let adj = moral::moral_adj(d.n(), |u| d.parents_of(u), &mask);
+                let core = csr::build_ug_core_from_adj(d.core_ref(), &adj)?;
+                let ug = super::ug::Ug::new(Arc::new(core))?;
+                Ok(GraphView::Ug(Arc::new(ug)))
+            }
+            _ => Err("moral_of_ancestors is only defined for DAGs".into()),
+        }
+    }
+
+    /// Ancestral reduction induced on seeds. Defined for DAG and PDAG.
+    pub fn ancestral_reduction(&self, seeds: &[u32]) -> Result<GraphView, String> {
+        match self {
+            GraphView::Dag(d) => {
+                use crate::graph::alg::bitset;
+                let mask = bitset::ancestors_mask(seeds, |u| d.parents_of(u), d.n());
+                let keep = bitset::collect_from_mask(&mask);
+                self.induced_subgraph(&keep)
+            }
+            GraphView::Pdag(p) => {
+                use crate::graph::alg::bitset;
+                let mask = bitset::ancestors_mask(seeds, |u| p.parents_of(u), p.n());
+                let keep = bitset::collect_from_mask(&mask);
+                self.induced_subgraph(&keep)
+            }
+            _ => Err("ancestral_reduction is only defined for DAGs and PDAGs".into()),
+        }
+    }
+
+    /// Export edges as a list. For simple graphs only.
+    /// Returns (from, to, edge_class, side) tuples.
+    pub fn to_edge_list(&self) -> Vec<(u32, u32, crate::edges::EdgeClass, u8)> {
+        let core = self.core();
+        let mut edges = Vec::new();
+        for u in 0..core.n() {
+            for k in core.row_range(u) {
+                let v = core.col_index[k];
+                let etype = core.etype[k];
+                let side = core.side[k];
+                let spec = &core.registry.specs[etype as usize];
+                edges.push((u, v, spec.class, side));
+            }
+        }
+        edges
+    }
 }
 
 #[cfg(test)]
@@ -426,4 +489,117 @@ mod tests {
             "all_backdoor_sets is only defined for DAGs"
         );
     }
+
+    #[test]
+    fn graphview_proper_backdoor_graph_public() {
+        // Build L→A→Y with L→Y (classic confounder)
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        // 0:L, 1:A, 2:Y
+        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
+        b.add_edge(0, 1, d).unwrap(); // L->A
+        b.add_edge(1, 2, d).unwrap(); // A->Y
+        b.add_edge(0, 2, d).unwrap(); // L->Y
+        let dag = Arc::new(Dag::new(Arc::new(b.finalize().unwrap())).unwrap());
+        let v = GraphView::Dag(dag);
+
+        // Get proper backdoor graph for A → Y
+        let pbg = v.proper_backdoor_graph(&[1], &[2]).unwrap();
+
+        // In the proper backdoor graph, A->Y edge should be removed
+        match pbg {
+            GraphView::Dag(ref d) => {
+                // Y should only have L as parent
+                assert_eq!(d.parents_of(2), &[0]);
+                // A and Y should NOT be d-separated without conditioning
+                // (backdoor path A <- L -> Y remains)
+                assert!(!d.d_separated(&[1], &[2], &[]));
+            }
+            _ => panic!("Expected DAG"),
+        }
+    }
+
+    #[test]
+    fn graphview_moral_of_ancestors_public() {
+        // Build L→A→Y with L→Y
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        // 0:L, 1:A, 2:Y
+        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
+        b.add_edge(0, 1, d).unwrap(); // L->A
+        b.add_edge(1, 2, d).unwrap(); // A->Y
+        b.add_edge(0, 2, d).unwrap(); // L->Y
+        let dag = Arc::new(Dag::new(Arc::new(b.finalize().unwrap())).unwrap());
+        let v = GraphView::Dag(dag);
+
+        // Get moral graph of ancestors of {A, Y}
+        let moral = v.moral_of_ancestors(&[1, 2]).unwrap();
+
+        // Should be a UG with all three nodes
+        match moral {
+            GraphView::Ug(ref u) => {
+                assert_eq!(u.n(), 3);
+                // L should be adjacent to A (parent of A)
+                // L should be adjacent to Y (parent of Y)
+                // A should be adjacent to Y (A->Y in original, also married via Y)
+                let mut l_nb = u.neighbors_of(0).to_vec();
+                l_nb.sort();
+                assert_eq!(l_nb, vec![1, 2]);
+            }
+            _ => panic!("Expected UG"),
+        }
+    }
+
+    #[test]
+    fn graphview_ancestral_reduction_public() {
+        // Build larger DAG: 0->1->2, 3->4 (3,4 are distractors)
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        let mut b = GraphBuilder::new_with_registry(5, true, &reg);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(1, 2, d).unwrap();
+        b.add_edge(3, 4, d).unwrap();
+        let dag = Arc::new(Dag::new(Arc::new(b.finalize().unwrap())).unwrap());
+        let v = GraphView::Dag(dag);
+
+        // Ancestral reduction on {1, 2}
+        let reduced = v.ancestral_reduction(&[1, 2]).unwrap();
+
+        // Should only contain An({1,2}) ∪ {1,2} = {0,1,2}
+        match reduced {
+            GraphView::Dag(ref d) => {
+                assert_eq!(d.n(), 3); // nodes {0,1,2}
+            }
+            _ => panic!("Expected DAG"),
+        }
+    }
+
+    #[test]
+    fn graphview_to_edge_list() {
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(1, 2, d).unwrap();
+        let dag = Arc::new(Dag::new(Arc::new(b.finalize().unwrap())).unwrap());
+        let v = GraphView::Dag(dag);
+
+        let edges = v.to_edge_list();
+        // Should have 4 edges (2 directed edges, each stored twice with different sides)
+        assert_eq!(edges.len(), 4);
+
+        // Check that we have the expected edges
+        let mut edge_pairs: Vec<(u32, u32)> = edges.iter().map(|(u, v, _, _)| (*u, *v)).collect();
+        edge_pairs.sort();
+        assert_eq!(edge_pairs, vec![(0, 1), (1, 0), (1, 2), (2, 1)]);
+    }
 }
+
