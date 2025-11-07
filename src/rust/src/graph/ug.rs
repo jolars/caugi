@@ -11,7 +11,7 @@ pub struct Ug {
     /// len = n+1
     node_edge_ranges: Arc<[usize]>,
     /// len = n; (neighbors)
-    node_deg: Arc<[u32]>,
+    // node_deg: Arc<[u32]>,
     /// packed neighbors
     neighborhoods: Arc<[u32]>,
 }
@@ -19,7 +19,7 @@ pub struct Ug {
 impl Ug {
     pub fn new(core: Arc<CaugiGraph>) -> Result<Self, String> {
         let n = core.n() as usize;
-        
+
         // Count neighbors per node and validate edges are undirected
         let mut deg: Vec<u32> = vec![0; n];
         for i in 0..n {
@@ -35,14 +35,14 @@ impl Ug {
                 }
             }
         }
-        
+
         let mut node_edge_ranges = Vec::with_capacity(n + 1);
         node_edge_ranges.push(0usize);
         for i in 0..n {
             let last = *node_edge_ranges.last().unwrap();
             node_edge_ranges.push(last + deg[i] as usize);
         }
-        
+
         let total = *node_edge_ranges.last().unwrap();
         let mut neigh = vec![0u32; total];
 
@@ -69,7 +69,7 @@ impl Ug {
         Ok(Self {
             core,
             node_edge_ranges: node_edge_ranges.into(),
-            node_deg: deg.into(),
+            // node_deg: deg.into(),
             neighborhoods: neigh.into(),
         })
     }
@@ -136,7 +136,7 @@ mod tests {
         b.add_edge(2, 3, cund).unwrap();
         let core = std::sync::Arc::new(b.finalize().unwrap());
         let g = Ug::new(core).expect("UG construction failed");
-        
+
         assert_eq!(g.neighbors_of(0), vec![1]);
         assert_eq!(g.neighbors_of(1), vec![0, 2]);
         assert_eq!(g.neighbors_of(2), vec![1, 3]);
@@ -179,7 +179,7 @@ mod tests {
         b.add_edge(1, 3, cund).unwrap();
         let core = std::sync::Arc::new(b.finalize().unwrap());
         let g = Ug::new(core).expect("UG construction failed");
-        
+
         // Markov blanket of node 1 should be all its neighbors
         assert_eq!(g.markov_blanket_of(1), vec![0, 2, 3]);
         // Node 0 has only one neighbor
@@ -197,7 +197,7 @@ mod tests {
         // nodes 3 and 4 are isolated
         let core = std::sync::Arc::new(b.finalize().unwrap());
         let g = Ug::new(core).expect("UG construction failed");
-        
+
         assert_eq!(g.exogenous_nodes(), vec![3, 4]);
     }
 
@@ -210,7 +210,7 @@ mod tests {
         b.add_edge(0, 1, cund).unwrap();
         let core = std::sync::Arc::new(b.finalize().unwrap());
         let g = Ug::new(core).expect("UG construction failed");
-        
+
         let core = g.core_ref();
         assert_eq!(core.n(), 2);
     }
