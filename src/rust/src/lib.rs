@@ -13,7 +13,7 @@ use graph::metrics::aid;
 use graph::metrics::{hd, shd_with_perm};
 
 use graph::view::GraphView;
-use graph::{CaugiGraph, dag::Dag, pdag::Pdag};
+use graph::{CaugiGraph, dag::Dag, pdag::Pdag, ug::Ug};
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -179,6 +179,11 @@ fn graphview_new(core: ExternalPtr<CaugiGraph>, class: &str) -> ExternalPtr<Grap
                 Pdag::new(Arc::new(core.as_ref().clone())).unwrap_or_else(|e| throw_r_error(e));
             ExternalPtr::new(GraphView::Pdag(Arc::new(pdag)))
         }
+        "UG" => {
+            let ug =
+                Ug::new(Arc::new(core.as_ref().clone())).unwrap_or_else(|e| throw_r_error(e));
+            ExternalPtr::new(GraphView::Ug(Arc::new(ug)))
+        }
         _ => ExternalPtr::new(GraphView::Raw(Arc::new(core.as_ref().clone()))),
     }
 }
@@ -343,6 +348,7 @@ fn graph_class_ptr(g: ExternalPtr<GraphView>) -> String {
     match g.as_ref() {
         GraphView::Dag(_) => "DAG",
         GraphView::Pdag(_) => "PDAG",
+        GraphView::Ug(_) => "UG",
         GraphView::Raw(_) => "UNKNOWN",
     }
     .to_string()

@@ -40,7 +40,7 @@
 #' if calling [build()]. __Note__: Even if `build = TRUE`, if no edges or
 #' nodes are provided, the graph will not be built and the pointer will be
 #' `NULL`.
-#' @param class Character; one of `"UNKNOWN"`, `"DAG"`, or `"PDAG"`.
+#' @param class Character; one of `"UNKNOWN"`, `"DAG"`, `"PDAG"`, or `"UG"`.
 #' @param state For internal use. Build a graph by supplying a pre-constructed
 #' state environment.
 #'
@@ -242,7 +242,7 @@ caugi <- S7::new_class(
                          from = NULL, edge = NULL, to = NULL, nodes = NULL,
                          simple = TRUE,
                          build = TRUE,
-                         class = c("UNKNOWN", "DAG", "PDAG"),
+                         class = c("UNKNOWN", "DAG", "PDAG", "UG"),
                          state = NULL) {
     if (!is.null(state)) {
       return(S7::new_object(
