@@ -8,9 +8,9 @@
 /// * `n` - Total number of nodes
 /// * `parents_of` - Function returning parents of a given node
 /// * `mask` - Boolean mask indicating which nodes to include
-pub fn moral_adj<F>(n: u32, parents_of: F, mask: &[bool]) -> Vec<Vec<u32>>
+pub fn moral_adj<'a, F>(n: u32, parents_of: F, mask: &[bool]) -> Vec<Vec<u32>>
 where
-    F: Fn(u32) -> &[u32],
+    F: Fn(u32) -> &'a [u32],
 {
     let n = n as usize;
     let mut adj = vec![Vec::<u32>::new(); n];

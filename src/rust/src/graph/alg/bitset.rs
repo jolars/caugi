@@ -29,9 +29,9 @@ pub fn mask_from(nodes: &[u32], n: u32) -> Vec<bool> {
 /// * `seeds` - Initial seed nodes
 /// * `parents_of` - Function that returns parents of a given node
 /// * `n` - Total number of nodes in the graph
-pub fn ancestors_mask<F>(seeds: &[u32], parents_of: F, n: u32) -> Vec<bool>
+pub fn ancestors_mask<'a, F>(seeds: &[u32], parents_of: F, n: u32) -> Vec<bool>
 where
-    F: Fn(u32) -> &[u32],
+    F: Fn(u32) -> &'a [u32],
 {
     let mut a = vec![false; n as usize];
     let mut st = Vec::new();
@@ -60,9 +60,9 @@ where
 /// * `seeds` - Initial seed nodes
 /// * `children_of` - Function that returns children of a given node
 /// * `n` - Total number of nodes in the graph
-pub fn descendants_mask<F>(seeds: &[u32], children_of: F, n: u32) -> Vec<bool>
+pub fn descendants_mask<'a, F>(seeds: &[u32], children_of: F, n: u32) -> Vec<bool>
 where
-    F: Fn(u32) -> &[u32],
+    F: Fn(u32) -> &'a [u32],
 {
     let mut d = vec![false; n as usize];
     let mut st = Vec::new();
