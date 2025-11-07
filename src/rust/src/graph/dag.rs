@@ -8,8 +8,8 @@ use crate::graph::alg::csr;
 use crate::graph::alg::directed_part_is_acyclic;
 use crate::graph::alg::moral;
 use crate::graph::pdag::Pdag;
-use std::collections::{HashSet, VecDeque};
 use crate::graph::ug::Ug;
+use std::collections::{HashSet, VecDeque};
 
 use std::sync::Arc;
 
@@ -226,6 +226,11 @@ impl Dag {
         bitset::ancestors_mask(seeds, |u| self.parents_of(u), self.n())
     }
 
+    // Descendants mask of a seed set. `d[v] == true` iff `v ∈ De(seeds) ∪ seeds`.
+    fn descendants_mask(&self, seeds: &[u32]) -> Vec<bool> {
+        bitset::descendants_mask(seeds, |u| self.children_of(u), self.n())
+    }
+
     /// Moralized adjacency within mask. Undirected edges among ancestors.
     /// Output adjacency lists are sorted and deduplicated.
     fn moral_adj(&self, mask: &[bool]) -> Vec<Vec<u32>> {
@@ -431,32 +436,36 @@ impl Dag {
     /// - Let `Cn = (De(x) ∩ An(y)) ∪ {y if y ∈ De(x)}`.
     /// - Return `Pa(Cn) \ (Cn ∪ {x})`.
     pub fn adjustment_set_optimal(&self, x: u32, y: u32) -> Vec<u32> {
-        let n = self.n();
-        // Mark descendants of x.
-        let de_mask = bitset::descendants_mask(&[x], |u| self.children_of(u), self.n());
-        // Mark ancestors of y.
+        let n = self.n() as usize;
+
+        // strict descendants of x
+        let mut de_mask = self.descendants_mask(&[x]);
+        de_mask[x as usize] = false;
+
+        // ancestors of y (likely includes y)
         let an_mask = self.ancestors_mask(&[y]);
 
-        // Cn mask: De(x) ∩ An(y) plus y if y ∈ De(x).
-        let mut cn_mask = vec![false; n as usize];
-        for i in 0..n as usize {
+        // Cn = De(x) ∩ An(y); y is already covered if y ∈ De(x)
+        let mut cn_mask = vec![false; n];
+        for i in 0..n {
             if de_mask[i] && an_mask[i] {
                 cn_mask[i] = true;
             }
         }
+        // keep if you want the explicit clause, though redundant if an_mask[y]=true:
         if de_mask[y as usize] {
             cn_mask[y as usize] = true;
         }
 
-        // Parents of Cn, excluding Cn and x.
-        let mut pacn_mask = vec![false; n as usize];
+        // Pa(Cn) \ (Cn ∪ {x})
+        let mut pacn_mask = vec![false; n];
         for v in Self::collect_from_mask(&cn_mask) {
             for &p in self.parents_of(v) {
                 pacn_mask[p as usize] = true;
             }
         }
         pacn_mask[x as usize] = false;
-        for i in 0..n as usize {
+        for i in 0..n {
             if cn_mask[i] {
                 pacn_mask[i] = false;
             }
@@ -1305,9 +1314,10 @@ mod tests {
         assert_eq!(cpdag.children_of(2), vec![1]);
     }
 
-        #[test]
+    #[test]
     fn dag_skeleton_basic() {
-        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
         let d = reg.code_of("-->").unwrap();
         let mut b = GraphBuilder::new_with_registry(3, true, &reg);
         b.add_edge(0, 1, d).unwrap();
@@ -1321,7 +1331,8 @@ mod tests {
 
     #[test]
     fn dag_moralize_married_parents() {
-        let mut reg = EdgeRegistry::new(); reg.register_builtins().unwrap();
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
         let d = reg.code_of("-->").unwrap();
         let mut b = GraphBuilder::new_with_registry(3, true, &reg);
         b.add_edge(0, 2, d).unwrap();
