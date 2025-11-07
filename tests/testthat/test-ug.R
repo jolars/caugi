@@ -95,7 +95,7 @@ test_that("UG graph markov_blanket_of returns neighbors", {
   expect_equal(markov_blanket(cg, "A"), "B")
 })
 
-test_that("UG graph exogenous_nodes works", {
+test_that("UG graph exogenous function works", {
   cg <- caugi(
     A %---% B,
     B %---% C,
@@ -115,15 +115,7 @@ test_that("UG graph with only isolated nodes", {
   expect_equal(sort(exogenous(cg)), c("A", "B", "C"))
 })
 
-test_that("UG graph with only isolated nodes", {
-  cg <- caugi(
-    nodes = c("A", "B", "C"),
-    class = "UG"
-  )
-  expect_equal(nrow(cg@edges), 0)
-  expect_equal(nrow(cg@nodes), 3)
-  expect_equal(sort(exogenous_nodes(cg)), c("A", "B", "C"))
-})
+test_that("UG graph can build complex structures", {
   # Create a triangle (cycle)
   cg <- caugi(
     A %---% B,
