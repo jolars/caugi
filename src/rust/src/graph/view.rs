@@ -223,8 +223,12 @@ impl GraphView {
         }
     }
 
-    /// Export edges as a list. For simple graphs only.
+    /// Export all edges as a list.
     /// Returns (from, to, edge_class, side) tuples.
+    /// 
+    /// Note: Each edge is represented by its CSR entries. For directed edges,
+    /// this means both (u, v, Directed, 0) and (v, u, Directed, 1) will appear.
+    /// For undirected edges, both (u, v, Undirected, 0) and (v, u, Undirected, 0).
     pub fn to_edge_list(&self) -> Vec<(u32, u32, crate::edges::EdgeClass, u8)> {
         let core = self.core();
         let mut edges = Vec::new();
