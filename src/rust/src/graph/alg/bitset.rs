@@ -54,6 +54,37 @@ where
     a
 }
 
+/// Descendants mask of a seed set. `d[v] == true` iff `v ∈ De(seeds) ∪ seeds`.
+/// 
+/// # Arguments
+/// * `seeds` - Initial seed nodes
+/// * `children_of` - Function that returns children of a given node
+/// * `n` - Total number of nodes in the graph
+pub fn descendants_mask<F>(seeds: &[u32], children_of: F, n: u32) -> Vec<bool>
+where
+    F: Fn(u32) -> &[u32],
+{
+    let mut d = vec![false; n as usize];
+    let mut st = Vec::new();
+    // Seed the stack with children of unseen seeds.
+    for &s in seeds {
+        if !d[s as usize] {
+            d[s as usize] = true;
+            st.extend_from_slice(children_of(s));
+        }
+    }
+    // Descend through children until fixed point.
+    while let Some(u) = st.pop() {
+        let ui = u as usize;
+        if d[ui] {
+            continue;
+        }
+        d[ui] = true;
+        st.extend_from_slice(children_of(u));
+    }
+    d
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -137,6 +168,58 @@ mod tests {
 
         let mask = ancestors_mask(&[0], parents_of, 4);
         // All nodes are ancestors or seed
+        assert_eq!(mask, vec![true, true, true, true]);
+    }
+
+    #[test]
+    fn descendants_mask_simple_chain() {
+        // Mock graph: 0 -> 1 -> 2
+        let children_of = |n: u32| -> &[u32] {
+            match n {
+                0 => &[1],
+                1 => &[2],
+                2 => &[],
+                _ => &[],
+            }
+        };
+
+        let mask = descendants_mask(&[0], children_of, 3);
+        // 0 and its descendants {1, 2}
+        assert_eq!(mask, vec![true, true, true]);
+    }
+
+    #[test]
+    fn descendants_mask_multiple_seeds() {
+        // Mock graph: 0 -> 2, 1 -> 3
+        let children_of = |n: u32| -> &[u32] {
+            match n {
+                0 => &[2],
+                1 => &[3],
+                _ => &[],
+            }
+        };
+
+        let mask = descendants_mask(&[0, 1], children_of, 4);
+        // Seeds {0, 1} and their descendants {2, 3}
+        assert_eq!(mask, vec![true, true, true, true]);
+    }
+
+    #[test]
+    fn descendants_mask_diamond() {
+        // Mock graph: 0 -> {1, 2} -> 3
+        let c1 = [1, 2];
+        let c3 = [3];
+        let children_of = |n: u32| -> &[u32] {
+            match n {
+                0 => &c1,
+                1 => &c3,
+                2 => &c3,
+                _ => &[],
+            }
+        };
+
+        let mask = descendants_mask(&[0], children_of, 4);
+        // All nodes are descendants or seed
         assert_eq!(mask, vec![true, true, true, true]);
     }
 }

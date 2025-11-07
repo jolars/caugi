@@ -277,10 +277,7 @@ impl Dag {
     /// Universe of candidates for backdoor adjustment wrt. `(x, y)`.
     /// Excludes `x`, `y`, and descendants of `x`.
     fn backdoor_universe(&self, x: u32, y: u32) -> Vec<u32> {
-        let mut de_mask = vec![false; self.n() as usize];
-        for d in self.descendants_of(x) {
-            de_mask[d as usize] = true;
-        }
+        let de_mask = bitset::descendants_mask(&[x], |u| self.children_of(u), self.n());
         (0..self.n())
             .filter(|&v| v != x && v != y && !de_mask[v as usize])
             .collect()
@@ -408,8 +405,11 @@ impl Dag {
         // Drop descendants of X, then drop X and Y.
         let mut dropm = vec![false; n as usize];
         for &x in xs {
-            for d in self.descendants_of(x) {
-                dropm[d as usize] = true;
+            let de_mask = bitset::descendants_mask(&[x], |u| self.children_of(u), self.n());
+            for i in 0..n as usize {
+                if de_mask[i] {
+                    dropm[i] = true;
+                }
             }
             dropm[x as usize] = true;
         }
@@ -433,10 +433,7 @@ impl Dag {
     pub fn adjustment_set_optimal(&self, x: u32, y: u32) -> Vec<u32> {
         let n = self.n();
         // Mark descendants of x.
-        let mut de_mask = vec![false; n as usize];
-        for d in self.descendants_of(x) {
-            de_mask[d as usize] = true;
-        }
+        let de_mask = bitset::descendants_mask(&[x], |u| self.children_of(u), self.n());
         // Mark ancestors of y.
         let an_mask = self.ancestors_mask(&[y]);
 
@@ -499,10 +496,7 @@ impl Dag {
     /// 2) Each parent `p` of `x` must be d-separated from `y` given `z ∪ {x}`.
     pub fn is_valid_backdoor_set(&self, x: u32, y: u32, z: &[u32]) -> bool {
         // Precompute De(x) mask for O(1) membership tests.
-        let mut de_mask = vec![false; self.n() as usize];
-        for d in self.descendants_of(x) {
-            de_mask[d as usize] = true;
-        }
+        let de_mask = bitset::descendants_mask(&[x], |u| self.children_of(u), self.n());
         for &v in z {
             if de_mask[v as usize] {
                 return false;
