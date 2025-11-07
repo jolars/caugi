@@ -24,10 +24,10 @@ g_dg <- as_dagitty(cg)
 
 }
 \seealso{
-Other conversion: 
+Other conversions: 
 \code{\link{as_adjacency}()},
 \code{\link{as_bnlearn}()},
 \code{\link{as_caugi}()},
 \code{\link{as_igraph}()}
 }
-\concept{conversion}
+\concept{conversions}

@@ -26,10 +26,10 @@ ig <- as_igraph(cg)
 
 }
 \seealso{
-Other conversion: 
+Other conversions: 
 \code{\link{as_adjacency}()},
 \code{\link{as_bnlearn}()},
 \code{\link{as_caugi}()},
 \code{\link{as_dagitty}()}
 }
-\concept{conversion}
+\concept{conversions}

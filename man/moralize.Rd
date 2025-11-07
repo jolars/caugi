@@ -20,3 +20,8 @@ converting all directed edges into undirected edges.
 This changes the graph from a Directed Acyclic Graph (DAG) to an
 Undirected Graph (UG), also known as a Markov Graph.
 }
+\seealso{
+Other operations: 
+\code{\link{skeleton}()}
+}
+\concept{operations}

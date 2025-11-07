@@ -20,3 +20,8 @@ undirected edges.
 This changes the graph from any class to an Undirected Graph (UG), also known
 as a Markov Graph.
 }
+\seealso{
+Other operations: 
+\code{\link{moralize}()}
+}
+\concept{operations}
