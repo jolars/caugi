@@ -606,6 +606,85 @@ fn all_backdoor_sets_ptr(
     extendr_api::prelude::List::from_values(robjs).into_robj()
 }
 
+// ── Graph transformations ──────────────────────────────────────────────────────
+
+#[extendr]
+fn proper_backdoor_graph_ptr(
+    g: ExternalPtr<GraphView>,
+    xs: Integers,
+    ys: Integers,
+) -> ExternalPtr<GraphView> {
+    let xs_u: Vec<u32> = xs.iter().map(|ri| rint_to_u32(ri, "xs")).collect();
+    let ys_u: Vec<u32> = ys.iter().map(|ri| rint_to_u32(ri, "ys")).collect();
+    // Check bounds
+    for &i in xs_u.iter().chain(ys_u.iter()) {
+        if i >= g.as_ref().n() {
+            throw_r_error(format!("Index {} is out of bounds", i + 1));
+        }
+    }
+    let out = g
+        .as_ref()
+        .proper_backdoor_graph(&xs_u, &ys_u)
+        .unwrap_or_else(|e| throw_r_error(e));
+    ExternalPtr::new(out)
+}
+
+#[extendr]
+fn moral_of_ancestors_ptr(g: ExternalPtr<GraphView>, seeds: Integers) -> ExternalPtr<GraphView> {
+    let seeds_u: Vec<u32> = seeds.iter().map(|ri| rint_to_u32(ri, "seeds")).collect();
+    // Check bounds
+    for &i in &seeds_u {
+        if i >= g.as_ref().n() {
+            throw_r_error(format!("Index {} is out of bounds", i + 1));
+        }
+    }
+    let out = g
+        .as_ref()
+        .moral_of_ancestors(&seeds_u)
+        .unwrap_or_else(|e| throw_r_error(e));
+    ExternalPtr::new(out)
+}
+
+#[extendr]
+fn ancestral_reduction_ptr(g: ExternalPtr<GraphView>, seeds: Integers) -> ExternalPtr<GraphView> {
+    let seeds_u: Vec<u32> = seeds.iter().map(|ri| rint_to_u32(ri, "seeds")).collect();
+    // Check bounds
+    for &i in &seeds_u {
+        if i >= g.as_ref().n() {
+            throw_r_error(format!("Index {} is out of bounds", i + 1));
+        }
+    }
+    let out = g
+        .as_ref()
+        .ancestral_reduction(&seeds_u)
+        .unwrap_or_else(|e| throw_r_error(e));
+    ExternalPtr::new(out)
+}
+
+#[extendr]
+fn to_edge_list_ptr(g: ExternalPtr<GraphView>) -> Robj {
+    let edges = g.as_ref().to_edge_list();
+    let mut from_vec: Vec<i32> = Vec::new();
+    let mut to_vec: Vec<i32> = Vec::new();
+    let mut class_vec: Vec<String> = Vec::new();
+    let mut side_vec: Vec<i32> = Vec::new();
+
+    for (u, v, class, side) in edges {
+        from_vec.push(u as i32);
+        to_vec.push(v as i32);
+        class_vec.push(format!("{:?}", class));
+        side_vec.push(side as i32);
+    }
+
+    list!(
+        from = from_vec,
+        to = to_vec,
+        class = class_vec,
+        side = side_vec
+    )
+    .into_robj()
+}
+
 // ── Subgraph ────────────────────────────────────────────────────────────────
 
 #[extendr]
@@ -739,6 +818,12 @@ extendr_module! {
     fn adjustment_set_optimal_ptr;
     fn is_valid_backdoor_set_ptr;
     fn all_backdoor_sets_ptr;
+
+    // graph transformations
+    fn proper_backdoor_graph_ptr;
+    fn moral_of_ancestors_ptr;
+    fn ancestral_reduction_ptr;
+    fn to_edge_list_ptr;
 
     // view df
     fn n_ptr;
