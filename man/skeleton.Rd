@@ -7,7 +7,7 @@
 skeleton(cg)
 }
 \arguments{
-\item{cg}{A \code{caugi} object.}
+\item{cg}{A \code{caugi} object. Either a DAG or PDAG.}
 }
 \value{
 A \code{caugi} object representing the skeleton of the graph (UG).

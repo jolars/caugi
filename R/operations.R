@@ -38,7 +38,7 @@ moralize <- function(cg) {
 #' This changes the graph from any class to an Undirected Graph (UG), also known
 #' as a Markov Graph.
 #'
-#' @param cg A `caugi` object.
+#' @param cg A `caugi` object. Either a DAG or PDAG.
 #'
 #' @returns A `caugi` object representing the skeleton of the graph (UG).
 skeleton <- function(cg) {
