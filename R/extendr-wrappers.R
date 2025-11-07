@@ -52,6 +52,10 @@ is_simple_ptr <- function(g) .Call(wrap__is_simple_ptr, g)
 
 graph_class_ptr <- function(g) .Call(wrap__graph_class_ptr, g)
 
+skeleton_ptr <- function(g) .Call(wrap__skeleton_ptr, g)
+
+moralize_ptr <- function(g) .Call(wrap__moralize_ptr, g)
+
 is_acyclic_ptr <- function(g) .Call(wrap__is_acyclic_ptr, g)
 
 to_cpdag_ptr <- function(g) .Call(wrap__to_cpdag_ptr, g)

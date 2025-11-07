@@ -101,8 +101,8 @@ Matrix_S4_class <- readRDS("inst/S4_class_definitions/Matrix_class.rds")
 #'
 #' cg <- as_caugi(M, class = "PAG")
 #'
-#' @family conversion
-#' @concept conversion
+#' @family conversions
+#' @concept conversions
 #'
 #' @export
 as_caugi <- S7::new_generic(

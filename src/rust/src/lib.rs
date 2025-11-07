@@ -761,6 +761,20 @@ fn is_cpdag_ptr(g: ExternalPtr<GraphView>) -> bool {
     }
 }
 
+// ── Skeleton and moralize ──────────────────────────────────────────────────────────
+
+#[extendr]
+fn skeleton_ptr(g: ExternalPtr<GraphView>) -> ExternalPtr<GraphView> {
+    let out = g.as_ref().skeleton().unwrap_or_else(|e| throw_r_error(e));
+    ExternalPtr::new(out)
+}
+
+#[extendr]
+fn moralize_ptr(g: ExternalPtr<GraphView>) -> ExternalPtr<GraphView> {
+    let out = g.as_ref().moralize().unwrap_or_else(|e| throw_r_error(e));
+    ExternalPtr::new(out)
+}
+
 extendr_module! {
     mod caugi;
     // registry
@@ -793,6 +807,10 @@ extendr_module! {
     // graph properties
     fn is_simple_ptr;
     fn graph_class_ptr;
+
+    // graph operations
+    fn skeleton_ptr;
+    fn moralize_ptr;
 
     // acyclicity test and conversion
     fn is_acyclic_ptr;

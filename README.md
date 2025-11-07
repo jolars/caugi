@@ -32,8 +32,8 @@ A `caugi` graph object is the bread and butter of the `caugi` package.
 It is easy to create, query, and modify.
 
 You can create simple graphs as well as a number of predefined graph
-classes. Currently, we only support `"UNKNOWN"`, `"DAG"`, or `"PDAG"`.
-We plan on supporting several other causal graph types in future
+classes. Currently, we support `"UNKNOWN"`, `"DAG"`, `"PDAG"`, and
+`"UG"`. We plan on supporting several other causal graph types in future
 releases, such as `"PAG"`, `"MAG"`, `"SWIG"`, and `"ADMG"`.
 
 ``` r

@@ -29,4 +29,7 @@ reference:
       - has_concept("methods")
   - title: Conversions
     contents:
-      - has_concept("conversion")
+      - has_concept("conversions")
+  - title: Operatoins
+    contents:
+      - has_concept("operations")
