@@ -71,7 +71,7 @@ impl GraphView {
         match self {
             GraphView::Dag(g) => Ok(g.ancestors_of(i)),
             GraphView::Pdag(g) => Ok(g.ancestors_of(i)),
-            GraphView::Ug(g) => Ok(g.ancestors_of(i)),
+            GraphView::Ug(_) => Err("ancestors_of not defined for UG".into()),
             GraphView::Raw(_) => Err("ancestors_of not implemented for UNKNOWN class".into()),
         }
     }
@@ -79,7 +79,7 @@ impl GraphView {
         match self {
             GraphView::Dag(g) => Ok(g.descendants_of(i)),
             GraphView::Pdag(g) => Ok(g.descendants_of(i)),
-            GraphView::Ug(g) => Ok(g.descendants_of(i)),
+            GraphView::Ug(_) => Err("descendants_of not defined for UG".into()),
             GraphView::Raw(_) => Err("descendants_of not implemented for UNKNOWN class".into()),
         }
     }

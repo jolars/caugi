@@ -88,18 +88,6 @@ impl Ug {
     }
 
     #[inline]
-    pub fn ancestors_of(&self, _i: u32) -> Vec<u32> {
-        // In an undirected graph, there's no directionality, so no ancestors
-        Vec::new()
-    }
-
-    #[inline]
-    pub fn descendants_of(&self, _i: u32) -> Vec<u32> {
-        // In an undirected graph, there's no directionality, so no descendants
-        Vec::new()
-    }
-
-    #[inline]
     pub fn markov_blanket_of(&self, i: u32) -> Vec<u32> {
         // In an undirected graph, the Markov blanket is just the neighbors
         self.neighbors_of(i).to_vec()
@@ -211,22 +199,6 @@ mod tests {
         let g = Ug::new(core).expect("UG construction failed");
         
         assert_eq!(g.exogenous_nodes(), vec![3, 4]);
-    }
-
-    #[test]
-    fn ug_ancestors_descendants_empty() {
-        let mut reg = EdgeRegistry::new();
-        reg.register_builtins().unwrap();
-        let cund = reg.code_of("---").unwrap();
-        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
-        b.add_edge(0, 1, cund).unwrap();
-        b.add_edge(1, 2, cund).unwrap();
-        let core = std::sync::Arc::new(b.finalize().unwrap());
-        let g = Ug::new(core).expect("UG construction failed");
-        
-        // Undirected graphs have no ancestors/descendants
-        assert!(g.ancestors_of(1).is_empty());
-        assert!(g.descendants_of(1).is_empty());
     }
 
     #[test]

@@ -47,16 +47,6 @@ cg <- caugi(
 )
 ```
 
-```{r}
-# an undirected graph
-ug <- caugi(
-  A %---% B,
-  B %---% C,
-  C %---% D,
-  class = "UG"
-)
-```
-
 ### Edge operators
 
 The available edges in `caugi` are listed below:
