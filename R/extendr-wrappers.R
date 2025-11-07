@@ -88,6 +88,14 @@ is_valid_backdoor_set_ptr <- function(g, x, y, z) .Call(wrap__is_valid_backdoor_
 
 all_backdoor_sets_ptr <- function(g, x, y, minimal, max_size) .Call(wrap__all_backdoor_sets_ptr, g, x, y, minimal, max_size)
 
+proper_backdoor_graph_ptr <- function(g, xs, ys) .Call(wrap__proper_backdoor_graph_ptr, g, xs, ys)
+
+moral_of_ancestors_ptr <- function(g, seeds) .Call(wrap__moral_of_ancestors_ptr, g, seeds)
+
+ancestral_reduction_ptr <- function(g, seeds) .Call(wrap__ancestral_reduction_ptr, g, seeds)
+
+to_edge_list_ptr <- function(g) .Call(wrap__to_edge_list_ptr, g)
+
 n_ptr <- function(g) .Call(wrap__n_ptr, g)
 
 edges_ptr_df <- function(g) .Call(wrap__edges_ptr_df, g)
