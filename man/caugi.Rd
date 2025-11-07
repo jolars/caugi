@@ -12,7 +12,7 @@ caugi(
   nodes = NULL,
   simple = TRUE,
   build = TRUE,
-  class = c("UNKNOWN", "DAG", "PDAG"),
+  class = c("UNKNOWN", "DAG", "PDAG", "UG"),
   state = NULL
 )
 }
@@ -47,7 +47,7 @@ if calling \code{\link[=build]{build()}}. \strong{Note}: Even if \code{build = T
 nodes are provided, the graph will not be built and the pointer will be
 \code{NULL}.}
 
-\item{class}{Character; one of \code{"UNKNOWN"}, \code{"DAG"}, or \code{"PDAG"}.}
+\item{class}{Character; one of \code{"UNKNOWN"}, \code{"DAG"}, \code{"PDAG"}, or \code{"UG"}.}
 
 \item{state}{For internal use. Build a graph by supplying a pre-constructed
 state environment.}
