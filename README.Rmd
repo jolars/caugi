@@ -35,7 +35,7 @@ library(caugi)
 
 A `caugi` graph object is the bread and butter of the `caugi` package. It is easy to create, query, and modify. 
 
-You can create simple graphs as well as a number of predefined graph classes. Currently, we only support `"UNKNOWN"`, `"DAG"`, or `"PDAG"`. We plan on supporting several other causal graph types in future releases, such as `"PAG"`, `"MAG"`, `"SWIG"`, and `"ADMG"`.
+You can create simple graphs as well as a number of predefined graph classes. Currently, we support `"UNKNOWN"`, `"DAG"`, `"PDAG"`, and `"UG"` (undirected graph). We plan on supporting several other causal graph types in future releases, such as `"PAG"`, `"MAG"`, `"SWIG"`, and `"ADMG"`.
 
 ```{r}
 # a tiny DAG
@@ -44,6 +44,16 @@ cg <- caugi(
   B %-->% D,
   C %-->% D,
   class = "DAG"
+)
+```
+
+```{r}
+# an undirected graph
+ug <- caugi(
+  A %---% B,
+  B %---% C,
+  C %---% D,
+  class = "UG"
 )
 ```
 
