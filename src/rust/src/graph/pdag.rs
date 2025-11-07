@@ -4,8 +4,8 @@
 use super::CaugiGraph;
 use crate::edges::EdgeClass;
 use crate::graph::alg::directed_part_is_acyclic;
-use std::sync::Arc;
 use crate::graph::ug::Ug;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Pdag {
@@ -1099,5 +1099,4 @@ mod tests {
         assert_eq!(ug.neighbors_of(1), &[0, 2]);
         assert_eq!(ug.neighbors_of(2), &[1]);
     }
-
 }
