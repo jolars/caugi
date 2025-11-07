@@ -12,8 +12,8 @@
 #' )
 #' ig <- as_igraph(cg)
 #'
-#' @family conversion
-#' @concept conversion
+#' @family conversions
+#' @concept conversions
 #'
 #' @export
 as_igraph <- function(x, ...) {
@@ -120,8 +120,8 @@ as_igraph <- function(x, ...) {
 #' )
 #' adj <- as_adjacency(cg)
 #'
-#' @family conversion
-#' @concept conversion
+#' @family conversions
+#' @concept conversions
 #'
 #' @export
 as_adjacency <- function(x) {
@@ -176,8 +176,8 @@ as_adjacency <- function(x) {
 #' )
 #' g_bn <- as_bnlearn(cg)
 #'
-#' @family conversion
-#' @concept conversion
+#' @family conversions
+#' @concept conversions
 #'
 #' @export
 as_bnlearn <- function(x) {
@@ -214,8 +214,8 @@ as_bnlearn <- function(x) {
 #' )
 #' g_dg <- as_dagitty(cg)
 #'
-#' @family conversion
-#' @concept conversion
+#' @family conversions
+#' @concept conversions
 #'
 #' @export
 as_dagitty <- function(x) {
