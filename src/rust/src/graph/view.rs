@@ -177,6 +177,30 @@ impl GraphView {
         }
     }
 
+    pub fn skeleton(&self) -> Result<GraphView, String> {
+        match self {
+            GraphView::Dag(d) => {
+                let ug = d.skeleton()?;
+                Ok(GraphView::Ug(Arc::new(ug)))
+            }
+            GraphView::Pdag(p) => {
+                let ug = p.skeleton()?;
+                Ok(GraphView::Ug(Arc::new(ug)))
+            }
+            _ => Err("skeleton is defined for DAGs and PDAGs only".into()),
+        }
+    }
+
+    pub fn moralize(&self) -> Result<GraphView, String> {
+        match self {
+            GraphView::Dag(d) => {
+                let ug = d.moralize()?;
+                Ok(GraphView::Ug(Arc::new(ug)))
+            }
+            _ => Err("moralize is only defined for DAGs".into()),
+        }
+    }
+
     /// Proper backdoor graph for Xs → Ys. Defined for DAG only.
     pub fn proper_backdoor_graph(&self, xs: &[u32], ys: &[u32]) -> Result<GraphView, String> {
         match self {
@@ -582,6 +606,92 @@ mod tests {
             }
             _ => panic!("Expected DAG"),
         }
+    }
+
+    #[test]
+    fn graphview_skeleton_from_dag_and_pdag_and_errors() {
+        use crate::graph::ug::Ug;
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap();
+        let d = r.code_of("-->").unwrap();
+        let u = r.code_of("---").unwrap();
+
+        // DAG: 0->1, 1->2  ⇒ skeleton neighbors {0:[1], 1:[0,2], 2:[1]}
+        let mut bd = GraphBuilder::new_with_registry(3, true, &r);
+        bd.add_edge(0, 1, d).unwrap();
+        bd.add_edge(1, 2, d).unwrap();
+        let v_dag = GraphView::Dag(Arc::new(Dag::new(Arc::new(bd.finalize().unwrap())).unwrap()));
+        let ug = match v_dag.skeleton().unwrap() {
+            GraphView::Ug(g) => g,
+            _ => panic!("expected UG"),
+        };
+        assert_eq!(ug.neighbors_of(0), &[1]);
+        assert_eq!(ug.neighbors_of(1), &[0, 2]);
+        assert_eq!(ug.neighbors_of(2), &[1]);
+
+        // PDAG: 0->1, 1--2  ⇒ skeleton neighbors {0:[1], 1:[0,2], 2:[1]}
+        let mut bp = GraphBuilder::new_with_registry(3, true, &r);
+        bp.add_edge(0, 1, d).unwrap();
+        bp.add_edge(1, 2, u).unwrap();
+        let v_pdag =
+            GraphView::Pdag(Arc::new(Pdag::new(Arc::new(bp.finalize().unwrap())).unwrap()));
+        let ug2 = match v_pdag.skeleton().unwrap() {
+            GraphView::Ug(g) => g,
+            _ => panic!("expected UG"),
+        };
+        assert_eq!(ug2.neighbors_of(0), &[1]);
+        assert_eq!(ug2.neighbors_of(1), &[0, 2]);
+        assert_eq!(ug2.neighbors_of(2), &[1]);
+
+        // UG: calling skeleton() must error
+        let mut bu = GraphBuilder::new_with_registry(2, true, &r);
+        bu.add_edge(0, 1, u).unwrap();
+        let v_ug = GraphView::Ug(Arc::new(Ug::new(Arc::new(bu.finalize().unwrap())).unwrap()));
+        assert_eq!(
+            v_ug.skeleton().unwrap_err(),
+            "skeleton is defined for DAGs and PDAGs only"
+        );
+    }
+
+    #[test]
+    fn graphview_moralize_from_dag_and_errors() {
+        use crate::graph::ug::Ug;
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap();
+        let d = r.code_of("-->").unwrap();
+        let u = r.code_of("---").unwrap();
+
+        // Moralize v-structure: 0->2<-1  ⇒ marry parents ⇒ UG edges {0-2,1-2,0-1}
+        let mut b = GraphBuilder::new_with_registry(3, true, &r);
+        b.add_edge(0, 2, d).unwrap();
+        b.add_edge(1, 2, d).unwrap();
+        let v_dag = GraphView::Dag(Arc::new(Dag::new(Arc::new(b.finalize().unwrap())).unwrap()));
+        let ug = match v_dag.moralize().unwrap() {
+            GraphView::Ug(g) => g,
+            _ => panic!("expected UG"),
+        };
+        assert_eq!(ug.neighbors_of(0), &[1, 2]);
+        assert_eq!(ug.neighbors_of(1), &[0, 2]);
+        assert_eq!(ug.neighbors_of(2), &[0, 1]);
+
+        // PDAG: moralize() must error
+        let mut bp = GraphBuilder::new_with_registry(2, true, &r);
+        bp.add_edge(0, 1, d).unwrap();
+        let v_pdag =
+            GraphView::Pdag(Arc::new(Pdag::new(Arc::new(bp.finalize().unwrap())).unwrap()));
+        assert_eq!(
+            v_pdag.moralize().unwrap_err(),
+            "moralize is only defined for DAGs"
+        );
+
+        // UG: moralize() must error
+        let mut bu = GraphBuilder::new_with_registry(2, true, &r);
+        bu.add_edge(0, 1, u).unwrap();
+        let v_ug = GraphView::Ug(Arc::new(Ug::new(Arc::new(bu.finalize().unwrap())).unwrap()));
+        assert_eq!(
+            v_ug.moralize().unwrap_err(),
+            "moralize is only defined for DAGs"
+        );
     }
 
     #[test]
