@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 library(caugi)
 ```
 
-In this vignette, we will walk you through on how to create a `caugi`, query it, modify it, and then compare it to other `caugi`s. 
+In this vignette, we will walk you through how to create a `caugi`, query it, modify it, and then compare it to other `caugi`s. 
 
 ## The `caugi` object
 
@@ -35,7 +35,7 @@ cg <- caugi(
 cg
 ```
 
-You might scratch your head a bit, when looking at the call above. To clarify, `A %-->% B` creates the edge `-->` from `A` to `B`. The syntax `B %-->% C + D` is equivalent to `B %--> C` _and_ `B %-->% D`. Notice that the graph prints two `tibbles`. The first is equivalent to `cg@nodes` and the second `cg@edges`. Besides that the `caugi` holds other _properties_. Let's check the other properties. 
+You might scratch your head a bit, when looking at the call above. To clarify, `A %-->% B` creates the edge `-->` from `A` to `B`. The syntax `B %-->% C + D` is equivalent to `B %--> C` _and_ `B %-->% D`. Notice that the graph prints two `tibbles`. The first is equivalent to `cg@nodes` and the second `cg@edges`. Besides that, the `caugi` holds other _properties_. Let's check the other properties.
 
 ### Properties
 
@@ -130,7 +130,7 @@ This indicates whether the graph has been "built" or not on the Rust side. This 
 cg@name_index_map
 ```
 
-The `name_index_map` is a hashmap that takes node names as keys and output zero-based indices. This is use to access nodes' zero-based indices,, when converting node names to indices for Rust calls, as the Rust backend uses zero-based indices. 
+The `name_index_map` is a hashmap that takes node names as keys and outputs zero-based indices. This is used to access nodes' zero-based indices, when converting node names to indices for Rust calls, as the Rust backend uses zero-based indices. 
 
 #### `.state`
 
@@ -138,5 +138,5 @@ The `name_index_map` is a hashmap that takes node names as keys and output zero-
 cg@.state
 ```
 
-This is the internal state of the `caugi` graph object. It is used to ensure that the `caugi` object can be modifying in R and, so to say, _saves_ the modifications you might make to the graph in R without having to rebuild the graph in Rust each time. The most important takeaways about the state is that you should _avoid_ modifying the state directly. Instead, you should use the verbs.  
+This is the internal state of the `caugi` graph object. It is used to ensure that the `caugi` object can be modified in R and, so to speak, _saves_ the modifications you might make to the graph in R without having to rebuild the graph in Rust each time. The most important takeaway about the state is that you should _avoid_ modifying the state directly. Instead, you should use the verbs.
 
