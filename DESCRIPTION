@@ -18,8 +18,7 @@ Imports:
     dplyr,
     fastmap,
     S7,
-    stats,
-    tibble
+    stats
 Suggests: 
     bench,
     bnlearn,
