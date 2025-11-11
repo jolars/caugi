@@ -415,7 +415,7 @@ caugi <- S7::new_class(
       )
   }
 
-  nodes_tbl <- tibble::tibble(name = node_names)
+  nodes_tbl <- .node_constructor(names = node_names)
 
   name_index_map <- fastmap::fastmap()
   do.call(name_index_map$mset, .set_names(
