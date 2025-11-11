@@ -4,7 +4,7 @@
 #' **caugi** wraps a high-performance Rust core in a pipe-friendly R API.
 #'
 #' @author
-#' Frederik Fabricius-Bjerre \email{frederik@fabriciusbjerre.dk},
+#' Frederik Fabricius-Bjerre \email{frederik@fabriciusbjerre.dk}
 #'
 #' @keywords package internal
 #' @name caugi-package

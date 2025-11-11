@@ -15,7 +15,7 @@ Useful links:
 
 }
 \author{
-Frederik Fabricius-Bjerre \email{frederik@fabriciusbjerre.dk},
+Frederik Fabricius-Bjerre \email{frederik@fabriciusbjerre.dk}
 }
 \keyword{internal}
 \keyword{package}
