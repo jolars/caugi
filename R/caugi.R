@@ -426,13 +426,12 @@ caugi <- S7::new_class(
   if (length(edges_idx$from0) == 0L) {
     edges_tbl <- .edge_constructor()
   } else {
-    edges_tbl <-
-      edges_tbl <- .edge_constructor_idx(
-        from_idx = edges_idx$from0 + 1L,
-        edge = as.character(edges_idx$glyph),
-        to_idx = edges_idx$to0 + 1L,
-        node_names = node_names
-      )
+    edges_tbl <- .edge_constructor_idx(
+      from_idx = edges_idx$from0 + 1L,
+      edge = as.character(edges_idx$glyph),
+      to_idx = edges_idx$to0 + 1L,
+      node_names = node_names
+    )
   }
 
   nodes_tbl <- .node_constructor(names = node_names)
