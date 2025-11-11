@@ -342,7 +342,7 @@
     }
   }
   edges <- if (length(units)) {
-    unqiue(.edge_units_to_dt(units), by = c("from", "edge", "to"))
+    data.table::unqiue(.edge_units_to_dt(units), by = c("from", "edge", "to"))
   } else {
     .edge_constructor()
   }
@@ -441,5 +441,30 @@
     to = node_names[to_idx]
   )
   data.table::setorder(dt, "from", "to", "edge")
+  return(dt)
+}
+
+#' @title Node constructor
+#'
+#' @description
+#' A simple wrapper creating a `data.table` object with a single column `name`.
+#'
+#' @details
+#' The reason this exists is so if changes should be made in the future, it is
+#' easy to simply change this constructor, rather than changing the calls to
+#' `data.table` all over the place.
+#'
+#' @param names Character vector of node names.
+#' @param sort Logical indicating whether to sort the node names.
+#'
+#' @returns A `data.table` object with a single column `name`.
+#' @keywords internal
+.node_constructor <- function(names = character(), sort = FALSE) {
+  dt <- data.table::data.table(
+    name = names
+  )
+  if (sort) {
+    data.table::setorder(dt, "name") # sorts inplace
+  }
   return(dt)
 }
