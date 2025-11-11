@@ -5,7 +5,7 @@
 library(caugi)
 ```
 
-In this vignette, we will walk you through on how to create a `caugi`,
+In this vignette, we will walk you through how to create a `caugi`,
 query it, modify it, and then compare it to other `caugi`s.
 
 ## The `caugi` object
@@ -22,27 +22,25 @@ cg <- caugi(
   class = "DAG"
 )
 cg
-#> # A tibble: 4 × 1
-#>   name 
-#>   <chr>
-#> 1 A    
-#> 2 B    
-#> 3 C    
-#> 4 D    
-#> # A tibble: 4 × 3
-#>   from  edge  to   
-#>   <chr> <chr> <chr>
-#> 1 A     -->   B    
-#> 2 A     -->   C    
-#> 3 B     -->   C    
-#> 4 B     -->   D
+#>      name
+#>    <char>
+#> 1:      A
+#> 2:      B
+#> 3:      C
+#> 4:      D
+#>      from   edge     to
+#>    <char> <char> <char>
+#> 1:      A    -->      B
+#> 2:      B    -->      C
+#> 3:      B    -->      D
+#> 4:      A    -->      C
 ```
 
 You might scratch your head a bit, when looking at the call above. To
 clarify, `A %-->% B` creates the edge `-->` from `A` to `B`. The syntax
 `B %-->% C + D` is equivalent to `B %--> C` *and* `B %-->% D`. Notice
 that the graph prints two `tibbles`. The first is equivalent to
-`cg@nodes` and the second `cg@edges`. Besides that the `caugi` holds
+`cg@nodes` and the second `cg@edges`. Besides that, the `caugi` holds
 other *properties*. Let’s check the other properties.
 
 ### Properties
@@ -51,7 +49,7 @@ other *properties*. Let’s check the other properties.
 
 ``` r
 cg@ptr
-#> <pointer: 0x5602416279c0>
+#> <pointer: 0x558e806d3930>
 ```
 
 This is the pointer to the Rust object that `caugi` utilizes for
@@ -120,19 +118,17 @@ cg_modified <- cg |>
   remove_edges(A %-->% B, B %-->% C + D) |>
   add_edges(B %-->% A, D %-->% C)
 cg_modified
-#> # A tibble: 4 × 1
-#>   name 
-#>   <chr>
-#> 1 A    
-#> 2 B    
-#> 3 C    
-#> 4 D    
-#> # A tibble: 3 × 3
-#>   from  edge  to   
-#>   <chr> <chr> <chr>
-#> 1 A     -->   C    
-#> 2 B     -->   A    
-#> 3 D     -->   C
+#>      name
+#>    <char>
+#> 1:      A
+#> 2:      B
+#> 3:      C
+#> 4:      D
+#>      from   edge     to
+#>    <char> <char> <char>
+#> 1:      A    -->      C
+#> 2:      B    -->      A
+#> 3:      D    -->      C
 ```
 
 Would you like to add nodes? Then use
@@ -191,20 +187,20 @@ cg@name_index_map
 ```
 
 The `name_index_map` is a hashmap that takes node names as keys and
-output zero-based indices. This is use to access nodes’ zero-based
-indices,, when converting node names to indices for Rust calls, as the
+outputs zero-based indices. This is used to access nodes’ zero-based
+indices, when converting node names to indices for Rust calls, as the
 Rust backend uses zero-based indices.
 
 #### `.state`
 
 ``` r
 cg@.state
-#> <environment: 0x56024057ed08>
+#> <environment: 0x558e80dec0f0>
 ```
 
 This is the internal state of the `caugi` graph object. It is used to
-ensure that the `caugi` object can be modifying in R and, so to say,
+ensure that the `caugi` object can be modified in R and, so to speak,
 *saves* the modifications you might make to the graph in R without
 having to rebuild the graph in Rust each time. The most important
-takeaways about the state is that you should *avoid* modifying the state
+takeaway about the state is that you should *avoid* modifying the state
 directly. Instead, you should use the verbs.

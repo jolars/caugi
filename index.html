@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">caugi</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,9 +82,9 @@
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># a tiny DAG</span></span>
 <span><span class="va">cg</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/caugi.html">caugi</a></span><span class="op">(</span></span>
-<span>  <span class="va">A</span> <span class="op"><a href="reference/grapes-greater-than-grapes.html">%--&gt;%</a></span> <span class="va">B</span> <span class="op">+</span> <span class="va">C</span>,</span>
-<span>  <span class="va">B</span> <span class="op"><a href="reference/grapes-greater-than-grapes.html">%--&gt;%</a></span> <span class="va">D</span>,</span>
-<span>  <span class="va">C</span> <span class="op"><a href="reference/grapes-greater-than-grapes.html">%--&gt;%</a></span> <span class="va">D</span>,</span>
+<span>  <span class="va">A</span> <span class="op"><a href="reference/edge_operators.html">%--&gt;%</a></span> <span class="va">B</span> <span class="op">+</span> <span class="va">C</span>,</span>
+<span>  <span class="va">B</span> <span class="op"><a href="reference/edge_operators.html">%--&gt;%</a></span> <span class="va">D</span>,</span>
+<span>  <span class="va">C</span> <span class="op"><a href="reference/edge_operators.html">%--&gt;%</a></span> <span class="va">D</span>,</span>
 <span>  class <span class="op">=</span> <span class="st">"DAG"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
@@ -115,18 +115,16 @@
 <span>  symmetric <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="reference/caugi.html">caugi</a></span><span class="op">(</span><span class="va">A</span> <span class="op"><a href="reference/grapes-greater-than-grapes.html">%--&gt;%</a></span> <span class="va">B</span>, <span class="va">B</span> <span class="op">%&lt;--%</span> <span class="va">C</span>, class <span class="op">=</span> <span class="st">"DAG"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 3 × 1</span></span>
-<span><span class="co">#&gt;   name </span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;</span></span>
-<span><span class="co">#&gt; 1 A    </span></span>
-<span><span class="co">#&gt; 2 B    </span></span>
-<span><span class="co">#&gt; 3 C    </span></span>
-<span><span class="co">#&gt; # A tibble: 2 × 3</span></span>
-<span><span class="co">#&gt;   from  edge  to   </span></span>
-<span><span class="co">#&gt;   &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
-<span><span class="co">#&gt; 1 A     --&gt;   B    </span></span>
-<span><span class="co">#&gt; 2 B     &lt;--   C</span></span>
+<span><span class="fu"><a href="reference/caugi.html">caugi</a></span><span class="op">(</span><span class="va">A</span> <span class="op"><a href="reference/edge_operators.html">%--&gt;%</a></span> <span class="va">B</span>, <span class="va">B</span> <span class="op">%&lt;--%</span> <span class="va">C</span>, class <span class="op">=</span> <span class="st">"DAG"</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      name</span></span>
+<span><span class="co">#&gt;    &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:      A</span></span>
+<span><span class="co">#&gt; 2:      B</span></span>
+<span><span class="co">#&gt; 3:      C</span></span>
+<span><span class="co">#&gt;      from   edge     to</span></span>
+<span><span class="co">#&gt;    &lt;char&gt; &lt;char&gt; &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1:      A    --&gt;      B</span></span>
+<span><span class="co">#&gt; 2:      B    &lt;--      C</span></span>
 <span></span>
 <span><span class="co"># reset the registry to default with original edges</span></span>
 <span><span class="fu"><a href="reference/registry.html">reset_caugi_registry</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
@@ -198,7 +196,7 @@
 <ul class="list-unstyled">
 <li><a href="https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
 <li><a href="https://app.codecov.io/gh/frederikfabriciusbjerre/caugi" class="external-link"><img src="https://codecov.io/gh/frederikfabriciusbjerre/caugi/graph/badge.svg" alt="Code coverage"></a></li>
-<li><a href="https://extendr.github.io/extendr/extendr_api/" class="external-link"><img src="https://img.shields.io/badge/extendr-%5E0.8.1-276DC2" alt="extendr"></a></li>
+<li><a href="https://extendr.rs/extendr/extendr_api/" class="external-link"><img src="https://img.shields.io/badge/extendr-%5E0.8.1-276DC2" alt="extendr"></a></li>
 </ul>
 </div>
 

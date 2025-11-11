@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">caugi</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,8 +68,8 @@
     
     
 <p>This vignette discusses the performance characteristics of
-<code>caugi</code> including a comparison to the popular <a href="https://r.igraph.org/" class="external-link"><code>igraph</code></a>, <a href="https://www.bnlearn.com/" class="external-link"><code>bnlearn</code></a>, <a href="https://dagitty.net/" class="external-link"><code>dagitty</code></a>, and <a href="https://cran.r-project.org/web/packages/ggm/index.html" class="external-link"><code>ggm</code></a>.
-We focus on the practical trade-offs that arise from different core data
+<code>caugi</code> including a comparison to the popular <a href="https://r.igraph.org/" class="external-link"><code>igraph</code></a>, <a href="https://www.bnlearn.com/" class="external-link"><code>bnlearn</code></a>, <a href="https://dagitty.net/" class="external-link"><code>dagitty</code></a>, and <a href="https://cran.r-project.org/package=ggm" class="external-link"><code>ggm</code></a>. We
+focus on the practical trade-offs that arise from different core data
 structures and design choices.</p>
 <p>The headline is: <code>caugi</code> frontloads computation. That is,
 <code>caugi</code> spends more effort when constructing a graph and
@@ -81,13 +81,13 @@ is also due to the Rust backend.</p>
 <div class="section level4">
 <h4 id="compressed-sparse-row-csr-representation">Compressed Sparse Row (CSR) representation<a class="anchor" aria-label="anchor" href="#compressed-sparse-row-csr-representation"></a>
 </h4>
-<p>The core data structure in <code>caugi</code> is a Compressed Sparse
-Row (CSR) representation of the graph. CSR stores for each vertex a
-contiguous slice of neighbor IDs with a pointer (offset) array that
-marks the start/end of each slice. This format is memory efficient for
-sparse graphs. The <code>caugi</code> graph object also stores important
-query information in the object, leading to parent, child, and neighbor
-queries being done in
+<p>The core data structure in <code>caugi</code> is a compressed sparse
+row (CSR) representation of the graph. CSR representations store for
+each vertex a contiguous slice of neighbor IDs with a pointer (offset)
+array that marks the start/end of each slice. This format is memory
+efficient for sparse graphs. The <code>caugi</code> graph object also
+stores important query information in the object, leading to parent,
+child, and neighbor queries being done in
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math>.
 This yields a larger memory footprint, but the trade-off is that queries
 are extremely fast.</p>
@@ -96,9 +96,9 @@ are extremely fast.</p>
 <h4 id="mutation-and-lazy-building">Mutation and lazy building<a class="anchor" aria-label="anchor" href="#mutation-and-lazy-building"></a>
 </h4>
 <p>The <code>caugi</code> graph objects are expensive to build. This is
-the performance downside of using <code>caugi</code>. For each time, we
+the performance downside of using <code>caugi</code>. For each time we
 make a modification to a <code>caugi</code> graph object, we need to
-rebuild the graph completely, since the graph object is immutable by
+rebuild the graph completely since the graph object is immutable by
 design. This has complexity
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><mrow><mo stretchy="true" form="prefix">|</mo><mi>V</mi><mo stretchy="true" form="postfix">|</mo></mrow><mo>+</mo><mrow><mo stretchy="true" form="prefix">|</mo><mi>E</mi><mo stretchy="true" form="postfix">|</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(|V| + |E|)</annotation></semantics></math>,
 where
@@ -106,11 +106,11 @@ where
 is the vertex set and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>E</mi><annotation encoding="application/x-tex">E</annotation></semantics></math>
 is the edge set.</p>
-<p>However, the graph object will only be rebuild, when the user either
+<p>However, the graph object will only be rebuilt when the user either
 calls <code><a href="../reference/build.html">build()</a></code> directly or queries the graph. Therefore, you
 do not need to worry about wasting compute time by iteratively making
 changes to a <code>caugi</code> graph object, as the graph rebuilds
-lazily when queried. By doing this <code>caugi</code> graphs
+lazily when queried. By doing this, <code>caugi</code> graphs
 <em>feel</em> mutable, but, in reality, they are not.</p>
 <p>By doing it this way, we ensure - that the graph object is always in
 a consistent state when queried, and - that queries are as fast as
@@ -181,11 +181,11 @@ become prohibitively slow for larger graphs.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 6</span></span></span>
 <span><span class="co">#&gt;   expression      min   median `itr/sec` mem_alloc `gc/sec`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;bch:expr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;bch:tm&gt;</span> <span style="color: #949494; font-style: italic;">&lt;bch:tm&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;bch:byt&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> caugi        63.9µs  68.04µs <span style="text-decoration: underline;">13</span>776.      67.36KB     8.00</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> igraph     524.86µs 564.35µs  <span style="text-decoration: underline;">1</span>685.      360.8KB     7.99</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> bnlearn     38.99µs  41.85µs <span style="text-decoration: underline;">16</span>024.      38.38KB    12.0 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> ggm         18.12ms  22.46ms    35.4     76.53MB    51.1 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> dagitty       2.62s    2.62s     0.381    5.09MB     0</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> caugi       59.07µs  68.06µs <span style="text-decoration: underline;">10</span>220.      67.36KB    6.00 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> igraph     482.66µs 546.52µs  <span style="text-decoration: underline;">1</span>749.     371.34KB    8.00 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> bnlearn     37.06µs  47.34µs <span style="text-decoration: underline;">20</span>807.      38.38KB    8.32 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> ggm         14.73ms  18.76ms    38.0     76.59MB   42.0  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> dagitty       2.58s    2.58s     0.387    5.09MB    0.387</span></span></code></pre></div>
 <p><code>bnlearn</code> is fastest here, but is only able to handle
 smaller graphs, whereas <code>caugi</code> and <code>igraph</code> can
 handle very large graph objects with almost no time increase:</p>
@@ -208,8 +208,8 @@ handle very large graph objects with almost no time increase:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 6</span></span></span>
 <span><span class="co">#&gt;   expression      min   median `itr/sec` mem_alloc `gc/sec`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;bch:expr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;bch:tm&gt;</span> <span style="color: #949494; font-style: italic;">&lt;bch:tm&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;bch:byt&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> caugi        62.3µs   65.8µs    <span style="text-decoration: underline;">14</span>830.     1008B     8.38</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> igraph      785.9µs  835.9µs     <span style="text-decoration: underline;">1</span>184.    3.05MB    61.7</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> caugi        57.2µs   64.8µs    <span style="text-decoration: underline;">15</span>016.     1008B     7.90</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> igraph      711.1µs    789µs     <span style="text-decoration: underline;">1</span>263.    3.05MB    30.8</span></span></code></pre></div>
 <p>For ancestors and descendants, we see that <code>caugi</code>
 outperforms all other packages by a several magnitudes, expect for
 <code>igraph</code>, which it still beats, but by a smaller margin::</p>
@@ -238,10 +238,10 @@ outperforms all other packages by a several magnitudes, expect for
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 6</span></span></span>
 <span><span class="co">#&gt;   expression      min   median `itr/sec` mem_alloc `gc/sec`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;bch:expr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;bch:tm&gt;</span> <span style="color: #949494; font-style: italic;">&lt;bch:tm&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;bch:byt&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> caugi       195.8µs 213.91µs  <span style="text-decoration: underline;">4</span>383.      65.25KB     4.00</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> igraph     651.86µs 684.09µs   422.     117.85KB     1.77</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> bnlearn       1.01s    1.01s     0.992    1.33GB     9.92</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> dagitty       2.67s    2.67s     0.375    5.09MB     0</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> caugi      189.34µs 209.66µs  <span style="text-decoration: underline;">4</span>646.      65.25KB     2.00</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> igraph     633.31µs 714.51µs  <span style="text-decoration: underline;">1</span>393.     117.85KB     2.00</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> bnlearn       1.05s    1.05s     0.949    1.33GB    15.2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> dagitty       2.66s    2.66s     0.376    5.09MB     0</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="d-separation">d-separation<a class="anchor" aria-label="anchor" href="#d-separation"></a>
@@ -274,9 +274,9 @@ then check for d-separation.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 6</span></span></span>
 <span><span class="co">#&gt;   expression      min   median `itr/sec` mem_alloc `gc/sec`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;bch:expr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;bch:tm&gt;</span> <span style="color: #949494; font-style: italic;">&lt;bch:tm&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;bch:byt&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> caugi        33.6ms  33.66ms    29.3     33.02KB     0   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> bnlearn       3.88s    3.88s     0.257    3.22GB     5.15</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> dagitty          2s       2s     0.501    4.19MB     0</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> caugi       32.21ms   33.5ms    29.6     33.02KB     0   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> bnlearn       3.89s    3.89s     0.257    3.22GB     4.37</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> dagitty       2.01s    2.01s     0.498    4.19MB     0</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="subgraph-building">Subgraph (building)<a class="anchor" aria-label="anchor" href="#subgraph-building"></a>
@@ -286,8 +286,7 @@ When we build a subgraph, we have to rebuild the entire
 <code>caugi</code> graph object. Here, we see that while
 <code>caugi</code> outperforms other packages for queries (except for
 parents/children for <code>bnlearn</code>), it is slower for building
-the graph objects themselves, which shows for the subgraph
-benchmark:</p>
+the graph objects themselves, which shows in the subgraph benchmark:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">subgraph_nodes_index</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample.int</a></span><span class="op">(</span><span class="fl">1000</span>, <span class="fl">500</span><span class="op">)</span></span>
 <span><span class="va">subgraph_nodes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"V"</span>, <span class="va">subgraph_nodes_index</span><span class="op">)</span></span>
@@ -308,9 +307,9 @@ benchmark:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 6</span></span></span>
 <span><span class="co">#&gt;   expression      min   median `itr/sec` mem_alloc `gc/sec`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;bch:expr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;bch:tm&gt;</span> <span style="color: #949494; font-style: italic;">&lt;bch:tm&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;bch:byt&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> caugi       13.22ms  14.11ms    66.7        12MB     1.96</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> igraph       1.88ms   1.93ms   516.       81.1KB     0   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> bnlearn       1.05s    1.05s     0.948   983.6MB     2.84</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> caugi        9.78ms   12.8ms    72.5       8.1MB     1.96</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> igraph       1.76ms    1.9ms   521.       81.1KB     0   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> bnlearn       1.05s    1.05s     0.950   983.6MB     2.85</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level3">
@@ -339,25 +338,24 @@ benchmark:</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] jsonlite_2.0.0      BiocManager_1.30.26 dplyr_1.1.4        </span></span>
-<span><span class="co">#&gt;  [4] compiler_4.5.2      tidyselect_1.2.1    Rcpp_1.1.0         </span></span>
-<span><span class="co">#&gt;  [7] parallel_4.5.2      jquerylib_0.1.4     systemfonts_1.3.1  </span></span>
-<span><span class="co">#&gt; [10] textshaping_1.0.4   boot_1.3-32         yaml_2.3.10        </span></span>
-<span><span class="co">#&gt; [13] fastmap_1.2.0       R6_2.6.1            generics_0.1.4     </span></span>
-<span><span class="co">#&gt; [16] curl_7.0.0          igraph_2.2.1        knitr_1.50         </span></span>
-<span><span class="co">#&gt; [19] BiocGenerics_0.56.0 htmlwidgets_1.6.4   MASS_7.3-65        </span></span>
-<span><span class="co">#&gt; [22] graph_1.88.0        tibble_3.3.0        desc_1.4.3         </span></span>
-<span><span class="co">#&gt; [25] bslib_0.9.0         pillar_1.11.1       rlang_1.1.6        </span></span>
-<span><span class="co">#&gt; [28] utf8_1.2.6          V8_8.0.1            cachem_1.1.0       </span></span>
-<span><span class="co">#&gt; [31] bnlearn_5.1         xfun_0.54           fs_1.6.6           </span></span>
-<span><span class="co">#&gt; [34] sass_0.4.10         S7_0.2.0            cli_3.6.5          </span></span>
-<span><span class="co">#&gt; [37] pkgdown_2.2.0       magrittr_2.0.4      digest_0.6.37      </span></span>
-<span><span class="co">#&gt; [40] lifecycle_1.0.4     dagitty_0.3-4       caugi_0.1.0        </span></span>
-<span><span class="co">#&gt; [43] vctrs_0.6.5         bench_1.1.4         data.table_1.17.8  </span></span>
-<span><span class="co">#&gt; [46] ggm_2.5.2           evaluate_1.0.5      glue_1.8.0         </span></span>
-<span><span class="co">#&gt; [49] ragg_1.5.0          stats4_4.5.2        profmem_0.7.0      </span></span>
-<span><span class="co">#&gt; [52] rmarkdown_2.30      tools_4.5.2         pkgconfig_2.0.3    </span></span>
-<span><span class="co">#&gt; [55] htmltools_0.5.8.1</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] jsonlite_2.0.0      BiocManager_1.30.26 compiler_4.5.2     </span></span>
+<span><span class="co">#&gt;  [4] Rcpp_1.1.0          parallel_4.5.2      jquerylib_0.1.4    </span></span>
+<span><span class="co">#&gt;  [7] systemfonts_1.3.1   textshaping_1.0.4   boot_1.3-32        </span></span>
+<span><span class="co">#&gt; [10] yaml_2.3.10         fastmap_1.2.0       R6_2.6.1           </span></span>
+<span><span class="co">#&gt; [13] generics_0.1.4      curl_7.0.0          igraph_2.2.1       </span></span>
+<span><span class="co">#&gt; [16] knitr_1.50          BiocGenerics_0.56.0 htmlwidgets_1.6.4  </span></span>
+<span><span class="co">#&gt; [19] MASS_7.3-65         graph_1.88.0        tibble_3.3.0       </span></span>
+<span><span class="co">#&gt; [22] desc_1.4.3          bslib_0.9.0         pillar_1.11.1      </span></span>
+<span><span class="co">#&gt; [25] rlang_1.1.6         utf8_1.2.6          V8_8.0.1           </span></span>
+<span><span class="co">#&gt; [28] cachem_1.1.0        bnlearn_5.1         xfun_0.54          </span></span>
+<span><span class="co">#&gt; [31] fs_1.6.6            sass_0.4.10         S7_0.2.0           </span></span>
+<span><span class="co">#&gt; [34] cli_3.6.5           pkgdown_2.2.0       magrittr_2.0.4     </span></span>
+<span><span class="co">#&gt; [37] digest_0.6.37       lifecycle_1.0.4     dagitty_0.3-4      </span></span>
+<span><span class="co">#&gt; [40] caugi_0.2.0         vctrs_0.6.5         bench_1.1.4        </span></span>
+<span><span class="co">#&gt; [43] ggm_2.5.2           evaluate_1.0.5      glue_1.8.0         </span></span>
+<span><span class="co">#&gt; [46] data.table_1.17.8   ragg_1.5.0          stats4_4.5.2       </span></span>
+<span><span class="co">#&gt; [49] profmem_0.7.0       rmarkdown_2.30      tools_4.5.2        </span></span>
+<span><span class="co">#&gt; [52] pkgconfig_2.0.3     htmltools_0.5.8.1</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
