@@ -449,8 +449,51 @@ caugi <- S7::new_class(
   caugi(state = state)
 }
 
+#' @title Edge constructor
+#'
+#' @description
+#' Internal function to construct edges for `caugi` objects.
+#'
+#' @param from Character vector of source node names.
+#' @param edge Character vector of edge glyphs.
+#' @param to Character vector of target node names.
+#'
+#' @returns A `data.table` object with columns `from`, `edge`, and `to`.
+#' @keywords internal
+.edge_constructor <- function(from = character(),
+                              edge = character(),
+                              to = character()) {
+  dt <- data.table::data.table(
+    from = from,
+    edge = edge,
+    to = to
+  )
+  data.table::setorder(dt, "from", "to", "edge")
+  return(dt)
+}
 
-#' @title Internal: Create the state environment for a `caugi`
+#' @title Edge constructor using indices.
+#'
+#' @description
+#' Internal function to construct edges for `caugi` objects using indices.
+#'
+#' @param from_idx Integer vector of source node indices.
+#' @param edge Character vector of edge glyphs.
+#' @param to_idx Integer vector of target node indices.
+#'
+#' @returns A `data.table` object with columns `from`, `edge`, and `to`.
+.edge_constructor_idx <- function(from_idx, edge, to_idx, node_names) {
+  dt <- data.table::data.table(
+    from = node_names[from_idx],
+    edge = edge,
+    to = node_names[to_idx]
+  )
+  data.table::setorder(dt, "from", "to", "edge")
+  return(dt)
+}
+
+
+#' @title Create the state environment for a `caugi` (internal)
 #'
 #' @description Internal function to create the state environment for a
 #' `caugi`. This function is not intended to be used directly by users.

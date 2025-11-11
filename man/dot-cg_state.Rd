@@ -2,7 +2,7 @@
 % Please edit documentation in R/caugi.R
 \name{.cg_state}
 \alias{.cg_state}
-\title{Internal: Create the state environment for a \code{caugi}}
+\title{Create the state environment for a \code{caugi} (internal)}
 \usage{
 .cg_state(
   nodes,
