@@ -5,9 +5,9 @@ Authors@R:
     person("Frederik", "Fabricius-Bjerre", , "frederik@fabriciusbjerre.dk", 
     role = c("aut", "cre"))
 Description: Create, query, and modify causal graphs. 'caugi' (Causal Graph
-Interface) is a causality-first, high performance graph package that provides a 
-simple interface to build, structure, and examine causal relationships in R 
-using a Rust backend. 
+    Interface) is a causality-first, high performance graph package that provides a 
+    simple interface to build, structure, and examine causal relationships in R 
+    using a Rust backend. 
 License: MIT + file LICENSE
 URL: https://frederikfabriciusbjerre.github.io/caugi/
 BugReports: https://github.com/frederikfabriciusbjerre/caugi/issues
