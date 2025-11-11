@@ -2,7 +2,7 @@
 % Please edit documentation in R/verbs.R
 \name{.get_nodes_tibble}
 \alias{.get_nodes_tibble}
-\title{Get nodes tibble from verb call.}
+\title{Get nodes \code{data.table} from verb call.}
 \usage{
 .get_nodes_tibble(name, calls)
 }
@@ -12,9 +12,9 @@
 \item{calls}{List of calls from \code{...}.}
 }
 \value{
-A tibble with column \code{name} for node names.
+A \code{data.table} with column \code{name} for node names.
 }
 \description{
-Internal helper to build nodes tibble from verb call.
+Internal helper to build nodes \code{data.table} from verb call.
 }
 \keyword{internal}
