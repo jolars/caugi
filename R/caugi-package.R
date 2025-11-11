@@ -6,6 +6,8 @@
 #' @author
 #' Frederik Fabricius-Bjerre \email{frederik@fabriciusbjerre.dk}
 #'
+#' @docType package
 #' @keywords package internal
 #' @name caugi-package
+#' @aliases caugi-package
 "_PACKAGE"
