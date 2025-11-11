@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette discusses the performance characteristics of `caugi` including a comparison to the popular [`igraph`](https://r.igraph.org/), [`bnlearn`](https://www.bnlearn.com/), [`dagitty`](https://dagitty.net/), and [`ggm`](https://cran.r-project.org/web/packages/ggm/index.html).
+This vignette discusses the performance characteristics of `caugi` including a comparison to the popular [`igraph`](https://r.igraph.org/), [`bnlearn`](https://www.bnlearn.com/), [`dagitty`](https://dagitty.net/), and [`ggm`](https://cran.r-project.org/package=ggm).
 We focus on the practical trade-offs that arise from different core data structures and design choices.
 
 The headline is: `caugi` frontloads computation.
