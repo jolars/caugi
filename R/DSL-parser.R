@@ -114,7 +114,6 @@
 #' @keywords internal
 .expand_nodes <- function(expr, env = parent.frame()) {
   if (is.symbol(expr)) {
-    val <- tryCatch(eval(expr, env), error = function(e) NULL)
     return(deparse1(expr))
   }
   if (is.character(expr) && length(expr) == 1L) {
