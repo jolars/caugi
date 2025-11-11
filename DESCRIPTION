@@ -4,8 +4,9 @@ Version: 0.1.0
 Authors@R: 
     person("Frederik", "Fabricius-Bjerre", , "frederik@fabriciusbjerre.dk", 
     role = c("aut", "cre"))
-Description: caugi is a package for creating, querying, and processing
-    causal graphs.
+Description: Create, query, and modify causal graphs. 'caugi' (Causal Graph
+Interface) is a causality-first, high performance graph package that provides a 
+simple interface to build, structure, and examine causal relationships in R.
 License: MIT + file LICENSE
 URL: https://frederikfabriciusbjerre.github.io/caugi/
 BugReports: https://github.com/frederikfabriciusbjerre/caugi/issues
