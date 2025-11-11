@@ -256,6 +256,26 @@ caugi <- S7::new_class(
     calls <- as.list(substitute(list(...)))[-1L]
     has_expr <- length(calls) > 0L
     has_vec <- !(is.null(from) && is.null(edge) && is.null(to))
+    if (has_vec) {
+      if (is.null(from) || is.null(edge) || is.null(to)) {
+        stop(
+          "`from`, `edge`, and `to` must all be provided.",
+          call. = FALSE
+        )
+      }
+      if (!(is.character(from) && is.character(edge) && is.character(to))) {
+        stop(
+          "`from`, `edge`, and `to` must all be character vectors.",
+          call. = FALSE
+        )
+      }
+      if (!(length(from) == length(edge) && length(edge) == length(to))) {
+        stop(
+          "`from`, `edge`, and `to` must be equal length.",
+          call. = FALSE
+        )
+      }
+    }
 
     if (has_expr && has_vec) {
       stop(
