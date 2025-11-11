@@ -12,6 +12,9 @@ E(cg)
 \arguments{
 \item{cg}{A \code{caugi} object.}
 }
+\value{
+A \code{data.table} with columns \code{from}, \code{edge}, and \code{to}.
+}
 \description{
 Get edges of a \code{caugi}.
 }
@@ -22,7 +25,7 @@ cg <- caugi(
   D,
   class = "DAG"
 )
-edges(cg) # returns the tibble with columns from, edge, to
+edges(cg) # returns the data.table with columns from, edge, to
 
 }
 \seealso{

@@ -24,7 +24,7 @@ adjustment_set(
 The \code{optimal} option computes the O-set.}
 }
 \value{
-A tibble with a \code{name} column (possibly 0 rows).
+A character vector of node names representing the adjustment set.
 }
 \description{
 Computes an adjustment set for \code{X -> Y} in a DAG.

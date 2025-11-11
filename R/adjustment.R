@@ -75,7 +75,7 @@ d_separated <- function(cg,
 #' @param type One of `"parents"`, `"backdoor"`, `"optimal"`.
 #' The `optimal` option computes the O-set.
 #'
-#' @returns A tibble with a `name` column (possibly 0 rows).
+#' @returns A character vector of node names representing the adjustment set.
 #'
 #' @examples
 #' cg <- caugi(

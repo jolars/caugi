@@ -325,7 +325,7 @@ is_cpdag <- function(cg) {
 #'
 #' @param cg A `caugi` object.
 #'
-#' @returns A tibble with a `name` column.
+#' @returns A `data.table` with a `name` column.
 #'
 #' @rdname nodes
 #'
@@ -336,7 +336,7 @@ is_cpdag <- function(cg) {
 #'   D,
 #'   class = "DAG"
 #' )
-#' nodes(cg) # returns the tibble with nodes A, B, C, D
+#' nodes(cg) # returns the data.table with nodes A, B, C, D
 #'
 #' @family queries
 #' @concept queries
@@ -369,10 +369,12 @@ V <- nodes # igraph notation
 #'   D,
 #'   class = "DAG"
 #' )
-#' edges(cg) # returns the tibble with columns from, edge, to
+#' edges(cg) # returns the data.table with columns from, edge, to
 #'
 #' @family queries
 #' @concept queries
+#'
+#' @returns A `data.table` with columns `from`, `edge`, and `to`.
 #'
 #' @export
 edges <- function(cg) {
