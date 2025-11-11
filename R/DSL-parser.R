@@ -342,7 +342,7 @@
     }
   }
   edges <- if (length(units)) {
-    data.table::unqiue(.edge_units_to_dt(units), by = c("from", "edge", "to"))
+    unique(.edge_units_to_dt(units), by = c("from", "edge", "to"))
   } else {
     .edge_constructor()
   }
