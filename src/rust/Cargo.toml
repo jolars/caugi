@@ -13,7 +13,7 @@ name = 'caugi'
 [dependencies]
 extendr-api = '0.8.1'
 bitflags = '2.9.3'
-gadjid = { git = "https://github.com/CausalDisco/gadjid", package = 'gadjid', rev = '099d750b0c93ae20ab9b7664a11eed7932335998', optional = true }
+gadjid = { git = "https://github.com/CausalDisco/gadjid", package = 'gadjid', rev = '5b97028d4e943ce8a642d2b7bc1145f5435f619a', optional = true }
 
 [features]
 default = ['gadjid']
