@@ -298,7 +298,7 @@ caugi <- S7::new_class(
         declared <- unique(c(declared, nodes))
       }
     } else if (has_vec) {
-      edges <- .get_edges_tibble(from, edge, to, calls = list())
+      edges <- .edge_constructor(from = from, edge = edge, to = to)
       declared <- nodes
     } else {
       if (build == TRUE && !missing(build)) {
@@ -306,11 +306,7 @@ caugi <- S7::new_class(
           call. = FALSE
         )
       }
-      edges <- tibble::tibble(
-        from = character(),
-        edge = character(),
-        to = character()
-      )
+      edges <- .edge_constructor()
       declared <- nodes
     }
 
@@ -325,7 +321,7 @@ caugi <- S7::new_class(
       # No declared nodes: use edge order
       all_node_names <- edge_node_names
     }
-    nodes <- tibble::tibble(name = all_node_names)
+    nodes <- data.table::data.table(name = all_node_names)
     n <- nrow(nodes)
     id <- seq_len(n) - 1L
     names(id) <- nodes$name
@@ -354,13 +350,6 @@ caugi <- S7::new_class(
       gptr <- graph_builder_build_view(b, class)
       built <- TRUE
     }
-
-    edges <- tibble::tibble(
-      from = edges$from,
-      edge = edges$edge,
-      to   = edges$to
-    ) |>
-      dplyr::arrange(from, to, edge)
 
     # initialize fastmap for name to index mapping
     name_index_map <- fastmap::fastmap()
@@ -415,18 +404,15 @@ caugi <- S7::new_class(
   edges_idx <- edges_ptr_df(ptr)
 
   if (length(edges_idx$from0) == 0L) {
-    edges_tbl <- tibble::tibble(
-      from = character(),
-      edge = character(),
-      to = character()
-    )
+    edges_tbl <- .edge_constructor()
   } else {
-    edges_tbl <- tibble::tibble(
-      from = node_names[as.integer(edges_idx$from0) + 1L],
-      edge = as.character(edges_idx$glyph),
-      to   = node_names[as.integer(edges_idx$to0) + 1L]
-    )
-    edges_tbl <- dplyr::arrange(edges_tbl, from, to, edge)
+    edges_tbl <-
+      edges_tbl <- .edge_constructor_idx(
+        from_idx = edges_idx$from0 + 1L,
+        edge = as.character(edges_idx$glyph),
+        to_idx = edges_idx$to0 + 1L,
+        node_names = node_names
+      )
   }
 
   nodes_tbl <- tibble::tibble(name = node_names)
@@ -449,50 +435,6 @@ caugi <- S7::new_class(
   caugi(state = state)
 }
 
-#' @title Edge constructor
-#'
-#' @description
-#' Internal function to construct edges for `caugi` objects.
-#'
-#' @param from Character vector of source node names.
-#' @param edge Character vector of edge glyphs.
-#' @param to Character vector of target node names.
-#'
-#' @returns A `data.table` object with columns `from`, `edge`, and `to`.
-#' @keywords internal
-.edge_constructor <- function(from = character(),
-                              edge = character(),
-                              to = character()) {
-  dt <- data.table::data.table(
-    from = from,
-    edge = edge,
-    to = to
-  )
-  data.table::setorder(dt, "from", "to", "edge")
-  return(dt)
-}
-
-#' @title Edge constructor using indices.
-#'
-#' @description
-#' Internal function to construct edges for `caugi` objects using indices.
-#'
-#' @param from_idx Integer vector of source node indices.
-#' @param edge Character vector of edge glyphs.
-#' @param to_idx Integer vector of target node indices.
-#'
-#' @returns A `data.table` object with columns `from`, `edge`, and `to`.
-.edge_constructor_idx <- function(from_idx, edge, to_idx, node_names) {
-  dt <- data.table::data.table(
-    from = node_names[from_idx],
-    edge = edge,
-    to = node_names[to_idx]
-  )
-  data.table::setorder(dt, "from", "to", "edge")
-  return(dt)
-}
-
-
 #' @title Create the state environment for a `caugi` (internal)
 #'
 #' @description Internal function to create the state environment for a
@@ -514,8 +456,8 @@ caugi <- S7::new_class(
 .cg_state <- function(nodes, edges, ptr, built, simple, class,
                       name_index_map, index_name_map) {
   e <- new.env(parent = emptyenv())
-  e$nodes <- tibble::tibble(name = nodes$name)
-  e$edges <- tibble::tibble(from = edges$from, edge = edges$edge, to = edges$to)
+  e$nodes <- nodes
+  e$edges <- edges
   e$ptr <- ptr
   e$built <- isTRUE(built)
   e$simple <- isTRUE(simple)
