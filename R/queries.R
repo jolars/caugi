@@ -949,7 +949,7 @@ subgraph <- function(cg, nodes = NULL, index = NULL) {
     } else {
       dt <- dt[0L, ] # empty, preserve columns
     }
-    edges_sub <- as.data.frame(dt)
+    edges_sub <- dt
   } else {
     edges_sub <- cg@edges
   }
