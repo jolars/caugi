@@ -21,7 +21,7 @@ test_that("build.caugi builds with and without edges", {
   cg1 <- build(cg) # with edges
   expect_true(cg1@built)
   expect_equal(cg1@nodes$name, c("A", "B"))
-  expect_equal(cg1@edges, tibble::tibble(from = "A", edge = "-->", to = "B"))
+  expect_equal(cg1@edges, data.table::data.table(from = "A", edge = "-->", to = "B"))
 
   expect_identical(build(cg1), cg1) # identical if built
 })
@@ -67,7 +67,7 @@ test_that("add_edges validates inputs and updates graph", {
   cg1 <- add_edges(cg, from = "A", edge = "-->", to = "B")
   expect_false(cg1@built)
   expect_setequal(cg1@nodes$name, c("A", "B"))
-  expect_equal(cg1@edges, tibble::tibble(from = "A", edge = "-->", to = "B"))
+  expect_equal(cg1@edges, data.table::data.table(from = "A", edge = "-->", to = "B"))
 
   cg2 <- add_edges(cg1,
     from = c("A", "A"),
@@ -121,7 +121,7 @@ test_that("add_edges expression path (DSL) works (also some + notation)", {
   cg <- add_nodes(cg, A + B)
   cg <- add_edges(cg, A %-->% B + C)
   expect_setequal(cg@nodes$name, c("A", "B", "C"))
-  expect_equal(cg@edges, tibble::tibble(
+  expect_equal(cg@edges, data.table::data.table(
     from = "A",
     edge = c("-->", "-->"),
     to = c("B", "C")
@@ -143,7 +143,7 @@ test_that("remove_edges works and keeps other edges", {
 
   cg1 <- remove_edges(cg, from = "A", edge = "-->", to = "B")
   expect_false(cg1@built)
-  expect_equal(cg1@edges, tibble::tibble(from = "A", edge = "-->", to = "C"))
+  expect_equal(cg1@edges, data.table::data.table(from = "A", edge = "-->", to = "C"))
 })
 
 test_that("set_edges replaces any existing edges for pairs", {
@@ -155,7 +155,7 @@ test_that("set_edges replaces any existing edges for pairs", {
   )
   cg1 <- set_edges(cg, from = "A", edge = "<->", to = "B")
   expect_false(cg1@built)
-  expect_equal(cg1@edges, tibble::tibble(from = "A", edge = "<->", to = "B"))
+  expect_equal(cg1@edges, data.table::data.table(from = "A", edge = "<->", to = "B"))
 })
 
 test_that("set_edges errors whwn both vector and expr paths are given", {
@@ -243,37 +243,37 @@ test_that("name_to_index_map updates when using verbs", {
 # ───────────────────────────── Internal getters ───────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
-test_that(".get_nodes_tibble branches", {
+test_that(".get_nodes branches", {
   expect_equal(
-    caugi:::.get_nodes_tibble(NULL, list()),
-    tibble::tibble(name = character())
+    caugi:::.get_nodes(NULL, list()),
+    data.table::data.table(name = character())
   )
   expect_error(
-    caugi:::.get_nodes_tibble(
+    caugi:::.get_nodes(
       name = "A",
       calls = list(quote(A))
     ),
     "or `name`, not both"
   )
-  res <- caugi:::.get_nodes_tibble(name = c("A", "A", "B"), calls = list())
+  res <- caugi:::.get_nodes(name = c("A", "A", "B"), calls = list())
   expect_setequal(res$name, c("A", "B"))
 })
 
-test_that(".get_edges_tibble vector path and error branches", {
-  expect_error(caugi:::.get_edges_tibble(
+test_that(".get_edges vector path and error branches", {
+  expect_error(caugi:::.get_edges(
     from = "A",
     edge = NULL,
     to = "B",
     calls = list()
   ))
-  expect_error(caugi:::.get_edges_tibble(
+  expect_error(caugi:::.get_edges(
     from = c("A", "B"),
     edge = c("-->"),
     to = c("B"),
     calls = list()
   ))
 
-  res <- caugi:::.get_edges_tibble(
+  res <- caugi:::.get_edges(
     from = c("A", "A"),
     edge = c("-->", "-->"),
     to = c("B", "B"),
@@ -282,8 +282,8 @@ test_that(".get_edges_tibble vector path and error branches", {
   expect_equal(nrow(res), 2L)
 })
 
-test_that(".get_edges_tibble expression path branch", {
-  res <- caugi:::.get_edges_tibble(
+test_that(".get_edges expression path branch", {
+  res <- caugi:::.get_edges(
     from = NULL, edge = NULL, to = NULL,
     calls = list(
       quote(A %-->% B),
@@ -296,8 +296,8 @@ test_that(".get_edges_tibble expression path branch", {
   expect_equal(res$to, c("B", "C"))
 })
 
-test_that(".get_edges_tibble works with empty input", {
-  res <- caugi:::.get_edges_tibble(
+test_that(".get_edges works with empty input", {
+  res <- caugi:::.get_edges(
     from = NULL, edge = NULL, to = NULL,
     calls = list()
   )
@@ -323,7 +323,7 @@ test_that(".mark_not_built flips flag", {
 test_that(".update_caugi add/remove paths and validations", {
   cg <- caugi()
   cg1 <- caugi:::.update_caugi(cg,
-    nodes = tibble::tibble(
+    nodes = data.table::data.table(
       name = c("A", "B", "B")
     ),
     action = "add"
@@ -332,9 +332,10 @@ test_that(".update_caugi add/remove paths and validations", {
   expect_setequal(cg1@nodes$name, c("A", "B"))
 
   cg2 <- caugi:::.update_caugi(cg1,
-    edges = dplyr::bind_rows(
-      tibble::tibble(from = "A", edge = "-->", to = "B"),
-      tibble::tibble(from = "A", edge = "-->", to = "B")
+    edges = data.table::data.table(
+      from = c("A", "A"),
+      edge = c("-->", "-->"),
+      to = c("B", "B")
     ),
     action = "add",
     inplace = FALSE
@@ -350,7 +351,7 @@ test_that(".update_caugi add/remove paths and validations", {
     to = c("B", "C", "C")
   )
   cg4 <- caugi:::.update_caugi(cg3,
-    edges = tibble::tibble(
+    edges = data.table::data.table(
       from = "A",
       to = "B"
     ),
@@ -360,7 +361,7 @@ test_that(".update_caugi add/remove paths and validations", {
 
   expect_error(
     caugi:::.update_caugi(cg4,
-      edges = tibble::tibble(from = "B"),
+      edges = data.table::data.table(from = "B"),
       action = "remove"
     ),
     "include at least `from` and `to`."

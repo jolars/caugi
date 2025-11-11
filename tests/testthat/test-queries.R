@@ -365,7 +365,7 @@ test_that("subgraph selects nodes and errors with none", {
 
   sg <- subgraph(cg, nodes = c("A", "B"))
   expect_setequal(sg@nodes$name, c("A", "B"))
-  expect_equal(sg@edges, tibble::tibble(from = "A", edge = "-->", to = "B"))
+  expect_equal(sg@edges, data.table::data.table(from = "A", edge = "-->", to = "B"))
 })
 
 test_that("subgraph errors on invalid arg combos", {

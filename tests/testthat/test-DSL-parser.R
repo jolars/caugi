@@ -129,9 +129,8 @@ test_that(".combine_plus covers len 0 and len 1", {
 
 test_that(".collect_edges_nodes returns empty tibble when no units", {
   out <- .collect_edges_nodes(list())
-  expect_s3_class(out$edges, "tbl_df")
   expect_equal(nrow(out$edges), 0)
-  expect_named(out$edges, c("from", "to", "edge"))
+  expect_named(out$edges, c("from", "edge", "to"))
   expect_length(out$declared, 0)
 })
 
@@ -158,14 +157,14 @@ test_that(".parse_edge_arg extracts context correctly", {
   expect_equal(u$glyph, "-->")
 })
 
-test_that(".edge_units_to_tibble produces cartesian edges", {
+test_that(".edge_units_to_dt produces cartesian edges", {
   edge_unit <- list(
     lhs = quote(A + B),
     rhs = quote(C + D),
     glyph = "-->"
   )
-  df <- .edge_units_to_tibble(list(edge_unit))
-  expect_s3_class(df, "tbl_df")
+  df <- .edge_units_to_dt(list(edge_unit))
+  expect_s3_class(df, "data.table")
   expect_equal(nrow(df), 4)
   expect_equal(df$from, c("A", "A", "B", "B"))
   expect_equal(df$to, c("C", "D", "C", "D"))
@@ -189,7 +188,6 @@ test_that(".collect_edges_nodes gathers edges and declared nodes", {
   # Edges distinct and complete cartesian from {A,B} to {C,D}
   # plus B->C duplicate removed
   df <- out$edges
-  expect_s3_class(df, "tbl_df")
   expect_true(all(c("from", "edge", "to") %in% names(df)))
   expect_equal(nrow(df), 4) # A->C, A->D, B->C, B->D
   expect_true(any(df$from == "A" & df$to == "C"))
