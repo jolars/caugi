@@ -11,6 +11,7 @@
 Useful links:
 \itemize{
   \item \url{https://frederikfabriciusbjerre.github.io/caugi/}
+  \item Report bugs at \url{https://github.com/frederikfabriciusbjerre/caugi/issues}
 }
 
 }
