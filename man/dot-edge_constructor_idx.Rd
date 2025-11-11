@@ -12,6 +12,8 @@
 \item{edge}{Character vector of edge glyphs.}
 
 \item{to_idx}{Integer vector of target node indices.}
+
+\item{node_names}{Character vector of node names.}
 }
 \value{
 A \code{data.table} object with columns \code{from}, \code{edge}, and \code{to}.

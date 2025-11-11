@@ -432,6 +432,7 @@
 #' @param from_idx Integer vector of source node indices.
 #' @param edge Character vector of edge glyphs.
 #' @param to_idx Integer vector of target node indices.
+#' @param node_names Character vector of node names.
 #'
 #' @returns A `data.table` object with columns `from`, `edge`, and `to`.
 .edge_constructor_idx <- function(from_idx, edge, to_idx, node_names) {
