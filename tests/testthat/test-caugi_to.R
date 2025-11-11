@@ -122,8 +122,8 @@ test_that("cg --> adj --> cg --> adj round-trip (DAG)", {
 
   expect_equal(nodes(cg), nodes(cg2))
   expect_equal(
-    dplyr::arrange(edges(cg), from, to, edge),
-    dplyr::arrange(edges(cg2), from, to, edge)
+    edges(cg),
+    edges(cg2)
   )
 })
 
@@ -191,8 +191,8 @@ test_that("cg -> bn -> cg -> bn round-trip (DAG)", {
   # also check cg equality
   expect_equal(nodes(cg), nodes(cg2))
   expect_equal(
-    dplyr::arrange(edges(cg), from, to, edge),
-    dplyr::arrange(edges(cg2), from, to, edge)
+    edges(cg),
+    edges(cg2)
   )
 })
 

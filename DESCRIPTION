@@ -15,7 +15,6 @@ Depends:
     R (>= 4.2)
 Imports:
     data.table,
-    dplyr,
     fastmap,
     S7,
     stats

@@ -58,8 +58,8 @@ test_that("reproducible with same seed", {
   g2 <- generate_graph(7, m = 8, class = "DAG")
   expect_identical(nodes(g1), nodes(g2))
   expect_identical(
-    dplyr::arrange(edges(g1), from, to),
-    dplyr::arrange(edges(g2), from, to)
+    edges(g1),
+    edges(g2)
   )
 })
 

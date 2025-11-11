@@ -204,7 +204,7 @@ set_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL,
 
   edges <- .get_edges(from, edge, to, calls)
 
-  pairs <- dplyr::distinct(dplyr::select(edges, from, to))
+  pairs <- unique(edges[, .(from, to)])
   cg_mod <- .update_caugi(cg,
     edges = pairs, action = "remove",
     inplace = inplace
@@ -413,8 +413,8 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
           call. = FALSE
         )
       }
-      edges_key <- dplyr::select(edges, dplyr::all_of(keys))
-      s$edges <- dplyr::anti_join(s$edges, edges_key, by = keys)
+      edges_key <- unique(edges[, ..keys])
+      s$edges <- s$edges[!edges_key, on = keys]
     }
     if (!is.null(nodes)) {
       drop <- nodes$name
