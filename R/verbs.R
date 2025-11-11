@@ -389,7 +389,7 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
         edges$from,
         edges$to
       )))
-      s$edges <- data.table::unique(
+      s$edges <- unique(
         data.table::rbindlist(list(s$edges, edges), use.names = TRUE),
         by = c("from", "edge", "to")
       )
@@ -416,13 +416,13 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
     }
     if (!is.null(nodes)) {
       drop <- nodes$name
-      s$nodes <- tibble::tibble(name = setdiff(s$nodes$name, drop))
+      s$nodes <- .name_constructor(name = setdiff(s$nodes$name, drop))
       if (nrow(s$edges)) {
-        s$edges <- dplyr::filter(s$edges, !(from %in% drop | to %in% drop))
+        s$edges <- s$edges[!(from %chin% drop | to %chin% drop)]
       }
     }
-    s$nodes <- tibble::tibble(name = unique(s$nodes$name))
-    s$edges <- dplyr::distinct(s$edges)
+    s$nodes <- .node_constructor(name = unique(s$nodes$name))
+    s$edges <- unique(s$edges)
 
     # update fastmap
     drop_ids <- intersect(nodes$name, s$name_index_map$keys())
