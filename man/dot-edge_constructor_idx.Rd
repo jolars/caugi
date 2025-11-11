@@ -21,3 +21,4 @@ A \code{data.table} object with columns \code{from}, \code{edge}, and \code{to}.
 \description{
 Internal function to construct edges for \code{caugi} objects using indices.
 }
+\keyword{internal}

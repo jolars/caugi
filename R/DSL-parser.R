@@ -411,6 +411,7 @@
 #' @param to Character vector of target node names.
 #'
 #' @returns A `data.table` object with columns `from`, `edge`, and `to`.
+#'
 #' @keywords internal
 .edge_constructor <- function(from = character(),
                               edge = character(),
@@ -435,6 +436,8 @@
 #' @param node_names Character vector of node names.
 #'
 #' @returns A `data.table` object with columns `from`, `edge`, and `to`.
+#'
+#' @keywords internal
 .edge_constructor_idx <- function(from_idx, edge, to_idx, node_names) {
   dt <- data.table::data.table(
     from = node_names[from_idx],
@@ -459,6 +462,7 @@
 #' @param sort Logical indicating whether to sort the node names.
 #'
 #' @returns A `data.table` object with a single column `name`.
+#'
 #' @keywords internal
 .node_constructor <- function(names = character(), sort = FALSE) {
   dt <- data.table::data.table(
