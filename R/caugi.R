@@ -355,7 +355,7 @@ caugi <- S7::new_class(
     name_index_map <- fastmap::fastmap()
     do.call(
       name_index_map$mset,
-      stats::setNames(as.list(seq_len(nrow(nodes)) - 1L), nodes$name)
+      .set_names(as.list(seq_len(nrow(nodes)) - 1L), nodes$name)
     )
 
     state <- .cg_state(
@@ -418,7 +418,7 @@ caugi <- S7::new_class(
   nodes_tbl <- tibble::tibble(name = node_names)
 
   name_index_map <- fastmap::fastmap()
-  do.call(name_index_map$mset, stats::setNames(
+  do.call(name_index_map$mset, .set_names(
     as.list(seq_len(n) - 1L),
     node_names
   ))

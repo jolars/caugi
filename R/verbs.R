@@ -400,7 +400,7 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
       new_id_values <- seq_len(length(new_ids)) - 1L + nrow(s$nodes) - length(new_ids)
       do.call(
         s$name_index_map$mset,
-        stats::setNames(as.list(new_id_values), new_ids)
+        .set_names(as.list(new_id_values), new_ids)
       )
     }
   } else {

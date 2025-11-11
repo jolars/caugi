@@ -955,7 +955,7 @@ subgraph <- function(cg, nodes = NULL, index = NULL) {
   name_index_map_sub <- fastmap::fastmap()
   do.call(
     name_index_map_sub$mset,
-    stats::setNames(as.list(seq_len(nrow(nodes_sub)) - 1L), nodes_sub$name)
+    .set_names(as.list(seq_len(nrow(nodes_sub)) - 1L), nodes_sub$name)
   )
 
   state_sub <- .cg_state(
