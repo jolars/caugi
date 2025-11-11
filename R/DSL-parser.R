@@ -131,7 +131,9 @@
       return(c(.expand_nodes(expr[[2L]], env), .expand_nodes(expr[[3L]], env)))
     }
     if (fn == "c") {
-      return(unlist(lapply(as.list(expr)[-1L], .expand_nodes, env = env), use.names = FALSE))
+      return(unlist(lapply(as.list(expr)[-1L], .expand_nodes, env = env),
+        use.names = FALSE
+      ))
     }
   }
   stop("Unsupported node expression: ", deparse1(expr), call. = FALSE)
@@ -283,27 +285,27 @@
 }
 
 
-#' @title Turn edge units into a tibble of edges
+#' @title Turn edge units into a `data.table` of edges
 #'
-#' @description Convert a list of edge units into a tibble with columns
+#' @description Convert a list of edge units into a `data.table` with columns
 #' `from`, `edge`, and `to`.
 #'
 #' @param units A list of edge units, each with `lhs`, `rhs`, and `glyph`.
 #'
-#' @returns A tibble with columns `from`, `edge`, and `to`.
+#' @returns A `data.table` with columns `from`, `edge`, and `to`.
 #'
 #' @keywords internal
-.edge_units_to_tibble <- function(units) {
+.edge_units_to_dt <- function(units) {
   dfs <- lapply(units, function(u) {
     froms <- .expand_nodes(u$lhs)
     tos <- .expand_nodes(u$rhs)
-    tibble::tibble(
+    data.table::data.table(
       from = rep(froms, each = length(tos)),
       edge = u$glyph,
       to = rep(tos, times = length(froms))
     )
   })
-  dplyr::bind_rows(dfs)
+  data.table::rbindlist(dfs, use.names = TRUE)
 }
 
 #' @title Collect edges and nodes
@@ -314,7 +316,7 @@
 #' @param calls A list of expressions from caugi(...)
 #'
 #' @returns A list with two elements:
-#' * edges: a tibble with columns `from`, `edge`, `to`
+#' * edges: a `data.table` with columns `from`, `edge`, `to`
 #' * declared: a character vector of explicitly declared nodes
 #'
 #' @keywords internal
@@ -340,9 +342,9 @@
     }
   }
   edges <- if (length(units)) {
-    dplyr::distinct(.edge_units_to_tibble(units))
+    unique(.edge_units_to_dt(units), by = c("from", "edge", "to"))
   } else {
-    tibble::tibble(from = character(), to = character(), edge = character())
+    .edge_constructor()
   }
   list(edges = edges, declared = unique(declared))
 }
@@ -396,4 +398,78 @@
   froms <- .expand_nodes(lhs_term)
   tos <- .expand_nodes(rhs_term)
   list(lhs = lhs_term, rhs = rhs_term, glyph = glyph)
+}
+
+
+#' @title Edge constructor
+#'
+#' @description
+#' Internal function to construct edges for `caugi` objects.
+#'
+#' @param from Character vector of source node names.
+#' @param edge Character vector of edge glyphs.
+#' @param to Character vector of target node names.
+#'
+#' @returns A `data.table` object with columns `from`, `edge`, and `to`.
+#'
+#' @keywords internal
+.edge_constructor <- function(from = character(),
+                              edge = character(),
+                              to = character()) {
+  dt <- data.table::data.table(
+    from = from,
+    edge = edge,
+    to = to
+  )
+  data.table::setorder(dt, "from", "to", "edge")
+  return(dt)
+}
+
+#' @title Edge constructor using indices.
+#'
+#' @description
+#' Internal function to construct edges for `caugi` objects using indices.
+#'
+#' @param from_idx Integer vector of source node indices.
+#' @param edge Character vector of edge glyphs.
+#' @param to_idx Integer vector of target node indices.
+#' @param node_names Character vector of node names.
+#'
+#' @returns A `data.table` object with columns `from`, `edge`, and `to`.
+#'
+#' @keywords internal
+.edge_constructor_idx <- function(from_idx, edge, to_idx, node_names) {
+  dt <- data.table::data.table(
+    from = node_names[from_idx],
+    edge = edge,
+    to = node_names[to_idx]
+  )
+  data.table::setorder(dt, "from", "to", "edge")
+  return(dt)
+}
+
+#' @title Node constructor
+#'
+#' @description
+#' A simple wrapper creating a `data.table` object with a single column `name`.
+#'
+#' @details
+#' The reason this exists is so if changes should be made in the future, it is
+#' easy to simply change this constructor, rather than changing the calls to
+#' `data.table` all over the place.
+#'
+#' @param names Character vector of node names.
+#' @param sort Logical indicating whether to sort the node names.
+#'
+#' @returns A `data.table` object with a single column `name`.
+#'
+#' @keywords internal
+.node_constructor <- function(names = character(), sort = FALSE) {
+  dt <- data.table::data.table(
+    name = names
+  )
+  if (sort) {
+    data.table::setorder(dt, "name") # sorts inplace
+  }
+  return(dt)
 }

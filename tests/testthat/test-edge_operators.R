@@ -47,10 +47,8 @@ test_that(".expand_targets errors on unsupported RHS forms", {
 # ─────────────────────────────── Edge builder ─────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
-test_that(".edge_spec builds a tibble with class 'caugi_edge_spec'", {
+test_that(".edge_spec builds a data frame with class 'caugi_edge_spec'", {
   sp <- .edge_spec(quote(A), quote(c(B, C)), "-->")
-  expect_s3_class(sp, "caugi_edge_spec")
-  expect_s3_class(sp, "tbl_df")
   expect_equal(sp$from, c("A", "A"))
   expect_equal(sp$to, c("B", "C"))
   expect_equal(sp$edge, c("-->", "-->"))

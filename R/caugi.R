@@ -256,6 +256,26 @@ caugi <- S7::new_class(
     calls <- as.list(substitute(list(...)))[-1L]
     has_expr <- length(calls) > 0L
     has_vec <- !(is.null(from) && is.null(edge) && is.null(to))
+    if (has_vec) {
+      if (is.null(from) || is.null(edge) || is.null(to)) {
+        stop(
+          "`from`, `edge`, and `to` must all be provided.",
+          call. = FALSE
+        )
+      }
+      if (!(is.character(from) && is.character(edge) && is.character(to))) {
+        stop(
+          "`from`, `edge`, and `to` must all be character vectors.",
+          call. = FALSE
+        )
+      }
+      if (!(length(from) == length(edge) && length(edge) == length(to))) {
+        stop(
+          "`from`, `edge`, and `to` must be equal length.",
+          call. = FALSE
+        )
+      }
+    }
 
     if (has_expr && has_vec) {
       stop(
@@ -298,7 +318,7 @@ caugi <- S7::new_class(
         declared <- unique(c(declared, nodes))
       }
     } else if (has_vec) {
-      edges <- .get_edges_tibble(from, edge, to, calls = list())
+      edges <- .edge_constructor(from = from, edge = edge, to = to)
       declared <- nodes
     } else {
       if (build == TRUE && !missing(build)) {
@@ -306,11 +326,7 @@ caugi <- S7::new_class(
           call. = FALSE
         )
       }
-      edges <- tibble::tibble(
-        from = character(),
-        edge = character(),
-        to = character()
-      )
+      edges <- .edge_constructor()
       declared <- nodes
     }
 
@@ -325,7 +341,7 @@ caugi <- S7::new_class(
       # No declared nodes: use edge order
       all_node_names <- edge_node_names
     }
-    nodes <- tibble::tibble(name = all_node_names)
+    nodes <- data.table::data.table(name = all_node_names)
     n <- nrow(nodes)
     id <- seq_len(n) - 1L
     names(id) <- nodes$name
@@ -355,18 +371,11 @@ caugi <- S7::new_class(
       built <- TRUE
     }
 
-    edges <- tibble::tibble(
-      from = edges$from,
-      edge = edges$edge,
-      to   = edges$to
-    ) |>
-      dplyr::arrange(from, to, edge)
-
     # initialize fastmap for name to index mapping
     name_index_map <- fastmap::fastmap()
     do.call(
       name_index_map$mset,
-      stats::setNames(as.list(seq_len(nrow(nodes)) - 1L), nodes$name)
+      .set_names(as.list(seq_len(nrow(nodes)) - 1L), nodes$name)
     )
 
     state <- .cg_state(
@@ -415,24 +424,20 @@ caugi <- S7::new_class(
   edges_idx <- edges_ptr_df(ptr)
 
   if (length(edges_idx$from0) == 0L) {
-    edges_tbl <- tibble::tibble(
-      from = character(),
-      edge = character(),
-      to = character()
-    )
+    edges_tbl <- .edge_constructor()
   } else {
-    edges_tbl <- tibble::tibble(
-      from = node_names[as.integer(edges_idx$from0) + 1L],
+    edges_tbl <- .edge_constructor_idx(
+      from_idx = edges_idx$from0 + 1L,
       edge = as.character(edges_idx$glyph),
-      to   = node_names[as.integer(edges_idx$to0) + 1L]
+      to_idx = edges_idx$to0 + 1L,
+      node_names = node_names
     )
-    edges_tbl <- dplyr::arrange(edges_tbl, from, to, edge)
   }
 
-  nodes_tbl <- tibble::tibble(name = node_names)
+  nodes_tbl <- .node_constructor(names = node_names)
 
   name_index_map <- fastmap::fastmap()
-  do.call(name_index_map$mset, stats::setNames(
+  do.call(name_index_map$mset, .set_names(
     as.list(seq_len(n) - 1L),
     node_names
   ))
@@ -449,14 +454,13 @@ caugi <- S7::new_class(
   caugi(state = state)
 }
 
-
-#' @title Internal: Create the state environment for a `caugi`
+#' @title Create the state environment for a `caugi` (internal)
 #'
 #' @description Internal function to create the state environment for a
 #' `caugi`. This function is not intended to be used directly by users.
 #'
-#' @param nodes A tibble of nodes with a `name` column.
-#' @param edges A tibble of edges with `from`, `edge`, and `to` columns.
+#' @param nodes A `data.table` of nodes with a `name` column.
+#' @param edges A `data.table` of edges with `from`, `edge`, and `to` columns.
 #' @param ptr A pointer to the underlying Rust graph structure
 #' (or `NULL` if not built).
 #' @param built Logical; whether the graph has been built.
@@ -471,8 +475,8 @@ caugi <- S7::new_class(
 .cg_state <- function(nodes, edges, ptr, built, simple, class,
                       name_index_map, index_name_map) {
   e <- new.env(parent = emptyenv())
-  e$nodes <- tibble::tibble(name = nodes$name)
-  e$edges <- tibble::tibble(from = edges$from, edge = edges$edge, to = edges$to)
+  e$nodes <- nodes
+  e$edges <- edges
   e$ptr <- ptr
   e$built <- isTRUE(built)
   e$simple <- isTRUE(simple)

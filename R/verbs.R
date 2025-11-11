@@ -76,12 +76,11 @@ S7::method(build, caugi) <- function(cg, ...) {
   p <- graph_builder_build_view(b, s$class)
 
   # normalize edge order
-  s$edges <- tibble::tibble(
+  s$edges <- .edge_constructor(
     from = s$edges$from,
     edge = s$edges$edge,
     to   = s$edges$to
-  ) |>
-    dplyr::arrange(from, to, edge)
+  )
 
   s$ptr <- p
   s$built <- TRUE
@@ -153,8 +152,8 @@ add_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL,
     return(cg)
   }
 
-  # build edges tibble
-  edges <- .get_edges_tibble(from, edge, to, calls)
+  # build edges
+  edges <- .get_edges(from, edge, to, calls)
 
   # update via helper and return
   .update_caugi(cg, edges = edges, action = "add", inplace = inplace)
@@ -178,8 +177,8 @@ remove_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL,
     return(cg)
   }
 
-  # build edges tibble
-  edges <- .get_edges_tibble(from, edge, to, calls)
+  # build edges
+  edges <- .get_edges(from, edge, to, calls)
 
   # update via helper and return
   .update_caugi(cg, edges = edges, action = "remove", inplace = inplace)
@@ -203,9 +202,9 @@ set_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL,
     return(cg)
   }
 
-  edges <- .get_edges_tibble(from, edge, to, calls)
+  edges <- .get_edges(from, edge, to, calls)
 
-  pairs <- dplyr::distinct(dplyr::select(edges, from, to))
+  pairs <- unique(edges[, .(from, to)])
   cg_mod <- .update_caugi(cg,
     edges = pairs, action = "remove",
     inplace = inplace
@@ -225,7 +224,7 @@ set_edges <- function(cg, ..., from = NULL, edge = NULL, to = NULL,
 #' @export
 add_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
   calls <- as.list(substitute(list(...)))[-1L]
-  nodes <- .get_nodes_tibble(name, calls)
+  nodes <- .get_nodes(name, calls)
   if (!nrow(nodes)) {
     return(cg)
   }
@@ -236,7 +235,7 @@ add_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
 #' @export
 remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
   calls <- as.list(substitute(list(...)))[-1L]
-  nodes <- .get_nodes_tibble(name, calls)
+  nodes <- .get_nodes(name, calls)
   if (!nrow(nodes)) {
     return(cg)
   }
@@ -247,46 +246,46 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
 # ───────────────────────────── Internal helpers ───────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
-#' @title Get nodes tibble from verb call.
+#' @title Get nodes `data.table` from verb call.
 #'
-#' @description Internal helper to build nodes tibble from verb call.
+#' @description Internal helper to build nodes `data.table` from verb call.
 #'
 #' @param name Character vector of node names.
 #' @param calls List of calls from `...`.
 #'
-#' @returns A tibble with column `name` for node names.
+#' @returns A `data.table` with column `name` for node names.
 #'
 #' @keywords internal
-.get_nodes_tibble <- function(name, calls) {
+.get_nodes <- function(name, calls) {
   has_vec <- !is.null(name)
   has_expr <- length(calls) > 0L
   if (has_vec && has_expr) {
     stop("Provide nodes via `...` or `name`, not both.", call. = FALSE)
   }
   if (!has_vec && !has_expr) {
-    return(tibble::tibble(name = character()))
+    return(.node_constructor())
   }
-  nodes <- if (has_vec) {
-    as.character(name)
+  name <- if (has_vec) {
+    name
   } else {
     unlist(lapply(calls, .expand_nodes), use.names = FALSE)
   }
-  tibble::tibble(name = unique(as.character(nodes)))
+  .node_constructor(names = as.character(name))
 }
 
-#' @title Build edges tibble from verb call.
+#' @title Build edges `data.table` from verb call.
 #'
-#' @description Internal helper to build edges tibble from verb call.
+#' @description Internal helper to build edges `data.table` from verb call.
 #'
 #' @param from Character vector of source node names.
 #' @param edge Character vector of edge types.
 #' @param to Character vector of target node names.
 #' @param calls List of calls from `...`.
 #'
-#' @returns A tibble with columns `from`, `edge`, and `to`.
+#' @returns A `data.table` with columns `from`, `edge`, and `to`.
 #'
 #' @keywords internal
-.get_edges_tibble <- function(from, edge, to, calls) {
+.get_edges <- function(from, edge, to, calls) {
   has_vec <- !(is.null(from) && is.null(edge) && is.null(to))
   edges <- if (has_vec) {
     if (is.null(from) || is.null(edge) || is.null(to)) {
@@ -295,26 +294,17 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
     if (!(length(from) == length(to) && length(to) == length(edge))) {
       stop("`from`, `edge`, `to` must be equal length.", call. = FALSE)
     }
-    tibble::tibble(
+    .edge_constructor(
       from = as.character(from),
       edge = as.character(edge),
       to   = as.character(to)
     )
   } else {
     if (length(calls) == 0L) {
-      return(tibble::tibble(
-        from = character(),
-        edge = character(),
-        to = character()
-      ))
+      .edge_constructor()
     }
     units <- unlist(lapply(calls, .parse_edge_arg), recursive = FALSE)
-    x <- .edge_units_to_tibble(units)
-    tibble::tibble(
-      from = x$from,
-      edge = x$edge,
-      to   = x$to
-    )
+    .edge_units_to_dt(units)
   }
   edges
 }
@@ -350,11 +340,13 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
 #' not built.
 #'
 #' @param cg A `caugi` object.
-#' @param nodes A tibble with column `name` for node names to add/remove.
-#' @param edges A tibble with columns `from`, `edge`, `to` for edges to
+#' @param nodes A `data.frame` with column `name` for node names to add/remove.
+#' @param edges A `data.frame` with columns `from`, `edge`, `to` for edges to
 #' add/remove.
 #' @param action One of `"add"` or `"remove"`.
 #' @param inplace Logical, whether to modify the graph inplace or not.
+#'
+#' @importFrom data.table `%chin%`
 #'
 #' @returns The updated `caugi` object.
 #' @keywords internal
@@ -391,15 +383,18 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
 
   if (identical(action, "add")) {
     if (!is.null(nodes)) {
-      s$nodes <- tibble::tibble(name = unique(c(s$nodes$name, nodes$name)))
+      s$nodes <- .node_constructor(names = unique(c(s$nodes$name, nodes$name)))
     }
     if (!is.null(edges)) {
-      s$nodes <- tibble::tibble(name = unique(c(
+      s$nodes <- .node_constructor(names = unique(c(
         s$nodes$name,
         edges$from,
         edges$to
       )))
-      s$edges <- dplyr::distinct(dplyr::bind_rows(s$edges, edges))
+      s$edges <- unique(
+        data.table::rbindlist(list(s$edges, edges), use.names = TRUE),
+        by = c("from", "edge", "to")
+      )
     }
     # update fastmap
     new_ids <- setdiff(s$nodes$name, s$name_index_map$keys())
@@ -407,7 +402,7 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
       new_id_values <- seq_len(length(new_ids)) - 1L + nrow(s$nodes) - length(new_ids)
       do.call(
         s$name_index_map$mset,
-        stats::setNames(as.list(new_id_values), new_ids)
+        .set_names(as.list(new_id_values), new_ids)
       )
     }
   } else {
@@ -418,18 +413,18 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
           call. = FALSE
         )
       }
-      edges_key <- dplyr::select(edges, dplyr::all_of(keys))
-      s$edges <- dplyr::anti_join(s$edges, edges_key, by = keys)
+      edges_key <- unique(edges[, ..keys])
+      s$edges <- s$edges[!edges_key, on = keys]
     }
     if (!is.null(nodes)) {
       drop <- nodes$name
-      s$nodes <- tibble::tibble(name = setdiff(s$nodes$name, drop))
+      s$nodes <- .node_constructor(names = setdiff(s$nodes$name, drop))
       if (nrow(s$edges)) {
-        s$edges <- dplyr::filter(s$edges, !(from %in% drop | to %in% drop))
+        s$edges <- s$edges[!(from %chin% drop | to %chin% drop)]
       }
     }
-    s$nodes <- tibble::tibble(name = unique(s$nodes$name))
-    s$edges <- dplyr::distinct(s$edges)
+    s$nodes <- .node_constructor(names = unique(s$nodes$name))
+    s$edges <- unique(s$edges)
 
     # update fastmap
     drop_ids <- intersect(nodes$name, s$name_index_map$keys())

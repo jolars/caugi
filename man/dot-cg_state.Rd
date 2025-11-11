@@ -2,7 +2,7 @@
 % Please edit documentation in R/caugi.R
 \name{.cg_state}
 \alias{.cg_state}
-\title{Internal: Create the state environment for a \code{caugi}}
+\title{Create the state environment for a \code{caugi} (internal)}
 \usage{
 .cg_state(
   nodes,
@@ -16,9 +16,9 @@
 )
 }
 \arguments{
-\item{nodes}{A tibble of nodes with a \code{name} column.}
+\item{nodes}{A \code{data.table} of nodes with a \code{name} column.}
 
-\item{edges}{A tibble of edges with \code{from}, \code{edge}, and \code{to} columns.}
+\item{edges}{A \code{data.table} of edges with \code{from}, \code{edge}, and \code{to} columns.}
 
 \item{ptr}{A pointer to the underlying Rust graph structure
 (or \code{NULL} if not built).}

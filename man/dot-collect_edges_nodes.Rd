@@ -12,7 +12,7 @@
 \value{
 A list with two elements:
 \itemize{
-\item edges: a tibble with columns \code{from}, \code{edge}, \code{to}
+\item edges: a \code{data.table} with columns \code{from}, \code{edge}, \code{to}
 \item declared: a character vector of explicitly declared nodes
 }
 }

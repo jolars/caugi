@@ -338,7 +338,7 @@ test_that("getter queries builds", {
 # ────────────────────────────── Getter helpers ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
-test_that(".getter_output returns tibble with name column", {
+test_that(".getter_output returns data frame with name column", {
   cg <- caugi(A %-->% B, B %-->% C, class = "DAG")
   out <- caugi:::.getter_output(cg, c(0L, 2L), c("A", "C"))
   expect_identical(out[["A"]], "A")
@@ -365,7 +365,7 @@ test_that("subgraph selects nodes and errors with none", {
 
   sg <- subgraph(cg, nodes = c("A", "B"))
   expect_setequal(sg@nodes$name, c("A", "B"))
-  expect_equal(sg@edges, tibble::tibble(from = "A", edge = "-->", to = "B"))
+  expect_equal(sg@edges, data.table::data.table(from = "A", edge = "-->", to = "B"))
 })
 
 test_that("subgraph errors on invalid arg combos", {

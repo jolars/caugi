@@ -16,7 +16,7 @@ V(cg)
 \item{cg}{A \code{caugi} object.}
 }
 \value{
-A tibble with a \code{name} column.
+A \code{data.table} with a \code{name} column.
 }
 \description{
 Get nodes or edges of a \code{caugi}
@@ -28,7 +28,7 @@ cg <- caugi(
   D,
   class = "DAG"
 )
-nodes(cg) # returns the tibble with nodes A, B, C, D
+nodes(cg) # returns the data.table with nodes A, B, C, D
 
 }
 \seealso{

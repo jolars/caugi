@@ -41,7 +41,7 @@ as_igraph <- function(x, ...) {
   # empty graph
   if (nrow(edges(x)) == 0L) {
     return(igraph::graph_from_data_frame(
-      tibble::tibble(
+      data.table::data.table(
         from = character(0),
         to = character(0)
       ),
@@ -65,7 +65,7 @@ as_igraph <- function(x, ...) {
   if (!directed) {
     # all undirected
     return(igraph::graph_from_data_frame(
-      tibble::tibble(
+      data.table::data.table(
         from = pmin(e$from, e$to),
         to   = pmax(e$from, e$to)
       ),
@@ -75,7 +75,7 @@ as_igraph <- function(x, ...) {
   } else if (all(et %in% "-->")) {
     # all directed
     return(igraph::graph_from_data_frame(
-      tibble::tibble(from = e$from, to = e$to),
+      data.table::data.table(from = e$from, to = e$to),
       vertices = nodes(x), directed = TRUE, ...
     ))
   } else {
@@ -85,12 +85,12 @@ as_igraph <- function(x, ...) {
     undir <- e[e$edge %in% c("<->", "---"), c("from", "to"), drop = FALSE]
     u_from <- pmin(undir$from, undir$to)
     u_to <- pmax(undir$from, undir$to)
-    undir_fwd <- tibble::tibble(from = u_from, to = u_to)
-    undir_rev <- tibble::tibble(from = u_to, to = u_from)
+    undir_fwd <- data.table::data.table(from = u_from, to = u_to)
+    undir_rev <- data.table::data.table(from = u_to, to = u_from)
     bi_df <- rbind(undir_fwd, undir_rev)
 
     all_df <- rbind(
-      tibble::tibble(
+      data.table::data.table(
         from = dir_df$from,
         to = dir_df$to
       ),

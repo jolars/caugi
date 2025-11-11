@@ -15,7 +15,7 @@ Can be a symbol, string, number, \code{c(...)}, or a combination using \code{+}.
 \item{glyph}{A string representing the edge glyph (e.g., \code{"-->"}, \code{"<->"}).}
 }
 \value{
-A tibble with columns \code{from}, \code{to}, and \code{edge}.
+A \code{data.table} with columns \code{from}, \code{to}, and \code{edge}.
 }
 \description{
 These infix operators are used to specify edges in

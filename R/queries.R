@@ -325,7 +325,7 @@ is_cpdag <- function(cg) {
 #'
 #' @param cg A `caugi` object.
 #'
-#' @returns A tibble with a `name` column.
+#' @returns A `data.table` with a `name` column.
 #'
 #' @rdname nodes
 #'
@@ -336,7 +336,7 @@ is_cpdag <- function(cg) {
 #'   D,
 #'   class = "DAG"
 #' )
-#' nodes(cg) # returns the tibble with nodes A, B, C, D
+#' nodes(cg) # returns the data.table with nodes A, B, C, D
 #'
 #' @family queries
 #' @concept queries
@@ -369,10 +369,12 @@ V <- nodes # igraph notation
 #'   D,
 #'   class = "DAG"
 #' )
-#' edges(cg) # returns the tibble with columns from, edge, to
+#' edges(cg) # returns the data.table with columns from, edge, to
 #'
 #' @family queries
 #' @concept queries
+#'
+#' @returns A `data.table` with columns `from`, `edge`, and `to`.
 #'
 #' @export
 edges <- function(cg) {
@@ -932,7 +934,7 @@ subgraph <- function(cg, nodes = NULL, index = NULL) {
 
   ptr_sub <- induced_subgraph_ptr(cg@ptr, as.integer(keep_idx0))
 
-  nodes_sub <- data.frame(name = keep_names, stringsAsFactors = FALSE)
+  nodes_sub <- .node_constructor(names = keep_names)
 
   if (nrow(cg@edges)) {
     dt <- data.table::as.data.table(cg@edges)
@@ -947,7 +949,7 @@ subgraph <- function(cg, nodes = NULL, index = NULL) {
     } else {
       dt <- dt[0L, ] # empty, preserve columns
     }
-    edges_sub <- as.data.frame(dt)
+    edges_sub <- dt
   } else {
     edges_sub <- cg@edges
   }
@@ -955,7 +957,7 @@ subgraph <- function(cg, nodes = NULL, index = NULL) {
   name_index_map_sub <- fastmap::fastmap()
   do.call(
     name_index_map_sub$mset,
-    stats::setNames(as.list(seq_len(nrow(nodes_sub)) - 1L), nodes_sub$name)
+    .set_names(as.list(seq_len(nrow(nodes_sub)) - 1L), nodes_sub$name)
   )
 
   state_sub <- .cg_state(

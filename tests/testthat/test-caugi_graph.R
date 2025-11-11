@@ -291,7 +291,7 @@ test_that("caugi requires from, edge, to all present and equal length", {
   # missing one
   expect_error(
     caugi(from = "A", edge = "-->"),
-    "`from`, `edge`, `to` must all be supplied"
+    "`from`, `edge`, and `to` must all be provided."
   )
 
   # length mismatch
@@ -301,7 +301,7 @@ test_that("caugi requires from, edge, to all present and equal length", {
       edge = c("-->", "---"),
       to   = "C"
     ),
-    "`from`, `edge`, `to` must be equal length"
+    "`from`, `edge`, and `to` must be equal length."
   )
 })
 
