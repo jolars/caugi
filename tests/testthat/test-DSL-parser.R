@@ -127,7 +127,7 @@ test_that(".combine_plus covers len 0 and len 1", {
   expect_identical(deparse1(one), "A")
 })
 
-test_that(".collect_edges_nodes returns empty tibble when no units", {
+test_that(".collect_edges_nodes returns empty data frame when no units", {
   out <- .collect_edges_nodes(list())
   expect_equal(nrow(out$edges), 0)
   expect_named(out$edges, c("from", "edge", "to"))

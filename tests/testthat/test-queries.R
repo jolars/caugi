@@ -338,7 +338,7 @@ test_that("getter queries builds", {
 # ────────────────────────────── Getter helpers ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
-test_that(".getter_output returns tibble with name column", {
+test_that(".getter_output returns data frame with name column", {
   cg <- caugi(A %-->% B, B %-->% C, class = "DAG")
   out <- caugi:::.getter_output(cg, c(0L, 2L), c("A", "C"))
   expect_identical(out[["A"]], "A")
