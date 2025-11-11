@@ -15,9 +15,9 @@
 \arguments{
 \item{cg}{A \code{caugi} object.}
 
-\item{nodes}{A tibble with column \code{name} for node names to add/remove.}
+\item{nodes}{A \code{data.frame} with column \code{name} for node names to add/remove.}
 
-\item{edges}{A tibble with columns \code{from}, \code{edge}, \code{to} for edges to
+\item{edges}{A \code{data.frame} with columns \code{from}, \code{edge}, \code{to} for edges to
 add/remove.}
 
 \item{action}{One of \code{"add"} or \code{"remove"}.}

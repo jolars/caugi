@@ -440,8 +440,8 @@ caugi <- S7::new_class(
 #' @description Internal function to create the state environment for a
 #' `caugi`. This function is not intended to be used directly by users.
 #'
-#' @param nodes A tibble of nodes with a `name` column.
-#' @param edges A tibble of edges with `from`, `edge`, and `to` columns.
+#' @param nodes A `data.table` of nodes with a `name` column.
+#' @param edges A `data.table` of edges with `from`, `edge`, and `to` columns.
 #' @param ptr A pointer to the underlying Rust graph structure
 #' (or `NULL` if not built).
 #' @param built Logical; whether the graph has been built.
