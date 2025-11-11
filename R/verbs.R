@@ -346,6 +346,8 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
 #' @param action One of `"add"` or `"remove"`.
 #' @param inplace Logical, whether to modify the graph inplace or not.
 #'
+#' @importFrom data.table `%chin%`
+#'
 #' @returns The updated `caugi` object.
 #' @keywords internal
 .update_caugi <- function(cg, nodes = NULL, edges = NULL,
@@ -416,7 +418,7 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
     }
     if (!is.null(nodes)) {
       drop <- nodes$name
-      s$nodes <- .name_constructor(name = setdiff(s$nodes$name, drop))
+      s$nodes <- .node_constructor(name = setdiff(s$nodes$name, drop))
       if (nrow(s$edges)) {
         s$edges <- s$edges[!(from %chin% drop | to %chin% drop)]
       }
