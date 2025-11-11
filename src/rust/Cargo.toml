@@ -2,8 +2,8 @@
 name = 'caugi'
 publish = false
 version = '0.1.0'
-edition = '2024'
-rust-version = '1.85'
+edition = '2021'
+rust-version = '1.75'
 license = 'MIT'
 
 [lib]
