@@ -15,7 +15,6 @@
 The input object with the assigned names.
 }
 \description{
-Only made to avoid using \code{stats::setNames}, so that the \code{stats} package is
-not a dependency.
+Only made to avoid using \code{stats::setNames}.
 }
 \keyword{internal}

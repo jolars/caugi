@@ -270,7 +270,7 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
   } else {
     unlist(lapply(calls, .expand_nodes), use.names = FALSE)
   }
-  .node_constructor(name = as.character(name))
+  .node_constructor(names = as.character(name))
 }
 
 #' @title Build edges `data.table` from verb call.
@@ -383,10 +383,10 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
 
   if (identical(action, "add")) {
     if (!is.null(nodes)) {
-      s$nodes <- .node_constructor(name = unique(c(s$nodes$name, nodes$name)))
+      s$nodes <- .node_constructor(names = unique(c(s$nodes$name, nodes$name)))
     }
     if (!is.null(edges)) {
-      s$nodes <- .node_constructor(name = unique(c(
+      s$nodes <- .node_constructor(names = unique(c(
         s$nodes$name,
         edges$from,
         edges$to
@@ -418,12 +418,12 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
     }
     if (!is.null(nodes)) {
       drop <- nodes$name
-      s$nodes <- .node_constructor(name = setdiff(s$nodes$name, drop))
+      s$nodes <- .node_constructor(names = setdiff(s$nodes$name, drop))
       if (nrow(s$edges)) {
         s$edges <- s$edges[!(from %chin% drop | to %chin% drop)]
       }
     }
-    s$nodes <- .node_constructor(name = unique(s$nodes$name))
+    s$nodes <- .node_constructor(names = unique(s$nodes$name))
     s$edges <- unique(s$edges)
 
     # update fastmap

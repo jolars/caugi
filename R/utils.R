@@ -5,8 +5,7 @@
 #' @title Set names to an object
 #'
 #' @description
-#' Only made to avoid using `stats::setNames`, so that the `stats` package is
-#' not a dependency.
+#' Only made to avoid using `stats::setNames`.
 #'
 #' @param object An R object to which names are to be assigned.
 #' @param nm A character vector of names to assign to the object.

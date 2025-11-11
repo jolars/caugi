@@ -934,7 +934,7 @@ subgraph <- function(cg, nodes = NULL, index = NULL) {
 
   ptr_sub <- induced_subgraph_ptr(cg@ptr, as.integer(keep_idx0))
 
-  nodes_sub <- .node_constructor(name = keep_names)
+  nodes_sub <- .node_constructor(names = keep_names)
 
   if (nrow(cg@edges)) {
     dt <- data.table::as.data.table(cg@edges)
