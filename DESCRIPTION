@@ -32,7 +32,8 @@ Suggests:
     Matrix,
     rextendr,
     rmarkdown,
-    testthat
+    testthat,
+    ggbeeswarm
 VignetteBuilder: 
     knitr
 Config/rextendr/version: 0.4.2
