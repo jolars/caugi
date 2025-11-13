@@ -52,7 +52,9 @@ Suggests:
     Matrix,
     rextendr,
     rmarkdown,
-    testthat
+    testthat,
+    ggbeeswarm,
+    tidyr
 VignetteBuilder: 
     knitr
 Config/rextendr/version: 0.4.2
