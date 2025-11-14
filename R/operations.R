@@ -78,41 +78,53 @@ skeleton <- function(cg) {
 #' For example, convert a `DAG` to a `PDAG`, or a fully directed `caugi` of
 #' class `UNKNOWN` to a `DAG`. Throws an error if not possible.
 #'
+#' @details
+#' This function returns a copy of the object, and the original remains
+#' unchanged.
+#'
 #' @param cg A `caugi` object.
-#' @param new_class A character string specifying the new class.
+#' @param class A character string specifying the new class.
 #'
 #' @returns A `caugi` object of the specified class.
-mutate_caugi <- function(cg, new_class) {
+#'
+#' @examples
+#' cg <- caugi(A %-->% B, class = "UNKNOWN")
+#' cg_dag <- mutate_caugi(cg, "DAG")
+#'
+#' @family operations
+#' @concept operations
+#'
+#' @export
+mutate_caugi <- function(cg, class) {
   is_caugi(cg, throw_error = TRUE)
   old_class <- cg@graph_class
 
-  if (old_class == new_class) {
+  if (old_class == class) {
     return(cg)
   }
 
   if (is_empty_caugi(cg)) {
-    return(caugi(class = new_class))
+    return(caugi(class = class))
   }
 
-  is_mutation_possible <- switch(new_class,
+  is_mutation_possible <- switch(class,
     "DAG" = is_dag(cg),
     "PDAG" = is_pdag(cg),
     "UG" = is_ug(cg),
     "UNKNOWN" = TRUE,
-    stop(paste0("Unknown target class: ", new_class))
+    stop(paste0("Unknown target class: ", class))
   )
 
   if (!is_mutation_possible) {
     stop(paste0(
-      "Cannot convert caugi of, class '", old_class,
-      "' to '", new_class, "'.",
+      "Cannot convert caugi of, class '", old_class, "' to '", class, "'.",
       call. = FALSE
     ))
   } else {
     return(caugi(
       nodes = nodes(cg),
       edges_df = edges(cg),
-      class = new_class,
+      class = class,
       simple = TRUE,
       build = TRUE
     ))

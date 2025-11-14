@@ -4,12 +4,12 @@
 \alias{mutate_caugi}
 \title{Mutate \code{caugi} class}
 \usage{
-mutate_caugi(cg, new_class)
+mutate_caugi(cg, class)
 }
 \arguments{
 \item{cg}{A \code{caugi} object.}
 
-\item{new_class}{A character string specifying the new class.}
+\item{class}{A character string specifying the new class.}
 }
 \value{
 A \code{caugi} object of the specified class.
@@ -19,3 +19,18 @@ Mutate the \code{caugi} class from one graph class to another, if possible.
 For example, convert a \code{DAG} to a \code{PDAG}, or a fully directed \code{caugi} of
 class \code{UNKNOWN} to a \code{DAG}. Throws an error if not possible.
 }
+\details{
+This function returns a copy of the object, and the original remains
+unchanged.
+}
+\examples{
+cg <- caugi(A \%-->\% B, class = "UNKNOWN")
+cg_dag <- mutate_caugi(cg, "DAG")
+
+}
+\seealso{
+Other operations: 
+\code{\link{moralize}()},
+\code{\link{skeleton}()}
+}
+\concept{operations}

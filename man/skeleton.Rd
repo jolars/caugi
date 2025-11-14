@@ -27,6 +27,7 @@ skeleton(cg) # A --- B
 }
 \seealso{
 Other operations: 
-\code{\link{moralize}()}
+\code{\link{moralize}()},
+\code{\link{mutate_caugi}()}
 }
 \concept{operations}
