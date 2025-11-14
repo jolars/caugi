@@ -454,7 +454,7 @@ mod tests {
     #[cfg(feature = "gadjid")]
     #[test]
     fn aid_to_gadjid_map_length_mismatch_errors() {
-        use super::aid::{AidInput, ancestor_aid_align};
+        use super::aid::{ancestor_aid_align, AidInput};
         use crate::graph::dag::Dag;
 
         let mut reg = EdgeRegistry::new();
@@ -478,7 +478,7 @@ mod tests {
     #[cfg(feature = "gadjid")]
     #[test]
     fn aid_to_gadjid_rejects_non_cpdag() {
-        use super::aid::{AidInput, oset_aid_align};
+        use super::aid::{oset_aid_align, AidInput};
         use crate::graph::pdag::Pdag;
 
         let mut reg = EdgeRegistry::new();
@@ -502,7 +502,7 @@ mod tests {
     #[cfg(feature = "gadjid")]
     #[test]
     fn aid_align_identical_dag_zero_errors() {
-        use super::aid::{AidInput, ancestor_aid_align, oset_aid_align, parent_aid_align};
+        use super::aid::{ancestor_aid_align, oset_aid_align, parent_aid_align, AidInput};
         use crate::graph::dag::Dag;
 
         let mut reg = EdgeRegistry::new();
@@ -539,7 +539,7 @@ mod tests {
     #[cfg(feature = "gadjid")]
     #[test]
     fn aid_align_permutation_corrected_by_inverse_map() {
-        use super::aid::{AidInput, ancestor_aid_align, oset_aid_align, parent_aid_align};
+        use super::aid::{ancestor_aid_align, oset_aid_align, parent_aid_align, AidInput};
         use crate::graph::dag::Dag;
 
         let mut reg = EdgeRegistry::new();
@@ -584,7 +584,7 @@ mod tests {
     #[cfg(feature = "gadjid")]
     #[test]
     fn aid_align_cpdag_identical_zero_errors() {
-        use super::aid::{AidInput, ancestor_aid_align, oset_aid_align, parent_aid_align};
+        use super::aid::{ancestor_aid_align, oset_aid_align, parent_aid_align, AidInput};
         use crate::graph::pdag::Pdag;
 
         let mut reg = EdgeRegistry::new();
@@ -624,7 +624,7 @@ mod tests {
     #[cfg(feature = "gadjid")]
     #[test]
     fn aid_align_cpdag_structure_difference_counts_mistake() {
-        use super::aid::{AidInput, oset_aid_align};
+        use super::aid::{oset_aid_align, AidInput};
         use crate::graph::pdag::Pdag;
 
         let mut reg = EdgeRegistry::new();
@@ -731,7 +731,7 @@ mod tests {
     #[cfg(feature = "gadjid")]
     #[test]
     fn aid_pdag_inv_length_err_line_hit() {
-        use super::aid::{AidInput, oset_aid_align};
+        use super::aid::{oset_aid_align, AidInput};
         use crate::graph::pdag::Pdag;
 
         let mut reg = EdgeRegistry::new();

@@ -146,8 +146,6 @@ You _can_ ensure that your algorithm breaks, when introducing a faulty edge by b
 
 Now, you might want to specify the class of the output graph. Let's say that _if possible_ the output should be a DAG (which is advantageous for several reasons), but you don't want to enforce acyclicity in the algorithm, as that could sometimes cause your function to throw an error. You would rather have it return a graph in any case, but if it _is_ a DAG, then we return a DAG. 
 
-This is not ideal in `caugi`. Because of the way `caugi` works, this is a bit slower, but we can still do it! 
-
 ```{r fifth-iteration}
 #' @title Correlation implies causation!
 #'
@@ -170,16 +168,7 @@ correlation_implies_causation <- function(df) {
       }
     }
   }
-  it_is <- is_dag(cg) # this builds, since it is a query
-  if (it_is) {
-    cg <- caugi::caugi(
-      from = caugi::edges(cg)$from,
-      edge = caugi::edges(cg)$edge,
-      to = caugi::edges(cg)$to,
-      nodes = caugi::nodes(cg)$name,
-      class = "DAG"
-    )
-  }
+  if (caugi::is_dag(cg)) cg <- caugi::mutate_caugi(cg, class = "DAG")
   return(cg)
 }
 ```

@@ -31,6 +31,10 @@
 #' An optional, but recommended, option is to provide all node names in the
 #' graph, including those that appear in edges. If `nodes` is provided, the
 #' order of nodes in the graph will follow the order in `nodes`.
+#' @param edges_df Optional data.frame or data.table with columns
+#' `from`, `edge`, and `to` to specify edges. Mutually exclusive with `...`
+#' and `from`, `edge`, `to`. Can be used to create graphs using `edges(cg)`
+#' from another `caugi` object, `cg`.
 #' @param simple Logical; if `TRUE` (default), the graph is a simple graph, and
 #' the function will throw an error if the input contains parallel edges or
 #' self-loops.
@@ -239,7 +243,9 @@ caugi <- S7::new_class(
     NULL
   },
   constructor = function(...,
-                         from = NULL, edge = NULL, to = NULL, nodes = NULL,
+                         from = NULL, edge = NULL, to = NULL,
+                         nodes = NULL,
+                         edges_df = NULL,
                          simple = TRUE,
                          build = TRUE,
                          class = c("UNKNOWN", "DAG", "PDAG", "UG"),
@@ -256,6 +262,48 @@ caugi <- S7::new_class(
     calls <- as.list(substitute(list(...)))[-1L]
     has_expr <- length(calls) > 0L
     has_vec <- !(is.null(from) && is.null(edge) && is.null(to))
+    has_df <- !is.null(edges_df)
+    if (has_df) {
+      if (!is.data.frame(edges_df)) {
+        stop("`edges_df` must be a data.frame or data.table.",
+          call. = FALSE
+        )
+      }
+      required_cols <- c("from", "edge", "to")
+      if (!all(required_cols %chin% colnames(edges_df))) {
+        stop(
+          "`edges_df` must contain columns: ",
+          paste(required_cols, collapse = ", "), ".",
+          call. = FALSE
+        )
+      }
+      if (has_expr) {
+        stop(
+          "Provide edges via infix expressions in `...` or ",
+          "via `edges_df`, but not both.",
+          call. = FALSE
+        )
+      }
+      if (has_vec) {
+        stop(
+          "Provide edges via `edges_df` or via `from`, `edge`, `to`, ",
+          "but not both.",
+          call. = FALSE
+        )
+      }
+      if (nrow(edges_df) == 0L) {
+        from <- character(0)
+        edge <- character(0)
+        to <- character(0)
+      } else {
+        from <- as.character(edges_df$from)
+        edge <- as.character(edges_df$edge)
+        to <- as.character(edges_df$to)
+      }
+
+      has_vec <- TRUE
+    }
+
     if (has_vec) {
       if (is.null(from) || is.null(edge) || is.null(to)) {
         stop(
@@ -284,6 +332,7 @@ caugi <- S7::new_class(
         call. = FALSE
       )
     }
+
 
     if (!is.null(nodes)) {
       if (!is.character(nodes)) {

@@ -397,7 +397,7 @@ mod tests {
     #[test]
     fn too_many_types_limit_enforced() {
         let mut r = EdgeRegistry::new();
-        r.register_builtins().unwrap(); // 6
+        r.register_builtins().unwrap(); 
         // Fill up to MAX_TYPES
         let start = r.len();
         for i in start..EdgeRegistry::MAX_TYPES {

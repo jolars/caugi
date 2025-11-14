@@ -317,6 +317,45 @@ is_cpdag <- function(cg) {
   is_it
 }
 
+#' @title Is the `caugi` graph an UG?
+#'
+#' @description Checks if the given `caugi` graph is an undirected graph (UG).
+#'
+#' @param cg A `caugi` object.
+#' @param force_check Logical; if `TRUE`, the function will test if the graph is
+#' an UG, if `FALSE` (default), it will look at the graph class and match
+#' it, if possible.
+#'
+#' @returns A logical value indicating whether the graph is an UG.
+#'
+#' @examples
+#' cg_ug_class <- caugi(
+#'   A %---% B,
+#'   class = "UG"
+#' )
+#' is_ug(cg_ug_class) # TRUE
+#' cg_not_ug <- caugi(
+#'   A %-->% B,
+#'   class = "DAG"
+#' )
+#' is_ug(cg_not_ug) # FALSE
+#'
+#' @family queries
+#' @concept queries
+#'
+#' @export
+is_ug <- function(cg, force_check = FALSE) {
+  is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
+  if (identical(cg@graph_class, "UG") && !force_check) {
+    is_it <- TRUE
+  } else {
+    # if we can't be sure from the class, we check
+    is_it <- is_ug_type_ptr(cg@ptr)
+  }
+  is_it
+}
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ───────────────────────────── Nodes and edges ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────

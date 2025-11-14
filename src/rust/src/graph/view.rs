@@ -1,7 +1,7 @@
-use super::CaugiGraph;
 use super::dag::Dag;
 use super::pdag::Pdag;
 use super::ug::Ug;
+use super::CaugiGraph;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
@@ -245,27 +245,6 @@ impl GraphView {
             }
             _ => Err("ancestral_reduction is only defined for DAGs and PDAGs".into()),
         }
-    }
-
-    /// Export all edges as a list.
-    /// Returns (from, to, edge_class, side) tuples.
-    ///
-    /// Note: Each edge is represented by its CSR entries. For directed edges,
-    /// this means both (u, v, Directed, 0) and (v, u, Directed, 1) will appear.
-    /// For undirected edges, both (u, v, Undirected, 0) and (v, u, Undirected, 0).
-    pub fn to_edge_list(&self) -> Vec<(u32, u32, crate::edges::EdgeClass, u8)> {
-        let core = self.core();
-        let mut edges = Vec::new();
-        for u in 0..core.n() {
-            for k in core.row_range(u) {
-                let v = core.col_index[k];
-                let etype = core.etype[k];
-                let side = core.side[k];
-                let spec = &core.registry.specs[etype as usize];
-                edges.push((u, v, spec.class, side));
-            }
-        }
-        edges
     }
 }
 
@@ -696,27 +675,5 @@ mod tests {
             v_ug.moralize().unwrap_err(),
             "moralize is only defined for DAGs"
         );
-    }
-
-    #[test]
-    fn graphview_to_edge_list() {
-        let mut reg = EdgeRegistry::new();
-        reg.register_builtins().unwrap();
-        let d = reg.code_of("-->").unwrap();
-
-        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
-        b.add_edge(0, 1, d).unwrap();
-        b.add_edge(1, 2, d).unwrap();
-        let dag = Arc::new(Dag::new(Arc::new(b.finalize().unwrap())).unwrap());
-        let v = GraphView::Dag(dag);
-
-        let edges = v.to_edge_list();
-        // Should have 4 edges (2 directed edges, each stored twice with different sides)
-        assert_eq!(edges.len(), 4);
-
-        // Check that we have the expected edges
-        let mut edge_pairs: Vec<(u32, u32)> = edges.iter().map(|(u, v, _, _)| (*u, *v)).collect();
-        edge_pairs.sort();
-        assert_eq!(edge_pairs, vec![(0, 1), (1, 0), (1, 2), (2, 1)]);
     }
 }

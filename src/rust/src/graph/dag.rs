@@ -1281,7 +1281,7 @@ mod tests {
         let mut a = vec![false; dag.n() as usize];
         a[2] = true; // node v
         a[0] = true; // parent included
-        // a[1] stays false (parent excluded)
+                     // a[1] stays false (parent excluded)
 
         // Call the private helper directly (allowed inside this module's tests).
         let adj = dag.moral_adj(&a);

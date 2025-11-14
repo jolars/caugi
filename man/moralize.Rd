@@ -27,6 +27,7 @@ moralize(cg) # A -- B, A -- C, B -- C
 }
 \seealso{
 Other operations: 
+\code{\link{mutate_caugi}()},
 \code{\link{skeleton}()}
 }
 \concept{operations}

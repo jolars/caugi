@@ -94,6 +94,15 @@ test_that("building a graph with duplicates will deduplicate on initial call", {
   expect_equal(cg, cg_equiv)
 })
 
+test_that("expression and isolated nodes in nodes", {
+  cg <- caugi(
+    A %-->% B,
+    nodes = c("C", "D", "E")
+  )
+  expect_s7_class(cg, caugi)
+  expect_equal(nodes(cg)$name, c("A", "B", "C", "D", "E"))
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ─────────────────────────── Simple / non-simple ──────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
@@ -391,6 +400,38 @@ test_that("caugi preserves node order from nodes parameter", {
   expect_equal(nrow(edges(cg)), 3)
 })
 
+test_that("edges_df input works", {
+  edges_df <- data.frame(
+    from = c("A", "B", "C"),
+    edge = c("-->", "---", "<->"),
+    to   = c("B", "C", "D")
+  )
+
+  cg_df <- caugi(edges_df = edges_df)
+
+  cg_expr <- caugi(
+    A %-->% B,
+    B %---% C,
+    C %<->% D
+  )
+
+  expect_equal(cg_df, cg_expr)
+})
+
+test_that("edges_df input works for empty graph", {
+  edges_df <- data.frame(
+    from = character(),
+    edge = character(),
+    to   = character()
+  )
+
+  cg_df <- caugi(edges_df = edges_df)
+
+  cg_empty <- caugi()
+
+  expect_equal(cg_df, cg_empty)
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ─────────────────────────── Errors and warnings ──────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
@@ -425,9 +466,103 @@ test_that("caugi with wrong node input errors", {
   )
 })
 
+test_that("from, edge, to vectors are not characters", {
+  expect_error(
+    caugi(
+      from = c(1, 2),
+      edge = c("-->", "---"),
+      to = c("B", "C")
+    ),
+    "`from`, `edge`, and `to` must all be character vectors."
+  )
+  expect_error(
+    caugi(
+      from = c("A", "B"),
+      edge = c(1, 2),
+      to = c("B", "C")
+    ),
+    "`from`, `edge`, and `to` must all be character vectors."
+  )
+  expect_error(
+    caugi(
+      from = c("A", "B"),
+      edge = c("-->", "---"),
+      to = c(1, 2)
+    ),
+    "`from`, `edge`, and `to` must all be character vectors."
+  )
+})
+
+test_that("caugi with both edges df input and vectors from, edge, to errors", {
+  expect_error(
+    caugi(
+      from = c("A", "B"),
+      edge = c("-->", "---"),
+      to = c("B", "C"),
+      edges_df = data.frame(
+        from = c("C"),
+        edge = c("<->"),
+        to = c("D")
+      )
+    ),
+    "Provide edges via `edges_df` or via `from`, `edge`, `to`, but not both"
+  )
+})
+
+test_that("caugi with both edges df and expressions errors", {
+  expect_error(
+    caugi(
+      A %-->% B,
+      edges_df = data.frame(
+        from = c("C"),
+        edge = c("<->"),
+        to = c("D")
+      )
+    ),
+    "Provide edges via infix expressions in `...` or via `edges_df`"
+  )
+})
+
+test_that("faulty edges df throws errors", {
+  expect_error(
+    caugi(
+      edges_df = data.frame(
+        from = c("A", "B"),
+        edge = c("-->", "---")
+      )
+    ),
+    "`edges_df` must contain columns: from, edge, to"
+  )
+})
+
+test_that("faulty vec input throws error", {
+  expect_error(
+    caugi(
+      from = c("A", "B"),
+      edge = c(1, 2),
+      to = c("B", "C")
+    ),
+    "`from`, `edge`, and `to` must all be character vectors."
+  )
+})
+
+test_that("edges df input is not a data.frame or data.table", {
+  expect_error(
+    caugi(
+      edges_df = list(
+        from = c("A", "B"),
+        edge = c("-->", "---"),
+        to = c("B", "C")
+      )
+    ),
+    "`edges_df` must be a data.frame or data.table."
+  )
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
-# ─────────────────────────── .view_to_caugi ─────────────────────────────
+# ────────────────────────────── .view_to_caugi ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 test_that(".view_to_caugi works as expected", {
   cg <- caugi(

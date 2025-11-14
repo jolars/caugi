@@ -301,6 +301,21 @@ test_that("graphNEL with no edges, but with nodes, works", {
   expect_setequal(nodes(cg0)[["name"]], c("A", "B", "C"))
 })
 
+test_that("collapse && directed for graphNEL conversion to caugi", {
+  skip_if_not_installed("graph")
+
+  g_mut <- graph::graphNEL(nodes = c("A", "B"), edgemode = "directed")
+  g_mut <- graph::addEdge("A", "B", g_mut)
+  g_mut <- graph::addEdge("B", "A", g_mut)
+
+  cg_col <- as_caugi(g_mut, class = "PDAG", collapse = TRUE)
+  e_col <- as.data.frame(edges(cg_col))
+  expect_equal(nrow(e_col), 1L)
+  expect_equal(e_col$from, "A")
+  expect_equal(e_col$to, "B")
+  expect_equal(e_col$edge, "---")
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ──────────────────────────── dagitty conversion ──────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────

@@ -10,6 +10,7 @@ caugi(
   edge = NULL,
   to = NULL,
   nodes = NULL,
+  edges_df = NULL,
   simple = TRUE,
   build = TRUE,
   class = c("UNKNOWN", "DAG", "PDAG", "UG"),
@@ -35,6 +36,11 @@ Optional; mutually exclusive with \code{...}.}
 An optional, but recommended, option is to provide all node names in the
 graph, including those that appear in edges. If \code{nodes} is provided, the
 order of nodes in the graph will follow the order in \code{nodes}.}
+
+\item{edges_df}{Optional data.frame or data.table with columns
+\code{from}, \code{edge}, and \code{to} to specify edges. Mutually exclusive with \code{...}
+and \code{from}, \code{edge}, \code{to}. Can be used to create graphs using \code{edges(cg)}
+from another \code{caugi} object, \code{cg}.}
 
 \item{simple}{Logical; if \code{TRUE} (default), the graph is a simple graph, and
 the function will throw an error if the input contains parallel edges or
