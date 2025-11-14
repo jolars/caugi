@@ -340,10 +340,10 @@ is_cpdag <- function(cg) {
 #' )
 #' is_ug(cg_not_ug) # FALSE
 #'
-#'  @family queries
-#'  @concept queries
+#' @family queries
+#' @concept queries
 #'
-#'  @export
+#' @export
 is_ug <- function(cg, force_check = FALSE) {
   is_caugi(cg, throw_error = TRUE)
   cg <- build(cg)

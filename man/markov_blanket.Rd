@@ -52,6 +52,7 @@ Other queries:
 \code{\link{is_dag}()},
 \code{\link{is_empty_caugi}()},
 \code{\link{is_pdag}()},
+\code{\link{is_ug}()},
 \code{\link{neighbors}()},
 \code{\link{nodes}()},
 \code{\link{parents}()},
