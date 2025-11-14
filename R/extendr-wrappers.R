@@ -66,6 +66,8 @@ is_dag_type_ptr <- function(g) .Call(wrap__is_dag_type_ptr, g)
 
 is_pdag_type_ptr <- function(g) .Call(wrap__is_pdag_type_ptr, g)
 
+is_ug_type_ptr <- function(g) .Call(wrap__is_ug_type_ptr, g)
+
 shd_of_ptrs <- function(g1, names1, g2, names2) .Call(wrap__shd_of_ptrs, g1, names1, g2, names2)
 
 hd_of_ptrs <- function(g1, g2) .Call(wrap__hd_of_ptrs, g1, g2)
@@ -93,8 +95,6 @@ proper_backdoor_graph_ptr <- function(g, xs, ys) .Call(wrap__proper_backdoor_gra
 moral_of_ancestors_ptr <- function(g, seeds) .Call(wrap__moral_of_ancestors_ptr, g, seeds)
 
 ancestral_reduction_ptr <- function(g, seeds) .Call(wrap__ancestral_reduction_ptr, g, seeds)
-
-to_edge_list_ptr <- function(g) .Call(wrap__to_edge_list_ptr, g)
 
 n_ptr <- function(g) .Call(wrap__n_ptr, g)
 
