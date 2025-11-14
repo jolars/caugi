@@ -6,6 +6,14 @@
 \arguments{
 \item{x}{A \code{caugi} object.}
 
+\item{max_nodes}{Optional numeric; maximum number of node names to consider.
+If \code{NULL}, the method automatically prints as many as fit on one console
+line (plus a separate truncation line if needed).}
+
+\item{max_edges}{Optional numeric; maximum number of edges to consider.
+If \code{NULL}, the method automatically prints as many edges as fit on two
+console lines (plus a separate truncation line if needed).}
+
 \item{...}{Not used.}
 }
 \value{
@@ -15,11 +23,7 @@ The input \code{caugi} object, invisibly.
 Print a \code{caugi}
 }
 \examples{
-cg <- caugi(
-  A \%-->\% B + C,
-  nodes = LETTERS[1:5],
-  class = "DAG"
-)
+cg <- caugi(A \%-->\% B, class = "DAG")
 print(cg)
 
 }
