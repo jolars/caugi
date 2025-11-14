@@ -66,3 +66,55 @@ skeleton <- function(cg) {
   skeleton_cg <- .view_to_caugi(skeleton_ptr, node_names = cg@nodes$name)
   skeleton_cg
 }
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────── Mutate caugi class ──────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+#' @title Mutate `caugi` class
+#'
+#' @description
+#' Mutate the `caugi` class from one graph class to another, if possible.
+#' For example, convert a `DAG` to a `PDAG`, or a fully directed `caugi` of
+#' class `UNKNOWN` to a `DAG`. Throws an error if not possible.
+#'
+#' @param cg A `caugi` object.
+#' @param new_class A character string specifying the new class.
+#'
+#' @returns A `caugi` object of the specified class.
+mutate_caugi <- function(cg, new_class) {
+  is_caugi(cg, throw_error = TRUE)
+  old_class <- cg@graph_class
+
+  if (old_class == new_class) {
+    return(cg)
+  }
+
+  if (is_empty_caugi(cg)) {
+    return(caugi(class = new_class))
+  }
+
+  is_mutation_possible <- switch(new_class,
+    "DAG" = is_dag(cg),
+    "PDAG" = is_pdag(cg),
+    "UG" = is_ug(cg),
+    "UNKNOWN" = TRUE,
+    stop(paste0("Unknown target class: ", new_class))
+  )
+
+  if (!is_mutation_possible) {
+    stop(paste0(
+      "Cannot convert caugi of, class '", old_class,
+      "' to '", new_class, "'.",
+      call. = FALSE
+    ))
+  } else {
+    return(caugi(
+      nodes = nodes(cg),
+      edges_df = edges(cg),
+      class = new_class,
+      simple = TRUE,
+      build = TRUE
+    ))
+  }
+}
