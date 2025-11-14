@@ -112,5 +112,5 @@ Would you like to contribute? Great! Please see [CONTRIBUTING.md](CONTRIBUTING.m
 
 
 Did you find run into problems? That's _paw-ful_! 
-Please report an [issue](https://github.com/frederikfabriciusbjerre/caugi/issues).
+Please report an [issue](https://github.com/frederikfabriciusbjerre/caugi/issues)!
 

@@ -148,4 +148,4 @@ tidyverse style guide for R code, run `styler::style_pkg()` for R and
 `cargo fmt` for Rust before PRs, and write tests for new features.
 
 Did you find run into problems? That’s *paw-ful*! Please report an
-[issue](https://github.com/frederikfabriciusbjerre/caugi/issues).
+[issue](https://github.com/frederikfabriciusbjerre/caugi/issues)!
