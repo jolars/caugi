@@ -2,8 +2,8 @@
 
 * Add `mutate_caugi` function that allows conversion from one graph type to another.
 * Add custom printing method.
-* Add optional `edge_df` argument to `caugi` for easier construction from existing data frames containing the columns `from`, `edge`, and `to`.
-* Update _How to use `caugi` in a package_ vignette to use new conversion funcetionality. 
+* Add optional `edges_df` argument to `caugi` for easier construction from existing data frames containing the columns `from`, `edge`, and `to`.
+* Update _How to use `caugi` in a package_ vignette to use new conversion functionality. 
 * Add `CONTRIBUTING.md` to github. 
 
 # caugi 0.2.1
