@@ -1060,7 +1060,7 @@ mod tests {
         b.add_edge(0, 1, u).unwrap(); // A
         b.add_edge(2, 3, u).unwrap(); // B
         b.add_edge(4, 5, u).unwrap(); // C
-        // A -> B
+                                      // A -> B
         b.add_edge(0, 2, d).unwrap();
         // B -> C
         b.add_edge(3, 4, d).unwrap();

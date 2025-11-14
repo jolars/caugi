@@ -124,7 +124,7 @@ S7::method(print, caugi) <- function(x,
 
     extra_nodes <- n_nodes - shown_nodes
     if (extra_nodes > 0L) {
-      suffix <- paste0("… (", extra_nodes, " nodes more)")
+      suffix <- paste0("... (", extra_nodes, " nodes more)")
       cat(strrep(" ", node_indent), suffix, "\n", sep = "")
     }
   }
@@ -185,7 +185,7 @@ S7::method(print, caugi) <- function(x,
   # truncation line for edges
   extra_edges <- total_edges - used_edges
   if (extra_edges > 0L) {
-    suffix <- paste0("… (", extra_edges, " edges more)")
+    suffix <- paste0("... (", extra_edges, " edges more)")
     cat(strrep(" ", edge_indent), suffix, "\n", sep = "")
   }
 

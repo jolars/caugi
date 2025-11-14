@@ -13,7 +13,7 @@ use graph::metrics::aid;
 use graph::metrics::{hd, shd_with_perm};
 
 use graph::view::GraphView;
-use graph::{CaugiGraph, dag::Dag, pdag::Pdag, ug::Ug};
+use graph::{dag::Dag, pdag::Pdag, ug::Ug, CaugiGraph};
 use std::collections::HashMap;
 use std::sync::Arc;
 

@@ -1,7 +1,7 @@
-use super::CaugiGraph;
 use super::dag::Dag;
 use super::pdag::Pdag;
 use super::ug::Ug;
+use super::CaugiGraph;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]

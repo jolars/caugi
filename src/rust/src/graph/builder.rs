@@ -273,7 +273,7 @@ mod tests {
         let bad_code = 200;
         let mut b = GraphBuilder::new_with_registry(2, false, &r);
         assert!(b.add_edge(0, 2, bad_code).is_err()); // node out of range takes precedence
-        // valid nodes but bad code
+                                                      // valid nodes but bad code
         assert!(b.add_edge(0, 1, bad_code).is_err());
     }
 }

@@ -202,28 +202,24 @@ mod tests {
         )
         .unwrap();
         assert_eq!(ok.n(), 1);
-        assert!(
-            CaugiGraph::from_csr(
-                vec![0, 2],
-                vec![1],
-                vec![0, 0],
-                vec![0, 1],
-                simple,
-                snap.clone()
-            )
-            .is_err()
-        );
-        assert!(
-            CaugiGraph::from_csr(
-                vec![0, 2],
-                vec![1, 0],
-                vec![0],
-                vec![0, 1],
-                simple,
-                snap.clone()
-            )
-            .is_err()
-        );
+        assert!(CaugiGraph::from_csr(
+            vec![0, 2],
+            vec![1],
+            vec![0, 0],
+            vec![0, 1],
+            simple,
+            snap.clone()
+        )
+        .is_err());
+        assert!(CaugiGraph::from_csr(
+            vec![0, 2],
+            vec![1, 0],
+            vec![0],
+            vec![0, 1],
+            simple,
+            snap.clone()
+        )
+        .is_err());
         assert!(
             CaugiGraph::from_csr(vec![0, 2], vec![1, 0], vec![0, 0], vec![0], simple, snap)
                 .is_err()

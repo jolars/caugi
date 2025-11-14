@@ -183,7 +183,7 @@ plot_parameterized_benchmark <- function(bm) {
     geom_line() +
     geom_point() +
     scale_y_log10() +
-    facet_wrap(~ p, labeller = "label_both") +
+    facet_wrap(~p, labeller = "label_both") +
     labs(y = "time (s)", color = NULL)
 }
 
