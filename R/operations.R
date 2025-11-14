@@ -97,6 +97,7 @@ skeleton <- function(cg) {
 #' @export
 mutate_caugi <- function(cg, class) {
   is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
   old_class <- cg@graph_class
 
   if (old_class == class) {
@@ -117,7 +118,7 @@ mutate_caugi <- function(cg, class) {
 
   if (!is_mutation_possible) {
     stop(paste0(
-      "Cannot convert caugi of, class '", old_class, "' to '", class, "'.",
+      "Cannot convert caugi of class '", old_class, "' to '", class, "'.",
       call. = FALSE
     ))
   } else {
