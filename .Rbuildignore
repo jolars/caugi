@@ -24,3 +24,4 @@
 ^vignettes/articles$
 ^CONTRIBUTING\.md$
 ^codecov\.yml$
+^CRAN-SUBMISSION$
