@@ -343,6 +343,12 @@ fn is_pdag_type_ptr(g: ExternalPtr<GraphView>) -> bool {
 }
 
 #[extendr]
+fn is_ug_type_ptr(g: ExternalPtr<GraphView>) -> bool {
+    let core = g.as_ref().core();
+    Ug::new(Arc::new(core.clone())).is_ok()
+}
+
+#[extendr]
 fn graph_class_ptr(g: ExternalPtr<GraphView>) -> String {
     match g.as_ref() {
         GraphView::Dag(_) => "DAG",
@@ -660,30 +666,6 @@ fn ancestral_reduction_ptr(g: ExternalPtr<GraphView>, seeds: Integers) -> Extern
     ExternalPtr::new(out)
 }
 
-#[extendr]
-fn to_edge_list_ptr(g: ExternalPtr<GraphView>) -> Robj {
-    let edges = g.as_ref().to_edge_list();
-    let mut from_vec: Vec<i32> = Vec::new();
-    let mut to_vec: Vec<i32> = Vec::new();
-    let mut class_vec: Vec<String> = Vec::new();
-    let mut side_vec: Vec<i32> = Vec::new();
-
-    for (u, v, class, side) in edges {
-        from_vec.push(u as i32);
-        to_vec.push(v as i32);
-        class_vec.push(format!("{:?}", class));
-        side_vec.push(side as i32);
-    }
-
-    list!(
-        from = from_vec,
-        to = to_vec,
-        class = class_vec,
-        side = side_vec
-    )
-    .into_robj()
-}
-
 // ── Subgraph ────────────────────────────────────────────────────────────────
 
 #[extendr]
@@ -819,6 +801,7 @@ extendr_module! {
     // class tests + validator
     fn is_dag_type_ptr;
     fn is_pdag_type_ptr;
+    fn is_ug_type_ptr;
 
     // metrics
     fn shd_of_ptrs;
@@ -840,7 +823,6 @@ extendr_module! {
     fn proper_backdoor_graph_ptr;
     fn moral_of_ancestors_ptr;
     fn ancestral_reduction_ptr;
-    fn to_edge_list_ptr;
 
     // view df
     fn n_ptr;
