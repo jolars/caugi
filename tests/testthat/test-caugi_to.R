@@ -99,6 +99,16 @@ test_that("mixed edges: directed kept, undirected duplicated as bidirected", {
   expect_equal(nrow(ed), 5L)
 })
 
+test_that("conversion from UG --> igraph works", {
+  cg <- caugi(A %---% B, class = "UG")
+  ig <- as_igraph(cg)
+
+  expect_false(igraph::is_directed(ig))
+  ed <- igraph::as_data_frame(ig)
+  expect_true(any(ed$from == "A" & ed$to == "B") || any(ed$from == "B" & ed$to == "A"))
+  expect_equal(nrow(ed), 1L)
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ──────────────────────────────── Adjacency ───────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────

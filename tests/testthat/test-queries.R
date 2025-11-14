@@ -113,6 +113,19 @@ test_that("same_nodes works", {
   expect_error(same_nodes(cg1, cg3, throw_error = TRUE))
 })
 
+test_that("is_ug works", {
+  cg <- caugi(A %---% B, B %---% C, C %---% D, class = "UG")
+  expect_true(is_ug(cg))
+  expect_true(is_ug(cg, force_check = TRUE))
+
+
+  cg <- caugi(A %-->% B, B %---% C, C %---% D, class = "PDAG")
+  expect_false(is_ug(cg))
+
+  cg <- caugi(A %---% B, B %---% C, C %o->% D, class = "Unknown")
+  expect_false(is_ug(cg))
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ────────────────────────────── Getter queries ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────

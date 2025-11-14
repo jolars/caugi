@@ -103,3 +103,133 @@ test_that("moralize fails on non-DAGs", {
     "moralize\\(\\) can only be applied to DAGs\\."
   )
 })
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────── Mutation ───────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("mutate_caugi throws error, when mutation isn't possible", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    C %---% D,
+    D %-->% E,
+    F, G,
+    class = "PDAG"
+  )
+
+  is_it <- is_dag(cg)
+  expect_false(is_it)
+  expect_error(mutate_caugi(cg, class = "DAG"), "Cannot convert caugi of class")
+})
+
+test_that("mutate_caugi works for all classes to UNKNOWN", {
+  cg_pdag <- caugi(
+    A %-->% B,
+    B %-->% C,
+    C %---% D,
+    D %-->% E,
+    F, G,
+    class = "PDAG"
+  )
+  cg_dag <- caugi(
+    A %-->% B,
+    B %-->% C,
+    D %-->% E,
+    F, G,
+    class = "DAG"
+  )
+  cg_ug <- caugi(
+    A %---% B,
+    B %---% C,
+    C %---% D,
+    D %---% E,
+    F, G,
+    class = "UG"
+  )
+  cg_unknown_pdag <- mutate_caugi(cg_pdag, class = "UNKNOWN")
+  cg_unknown_dag <- mutate_caugi(cg_dag, class = "UNKNOWN")
+  cg_unknown_ug <- mutate_caugi(cg_ug, class = "UNKNOWN")
+  expect_equal(cg_unknown_pdag@graph_class, "UNKNOWN")
+  expect_equal(cg_unknown_dag@graph_class, "UNKNOWN")
+  expect_equal(cg_unknown_ug@graph_class, "UNKNOWN")
+
+  expect_equal(edges(cg_unknown_pdag), edges(cg_pdag))
+  expect_equal(edges(cg_unknown_dag), edges(cg_dag))
+  expect_equal(edges(cg_unknown_ug), edges(cg_ug))
+
+  expect_equal(nodes(cg_unknown_pdag), nodes(cg_pdag))
+  expect_equal(nodes(cg_unknown_dag), nodes(cg_dag))
+  expect_equal(nodes(cg_unknown_ug), nodes(cg_ug))
+})
+
+test_that("mutate_caugi works from UNKNOWN to DAG", {
+  cg_unknown <- caugi(
+    A %-->% B,
+    B %-->% C,
+    D %-->% E,
+    F, G,
+    class = "UNKNOWN"
+  )
+  is_it <- is_dag(cg_unknown)
+  expect_true(is_it)
+
+  cg_dag <- mutate_caugi(cg_unknown, class = "DAG")
+  expect_equal(cg_dag@graph_class, "DAG")
+  expect_equal(edges(cg_dag), edges(cg_unknown))
+  expect_equal(nodes(cg_dag), nodes(cg_unknown))
+})
+
+test_that("mutate_caugi works from DAG to PDAG", {
+  cg_dag <- caugi(
+    A %-->% B,
+    B %-->% C,
+    D %-->% E,
+    F, G,
+    class = "DAG"
+  )
+
+  cg_pdag <- mutate_caugi(cg_dag, class = "PDAG")
+  expect_equal(cg_pdag@graph_class, "PDAG")
+  expect_equal(edges(cg_pdag), edges(cg_dag))
+  expect_equal(nodes(cg_pdag), nodes(cg_dag))
+})
+
+test_that("mutate_caugi works from PDAG to DAG if PDAG is a DAG", {
+  cg_pdag <- caugi(
+    A %-->% B,
+    B %-->% C,
+    D %-->% E,
+    F, G,
+    class = "PDAG"
+  )
+  is_it <- is_dag(cg_pdag)
+  expect_true(is_it)
+
+  cg_dag <- mutate_caugi(cg_pdag, class = "DAG")
+  expect_equal(cg_dag@graph_class, "DAG")
+  expect_equal(edges(cg_dag), edges(cg_pdag))
+  expect_equal(nodes(cg_dag), nodes(cg_pdag))
+})
+
+test_that("mutate_caugi works on empty caugi", {
+  cg_empty <- caugi(class = "DAG")
+  cg_empty_ug <- mutate_caugi(cg_empty, class = "UG")
+  expect_equal(length(cg_empty_ug), 0)
+  expect_equal(cg_empty_ug@graph_class, "UG")
+})
+
+test_that("mutate_caugi doesn't change class if old class is equal to new class", {
+  cg_dag <- caugi(
+    A %-->% B,
+    B %-->% C,
+    D %-->% E,
+    F, G,
+    class = "DAG"
+  )
+
+  cg_dag_mutated <- mutate_caugi(cg_dag, class = "DAG")
+  expect_equal(cg_dag_mutated@graph_class, "DAG")
+  expect_equal(edges(cg_dag_mutated), edges(cg_dag))
+  expect_equal(nodes(cg_dag_mutated), nodes(cg_dag))
+})
