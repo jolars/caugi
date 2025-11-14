@@ -263,34 +263,6 @@ caugi <- S7::new_class(
     has_expr <- length(calls) > 0L
     has_vec <- !(is.null(from) && is.null(edge) && is.null(to))
     has_df <- !is.null(edges_df)
-    if (has_vec) {
-      if (is.null(from) || is.null(edge) || is.null(to)) {
-        stop(
-          "`from`, `edge`, and `to` must all be provided.",
-          call. = FALSE
-        )
-      }
-      if (!(is.character(from) && is.character(edge) && is.character(to))) {
-        stop(
-          "`from`, `edge`, and `to` must all be character vectors.",
-          call. = FALSE
-        )
-      }
-      if (!(length(from) == length(edge) && length(edge) == length(to))) {
-        stop(
-          "`from`, `edge`, and `to` must be equal length.",
-          call. = FALSE
-        )
-      }
-      if (has_df) {
-        stop(
-          "Provide edges via `from`, `edge`, `to` or via `edges_df`, ",
-          "but not both.",
-          call. = FALSE
-        )
-      }
-    }
-
     if (has_df) {
       if (!is.data.frame(edges_df)) {
         stop("`edges_df` must be a data.frame or data.table.",
@@ -330,6 +302,27 @@ caugi <- S7::new_class(
       }
 
       has_vec <- TRUE
+    }
+
+    if (has_vec) {
+      if (is.null(from) || is.null(edge) || is.null(to)) {
+        stop(
+          "`from`, `edge`, and `to` must all be provided.",
+          call. = FALSE
+        )
+      }
+      if (!(is.character(from) && is.character(edge) && is.character(to))) {
+        stop(
+          "`from`, `edge`, and `to` must all be character vectors.",
+          call. = FALSE
+        )
+      }
+      if (!(length(from) == length(edge) && length(edge) == length(to))) {
+        stop(
+          "`from`, `edge`, and `to` must be equal length.",
+          call. = FALSE
+        )
+      }
     }
 
     if (has_expr && has_vec) {
