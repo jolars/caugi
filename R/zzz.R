@@ -1,3 +1,5 @@
+# nocov start
+
 #' @useDynLib caugi, .registration = TRUE
 .onLoad <- function(libname, pkgname) {
   if (isNamespaceLoaded("graph")) {
@@ -24,3 +26,5 @@
 
   S7::methods_register()
 }
+
+# nocov end
