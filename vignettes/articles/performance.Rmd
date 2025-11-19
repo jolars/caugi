@@ -190,7 +190,7 @@ plot_parameterized_benchmark <- function(bm) {
 plot_parameterized_benchmark(bm_parents_children_np)
 ```
 
-For ancestors and descendants, we see that `caugi` outperforms all other packages by a several magnitudes, expect for `igraph`, which it still beats, but by a smaller margin:
+For ancestors and descendants, we see that `caugi` outperforms all other packages by a several magnitudes, except for `igraph`, which it still beats, but by a smaller margin:
 
 ```{r benchmark-an-de}
 #| fig-cap: "Benchmarking ancestors/descendants queries for different packages."
