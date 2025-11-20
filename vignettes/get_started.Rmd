@@ -35,7 +35,7 @@ cg <- caugi(
 cg
 ```
 
-You might scratch your head a bit, when looking at the call above. To clarify, `A %-->% B` creates the edge `-->` from `A` to `B`. The syntax `B %-->% C + D` is equivalent to `B %--> C` _and_ `B %-->% D`. Notice that the graph prints two `tibbles`. The first is equivalent to `cg@nodes` and the second `cg@edges`. Besides that, the `caugi` holds other _properties_. Let's check the other properties.
+You might scratch your head a bit, when looking at the call above. To clarify, `A %-->% B` creates the edge `-->` from `A` to `B`. The syntax `B %-->% C + D` is equivalent to `B %-->% C` _and_ `B %-->% D`. Notice that the graph prints two `tibbles`. The first is equivalent to `cg@nodes` and the second `cg@edges`. Besides that, the `caugi` holds other _properties_. Let's check the other properties.
 
 ### Properties
 
