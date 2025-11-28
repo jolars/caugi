@@ -40,7 +40,7 @@ install.packages("caugi")
 ```
 
 If you don't have Rust installed, please install `rustc >= 1.80.0` or higher from:
-https://www.rust-lang.org/tools/install
+https://rust-lang.org/tools/install/
 
 Alternatively, you may install Rust from your OS package manager.
 
