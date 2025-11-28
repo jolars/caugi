@@ -39,6 +39,11 @@ or directly from CRAN with:
 install.packages("caugi")
 ```
 
+If you don't have Rust installed, please install `rustc >= 1.80.0` or higher from:
+https://www.rust-lang.org/tools/install
+
+Alternatively, you may install Rust from your OS package manager.
+
 ## The basic object: `caugi`
 
 A `caugi` graph object is the bread and butter of the `caugi` package. It is easy to create, query, and modify. 
