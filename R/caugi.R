@@ -253,7 +253,7 @@ caugi <- S7::new_class(
     if (!is.null(state)) {
       return(S7::new_object(
         caugi,
-        `.state` = .freeze_state(state)
+        `.state` = state
       ))
     }
     class <- toupper(class)
@@ -439,7 +439,7 @@ caugi <- S7::new_class(
 
     S7::new_object(
       caugi,
-      `.state` = .freeze_state(state)
+      `.state` = state
     )
   }
 )
@@ -533,32 +533,5 @@ caugi <- S7::new_class(
   e$simple <- isTRUE(simple)
   e$class <- class
   e$name_index_map <- name_index_map
-  e
-}
-
-#' @title Internal: Freeze the state environment of a `caugi`
-#'
-#' @description Internal functions to freeze and unfreeze the state environment
-#' of a `caugi`, preventing further modifications. These functions are not
-#' intended to be used directly by users.
-#'
-#' @param e The state environment to freeze/unfreeze.
-#'
-#' @returns The frozen/unfrozen environment.
-#'
-#' @name freeze_state
-#'
-#' @keywords internal
-.freeze_state <- function(e) {
-  for (nm in ls(envir = e, all.names = TRUE)) lockBinding(nm, e)
-  lockEnvironment(e, bindings = TRUE)
-  e
-}
-
-#' @name freeze_state
-#'
-#' @keywords internal
-.unfreeze_state <- function(e) {
-  for (nm in ls(envir = e, all.names = TRUE)) unlockBinding(nm, e)
   e
 }

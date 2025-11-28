@@ -52,7 +52,7 @@ S7::method(build, caugi) <- function(cg, ...) {
     return(cg)
   }
 
-  s <- .unfreeze_state(cg@`.state`)
+  s <- cg@`.state`
 
   n <- nrow(s$nodes)
   id <- seq_len(n) - 1L
@@ -83,7 +83,6 @@ S7::method(build, caugi) <- function(cg, ...) {
 
   s$ptr <- p
   s$built <- TRUE
-  .freeze_state(cg@`.state`)
   cg
 }
 
@@ -326,9 +325,7 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
   on.exit(attr(cg, ".should_validate") <- NULL)
 
   s <- cg@`.state`
-  if (bindingIsLocked("built", s)) unlockBinding("built", s)
   s$built <- FALSE
-  lockBinding("built", s)
 
   cg
 }
@@ -359,7 +356,7 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
   if (!inplace) {
     s <- cg@`.state`
 
-    # clone state (no unlocking of the original)
+    # clone state
     state_copy <- .cg_state(
       nodes = s$nodes,
       edges = s$edges,
@@ -370,7 +367,7 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
       name_index_map = s$name_index_map
     )
 
-    cg_copy <- caugi(state = .freeze_state(state_copy))
+    cg_copy <- caugi(state = state_copy)
 
     # reuse the in-place path on the copy
     return(.update_caugi(
@@ -379,7 +376,7 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
     ))
   }
 
-  s <- .unfreeze_state(cg@`.state`)
+  s <- cg@`.state`
 
   if (identical(action, "add")) {
     if (!is.null(nodes)) {
@@ -436,6 +433,5 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
       }
     }
   }
-  .freeze_state(cg@`.state`)
   .mark_not_built(cg)
 }
