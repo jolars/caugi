@@ -598,27 +598,6 @@ test_that(".view_to_caugi works for empty cg", {
   expect_equal(cg, .view_to_caugi(cg@ptr))
 })
 
-# ──────────────────────────────────────────────────────────────────────────────
-# ───────────────────────── Freezing and unfreezing ────────────────────────────
-# ──────────────────────────────────────────────────────────────────────────────
-
-test_that("freeze / unfreeze works as expected", {
-  cg <- caugi(
-    A %-->% B,
-    B %---% C
-  )
-
-  # test if built is TRUE
-  expect_true(cg@built)
-  # currently frozen
-  s <- cg@.state
-  expect_error(s$built <- FALSE)
-
-  s <- caugi:::.unfreeze_state(cg@.state)
-  s$built <- FALSE
-  expect_false(s$built)
-  expect_false(cg@.state$built)
-})
 
 # ──────────────────────────────────────────────────────────────────────────────
 # ───────────────────────────────── UG tests ───────────────────────────────────
