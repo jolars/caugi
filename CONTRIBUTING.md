@@ -236,6 +236,7 @@ test_that("parents() returns correct parents", {
 ### Code Review Process
 
 All contributions go through code review. Be prepared to:
+
 - Respond to feedback and make requested changes
 - Discuss design decisions and implementation approaches
 - Iterate on your implementation based on maintainer guidance
@@ -247,6 +248,7 @@ Found a bug or have a feature request? Please [open an issue](https://github.com
 ### Bug Reports
 
 When reporting a bug, please include:
+
 - A clear, descriptive title
 - A minimal reproducible example
 - Your R version and sessionInfo()
@@ -270,6 +272,7 @@ sessionInfo()
 ### Feature Requests
 
 When requesting a feature:
+
 - Describe the use case and motivation
 - Provide examples of how the feature would be used
 - Discuss any alternative approaches you've considered
@@ -287,6 +290,7 @@ By participating in this project, you agree to abide by standard community guide
 ## Questions?
 
 If you have questions about contributing, feel free to:
+
 - Open an issue for discussion
 - Ask in your pull request
 - Contact the maintainers
