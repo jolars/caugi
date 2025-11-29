@@ -22,15 +22,6 @@ Thank you for your interest in contributing to `caugi`! This document provides g
 - **Tidy**: Following tidyverse principles and conventions
 - **Flexible**: Supporting multiple graph types and custom edge definitions
 
-### Key Features
-
-- Fast querying of causal relationships (parents, ancestors, neighbors, etc.)
-- Structural queries (acyclicity, CPDAG validation, etc.)
-- Graph manipulation operations (add/remove edges and nodes)
-- Graph metrics (Structural Hamming Distance, Adjustment Identification Distance)
-- Custom edge type registration
-- Lazy building for efficient batch operations
-
 ## Getting Started
 
 ### Prerequisites
@@ -289,7 +280,7 @@ By participating in this project, you agree to abide by standard community guide
 
 ## Additional Resources
 
-- [Package documentation](https://frederikfabriciusbjerre.github.io/caugi/)
+- [Package documentation](https://caugi.org/)
 - [Issue tracker](https://github.com/frederikfabriciusbjerre/caugi/issues)
 - [extendr documentation](https://extendr.github.io/)
 
