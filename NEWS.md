@@ -1,3 +1,10 @@
+# caugi 0.3.2
+
+* Change website to `caugi.org/`.
+* Minor modifications to `CONTRIBUTING.md`.
+* Minor `README` rewrite.
+
+
 # caugi 0.3.1
 
 * Remove the use of `lockBinding` and `unlockBinding` in the package to 
