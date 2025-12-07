@@ -313,6 +313,14 @@ is_valid_adjustment_admg <- function(cg,
                                      Y_index = NULL,
                                      Z_index = NULL) {
   is_caugi(cg, TRUE)
+  # Validate that X and Y are provided
+
+  if (is.null(X) && is.null(X_index)) {
+    stop("X (or X_index) must be provided.", call. = FALSE)
+  }
+  if (is.null(Y) && is.null(Y_index)) {
+    stop("Y (or Y_index) must be provided.", call. = FALSE)
+  }
   cg <- build(cg)
 
   X_idx0 <- .resolve_idx0_mget(cg@name_index_map, X, X_index)
@@ -360,6 +368,13 @@ all_adjustment_sets_admg <- function(cg,
                                      minimal = TRUE,
                                      max_size = 3L) {
   is_caugi(cg, TRUE)
+  # Validate that X and Y are provided
+  if (is.null(X) && is.null(X_index)) {
+    stop("X (or X_index) must be provided.", call. = FALSE)
+  }
+  if (is.null(Y) && is.null(Y_index)) {
+    stop("Y (or Y_index) must be provided.", call. = FALSE)
+  }
   cg <- build(cg)
 
   X_idx0 <- .resolve_idx0_mget(cg@name_index_map, X, X_index)
