@@ -7,6 +7,7 @@
 //!
 //! The directed part must be acyclic.
 
+use super::error::AdmgError;
 use super::CaugiGraph;
 use crate::edges::EdgeClass;
 use crate::graph::alg::bitset;
@@ -32,12 +33,21 @@ impl Admg {
     /// 2. Only directed and bidirected edges are present
     ///
     /// Parents, spouses, and children for each node are stored contiguously and sorted.
+    ///
+    /// Returns a `String` error for FFI compatibility. Use `try_new` for typed errors.
     pub fn new(core: Arc<CaugiGraph>) -> Result<Self, String> {
+        Self::try_new(core).map_err(|e| e.to_string())
+    }
+
+    /// Builds an `Admg` view with typed error handling.
+    ///
+    /// See [`new`](Self::new) for details.
+    pub fn try_new(core: Arc<CaugiGraph>) -> Result<Self, AdmgError> {
         let n = core.n() as usize;
 
         // Check acyclicity of directed part
         if !directed_part_is_acyclic(&core) {
-            return Err("ADMG contains a directed cycle".into());
+            return Err(AdmgError::DirectedCycle);
         }
 
         // Count (parents, spouses, children) per node
@@ -57,9 +67,9 @@ impl Admg {
                         deg[i].1 += 1; // spouse
                     }
                     _ => {
-                        return Err(
-                            "ADMG can only contain directed and bidirected edges".into()
-                        );
+                        return Err(AdmgError::InvalidEdgeType {
+                            found: spec.glyph.clone(),
+                        });
                     }
                 }
             }
@@ -433,6 +443,8 @@ impl Admg {
     /// 1. Block the causal effect (if on the path itself)
     /// 2. Open spurious paths via collider bias (if descendant of a node on the path)
     fn forbidden_set(&self, xs: &[u32], ys: &[u32]) -> Vec<bool> {
+        use std::collections::HashSet;
+
         let n = self.n() as usize;
 
         // Step 1: Compute De(X) ∪ X (nodes reachable from X, including X)
@@ -451,10 +463,11 @@ impl Admg {
         }
 
         // Step 4: Compute cn \ Y (exclude Y from causal nodes for descendants computation)
+        // Use HashSet for O(1) membership lookup instead of O(|Y|) linear search
+        let y_set: HashSet<u32> = ys.iter().copied().collect();
         let causal_nodes_minus_y: Vec<u32> = causal_nodes
-            .iter()
-            .copied()
-            .filter(|&v| ys.iter().all(|&y| y != v))
+            .into_iter()
+            .filter(|v| !y_set.contains(v))
             .collect();
 
         // Step 5: Compute De(cn \ Y) - this includes cn \ Y itself since descendants_mask
@@ -599,13 +612,16 @@ impl Admg {
         minimal: bool,
         max_size: u32,
     ) -> Vec<Vec<u32>> {
+        use std::collections::HashSet;
+
         // Universe of candidates: not in forbidden set or Y
         // The forbidden set already includes X
         let forbidden = self.forbidden_set(xs, ys);
+        let y_set: HashSet<u32> = ys.iter().copied().collect();
         let universe: Vec<u32> = (0..self.n())
             .filter(|&v| {
                 let vi = v as usize;
-                !forbidden[vi] && ys.iter().all(|&y| y != v)
+                !forbidden[vi] && !y_set.contains(&v)
             })
             .collect();
 
@@ -778,8 +794,37 @@ impl Admg {
     }
 
     /// Number of districts (c-components) in the ADMG.
+    ///
+    /// Uses Union-Find for O(n α(n)) complexity without allocating full district lists.
     pub fn num_districts(&self) -> usize {
-        self.districts().len()
+        let n = self.n() as usize;
+        if n == 0 {
+            return 0;
+        }
+
+        let mut count = n; // Start with each node as its own component
+        let mut parent: Vec<usize> = (0..n).collect();
+
+        // Union-Find with path compression
+        fn find(parent: &mut [usize], mut x: usize) -> usize {
+            while parent[x] != x {
+                parent[x] = parent[parent[x]]; // Path compression
+                x = parent[x];
+            }
+            x
+        }
+
+        for v in 0..n as u32 {
+            for &s in self.spouses_of(v) {
+                let pv = find(&mut parent, v as usize);
+                let ps = find(&mut parent, s as usize);
+                if pv != ps {
+                    parent[pv] = ps;
+                    count -= 1;
+                }
+            }
+        }
+        count
     }
 }
 

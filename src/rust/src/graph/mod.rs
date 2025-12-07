@@ -13,6 +13,7 @@ pub mod admg;
 pub mod alg;
 pub mod builder;
 pub mod dag;
+pub mod error;
 pub mod pdag;
 pub mod ug;
 pub mod view;
