@@ -4,6 +4,7 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
+use super::error::BuilderError;
 use super::{CaugiGraph, RegistrySnapshot};
 use crate::edges::{EdgeRegistry, EdgeSpec, Mark};
 
@@ -81,24 +82,41 @@ impl GraphBuilder {
         }
     }
 
+    /// Add an edge to the graph.
+    ///
+    /// Returns a `String` error for FFI compatibility. Use `try_add_edge` for typed errors.
     pub fn add_edge(&mut self, u: u32, v: u32, etype: u8) -> Result<(), String> {
-        if u >= self.n || v >= self.n {
-            return Err("node id out of range".into());
+        self.try_add_edge(u, v, etype).map_err(|e| e.to_string())
+    }
+
+    /// Add an edge to the graph with typed error handling.
+    pub fn try_add_edge(&mut self, u: u32, v: u32, etype: u8) -> Result<(), BuilderError> {
+        if u >= self.n {
+            return Err(BuilderError::NodeOutOfRange {
+                node: u,
+                max: self.n - 1,
+            });
+        }
+        if v >= self.n {
+            return Err(BuilderError::NodeOutOfRange {
+                node: v,
+                max: self.n - 1,
+            });
         }
         if self.simple && u == v {
-            return Err("self-loops not allowed in simple graphs".into());
+            return Err(BuilderError::SelfLoop { node: u });
         }
 
         let spec: EdgeSpec = self
             .specs
             .get(etype as usize)
             .cloned()
-            .ok_or("invalid edge code")?;
+            .ok_or(BuilderError::InvalidEdgeCode { code: etype })?;
 
         if self.simple {
             let (a, b) = if u <= v { (u, v) } else { (v, u) };
             if !self.pair_seen.insert((a, b)) {
-                return Err("parallel edges not allowed in simple graphs".into());
+                return Err(BuilderError::ParallelEdge { from: a, to: b });
             }
         }
 
@@ -109,7 +127,11 @@ impl GraphBuilder {
             (u, v, etype, false)
         };
         if !self.seen.insert(key) {
-            return Err("duplicate edge".into());
+            return Err(BuilderError::DuplicateEdge {
+                from: u,
+                to: v,
+                edge_type: etype,
+            });
         }
 
         // Push halves based on marks.
