@@ -19,7 +19,7 @@
 as_igraph <- function(x, ...) {
   is_caugi(x, throw_error = TRUE)
 
-  if (!(x@graph_class %in% c("DAG", "PDAG", "UG", "UNKNOWN"))) {
+  if (!(x@graph_class %in% c("DAG", "PDAG", "ADMG", "UG", "UNKNOWN"))) {
     stop("caugi graphs of class '", x@graph_class, "' cannot be converted to ",
       "igraph objects.",
       call. = FALSE
@@ -136,7 +136,7 @@ as_adjacency <- function(x) {
     return(out)
   }
 
-  ok <- e$edge %in% c("-->", "---")
+  ok <- e$edge %in% c("-->", "---", "<->")
   if (any(!ok)) {
     stop("Unsupported edge glyphs in conversion to adjacency: ",
       paste(unique(e$edge[!ok]), collapse = ", "),
@@ -152,12 +152,22 @@ as_adjacency <- function(x) {
     out[cbind(i[dir_ix], j[dir_ix])] <- 1L
   }
 
+  # Undirected edges: symmetric entries
   und_ix <- e$edge %in% c("---")
   if (any(und_ix)) {
     iu <- i[und_ix]
     ju <- j[und_ix]
     out[cbind(iu, ju)] <- 1L
     out[cbind(ju, iu)] <- 1L
+  }
+
+  # Bidirected edges: symmetric entries (for ADMG support)
+  bid_ix <- e$edge %in% c("<->")
+  if (any(bid_ix)) {
+    ib <- i[bid_ix]
+    jb <- j[bid_ix]
+    out[cbind(ib, jb)] <- 1L
+    out[cbind(jb, ib)] <- 1L
   }
 
   out
