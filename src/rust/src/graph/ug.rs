@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 //! UG (Undirected Graph) wrapper with O(1) slice queries via packed neighborhoods.
 
+use super::error::UgError;
 use super::CaugiGraph;
 use crate::edges::EdgeClass;
 use std::sync::Arc;
@@ -17,7 +18,15 @@ pub struct Ug {
 }
 
 impl Ug {
+    /// Builds a `Ug` view over a class-agnostic CSR graph.
+    ///
+    /// Returns a `String` error for FFI compatibility. Use `try_new` for typed errors.
     pub fn new(core: Arc<CaugiGraph>) -> Result<Self, String> {
+        Self::try_new(core).map_err(|e| e.to_string())
+    }
+
+    /// Builds a `Ug` view with typed error handling.
+    pub fn try_new(core: Arc<CaugiGraph>) -> Result<Self, UgError> {
         let n = core.n() as usize;
 
         // Count neighbors per node and validate edges are undirected
@@ -30,7 +39,9 @@ impl Ug {
                     EdgeClass::Undirected => deg[i] += 1,
                     // Reject any non-undirected edges
                     _ => {
-                        return Err("UG can only contain undirected edges".into());
+                        return Err(UgError::InvalidEdgeType {
+                            found: spec.glyph.clone(),
+                        });
                     }
                 }
             }
