@@ -248,7 +248,7 @@ caugi <- S7::new_class(
                          edges_df = NULL,
                          simple = TRUE,
                          build = TRUE,
-                         class = c("UNKNOWN", "DAG", "PDAG", "UG"),
+                         class = c("UNKNOWN", "DAG", "PDAG", "ADMG", "UG"),
                          state = NULL) {
     if (!is.null(state)) {
       return(S7::new_object(
