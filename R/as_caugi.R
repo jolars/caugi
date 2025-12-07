@@ -14,8 +14,9 @@
 #' - 3: tail (e.g., `A o-- B` or `A --- B`)
 #'
 #' @param x An object to convert to a `caugi`.
-#' @param class "DAG", "PDAG", "PAG", or "UNKNOWN".
+#' @param class "DAG", "PDAG", "ADMG", "PAG", or "UNKNOWN".
 #' "PAG" is only supported for integer coded matrices.
+#' "ADMG" is for Acyclic Directed Mixed Graphs (with `-->` and `<->` edges).
 #' @param simple logical. If `TRUE` (default) the graph will be simple
 #' (no multiple edges or self-loops).
 #' @param build logical. If `TRUE` (default) build the graph now, otherwise
@@ -98,7 +99,7 @@ as_caugi <- S7::new_generic(
   "as_caugi",
   dispatch_args = "x",
   fun = function(x,
-                 class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
+                 class = c("DAG", "PDAG", "ADMG", "PAG", "UNKNOWN"),
                  simple = TRUE,
                  build = TRUE,
                  collapse = FALSE,
@@ -112,7 +113,7 @@ S7::method(
   as_caugi,
   S7::new_S3_class("igraph")
 ) <- function(x,
-              class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
+              class = c("DAG", "PDAG", "ADMG", "PAG", "UNKNOWN"),
               simple = TRUE,
               build = TRUE,
               collapse = FALSE,
@@ -196,7 +197,7 @@ register_graphnel_s4_class <- function() {
     as_caugi,
     methods::getClassDef("graphNEL", package = "graph")
   ) <- function(x,
-                class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
+                class = c("DAG", "PDAG", "ADMG", "PAG", "UNKNOWN"),
                 simple = TRUE,
                 build = TRUE,
                 collapse = FALSE,
@@ -271,7 +272,7 @@ S7::method(
   as_caugi,
   S7::new_S3_class("integer")
 ) <- function(x,
-              class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
+              class = c("DAG", "PDAG", "ADMG", "PAG", "UNKNOWN"),
               simple = TRUE,
               build = TRUE,
               collapse = FALSE,
@@ -451,7 +452,7 @@ S7::method(
   as_caugi,
   S7::new_S3_class("double")
 ) <- function(x,
-              class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
+              class = c("DAG", "PDAG", "ADMG", "PAG", "UNKNOWN"),
               simple = TRUE,
               build = TRUE,
               collapse = FALSE,
@@ -482,7 +483,7 @@ S7::method(
   as_caugi,
   S7::new_S3_class("logical")
 ) <- function(x,
-              class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
+              class = c("DAG", "PDAG", "ADMG", "PAG", "UNKNOWN"),
               simple = TRUE,
               build = TRUE,
               collapse = FALSE,
@@ -511,7 +512,7 @@ register_matrix_s4_class <- function() {
     as_caugi,
     methods::getClassDef("Matrix", package = "Matrix")
   ) <- function(x,
-                class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
+                class = c("DAG", "PDAG", "ADMG", "PAG", "UNKNOWN"),
                 simple = TRUE,
                 build = TRUE,
                 collapse = FALSE,
@@ -535,7 +536,7 @@ S7::method(
   as_caugi,
   S7::new_S3_class("tidygraph")
 ) <- function(x,
-              class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
+              class = c("DAG", "PDAG", "ADMG", "PAG", "UNKNOWN"),
               simple = TRUE,
               build = TRUE,
               collapse = FALSE,
@@ -560,7 +561,7 @@ S7::method(
   as_caugi,
   S7::new_S3_class("dagitty")
 ) <- function(x,
-              class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
+              class = c("DAG", "PDAG", "ADMG", "PAG", "UNKNOWN"),
               simple = TRUE,
               build = TRUE,
               collapse = FALSE,
@@ -668,7 +669,7 @@ S7::method(
   as_caugi,
   S7::new_S3_class("bn")
 ) <- function(x,
-              class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
+              class = c("DAG", "PDAG", "ADMG", "PAG", "UNKNOWN"),
               simple = TRUE,
               build = TRUE,
               collapse = FALSE,
