@@ -68,6 +68,20 @@ is_pdag_type_ptr <- function(g) .Call(wrap__is_pdag_type_ptr, g)
 
 is_ug_type_ptr <- function(g) .Call(wrap__is_ug_type_ptr, g)
 
+is_admg_type_ptr <- function(g) .Call(wrap__is_admg_type_ptr, g)
+
+spouses_of_ptr <- function(g, idxs) .Call(wrap__spouses_of_ptr, g, idxs)
+
+districts_ptr <- function(g) .Call(wrap__districts_ptr, g)
+
+district_of_ptr <- function(g, idx) .Call(wrap__district_of_ptr, g, idx)
+
+m_separated_ptr <- function(g, xs, ys, z) .Call(wrap__m_separated_ptr, g, xs, ys, z)
+
+is_valid_adjustment_set_admg_ptr <- function(g, xs, ys, z) .Call(wrap__is_valid_adjustment_set_admg_ptr, g, xs, ys, z)
+
+all_adjustment_sets_admg_ptr <- function(g, xs, ys, minimal, max_size) .Call(wrap__all_adjustment_sets_admg_ptr, g, xs, ys, minimal, max_size)
+
 shd_of_ptrs <- function(g1, names1, g2, names2) .Call(wrap__shd_of_ptrs, g1, names1, g2, names2)
 
 hd_of_ptrs <- function(g1, g2) .Call(wrap__hd_of_ptrs, g1, g2)
