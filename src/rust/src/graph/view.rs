@@ -1,3 +1,4 @@
+use super::admg::Admg;
 use super::dag::Dag;
 use super::pdag::Pdag;
 use super::ug::Ug;
@@ -9,8 +10,8 @@ pub enum GraphView {
     Dag(Arc<Dag>),
     Pdag(Arc<Pdag>),
     Ug(Arc<Ug>),
+    Admg(Arc<Admg>),
     Raw(Arc<CaugiGraph>),
-    // ADMG, MAG, PAG, etc in the future
 }
 
 impl GraphView {
@@ -20,6 +21,7 @@ impl GraphView {
             GraphView::Dag(d) => d.core_ref(),
             GraphView::Pdag(p) => p.core_ref(),
             GraphView::Ug(u) => u.core_ref(),
+            GraphView::Admg(a) => a.core_ref(),
             GraphView::Raw(c) => c,
         }
     }
@@ -30,6 +32,7 @@ impl GraphView {
             GraphView::Dag(g) => g.n(),
             GraphView::Pdag(g) => g.n(),
             GraphView::Ug(g) => g.n(),
+            GraphView::Admg(g) => g.n(),
             GraphView::Raw(core) => core.n(),
         }
     }
@@ -39,6 +42,7 @@ impl GraphView {
         match self {
             GraphView::Dag(g) => Ok(g.parents_of(i)),
             GraphView::Pdag(g) => Ok(g.parents_of(i)),
+            GraphView::Admg(g) => Ok(g.parents_of(i)),
             GraphView::Ug(_) => Err("parents_of not defined for UG".into()),
             GraphView::Raw(_) => Err("parents_of not implemented for UNKNOWN class".into()),
         }
@@ -47,6 +51,7 @@ impl GraphView {
         match self {
             GraphView::Dag(g) => Ok(g.children_of(i)),
             GraphView::Pdag(g) => Ok(g.children_of(i)),
+            GraphView::Admg(g) => Ok(g.children_of(i)),
             GraphView::Ug(_) => Err("children_of not defined for UG".into()),
             GraphView::Raw(_) => Err("children_of not implemented for UNKNOWN class".into()),
         }
@@ -54,6 +59,7 @@ impl GraphView {
     pub fn undirected_of(&self, i: u32) -> Result<&[u32], String> {
         match self {
             GraphView::Dag(_) => Err("undirected_of not defined for Dag".into()),
+            GraphView::Admg(_) => Err("undirected_of not defined for ADMG".into()),
             GraphView::Pdag(g) => Ok(g.undirected_of(i)),
             GraphView::Ug(g) => Ok(g.neighbors_of(i)),
             GraphView::Raw(_) => Err("undirected_of not implemented for UNKNOWN class".into()),
@@ -64,6 +70,7 @@ impl GraphView {
             GraphView::Dag(g) => Ok(g.neighbors_of(i)),
             GraphView::Pdag(g) => Ok(g.neighbors_of(i)),
             GraphView::Ug(g) => Ok(g.neighbors_of(i)),
+            GraphView::Admg(g) => Ok(g.neighbors_of(i)),
             GraphView::Raw(_) => Err("neighbors_of not implemented for UNKNOWN class".into()),
         }
     }
@@ -71,6 +78,7 @@ impl GraphView {
         match self {
             GraphView::Dag(g) => Ok(g.ancestors_of(i)),
             GraphView::Pdag(g) => Ok(g.ancestors_of(i)),
+            GraphView::Admg(g) => Ok(g.ancestors_of(i)),
             GraphView::Ug(_) => Err("ancestors_of not defined for UG".into()),
             GraphView::Raw(_) => Err("ancestors_of not implemented for UNKNOWN class".into()),
         }
@@ -79,6 +87,7 @@ impl GraphView {
         match self {
             GraphView::Dag(g) => Ok(g.descendants_of(i)),
             GraphView::Pdag(g) => Ok(g.descendants_of(i)),
+            GraphView::Admg(g) => Ok(g.descendants_of(i)),
             GraphView::Ug(_) => Err("descendants_of not defined for UG".into()),
             GraphView::Raw(_) => Err("descendants_of not implemented for UNKNOWN class".into()),
         }
@@ -88,6 +97,7 @@ impl GraphView {
             GraphView::Dag(g) => Ok(g.markov_blanket_of(i)),
             GraphView::Pdag(g) => Ok(g.markov_blanket_of(i)),
             GraphView::Ug(g) => Ok(g.markov_blanket_of(i)),
+            GraphView::Admg(g) => Ok(g.markov_blanket_of(i)),
             GraphView::Raw(_) => Err("markov_blanket_of not implemented for UNKNOWN class".into()),
         }
     }
@@ -96,7 +106,38 @@ impl GraphView {
             GraphView::Dag(g) => Ok(g.exogenous_nodes()),
             GraphView::Pdag(g) => Ok(g.exogenous_nodes(undirected_as_parents)),
             GraphView::Ug(g) => Ok(g.exogenous_nodes()),
+            GraphView::Admg(g) => Ok(g.exogenous_nodes()),
             GraphView::Raw(_) => Err("exogenous_nodes not implemented for UNKNOWN class".into()),
+        }
+    }
+
+    // ---- ADMG-specific methods ----
+    pub fn spouses_of(&self, i: u32) -> Result<&[u32], String> {
+        match self {
+            GraphView::Admg(g) => Ok(g.spouses_of(i)),
+            _ => Err("spouses_of is only defined for ADMGs".into()),
+        }
+    }
+
+    pub fn districts(&self) -> Result<Vec<Vec<u32>>, String> {
+        match self {
+            GraphView::Admg(g) => Ok(g.districts()),
+            _ => Err("districts is only defined for ADMGs".into()),
+        }
+    }
+
+    pub fn district_of(&self, i: u32) -> Result<Vec<u32>, String> {
+        match self {
+            GraphView::Admg(g) => Ok(g.district_of(i)),
+            _ => Err("district_of is only defined for ADMGs".into()),
+        }
+    }
+
+    pub fn m_separated(&self, xs: &[u32], ys: &[u32], z: &[u32]) -> Result<bool, String> {
+        match self {
+            GraphView::Admg(g) => Ok(g.m_separated(xs, ys, z)),
+            GraphView::Dag(d) => Ok(d.d_separated(xs, ys, z)), // d-sep is m-sep for DAGs
+            _ => Err("m_separated is only defined for ADMGs and DAGs".into()),
         }
     }
 
@@ -144,6 +185,32 @@ impl GraphView {
         }
     }
 
+    // ---- ADMG adjustment methods ----
+    pub fn is_valid_adjustment_set_admg(
+        &self,
+        xs: &[u32],
+        ys: &[u32],
+        z: &[u32],
+    ) -> Result<bool, String> {
+        match self {
+            GraphView::Admg(g) => Ok(g.is_valid_adjustment_set(xs, ys, z)),
+            _ => Err("is_valid_adjustment_set_admg is only defined for ADMGs".into()),
+        }
+    }
+
+    pub fn all_adjustment_sets_admg(
+        &self,
+        xs: &[u32],
+        ys: &[u32],
+        minimal: bool,
+        max_size: u32,
+    ) -> Result<Vec<Vec<u32>>, String> {
+        match self {
+            GraphView::Admg(g) => Ok(g.all_adjustment_sets(xs, ys, minimal, max_size)),
+            _ => Err("all_adjustment_sets_admg is only defined for ADMGs".into()),
+        }
+    }
+
     pub fn induced_subgraph(&self, keep: &[u32]) -> Result<GraphView, String> {
         let (core2, _new_to_old, _old_to_new) = self.core().induced_subgraph(keep)?;
         let gv = match self {
@@ -158,6 +225,10 @@ impl GraphView {
             GraphView::Ug(_) => {
                 let u = super::ug::Ug::new(std::sync::Arc::new(core2))?;
                 GraphView::Ug(std::sync::Arc::new(u))
+            }
+            GraphView::Admg(_) => {
+                let a = super::admg::Admg::new(std::sync::Arc::new(core2))?;
+                GraphView::Admg(std::sync::Arc::new(a))
             }
             GraphView::Raw(_) => GraphView::Raw(std::sync::Arc::new(core2)),
         };
@@ -228,7 +299,7 @@ impl GraphView {
         }
     }
 
-    /// Ancestral reduction induced on seeds. Defined for DAG and PDAG.
+    /// Ancestral reduction induced on seeds. Defined for DAG, PDAG, and ADMG.
     pub fn ancestral_reduction(&self, seeds: &[u32]) -> Result<GraphView, String> {
         match self {
             GraphView::Dag(d) => {
@@ -243,7 +314,13 @@ impl GraphView {
                 let keep = bitset::collect_from_mask(&mask);
                 self.induced_subgraph(&keep)
             }
-            _ => Err("ancestral_reduction is only defined for DAGs and PDAGs".into()),
+            GraphView::Admg(a) => {
+                use crate::graph::alg::bitset;
+                let mask = bitset::ancestors_mask(seeds, |u| a.parents_of(u), a.n());
+                let keep = bitset::collect_from_mask(&mask);
+                self.induced_subgraph(&keep)
+            }
+            _ => Err("ancestral_reduction is only defined for DAGs, PDAGs, and ADMGs".into()),
         }
     }
 }
