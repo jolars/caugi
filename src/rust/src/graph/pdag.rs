@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 //! Pdag wrapper with O(1) slice queries via packed neighborhoods.
 
+use super::error::PdagError;
 use super::CaugiGraph;
 use crate::edges::EdgeClass;
 use crate::graph::alg::directed_part_is_acyclic;
@@ -19,10 +20,18 @@ pub struct Pdag {
 }
 
 impl Pdag {
+    /// Builds a `Pdag` view over a class-agnostic CSR graph.
+    ///
+    /// Returns a `String` error for FFI compatibility. Use `try_new` for typed errors.
     pub fn new(core: Arc<CaugiGraph>) -> Result<Self, String> {
+        Self::try_new(core).map_err(|e| e.to_string())
+    }
+
+    /// Builds a `Pdag` view with typed error handling.
+    pub fn try_new(core: Arc<CaugiGraph>) -> Result<Self, PdagError> {
         let n = core.n() as usize;
         if !directed_part_is_acyclic(&core) {
-            return Err("PDAG contains a directed cycle".into());
+            return Err(PdagError::DirectedCycle);
         }
         let mut deg: Vec<(u32, u32, u32)> = vec![(0, 0, 0); n];
         for i in 0..n {
@@ -40,7 +49,9 @@ impl Pdag {
                     EdgeClass::Undirected => deg[i].1 += 1,
                     // Throw error on partial/bidirected edges
                     _ => {
-                        return Err("Pdag cannot contain partial/bidirected edges".into());
+                        return Err(PdagError::InvalidEdgeType {
+                            found: spec.glyph.clone(),
+                        });
                     }
                 }
             }
