@@ -52,7 +52,9 @@ d_separated(cg, "X", "Y", Z = NULL) # FALSE
 \seealso{
 Other adjustment: 
 \code{\link{adjustment_set}()},
+\code{\link{all_adjustment_sets_admg}()},
 \code{\link{all_backdoor_sets}()},
+\code{\link{is_valid_adjustment_admg}()},
 \code{\link{is_valid_backdoor}()}
 }
 \concept{adjustment}

@@ -52,7 +52,9 @@ is_valid_backdoor(cg, X = "X", Y = "Y", Z = c("A", "C")) # TRUE
 \seealso{
 Other adjustment: 
 \code{\link{adjustment_set}()},
+\code{\link{all_adjustment_sets_admg}()},
 \code{\link{all_backdoor_sets}()},
-\code{\link{d_separated}()}
+\code{\link{d_separated}()},
+\code{\link{is_valid_adjustment_admg}()}
 }
 \concept{adjustment}
