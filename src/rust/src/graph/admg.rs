@@ -421,50 +421,49 @@ impl Admg {
         bitset::descendants_mask(seeds, |u| self.children_of(u), self.n())
     }
 
-    /// Check if node `b` is reachable from node `a` via directed paths.
-    fn has_directed_path(&self, a: u32, b: u32) -> bool {
-        if a == b {
-            return true;
-        }
-        let n = self.n() as usize;
-        let mut seen = vec![false; n];
-        let mut stack = vec![a];
-
-        while let Some(u) = stack.pop() {
-            if u == b {
-                return true;
-            }
-            if std::mem::replace(&mut seen[u as usize], true) {
-                continue;
-            }
-            stack.extend_from_slice(self.children_of(u));
-        }
-        false
-    }
-
-    /// Compute the "forbidden" set for adjustment:
-    /// Descendants of X that lie on a proper causal path from X to Y.
+    /// Compute the "forbidden" set for adjustment per the Generalized Adjustment Criterion.
+    ///
+    /// The forbidden set is: forb_G(X,Y) = De(cn(X,Y) \ Y) ∪ X
+    ///
+    /// where cn(X,Y) = nodes on proper causal paths from X to Y, i.e., nodes v such that:
+    /// - v is reachable from X via directed edges (v ∈ De(X) ∪ X), AND
+    /// - Y is reachable from v via directed edges (v ∈ An(Y) ∪ Y)
+    ///
+    /// Adjusting for any node in this set can:
+    /// 1. Block the causal effect (if on the path itself)
+    /// 2. Open spurious paths via collider bias (if descendant of a node on the path)
     fn forbidden_set(&self, xs: &[u32], ys: &[u32]) -> Vec<bool> {
         let n = self.n() as usize;
-        let mut forbidden = vec![false; n];
 
-        // Compute De(X)
+        // Step 1: Compute De(X) ∪ X (nodes reachable from X, including X)
         let de_x = self.descendants_mask(xs);
 
-        // For each y ∈ Y, find all nodes on causal paths from X to y
-        for &y in ys {
-            // A node is on a causal path if it's a descendant of X and ancestor of Y
-            // that can reach Y via directed path
-            for v in 0..n as u32 {
-                if de_x[v as usize] && self.has_directed_path(v, y) {
-                    forbidden[v as usize] = true;
-                }
+        // Step 2: Compute An(Y) ∪ Y (nodes that can reach Y, including Y)
+        let an_y = self.ancestors_mask(ys);
+
+        // Step 3: Find cn(X,Y) = nodes on proper causal paths
+        // A node v is on a causal path if v ∈ (De(X) ∪ X) AND v ∈ (An(Y) ∪ Y)
+        let mut causal_nodes: Vec<u32> = Vec::new();
+        for v in 0..n as u32 {
+            if de_x[v as usize] && an_y[v as usize] {
+                causal_nodes.push(v);
             }
         }
 
-        // Remove X itself from forbidden (we exclude X from adjustment anyway)
+        // Step 4: Compute cn \ Y (exclude Y from causal nodes for descendants computation)
+        let causal_nodes_minus_y: Vec<u32> = causal_nodes
+            .iter()
+            .copied()
+            .filter(|&v| ys.iter().all(|&y| y != v))
+            .collect();
+
+        // Step 5: Compute De(cn \ Y) - this includes cn \ Y itself since descendants_mask
+        // includes the seeds
+        let mut forbidden = self.descendants_mask(&causal_nodes_minus_y);
+
+        // Step 6: Add X to forbidden set
         for &x in xs {
-            forbidden[x as usize] = false;
+            forbidden[x as usize] = true;
         }
 
         forbidden
@@ -472,12 +471,14 @@ impl Admg {
 
     /// Validate whether Z is a valid adjustment set for estimating X → Y.
     ///
-    /// Uses the generalized adjustment criterion for ADMGs:
-    /// 1. Z must not contain any descendant of X on a proper causal path to Y
-    /// 2. Z must m-separate X from Y in the proper backdoor graph
+    /// Uses the generalized adjustment criterion (GAC) for ADMGs:
+    /// 1. Z ∩ forb(X,Y) = ∅, where forb(X,Y) = De(cn(X,Y) \ Y) ∪ X
+    ///    (Z must not contain any node in the forbidden set)
+    /// 2. All non-causal paths from X to Y are blocked by Z
     ///
-    /// The proper backdoor graph is obtained by removing the first edge
-    /// on every proper causal path from X to Y.
+    /// The forbidden set includes X, all nodes on proper causal paths from X to Y,
+    /// and all descendants of those path nodes (except Y). Conditioning on forbidden
+    /// nodes can block the causal effect or open spurious paths via collider bias.
     pub fn is_valid_adjustment_set(&self, xs: &[u32], ys: &[u32], z: &[u32]) -> bool {
         // Check condition 1: Z contains no forbidden nodes
         let forbidden = self.forbidden_set(xs, ys);
@@ -598,14 +599,13 @@ impl Admg {
         minimal: bool,
         max_size: u32,
     ) -> Vec<Vec<u32>> {
-        // Universe of candidates: not in X, Y, or De(X) on causal paths
-        let de_mask = self.descendants_mask(xs);
+        // Universe of candidates: not in forbidden set or Y
+        // The forbidden set already includes X
+        let forbidden = self.forbidden_set(xs, ys);
         let universe: Vec<u32> = (0..self.n())
             .filter(|&v| {
                 let vi = v as usize;
-                !de_mask[vi]  // Not a descendant of X
-                    && xs.iter().all(|&x| x != v)
-                    && ys.iter().all(|&y| y != v)
+                !forbidden[vi] && ys.iter().all(|&y| y != v)
             })
             .collect();
 
@@ -1332,5 +1332,143 @@ mod tests {
 
         // L is valid
         assert!(admg.is_valid_adjustment_set(&[0], &[2], &[3]));
+    }
+
+    // ── GAC Edge Case Tests ──────────────────────────────────────────────────
+
+    #[test]
+    fn admg_gac_mediator_descendant_forbidden() {
+        // Test that descendants of mediators (not on the causal path itself) are forbidden.
+        // Graph: X -> M -> Y, M -> W
+        // W is a descendant of M (which is on causal path), so W is in forb.
+        // Adjusting for W could open collider bias if there's confounding at M.
+        let (reg, dir, _bid) = setup();
+        let mut b = GraphBuilder::new_with_registry(4, true, &reg);
+        // 0:X, 1:M, 2:Y, 3:W
+        b.add_edge(0, 1, dir).unwrap(); // X -> M
+        b.add_edge(1, 2, dir).unwrap(); // M -> Y
+        b.add_edge(1, 3, dir).unwrap(); // M -> W
+
+        let admg = Admg::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        // W is descendant of M (on causal path), so {W} is NOT valid
+        // Even though there are no backdoor paths here, W is in the forbidden set
+        assert!(!admg.is_valid_adjustment_set(&[0], &[2], &[3]));
+
+        // Empty set should be valid (no confounding)
+        assert!(admg.is_valid_adjustment_set(&[0], &[2], &[]));
+    }
+
+    #[test]
+    fn admg_gac_collider_opening_via_descendant() {
+        // Test collider bias opening when conditioning on descendant of mediator.
+        // Graph: X -> M -> Y, U -> M, U -> Y, M -> W
+        // If we condition on W (descendant of M), we open the collider at M,
+        // creating a spurious path X -> M <- U -> Y.
+        let (reg, dir, _bid) = setup();
+        let mut b = GraphBuilder::new_with_registry(5, true, &reg);
+        // 0:X, 1:M, 2:Y, 3:U, 4:W
+        b.add_edge(0, 1, dir).unwrap(); // X -> M
+        b.add_edge(1, 2, dir).unwrap(); // M -> Y
+        b.add_edge(3, 1, dir).unwrap(); // U -> M (creates collider at M)
+        b.add_edge(3, 2, dir).unwrap(); // U -> Y
+        b.add_edge(1, 4, dir).unwrap(); // M -> W
+
+        let admg = Admg::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        // W is descendant of M (on causal path), so {W} is NOT valid
+        // Conditioning on W would open the collider at M via X -> M <- U -> Y
+        assert!(!admg.is_valid_adjustment_set(&[0], &[2], &[4]));
+
+        // {U} is valid - blocks the backdoor path directly
+        assert!(admg.is_valid_adjustment_set(&[0], &[2], &[3]));
+
+        // Empty set is NOT valid - backdoor path X <- ... wait, there's no backdoor
+        // Actually the path U -> M <- X is a collider at M, so it's blocked.
+        // The confounding is via U -> Y but there's no path from X to U.
+        // Let me reconsider... X -> M <- U creates collider at M, unconditionally blocked.
+        // So empty set should be valid here.
+        assert!(admg.is_valid_adjustment_set(&[0], &[2], &[]));
+    }
+
+    #[test]
+    fn admg_gac_forbidden_includes_all_path_descendants() {
+        // Graph: X -> A -> B -> Y, A -> C, B -> D
+        // All of {A, B, C, D} should be in forbidden set (A, B on path; C, D are descendants)
+        let (reg, dir, _bid) = setup();
+        let mut b = GraphBuilder::new_with_registry(6, true, &reg);
+        // 0:X, 1:A, 2:B, 3:Y, 4:C, 5:D
+        b.add_edge(0, 1, dir).unwrap(); // X -> A
+        b.add_edge(1, 2, dir).unwrap(); // A -> B
+        b.add_edge(2, 3, dir).unwrap(); // B -> Y
+        b.add_edge(1, 4, dir).unwrap(); // A -> C (branch off causal path)
+        b.add_edge(2, 5, dir).unwrap(); // B -> D (branch off causal path)
+
+        let admg = Admg::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        // All descendants of causal path nodes are forbidden
+        assert!(!admg.is_valid_adjustment_set(&[0], &[3], &[1])); // A is on path
+        assert!(!admg.is_valid_adjustment_set(&[0], &[3], &[2])); // B is on path
+        assert!(!admg.is_valid_adjustment_set(&[0], &[3], &[4])); // C is desc of A
+        assert!(!admg.is_valid_adjustment_set(&[0], &[3], &[5])); // D is desc of B
+
+        // Empty set is valid (no confounding)
+        assert!(admg.is_valid_adjustment_set(&[0], &[3], &[]));
+    }
+
+    #[test]
+    fn admg_gac_non_descendant_of_path_is_allowed() {
+        // Graph: X -> M -> Y, L -> X, L -> Y, W (isolated)
+        // W is not a descendant of any node on the causal path, so W CAN be in Z
+        // (not forbidden), but W alone doesn't block the backdoor path through L.
+        let (reg, dir, _bid) = setup();
+        let mut b = GraphBuilder::new_with_registry(5, true, &reg);
+        // 0:X, 1:M, 2:Y, 3:L, 4:W
+        b.add_edge(0, 1, dir).unwrap(); // X -> M
+        b.add_edge(1, 2, dir).unwrap(); // M -> Y
+        b.add_edge(3, 0, dir).unwrap(); // L -> X
+        b.add_edge(3, 2, dir).unwrap(); // L -> Y
+
+        let admg = Admg::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        // W is not forbidden (not descendant of causal path), but {W} alone is NOT valid
+        // because it doesn't block the backdoor path L -> Y
+        assert!(!admg.is_valid_adjustment_set(&[0], &[2], &[4]));
+
+        // {L} is valid and necessary (blocks the backdoor)
+        assert!(admg.is_valid_adjustment_set(&[0], &[2], &[3]));
+
+        // {L, W} is also valid (W is allowed since it's not forbidden, L blocks backdoor)
+        assert!(admg.is_valid_adjustment_set(&[0], &[2], &[3, 4]));
+
+        // Empty set is NOT valid (backdoor via L)
+        assert!(!admg.is_valid_adjustment_set(&[0], &[2], &[]));
+    }
+
+    #[test]
+    fn admg_gac_bidirected_with_forbidden_descendant() {
+        // Test with bidirected edges and forbidden descendants
+        // Graph: X -> M -> Y, X <-> Y (latent confounding), M -> W
+        // The bidirected edge creates confounding that cannot be adjusted for.
+        // W is descendant of M, so W is forbidden.
+        let (reg, dir, bid) = setup();
+        let mut b = GraphBuilder::new_with_registry(4, true, &reg);
+        // 0:X, 1:M, 2:Y, 3:W
+        b.add_edge(0, 1, dir).unwrap(); // X -> M
+        b.add_edge(1, 2, dir).unwrap(); // M -> Y
+        b.add_edge(0, 2, bid).unwrap(); // X <-> Y (latent confounding)
+        b.add_edge(1, 3, dir).unwrap(); // M -> W
+
+        let admg = Admg::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        // W is forbidden (descendant of M)
+        assert!(!admg.is_valid_adjustment_set(&[0], &[2], &[3]));
+
+        // Empty set is NOT valid (X <-> Y confounding cannot be blocked)
+        assert!(!admg.is_valid_adjustment_set(&[0], &[2], &[]));
+
+        // No valid adjustment exists for this graph (the X <-> Y confounding is unblockable)
+        let sets = admg.all_adjustment_sets(&[0], &[2], false, 5);
+        assert!(sets.is_empty());
     }
 }
