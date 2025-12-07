@@ -33,14 +33,14 @@ test_that("build() errors when breaking simple graph assumptions", {
     edge = c("o->", "-->"),
     to = c("B", "B")
   )
-  expect_error(build(cg), "parallel")
+  expect_error(build(cg), "Parallel edges not allowed")
   cg <- caugi()
   cg <- add_edges(cg,
     from = c("A", "A"),
     edge = c("-->", "<->"),
     to = c("B", "A")
   )
-  expect_error(build(cg), "self-loop")
+  expect_error(build(cg), "Self-loops not allowed")
 })
 
 # ──────────────────────────────────────────────────────────────────────────────

@@ -378,7 +378,7 @@ test_that("parentheses isolate terms inside chain", {
 })
 
 test_that("self-loop is caugt by chained edges", {
-  expect_error(caugi(A %-->% B %-->% B), "self-loops")
+  expect_error(caugi(A %-->% B %-->% B), "Self-loops not allowed")
 })
 
 test_that("chains respect class constraints", {
