@@ -989,7 +989,7 @@ spouses <- function(cg, nodes = NULL, index = NULL) {
   index <- cg@name_index_map$mget(nodes,
     missing = stop(
       paste(
-        "Non-existant node name:",
+        "Non-existent node name:",
         paste(setdiff(nodes, cg@nodes$name),
           collapse = ", "
         )
