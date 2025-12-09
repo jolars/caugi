@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 //! DAG wrapper with O(1) slice queries via packed neighborhoods.
 
+use super::error::DagError;
 use super::CaugiGraph;
 use crate::edges::EdgeClass;
 use crate::graph::alg::bitset;
@@ -26,11 +27,20 @@ impl Dag {
     ///
     /// Validates that the directed part is acyclic and that every edge is directed.
     /// Parents and children for each node are stored contiguously and are sorted.
+    ///
+    /// Returns a `String` error for FFI compatibility. Use `try_new` for typed errors.
     pub fn new(core: Arc<CaugiGraph>) -> Result<Self, String> {
+        Self::try_new(core).map_err(|e| e.to_string())
+    }
+
+    /// Builds a `Dag` view with typed error handling.
+    ///
+    /// See [`new`](Self::new) for details.
+    pub fn try_new(core: Arc<CaugiGraph>) -> Result<Self, DagError> {
         let n = core.n() as usize;
 
         if !directed_part_is_acyclic(&core) {
-            return Err("Dag contains a directed cycle".into());
+            return Err(DagError::DirectedCycle);
         }
 
         // Count `(parents, children)` per row.
@@ -46,7 +56,11 @@ impl Dag {
                             deg[i].1 += 1 // child
                         }
                     }
-                    _ => return Err("Dag cannot contain non-directed edges".into()),
+                    _ => {
+                        return Err(DagError::InvalidEdgeType {
+                            found: spec.glyph.clone(),
+                        })
+                    }
                 }
             }
         }

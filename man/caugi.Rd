@@ -13,7 +13,7 @@ caugi(
   edges_df = NULL,
   simple = TRUE,
   build = TRUE,
-  class = c("UNKNOWN", "DAG", "PDAG", "UG"),
+  class = c("UNKNOWN", "DAG", "PDAG", "ADMG", "UG"),
   state = NULL
 )
 }

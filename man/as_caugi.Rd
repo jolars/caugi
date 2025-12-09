@@ -6,7 +6,7 @@
 \usage{
 as_caugi(
   x,
-  class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
+  class = c("DAG", "PDAG", "ADMG", "PAG", "UNKNOWN"),
   simple = TRUE,
   build = TRUE,
   collapse = FALSE,
@@ -17,8 +17,9 @@ as_caugi(
 \arguments{
 \item{x}{An object to convert to a \code{caugi}.}
 
-\item{class}{"DAG", "PDAG", "PAG", or "UNKNOWN".
-"PAG" is only supported for integer coded matrices.}
+\item{class}{"DAG", "PDAG", "ADMG", "PAG", or "UNKNOWN".
+"PAG" is only supported for integer coded matrices.
+"ADMG" is for Acyclic Directed Mixed Graphs (with \verb{-->} and \verb{<->} edges).}
 
 \item{simple}{logical. If \code{TRUE} (default) the graph will be simple
 (no multiple edges or self-loops).}

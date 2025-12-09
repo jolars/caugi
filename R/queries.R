@@ -356,6 +356,51 @@ is_ug <- function(cg, force_check = FALSE) {
   is_it
 }
 
+#' @title Is the `caugi` graph an ADMG?
+#'
+#' @description Checks if the given `caugi` graph is an
+#' Acyclic Directed Mixed Graph (ADMG).
+#'
+#' An ADMG contains only directed (`-->`) and bidirected (`<->`) edges,
+#' and the directed part must be acyclic.
+#'
+#' @param cg A `caugi` object.
+#' @param force_check Logical; if `TRUE`, the function will test if the graph is
+#' an ADMG, if `FALSE` (default), it will look at the graph class and match
+#' it, if possible.
+#'
+#' @returns A logical value indicating whether the graph is an ADMG.
+#'
+#' @examples
+#' cg_admg <- caugi(
+#'   A %-->% B,
+#'   A %<->% C,
+#'   class = "ADMG"
+#' )
+#' is_admg(cg_admg) # TRUE
+#'
+#' cg_dag <- caugi(
+#'   A %-->% B,
+#'   class = "DAG"
+#' )
+#' is_admg(cg_dag) # TRUE (DAGs are valid ADMGs)
+#'
+#' @family queries
+#' @concept queries
+#'
+#' @export
+is_admg <- function(cg, force_check = FALSE) {
+  is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
+  if (identical(cg@graph_class, "ADMG") && !force_check) {
+    is_it <- TRUE
+  } else {
+    # if we can't be sure from the class, we check
+    is_it <- is_admg_type_ptr(cg@ptr)
+  }
+  is_it
+}
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ───────────────────────────── Nodes and edges ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
@@ -889,6 +934,162 @@ exogenous <- function(cg, undirected_as_parents = FALSE) {
   cg <- build(cg)
   idx0 <- exogenous_nodes_of_ptr(cg@ptr, undirected_as_parents)
   cg@nodes$name[idx0 + 1L]
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────── ADMG-specific queries ────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+#' @title Get spouses (bidirected neighbors) of nodes in an ADMG
+#'
+#' @description Get nodes connected via bidirected edges in an ADMG.
+#'
+#' @param cg A `caugi` object of class ADMG.
+#' @param nodes A vector of node names.
+#' @param index A vector of node indexes.
+#'
+#' @returns Either a character vector of node names (if a single node is
+#' requested) or a list of character vectors (if multiple nodes are requested).
+#'
+#' @examples
+#' cg <- caugi(
+#'   A %-->% B,
+#'   A %<->% C,
+#'   B %<->% C,
+#'   class = "ADMG"
+#' )
+#' spouses(cg, "A") # "C"
+#' spouses(cg, "C") # c("A", "B")
+#'
+#' @family queries
+#' @concept queries
+#'
+#' @export
+spouses <- function(cg, nodes = NULL, index = NULL) {
+  nodes_supplied <- !missing(nodes)
+  index_supplied <- !missing(index) && !is.null(index)
+  if (nodes_supplied && index_supplied) {
+    stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
+  }
+  if (!cg@built) cg <- build(cg)
+  if (index_supplied) {
+    return(.getter_output(
+      cg,
+      spouses_of_ptr(cg@ptr, as.integer(index - 1L)),
+      cg@nodes$name[index]
+    ))
+  }
+  if (!nodes_supplied) {
+    stop("Supply one of `nodes` or `index`.", call. = FALSE)
+  }
+  if (!is.character(nodes)) {
+    stop("`nodes` must be a character vector of node names.", call. = FALSE)
+  }
+
+  index <- cg@name_index_map$mget(nodes,
+    missing = stop(
+      paste(
+        "Non-existent node name:",
+        paste(setdiff(nodes, cg@nodes$name),
+          collapse = ", "
+        )
+      ),
+      call. = FALSE
+    )
+  )
+
+  .getter_output(cg, spouses_of_ptr(cg@ptr, as.integer(index)), nodes)
+}
+
+#' @title Get districts (c-components) of an ADMG
+#'
+#' @description Get the districts (c-components) of an ADMG.
+#' A district is a maximal set of nodes connected via bidirected edges.
+#'
+#' @param cg A `caugi` object of class ADMG.
+#'
+#' @returns A list of character vectors, each containing the nodes in a district.
+#'
+#' @examples
+#' cg <- caugi(
+#'   A %-->% B,
+#'   A %<->% C,
+#'   D %<->% E,
+#'   class = "ADMG"
+#' )
+#' districts(cg)
+#' # Returns list with districts: {A, C}, {B}, {D, E}
+#'
+#' @family queries
+#' @concept queries
+#'
+#' @export
+districts <- function(cg) {
+  is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
+  idx0_list <- districts_ptr(cg@ptr)
+  lapply(idx0_list, function(idx0) cg@nodes$name[idx0 + 1L])
+}
+
+#' @title M-separation test for ADMGs
+#'
+#' @description Test whether two sets of nodes are m-separated given a
+#' conditioning set in an ADMG.
+#'
+#' M-separation generalizes d-separation to ADMGs (Acyclic Directed Mixed Graphs).
+#'
+#' @param cg A `caugi` object of class ADMG or DAG.
+#' @param x A character vector of node names (the "source" set).
+#' @param y A character vector of node names (the "target" set).
+#' @param z A character vector of node names to condition on (default: empty).
+#'
+#' @returns A logical value; `TRUE` if `x` and `y` are m-separated given `z`.
+#'
+#' @examples
+#' # Classic confounding example
+#' cg <- caugi(
+#'   L %-->% X,
+#'   X %-->% Y,
+#'   L %-->% Y,
+#'   class = "ADMG"
+#' )
+#' m_separated(cg, "X", "Y") # FALSE (connected via L)
+#' m_separated(cg, "X", "Y", "L") # TRUE (L blocks the path)
+#'
+#' @family queries
+#' @concept queries
+#'
+#' @export
+m_separated <- function(cg, x, y, z = character(0)) {
+  is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
+
+  if (!is.character(x) || !is.character(y) || !is.character(z)) {
+    stop("`x`, `y`, and `z` must be character vectors.", call. = FALSE)
+  }
+
+  # Convert node names to indices
+  x_idx <- cg@name_index_map$mget(x,
+    missing = stop(paste("Unknown node in x:", paste(setdiff(x, cg@nodes$name), collapse = ", ")),
+      call. = FALSE
+    )
+  )
+  y_idx <- cg@name_index_map$mget(y,
+    missing = stop(paste("Unknown node in y:", paste(setdiff(y, cg@nodes$name), collapse = ", ")),
+      call. = FALSE
+    )
+  )
+  z_idx <- if (length(z) > 0) {
+    cg@name_index_map$mget(z,
+      missing = stop(paste("Unknown node in z:", paste(setdiff(z, cg@nodes$name), collapse = ", ")),
+        call. = FALSE
+      )
+    )
+  } else {
+    integer(0)
+  }
+
+  m_separated_ptr(cg@ptr, as.integer(x_idx), as.integer(y_idx), as.integer(z_idx))
 }
 
 # ──────────────────────────────────────────────────────────────────────────────

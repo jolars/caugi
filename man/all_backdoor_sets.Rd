@@ -77,7 +77,9 @@ all_backdoor_sets(cg, X = "X", Y = "Y", max_size = 3L, minimal = TRUE)
 \seealso{
 Other adjustment: 
 \code{\link{adjustment_set}()},
+\code{\link{all_adjustment_sets_admg}()},
 \code{\link{d_separated}()},
+\code{\link{is_valid_adjustment_admg}()},
 \code{\link{is_valid_backdoor}()}
 }
 \concept{adjustment}
