@@ -2,58 +2,11 @@
 //! Graph transformations for PDAGs.
 
 use super::Pdag;
-use crate::edges::EdgeClass;
+use crate::graph::alg::csr;
 use crate::graph::ug::Ug;
-use crate::graph::CaugiGraph;
 use std::sync::Arc;
 
 impl Pdag {
-    fn undirected_code(&self) -> Result<u8, String> {
-        let mut code: Option<u8> = None;
-        for (i, s) in self.core_ref().registry.specs.iter().enumerate() {
-            if let EdgeClass::Undirected = s.class {
-                if code.is_none() || s.glyph == "---" {
-                    code = Some(i as u8);
-                }
-            }
-        }
-        code.ok_or("No Undirected edge spec in registry".into())
-    }
-
-    fn build_ug_core_from_adj(&self, adj: &[Vec<u32>]) -> Result<CaugiGraph, String> {
-        let n = self.n() as usize;
-        let und = self.undirected_code()?;
-
-        let mut row_index = Vec::with_capacity(n + 1);
-        row_index.push(0u32);
-        for i in 0..n {
-            row_index.push(row_index[i] + adj[i].len() as u32);
-        }
-        let nnz = *row_index.last().unwrap() as usize;
-
-        let mut col_index = vec![0u32; nnz];
-        let etype = vec![und; nnz];
-        let side = vec![0u8; nnz];
-
-        let mut cur = row_index[..n].to_vec();
-        for i in 0..n {
-            for &v in &adj[i] {
-                let k = cur[i] as usize;
-                col_index[k] = v;
-                cur[i] += 1;
-            }
-        }
-
-        CaugiGraph::from_csr(
-            row_index,
-            col_index,
-            etype,
-            side,
-            /*simple=*/ true,
-            self.core_ref().registry.clone(),
-        )
-    }
-
     /// UG skeleton of a PDAG: ignore orientation and keep every adjacency once per side.
     pub fn skeleton(&self) -> Result<Ug, String> {
         let n = self.n() as usize;
@@ -64,7 +17,7 @@ impl Pdag {
             v.dedup();
             adj[i] = v;
         }
-        let core = self.build_ug_core_from_adj(&adj)?;
+        let core = csr::build_ug_core_from_adj(self.core_ref(), &adj)?;
         Ug::new(Arc::new(core))
     }
 }
