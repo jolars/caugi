@@ -172,7 +172,7 @@ test_that("queries fail with bad input", {
   expect_error(parents(cg), "Supply one of `nodes` or `index`")
   expect_error(neighbors(cg, A, index = 1), "Supply either `nodes` or `index`")
   expect_error(neighbors(cg), "Supply one of `nodes` or `index`")
-  expect_error(ancestors(cg, "Z"), "Non-existant node name: Z")
+  expect_error(ancestors(cg, "Z"), "Non-existent node name: Z")
   expect_error(ancestors(cg, A, index = 1), "Supply either `nodes` or `index`")
   expect_error(ancestors(cg), "Supply one of `nodes` or `index`")
   expect_error(descendants(cg, index = 0), "must be >= 0")
@@ -196,7 +196,7 @@ test_that("getter queries handle missing relations and duplicates", {
 
 test_that("getter queries error on bad nodes or indices", {
   cg <- caugi(A %-->% B, B %-->% C, class = "DAG")
-  expect_error(parents(cg, "Z"), "Non-existant node name: Z")
+  expect_error(parents(cg, "Z"), "Non-existent node name: Z")
   expect_error(children(cg, index = 0), "must be >= 0")
   expect_error(children(cg, index = 100), "out of bounds")
 })
