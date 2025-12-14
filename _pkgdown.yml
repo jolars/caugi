@@ -1,6 +1,10 @@
 url: https://caugi.org/
 template:
   bootstrap: 5
+  opengraph:
+    image:
+      src: man/figures/og.png
+      alt: "The name 'caugi' on the left and a graph on the right with corgi dogs as nodes."
 
 reference:
   - title: The caugi object
