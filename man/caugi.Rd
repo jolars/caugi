@@ -123,7 +123,7 @@ cg5 <- caugi(
   build = FALSE
 )
 
-cg@built # FALSE
+cg5@built # FALSE
 
 }
 \concept{caugi}

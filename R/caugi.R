@@ -96,7 +96,7 @@
 #'   build = FALSE
 #' )
 #'
-#' cg@built # FALSE
+#' cg5@built # FALSE
 #'
 #' @family caugi
 #' @concept caugi
@@ -125,7 +125,7 @@ caugi <- S7::new_class(
       getter = function(self) self@`.state`$edges,
       setter = function(self, value) {
         stop(
-          "`edges` properrt is read-only via @ <-. ",
+          "`edges` property is read-only via @ <-. ",
           "Use `add_edges()` or `remove_edges()` instead. ",
           "Advanced users can modify `cg@.state$edges` directly ",
           "but this is not recommended.",
@@ -563,8 +563,7 @@ caugi <- S7::new_class(
   built,
   simple,
   class,
-  name_index_map,
-  index_name_map
+  name_index_map
 ) {
   e <- new.env(parent = emptyenv())
   e$nodes <- nodes
