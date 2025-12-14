@@ -152,7 +152,9 @@ mod tests {
         };
 
         // MB(0) = pa(0)=∅, ch(0)={1,3}, spouses via 1={2}
-        assert_eq!(markov_blanket_dag(4, 0, parents_of, children_of), vec![1, 2, 3]);
+        assert_eq!(
+            markov_blanket_dag(4, 0, parents_of, children_of),
+            vec![1, 2, 3]
+        );
     }
 }
-

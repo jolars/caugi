@@ -143,11 +143,7 @@ impl std::fmt::Display for BuilderError {
                 to,
                 edge_type,
             } => {
-                write!(
-                    f,
-                    "Duplicate edge {} -> {} (type {})",
-                    from, to, edge_type
-                )
+                write!(f, "Duplicate edge {} -> {} (type {})", from, to, edge_type)
             }
             Self::InvalidEdgeCode { code } => write!(f, "Invalid edge code: {}", code),
             Self::CsrLengthMismatch => write!(f, "CSR arrays length mismatch"),
@@ -163,7 +159,10 @@ impl std::error::Error for BuilderError {}
 #[derive(Debug, Clone)]
 pub enum GraphViewError {
     /// Operation not supported for this graph type.
-    UnsupportedOperation { operation: &'static str, graph_type: &'static str },
+    UnsupportedOperation {
+        operation: &'static str,
+        graph_type: &'static str,
+    },
 }
 
 impl std::fmt::Display for GraphViewError {
@@ -224,7 +223,9 @@ mod tests {
         let err = DagError::InvalidEdgeType {
             found: "---".to_string(),
         };
-        assert!(err.to_string().contains("DAG can only contain directed edges"));
+        assert!(err
+            .to_string()
+            .contains("DAG can only contain directed edges"));
         assert!(err.to_string().contains("---"));
     }
 
@@ -254,7 +255,9 @@ mod tests {
         let err = UgError::InvalidEdgeType {
             found: "-->".to_string(),
         };
-        assert!(err.to_string().contains("UG can only contain undirected edges"));
+        assert!(err
+            .to_string()
+            .contains("UG can only contain undirected edges"));
         assert!(err.to_string().contains("-->"));
     }
 

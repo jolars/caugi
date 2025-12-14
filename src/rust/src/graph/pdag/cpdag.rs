@@ -614,4 +614,3 @@ mod tests {
         assert!(g.is_cpdag());
     }
 }
-

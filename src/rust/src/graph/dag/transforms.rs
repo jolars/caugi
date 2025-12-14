@@ -405,4 +405,3 @@ mod tests {
         assert_eq!(ug.neighbors_of(2), &[0, 1]);
     }
 }
-

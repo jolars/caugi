@@ -465,4 +465,3 @@ mod tests {
         assert_eq!(g.descendants_of(0), vec![1, 2, 3]);
     }
 }
-

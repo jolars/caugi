@@ -422,4 +422,3 @@ mod tests {
         assert!(adj[1].is_empty());
     }
 }
-

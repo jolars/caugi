@@ -370,4 +370,3 @@ mod tests {
         assert_eq!(g.exogenous_nodes(true), vec![0, 3]);
     }
 }
-
