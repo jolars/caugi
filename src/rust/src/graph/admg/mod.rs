@@ -16,6 +16,7 @@ use super::CaugiGraph;
 use crate::edges::EdgeClass;
 use crate::graph::alg::bitset;
 use crate::graph::alg::directed_part_is_acyclic;
+use crate::graph::alg::traversal;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
@@ -200,33 +201,13 @@ impl Admg {
     /// All ancestors of `i` via directed edges, returned in ascending order.
     #[inline]
     pub fn ancestors_of(&self, i: u32) -> Vec<u32> {
-        let n = self.n() as usize;
-        let mut seen = vec![false; n];
-        let mut stack: Vec<u32> = self.parents_of(i).to_vec();
-        while let Some(u) = stack.pop() {
-            let ui = u as usize;
-            if std::mem::replace(&mut seen[ui], true) {
-                continue;
-            }
-            stack.extend_from_slice(self.parents_of(u));
-        }
-        bitset::collect_from_mask(&seen)
+        traversal::ancestors_of(self.n(), i, |u| self.parents_of(u))
     }
 
     /// All descendants of `i` via directed edges, returned in ascending order.
     #[inline]
     pub fn descendants_of(&self, i: u32) -> Vec<u32> {
-        let n = self.n() as usize;
-        let mut seen = vec![false; n];
-        let mut stack: Vec<u32> = self.children_of(i).to_vec();
-        while let Some(u) = stack.pop() {
-            let ui = u as usize;
-            if std::mem::replace(&mut seen[ui], true) {
-                continue;
-            }
-            stack.extend_from_slice(self.children_of(u));
-        }
-        bitset::collect_from_mask(&seen)
+        traversal::descendants_of(self.n(), i, |u| self.children_of(u))
     }
 
     /// Markov blanket of `i` in an ADMG:
