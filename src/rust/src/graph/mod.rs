@@ -18,8 +18,8 @@ pub mod pdag;
 pub mod ug;
 pub mod view;
 pub use view::GraphView;
-pub mod metrics;
 pub mod layout;
+pub mod metrics;
 
 #[derive(Debug, Clone)]
 pub struct RegistrySnapshot {
