@@ -2,7 +2,7 @@
 //! Adjustment sets, backdoor criterion, and d-separation for DAGs.
 
 use super::Dag;
-use crate::graph::alg::bitset;
+use crate::graph::alg::{bitset, reachability, subsets};
 use crate::graph::CaugiGraph;
 use std::sync::Arc;
 
@@ -18,7 +18,7 @@ impl Dag {
             }
         }
         // Exclude X ∪ Y.
-        let mut dropm = Self::mask_from(xs, n);
+        let mut dropm = bitset::mask_from(xs, n);
         for &y in ys {
             dropm[y as usize] = true;
         }
@@ -27,7 +27,7 @@ impl Dag {
                 keep[i] = false;
             }
         }
-        Self::collect_from_mask(&keep)
+        bitset::collect_from_mask(&keep)
     }
 
     /// Backdoor adjustment candidate set for `Xs → Ys`:
@@ -64,7 +64,7 @@ impl Dag {
                 keep[i] = false;
             }
         }
-        Self::collect_from_mask(&keep)
+        bitset::collect_from_mask(&keep)
     }
 
     /// Optimal O-set for single exposure-outcome pair `x → y`.
@@ -91,7 +91,7 @@ impl Dag {
         }
 
         let mut pacn_mask = vec![false; n];
-        for v in Self::collect_from_mask(&cn_mask) {
+        for v in bitset::collect_from_mask(&cn_mask) {
             for &p in self.parents_of(v) {
                 pacn_mask[p as usize] = true;
             }
@@ -102,7 +102,7 @@ impl Dag {
                 pacn_mask[i] = false;
             }
         }
-        Self::collect_from_mask(&pacn_mask)
+        bitset::collect_from_mask(&pacn_mask)
     }
 
     /// d-separation test via ancestral reduction + moralization + BFS.
@@ -126,7 +126,7 @@ impl Dag {
         }
 
         let adj = self.moral_adj(&mask);
-        !Self::reachable_to_any(&adj, &mask, xs, &blocked, ys)
+        !reachability::reachable_to_any(&adj, &mask, xs, &blocked, ys)
     }
 
     /// Validates a proposed backdoor set `z` for pair `(x, y)`.
@@ -169,11 +169,11 @@ impl Dag {
         let mut cur = Vec::new();
         let max_size = max_size as usize;
         for k in 0..=max_size.min(u.len()) {
-            Self::k_subsets(&u, k, 0, &mut cur, &mut acc);
+            subsets::k_subsets(&u, k, 0, &mut cur, &mut acc);
         }
         acc.retain(|z| self.is_valid_backdoor_set(x, y, z));
         if minimal {
-            Self::prune_minimal(&mut acc);
+            subsets::prune_minimal(&mut acc);
         }
         acc
     }
@@ -182,7 +182,7 @@ impl Dag {
     /// first edge of each proper causal path from any `x ∈ Xs` to any `y ∈ Ys`.
     pub fn proper_backdoor_graph(&self, xs: &[u32], ys: &[u32]) -> Result<Self, String> {
         let reach = self.can_reach_any_y(ys);
-        let xs_mask = Self::mask_from(xs, self.n());
+        let xs_mask = bitset::mask_from(xs, self.n());
         let core = self.rebuild_filtered(|u, k| self.drop_first_edge(&xs_mask, &reach, u, k))?;
         Dag::new(Arc::new(core))
     }
@@ -197,7 +197,7 @@ impl Dag {
     /// Build the proper backdoor graph core for `Xs → Ys`.
     pub fn proper_backdoor_core(&self, xs: &[u32], ys: &[u32]) -> Result<CaugiGraph, String> {
         let reach = self.can_reach_any_y(ys);
-        let xs_mask = Self::mask_from(xs, self.n());
+        let xs_mask = bitset::mask_from(xs, self.n());
         self.rebuild_filtered(|u, k| self.drop_first_edge(&xs_mask, &reach, u, k))
     }
 }

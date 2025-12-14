@@ -182,18 +182,6 @@ impl Dag {
 
 // -------- Internal helpers for masks and graph operations --------
 impl Dag {
-    /// Collect ascending indices where `mask[i]` is `true`.
-    #[inline]
-    pub(crate) fn collect_from_mask(mask: &[bool]) -> Vec<u32> {
-        bitset::collect_from_mask(mask)
-    }
-
-    /// Build a boolean membership mask for `nodes` over domain `[0, n)`.
-    #[inline]
-    pub(crate) fn mask_from(nodes: &[u32], n: u32) -> Vec<bool> {
-        bitset::mask_from(nodes, n)
-    }
-
     /// Ancestors mask of a seed set. `a[v] == true` iff `v ∈ An(seeds) ∪ seeds`.
     pub(crate) fn ancestors_mask(&self, seeds: &[u32]) -> Vec<bool> {
         bitset::ancestors_mask(seeds, |u| self.parents_of(u), self.n())
@@ -207,48 +195,6 @@ impl Dag {
     /// Moralized adjacency within mask. Undirected edges among ancestors.
     pub(crate) fn moral_adj(&self, mask: &[bool]) -> Vec<Vec<u32>> {
         moral::moral_adj(self.n(), |u| self.parents_of(u), mask)
-    }
-
-    /// BFS over moral graph to check reachability from `src` to any `tgt`
-    /// while ignoring `blocked` nodes. Only visits nodes inside mask.
-    pub(crate) fn reachable_to_any(
-        adj: &[Vec<u32>],
-        mask: &[bool],
-        src: &[u32],
-        blocked: &[bool],
-        tgt: &[u32],
-    ) -> bool {
-        use std::collections::VecDeque;
-        let n = adj.len();
-        let mut target = vec![false; n];
-        for &y in tgt {
-            if !blocked[y as usize] {
-                target[y as usize] = true;
-            }
-        }
-        let mut seen = vec![false; n];
-        let mut q = VecDeque::new();
-        for &x in src {
-            let xi = x as usize;
-            if mask[xi] && !blocked[xi] && !seen[xi] {
-                seen[xi] = true;
-                q.push_back(x);
-            }
-        }
-        while let Some(u) = q.pop_front() {
-            let ui = u as usize;
-            if target[ui] {
-                return true;
-            }
-            for &w in &adj[ui] {
-                let wi = w as usize;
-                if mask[wi] && !blocked[wi] && !seen[wi] {
-                    seen[wi] = true;
-                    q.push_back(w);
-                }
-            }
-        }
-        false
     }
 
     /// Backward reachability through parents from every `y ∈ ys`.
@@ -291,45 +237,6 @@ impl Dag {
         mut drop: F,
     ) -> Result<CaugiGraph, String> {
         csr::filter_edges(self.core_ref(), |u, k, _c| !drop(u, k))
-    }
-
-    /// Remove non-minimal supersets in-place, keep inclusion-minimal sets only.
-    pub(crate) fn prune_minimal(sets: &mut Vec<Vec<u32>>) {
-        sets.iter_mut().for_each(|v| {
-            v.sort_unstable();
-            v.dedup();
-        });
-        sets.sort();
-        let mut out: Vec<Vec<u32>> = Vec::new();
-        'next: for z in sets.drain(..) {
-            for s in &out {
-                if s.iter().all(|v| z.binary_search(v).is_ok()) {
-                    continue 'next;
-                }
-            }
-            out.retain(|s| !z.iter().all(|v| s.binary_search(v).is_ok()));
-            out.push(z);
-        }
-        *sets = out;
-    }
-
-    /// Enumerate all `k`-subsets of `u` into `out` (lexicographic order).
-    pub(crate) fn k_subsets(
-        u: &[u32],
-        k: usize,
-        start: usize,
-        cur: &mut Vec<u32>,
-        out: &mut Vec<Vec<u32>>,
-    ) {
-        if cur.len() == k {
-            out.push(cur.clone());
-            return;
-        }
-        for i in start..u.len() {
-            cur.push(u[i]);
-            Self::k_subsets(u, k, i + 1, cur, out);
-            cur.pop();
-        }
     }
 }
 
@@ -433,20 +340,6 @@ mod tests {
         b.add_edge(0, 2, d).unwrap();
         let g = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
         assert_eq!(g.exogenous_nodes(), vec![0, 3]);
-    }
-
-    #[test]
-    fn dag_prune_minimal_skips_supersets_branch() {
-        let mut sets = vec![vec![0], vec![0, 1]];
-        Dag::prune_minimal(&mut sets);
-        assert_eq!(sets, vec![vec![0]]);
-    }
-
-    #[test]
-    fn dag_prune_minimal_removes_existing_supersets_when_subset_arrives() {
-        let mut sets = vec![vec![0, 1], vec![0]];
-        Dag::prune_minimal(&mut sets);
-        assert_eq!(sets, vec![vec![0]]);
     }
 
     #[test]
