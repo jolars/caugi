@@ -13,7 +13,7 @@ layout.}
 \item{node_style}{List of node styling parameters. Supports:
 \itemize{
 \item Appearance (passed to \code{gpar()}): \code{fill}, \code{col}, \code{lwd}, \code{lty}, \code{alpha}
-\item Geometry: \code{padding} (text padding inside nodes in mm, default 0.3),
+\item Geometry: \code{padding} (text padding inside nodes in mm, default 2),
 \code{size} (node size multiplier, default 1)
 }}
 
@@ -21,7 +21,7 @@ layout.}
 or per-type options via \code{directed}, \code{undirected}, \code{bidirected}, \code{partial}.
 Supports:
 \itemize{
-\item Appearance (passed to \code{gpar()}): \code{col}, \code{lwd}, \code{lty}, \code{alpha}
+\item Appearance (passed to \code{gpar()}): \code{col}, \code{lwd}, \code{lty}, \code{alpha}, \code{fill}.
 \item Geometry: \code{arrow_size} (arrow length in mm, default 3)
 }}
 
