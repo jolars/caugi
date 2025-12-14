@@ -4,6 +4,7 @@
 pub mod bitset;
 pub mod csr;
 pub mod moral;
+pub mod traversal;
 
 use crate::edges::EdgeClass;
 use crate::graph::CaugiGraph;
