@@ -46,7 +46,7 @@ d_separated <- function(
   Y_index = NULL,
   Z_index = NULL
 ) {
-  is_caugi(cg, TRUE)
+  is_caugi(cg, throw_error = TRUE)
   if (
     length(X) > 1 || length(Y) > 1 || length(X_index) > 1 || length(Y_index) > 1
   ) {
@@ -112,7 +112,7 @@ adjustment_set <- function(
   Y_index = NULL,
   type = c("optimal", "parents", "backdoor")
 ) {
-  is_caugi(cg, TRUE)
+  is_caugi(cg, throw_error = TRUE)
   if (
     length(X) > 1 || length(Y) > 1 || length(X_index) > 1 || length(Y_index) > 1
   ) {
@@ -176,7 +176,7 @@ is_valid_backdoor <- function(
   Y_index = NULL,
   Z_index = NULL
 ) {
-  is_caugi(cg, TRUE)
+  is_caugi(cg, throw_error = TRUE)
   if (
     length(X) > 1 || length(Y) > 1 || length(X_index) > 1 || length(Y_index) > 1
   ) {
@@ -258,7 +258,7 @@ all_backdoor_sets <- function(
   minimal = TRUE,
   max_size = 3L
 ) {
-  is_caugi(cg, TRUE)
+  is_caugi(cg, throw_error = TRUE)
   if (
     length(X) > 1 || length(Y) > 1 || length(X_index) > 1 || length(Y_index) > 1
   ) {
@@ -322,7 +322,7 @@ is_valid_adjustment_admg <- function(
   Y_index = NULL,
   Z_index = NULL
 ) {
-  is_caugi(cg, TRUE)
+  is_caugi(cg, throw_error = TRUE)
   # Validate that X and Y are provided
 
   if (is.null(X) && is.null(X_index)) {
@@ -379,7 +379,7 @@ all_adjustment_sets_admg <- function(
   minimal = TRUE,
   max_size = 3L
 ) {
-  is_caugi(cg, TRUE)
+  is_caugi(cg, throw_error = TRUE)
   # Validate that X and Y are provided
   if (is.null(X) && is.null(X_index)) {
     stop("X (or X_index) must be provided.", call. = FALSE)
@@ -434,7 +434,7 @@ all_adjustment_sets_admg <- function(
       node_name,
       missing = stop(
         paste(
-          "Non-existant node name:",
+          "Non-existent node name:",
           paste(setdiff(node_name, nm_idx_map$keys()), collapse = ", ")
         ),
         call. = FALSE
@@ -468,7 +468,7 @@ all_adjustment_sets_admg <- function(
         node_name,
         missing = stop(
           paste(
-            "Non-existant node name:",
+            "Non-existent node name:",
             paste(setdiff(node_name, nm_idx_map$keys()), collapse = ", ")
           ),
           call. = FALSE
