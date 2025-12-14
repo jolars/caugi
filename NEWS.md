@@ -1,3 +1,20 @@
+# caugi 0.5.0
+## New Features
+
+* Add `plot()` method for visualizing DAGs using the Sugiyama hierarchical layout algorithm. The plot is rendered using grid graphics and returns a `caugi_plot` object that can be customized with `node_style`, `edge_style`, and `label_style` arguments.
+* Add `caugi_layout()` function to compute node coordinates for graph visualization using the Sugiyama layout algorithm.
+
+## Improvements
+
+* Add favicons for the package website.
+* Standardize `is_caugi()` validation calls internally. 
+* Adopt [air](https://github.com/posit-dev/air) as the R code formatter for the package.
+
+## Bug Fixes
+
+* Fix typo in error messages and documentation examples.
+* Remove unused `index_name_map` parameter from internal `.cg_state()` function.
+
 # caugi 0.4.0
 
 * Add support for Acyclic Directed Mixed Graphs (ADMGs), which combine directed
