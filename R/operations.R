@@ -26,7 +26,7 @@
 #'
 #' @export
 moralize <- function(cg) {
-  is_caugi(cg, TRUE)
+  is_caugi(cg, throw_error = TRUE)
   if (cg@graph_class != "DAG") {
     stop("moralize() can only be applied to DAGs.", call. = FALSE)
   }
@@ -60,7 +60,7 @@ moralize <- function(cg) {
 #'
 #' @export
 skeleton <- function(cg) {
-  is_caugi(cg, TRUE)
+  is_caugi(cg, throw_error = TRUE)
   cg <- build(cg)
   skeleton_ptr <- skeleton_ptr(cg@ptr)
   skeleton_cg <- .view_to_caugi(skeleton_ptr, node_names = cg@nodes$name)

@@ -314,7 +314,7 @@ is_pdag <- function(cg, force_check = FALSE) {
 #'
 #' @export
 is_cpdag <- function(cg) {
-  is_caugi(cg, TRUE)
+  is_caugi(cg, throw_error = TRUE)
   cg <- build(cg)
   is_it <- is_cpdag_ptr(cg@ptr)
   is_it
@@ -565,7 +565,7 @@ parents <- function(cg, nodes = NULL, index = NULL) {
     nodes,
     missing = stop(
       paste(
-        "Non-existant node name:",
+        "Non-existent node name:",
         paste(setdiff(nodes, cg@nodes$name), collapse = ", ")
       ),
       call. = FALSE
@@ -632,7 +632,7 @@ children <- function(cg, nodes = NULL, index = NULL) {
     nodes,
     missing = stop(
       paste(
-        "Non-existant node name:",
+        "Non-existent node name:",
         paste(setdiff(nodes, cg@nodes$name), collapse = ", ")
       ),
       call. = FALSE
@@ -699,7 +699,7 @@ neighbors <- function(cg, nodes = NULL, index = NULL) {
     nodes,
     missing = stop(
       paste(
-        "Non-existant node name:",
+        "Non-existent node name:",
         paste(setdiff(nodes, cg@nodes$name), collapse = ", ")
       ),
       call. = FALSE
@@ -770,7 +770,7 @@ ancestors <- function(cg, nodes = NULL, index = NULL) {
     nodes,
     missing = stop(
       paste(
-        "Non-existant node name:",
+        "Non-existent node name:",
         paste(setdiff(nodes, cg@nodes$name), collapse = ", ")
       ),
       call. = FALSE
@@ -837,7 +837,7 @@ descendants <- function(cg, nodes = NULL, index = NULL) {
     nodes,
     missing = stop(
       paste(
-        "Non-existant node name:",
+        "Non-existent node name:",
         paste(setdiff(nodes, cg@nodes$name), collapse = ", ")
       ),
       call. = FALSE
@@ -904,7 +904,7 @@ markov_blanket <- function(cg, nodes = NULL, index = NULL) {
     nodes,
     missing = stop(
       paste(
-        "Non-existant node name:",
+        "Non-existent node name:",
         paste(setdiff(nodes, cg@nodes$name), collapse = ", ")
       ),
       call. = FALSE
