@@ -98,7 +98,7 @@ test_that("plot.caugi builds graph if needed", {
   expect_s7_class(plot(cg), caugi_plot)
 })
 
-test_that("caugi_layout works with force method", {
+test_that("caugi_layout works with fruchterman-reingold method", {
   cg <- caugi(
     A %-->% B + C,
     B %-->% D,
@@ -106,7 +106,7 @@ test_that("caugi_layout works with force method", {
     class = "DAG"
   )
 
-  layout <- caugi_layout(cg, method = "force")
+  layout <- caugi_layout(cg, method = "fruchterman-reingold")
 
   expect_s3_class(layout, "data.frame")
   expect_equal(nrow(layout), 4L)
@@ -118,14 +118,14 @@ test_that("caugi_layout works with force method", {
   expect_true(all(is.finite(layout$y)))
 })
 
-test_that("force layout works with mixed edge types", {
+test_that("fruchterman-reingold layout works with mixed edge types", {
   cg <- caugi(
     A %-->% B,
     B %---% C,
     C %<->% D
   )
 
-  layout <- caugi_layout(cg, method = "force")
+  layout <- caugi_layout(cg, method = "fruchterman-reingold")
 
   expect_s3_class(layout, "data.frame")
   expect_equal(nrow(layout), 4L)
@@ -142,7 +142,7 @@ test_that("sugiyama layout rejects mixed edge types", {
   expect_error(caugi_layout(cg, method = "sugiyama"))
 })
 
-test_that("plot.caugi works with force layout", {
+test_that("plot.caugi works with fruchterman-reingold layout", {
   cg <- caugi(
     A %-->% B + C,
     B %-->% D,
@@ -152,7 +152,7 @@ test_that("plot.caugi works with force layout", {
   pdf(NULL)
   on.exit(dev.off())
 
-  expect_s7_class(plot(cg, layout = "force"), caugi_plot)
+  expect_s7_class(plot(cg, layout = "fruchterman-reingold"), caugi_plot)
 })
 
 test_that("auto method selects sugiyama for directed-only graphs", {
@@ -168,13 +168,13 @@ test_that("auto method selects sugiyama for directed-only graphs", {
   expect_equal(layout_auto, layout_sug)
 })
 
-test_that("auto method selects force for mixed edge graphs", {
+test_that("auto method selects fruchterman-reingold for mixed edge graphs", {
   cg <- caugi(
     A %-->% B,
     B %---% C
   )
 
-  # Auto should work (selecting force internally)
+  # Auto should work (selecting fruchterman-reingold internally)
   layout_auto <- caugi_layout(cg, method = "auto")
   expect_s3_class(layout_auto, "data.frame")
   expect_equal(nrow(layout_auto), 3L)

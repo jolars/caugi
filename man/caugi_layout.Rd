@@ -4,7 +4,10 @@
 \alias{caugi_layout}
 \title{Compute Graph Layout}
 \usage{
-caugi_layout(x, method = c("auto", "sugiyama", "force", "kamada-kawai"))
+caugi_layout(
+  x,
+  method = c("auto", "sugiyama", "fruchterman-reingold", "kamada-kawai")
+)
 }
 \arguments{
 \item{x}{A \code{caugi} object. Must contain only directed edges for Sugiyama
@@ -13,11 +16,12 @@ layout.}
 \item{method}{Character string specifying the layout method. Options:
 \itemize{
 \item \code{"auto"}: Automatically choose sugiyama for graphs with only directed
-edges, otherwise force (default)
+edges, otherwise fruchterman-reingold (default)
 \item \code{"sugiyama"}: Hierarchical layout for DAGs (requires only directed edges)
-\item \code{"force"}: Force-directed layout (works with all edge types)
-\item \code{"kamada-kawai"}: Kamada-Kawai stress minimization (high quality, works
-with all edge types)
+\item \code{"fruchterman-reingold"}: Fruchterman-Reingold spring-electrical layout
+(fast, works with all edge types).
+\item \code{"kamada-kawai"}: Kamada-Kawai stress minimization (high quality, better
+distance preservation, works with all edge types).
 }}
 }
 \value{

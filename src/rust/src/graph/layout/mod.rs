@@ -25,7 +25,7 @@ impl std::str::FromStr for LayoutMethod {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "sugiyama" => Ok(Self::Sugiyama),
-            "force" => Ok(Self::ForceDirected),
+            "force" | "fruchterman-reingold" | "fr" => Ok(Self::ForceDirected),
             "kamada_kawai" | "kamada-kawai" | "kk" => Ok(Self::KamadaKawai),
             _ => Err(format!("Unknown layout method: '{}'", s)),
         }
@@ -45,9 +45,6 @@ pub fn compute_layout(graph: &CaugiGraph, method: LayoutMethod) -> Result<Vec<(f
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::edges::EdgeRegistry;
-    use crate::graph::builder::GraphBuilder;
-    use std::sync::Arc;
 
     #[test]
     fn test_from_str_valid() {
@@ -59,6 +56,14 @@ mod tests {
         ));
         assert!(matches!(
             LayoutMethod::from_str("force"),
+            Ok(LayoutMethod::ForceDirected)
+        ));
+        assert!(matches!(
+            LayoutMethod::from_str("fruchterman-reingold"),
+            Ok(LayoutMethod::ForceDirected)
+        ));
+        assert!(matches!(
+            LayoutMethod::from_str("fr"),
             Ok(LayoutMethod::ForceDirected)
         ));
         assert!(matches!(

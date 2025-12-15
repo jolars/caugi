@@ -10,11 +10,13 @@ layout.}
 \item{layout}{Character string specifying the layout method. Options:
 \itemize{
 \item \code{"auto"}: Automatically choose sugiyama for graphs with only directed
-edges, otherwise force (default)
+edges, otherwise fruchterman-reingold (default)
 \item \code{"sugiyama"}: Hierarchical layout for DAGs (requires only directed edges)
-\item \code{"force"}: Force-directed layout (works with all edge types)
-\item \code{"kamada-kawai"}: Kamada-Kawai stress minimization (high quality, works
-with all edge types)
+\item \code{"fruchterman-reingold"}: Fruchterman-Reingold spring-electrical layout
+(fast, works with all edge types). Also accepts \code{"fr"} as shorthand.
+\item \code{"kamada-kawai"}: Kamada-Kawai stress minimization (high quality, better
+distance preservation, works with all edge types). Also accepts \code{"kk"} as
+shorthand.
 }}
 
 \item{node_style}{List of node styling parameters. Supports:

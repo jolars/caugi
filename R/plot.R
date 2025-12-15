@@ -8,11 +8,12 @@
 #'   layout.
 #' @param method Character string specifying the layout method. Options:
 #'   * `"auto"`: Automatically choose sugiyama for graphs with only directed
-#'     edges, otherwise force (default)
+#'     edges, otherwise fruchterman-reingold (default)
 #'   * `"sugiyama"`: Hierarchical layout for DAGs (requires only directed edges)
-#'   * `"force"`: Force-directed layout (works with all edge types)
-#'   * `"kamada-kawai"`: Kamada-Kawai stress minimization (high quality, works
-#'     with all edge types)
+#'   * `"fruchterman-reingold"`: Fruchterman-Reingold spring-electrical layout
+#'     (fast, works with all edge types).
+#'   * `"kamada-kawai"`: Kamada-Kawai stress minimization (high quality, better
+#'     distance preservation, works with all edge types).
 #'
 #' @returns A `data.frame` with columns `name`, `x`, and `y` containing node
 #'   names and their coordinates.
@@ -32,7 +33,7 @@
 #' @export
 caugi_layout <- function(
   x,
-  method = c("auto", "sugiyama", "force", "kamada-kawai")
+  method = c("auto", "sugiyama", "fruchterman-reingold", "kamada-kawai")
 ) {
   is_caugi(x, throw_error = TRUE)
 
@@ -48,7 +49,11 @@ caugi_layout <- function(
 
   # Auto-select method based on edge types
   if (method == "auto") {
-    method <- if (length(non_directed) == 0) "sugiyama" else "force"
+    method <- if (length(non_directed) == 0) {
+      "sugiyama"
+    } else {
+      "fruchterman-reingold"
+    }
   }
 
   # Sugiyama layout only works reliably with directed edges
@@ -59,7 +64,8 @@ caugi_layout <- function(
       "Found edge type(s): ",
       paste(non_directed, collapse = ", "),
       ". ",
-      "Consider using \"force\" for graphs with mixed edge types.",
+      "Consider using \"fruchterman-reingold\" or \"kamada-kawai\" ",
+      "for graphs with mixed edge types.",
       call. = FALSE
     )
   }
@@ -108,11 +114,13 @@ get_gpar_params <- function(style) {
 #'   layout.
 #' @param layout Character string specifying the layout method. Options:
 #'   * `"auto"`: Automatically choose sugiyama for graphs with only directed
-#'     edges, otherwise force (default)
+#'     edges, otherwise fruchterman-reingold (default)
 #'   * `"sugiyama"`: Hierarchical layout for DAGs (requires only directed edges)
-#'   * `"force"`: Force-directed layout (works with all edge types)
-#'   * `"kamada-kawai"`: Kamada-Kawai stress minimization (high quality, works
-#'     with all edge types)
+#'   * `"fruchterman-reingold"`: Fruchterman-Reingold spring-electrical layout
+#'     (fast, works with all edge types). Also accepts `"fr"` as shorthand.
+#'   * `"kamada-kawai"`: Kamada-Kawai stress minimization (high quality, better
+#'     distance preservation, works with all edge types). Also accepts `"kk"` as
+#'     shorthand.
 #' @param node_style List of node styling parameters. Supports:
 #'   * Appearance (passed to `gpar()`): `fill`, `col`, `lwd`, `lty`, `alpha`
 #'   * Geometry: `padding` (text padding inside nodes in mm, default 2),
@@ -160,7 +168,7 @@ get_gpar_params <- function(style) {
 #' @export
 S7::method(plot, caugi) <- function(
   x,
-  layout = c("auto", "sugiyama", "force", "kamada-kawai"),
+  layout = c("auto", "sugiyama", "fruchterman-reingold", "kamada-kawai"),
   node_style = list(),
   edge_style = list(),
   label_style = list(),
