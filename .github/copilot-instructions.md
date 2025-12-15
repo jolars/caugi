@@ -15,7 +15,7 @@
 
 ### R Code
 
-- **Follow tidyverse style guide**: Use `styler::style_pkg()` before committing R code
+- **Follow tidyverse style guide**: Run `air format .` to format all R code before committing (configured via `air.toml`). Use `air format . --check` to check without modifying files.
 - **Roxygen2 documentation**: All exported functions must have comprehensive documentation with `@title`, `@description`, `@param`, `@returns`, and `@examples`
 - **Naming conventions**:
   - Functions: `snake_case`
@@ -38,13 +38,27 @@ caugi/
 │   ├── edge_operators.R   # Edge operator definitions
 │   ├── queries.R          # Graph query functions
 │   ├── metrics.R          # Graph metrics (SHD, AID)
+│   ├── adjustment.R       # Adjustment set functions
+│   ├── DSL-parser.R       # DSL parsing logic
+│   ├── format-dot.R       # DOT format output
+│   ├── format-mermaid.R   # Mermaid format output
+│   ├── simulation.R       # Graph simulation
+│   ├── verbs.R            # Tidyverse-style verbs
+│   ├── operations.R       # Graph operations
+│   ├── as_caugi.R         # Coercion to caugi
+│   ├── caugi_to.R         # Coercion from caugi
 │   └── ...
 ├── src/
 │   ├── rust/              # Rust source code
 │   │   ├── src/
 │   │   │   ├── lib.rs     # Main library and extendr bindings
-│   │   │   ├── graph/     # Graph data structures and algorithms
-│   │   │   └── edges/     # Edge type definitions
+│   │   │   ├── edges/     # Edge type definitions
+│   │   │   └── graph/     # Graph data structures and algorithms
+│   │   │       ├── alg/   # Core graph algorithms
+│   │   │       ├── dag/   # DAG-specific functionality
+│   │   │       ├── pdag/  # PDAG-specific functionality
+│   │   │       ├── admg/  # ADMG-specific functionality
+│   │   │       └── layout/ # Graph layout algorithms (Sugiyama, force-directed, etc.)
 │   │   └── Cargo.toml
 │   └── entrypoint.c       # C entrypoint for R
 ├── tests/
@@ -62,6 +76,7 @@ caugi/
 3. **Run tests**: `devtools::test()` or `testthat::test_local()`
 4. **Check package**: `devtools::check()` runs R CMD check
 5. **Code coverage**: Monitored via codecov
+6. **Build documentation site**: `pkgdown::build_site()` builds the package website configured in `_pkgdown.yml`
 
 ### Testing Requirements
 
@@ -77,6 +92,11 @@ caugi/
 2. **Lazy building**: Remember that graph mutations are batched - test both before and after explicit `build()` calls
 3. **Edge registry**: Be careful when modifying the edge registry system
 4. **Backward compatibility**: Maintain API compatibility when possible
+5. **Update NEWS.md**: Add entries to `NEWS.md` for user-facing changes under the appropriate section:
+   - **New Features**: New functions, methods, or capabilities
+   - **Improvements**: Enhancements to existing functionality, performance, or documentation
+   - **Bug Fixes**: Corrections to existing behavior
+   - Use bullet points starting with `*` and include function names in backticks
 
 ## Special Considerations
 
@@ -89,8 +109,8 @@ caugi/
 
 ### Graph Classes
 
-- Supported: `"UNKNOWN"`, `"DAG"`, `"PDAG"`
-- Planned: `"PAG"`, `"MAG"`, `"SWIG"`, `"ADMG"`
+- Supported: `"UNKNOWN"`, `"DAG"`, `"PDAG"`, `"ADMG"`, `"UG"`
+- Planned: `"PAG"`, `"MAG"`, `"SWIG"`
 - Always validate graph class invariants when adding new graph types
 
 ### Performance
@@ -102,34 +122,43 @@ caugi/
 ## Dependencies
 
 ### R Dependencies
-- Core: `S7`, `tibble`, `dplyr`, `data.table`, `fastmap`
-- Suggested: `testthat`, `devtools`, `knitr`, `rmarkdown`, `rextendr`
+
+- Core: `S7`, `data.table`, `fastmap`, `grid`, `stats`, `methods`
+- Suggested: `testthat`, `devtools`, `knitr`, `rmarkdown`, `rextendr`, `bnlearn`, `dagitty`, `ggm`, `graph`, `gRbase`, `igraph`, `MASS`, `Matrix`
 
 ### Rust Dependencies
+
 - `extendr-api = "0.8.1"` - R bindings
 - `bitflags = "2.9.3"` - Bitflag operations
-- `gadjid` (optional) - For adjustment identification distance
+- `rust-sugiyama = "0.4.0"` - Sugiyama layout algorithm for graph visualization
+- `fdg-sim = "0.9.1"` - Force-directed graph simulation for layout
+- `gadjid` (optional, default enabled) - For adjustment identification distance
 
 ### System Requirements
-- Cargo (Rust package manager)
-- rustc >= 1.85.0 (as specified in DESCRIPTION)
 
-**Note**: The Cargo.toml specifies `rust-version = '1.85'` and `edition = '2024'`.
+- Cargo (Rust package manager)
+- rustc >= 1.80.0 (as specified in DESCRIPTION)
+- xz
+
+**Note**: The Cargo.toml specifies `rust-version = '1.80'` and `edition = '2021'`.
 
 ## Contribution Guidelines
 
 For detailed contribution guidelines, see [CONTRIBUTING.md](/CONTRIBUTING.md) in the repository root.
 
 Quick reference:
+
 1. Follow the tidyverse style guide for R code
-2. Run `styler::style_pkg()` for R and `cargo fmt` for Rust before PRs
+2. Run `air format .` for R and `cargo fmt` for Rust before PRs
 3. Write tests for new features
 4. Update documentation (Roxygen2 for R)
-5. Ensure `devtools::check()` passes without errors or warnings
+5. Update `NEWS.md` with user-facing changes
+6. Ensure `devtools::check()` passes without errors or warnings
 
 ## Common Patterns
 
 ### Creating a caugi object
+
 ```r
 cg <- caugi(
   A %-->% B + C,
@@ -140,13 +169,40 @@ cg <- caugi(
 ```
 
 ### Querying graphs
+
 ```r
-parents(cg, "D")      # Get parents of node D
-ancestors(cg, "D")    # Get all ancestors
-is_acyclic(cg)        # Check if acyclic
+parents(cg, "D") # Get parents of node D
+ancestors(cg, "D") # Get all ancestors
+is_acyclic(cg) # Check if acyclic
 ```
 
+### Plotting graphs
+
+```r
+# Basic plotting with automatic layout selection
+plot(cg)
+
+# Compute layout coordinates explicitly
+coords <- caugi_layout(cg, method = "sugiyama")
+
+# Customize appearance
+plot(
+  cg,
+  layout = "fruchterman-reingold",
+  node_style = list(fill = "lightblue", padding = 3),
+  edge_style = list(col = "darkgray", arrow_size = 4)
+)
+```
+
+**Available layout methods:**
+
+- `"auto"`: Automatically selects best layout (default)
+- `"sugiyama"`: Hierarchical layout for DAGs (directed edges only)
+- `"fruchterman-reingold"`: Fast force-directed layout (all edge types)
+- `"kamada-kawai"`: High-quality stress minimization (all edge types)
+
 ### Testing pattern
+
 ```r
 test_that("feature description", {
   cg <- caugi(A %-->% B)
@@ -155,7 +211,17 @@ test_that("feature description", {
 })
 ```
 
+## Documentation
+
+The package uses **pkgdown** to generate the documentation website at [caugi.org](https://caugi.org/). The site structure is configured in `_pkgdown.yml` and organizes functions by concept (queries, verbs, adjustment, plotting, etc.).
+
+- **Build site locally**: `pkgdown::build_site()`
+- **Preview changes**: `pkgdown::build_site(preview = TRUE)`
+- **Reference docs**: Auto-generated from Roxygen2 comments
+- **Articles**: Vignettes from `vignettes/` directory
+
 ## Resources
+
 - [Package documentation](https://caugi.org/)
 - [Performance vignette](https://caugi.org/articles/performance.html)
 - [Issue tracker](https://github.com/frederikfabriciusbjerre/caugi/issues)
