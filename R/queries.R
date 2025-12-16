@@ -945,6 +945,45 @@ exogenous <- function(cg, undirected_as_parents = FALSE) {
   cg@nodes$name[idx0 + 1L]
 }
 
+#' @title Get a topological ordering of a DAG
+#'
+#' @description Returns a topological ordering of the nodes in a DAG. For every
+#' directed edge u -> v in the graph, u will appear before v in the returned
+#' ordering.
+#'
+#' @param cg A `caugi` object of class DAG.
+#'
+#' @returns A character vector of node names in topological order.
+#'
+#' @examples
+#' # Simple DAG: A -> B -> C
+#' cg <- caugi(
+#'   A %-->% B,
+#'   B %-->% C,
+#'   class = "DAG"
+#' )
+#' topological_sort(cg) # Returns c("A", "B", "C") or equivalent valid ordering
+#'
+#' # DAG with multiple valid orderings
+#' cg2 <- caugi(
+#'   A %-->% C,
+#'   B %-->% C,
+#'   class = "DAG"
+#' )
+#' # Could return c("A", "B", "C") or c("B", "A", "C")
+#' topological_sort(cg2)
+#'
+#' @family queries
+#' @concept queries
+#'
+#' @export
+topological_sort <- function(cg) {
+  is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
+  idx0 <- topological_sort_ptr(cg@ptr)
+  cg@nodes$name[idx0 + 1L]
+}
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ─────────────────────────── ADMG-specific queries ────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────

@@ -111,6 +111,20 @@ impl GraphView {
         }
     }
 
+    /// Returns a topological ordering of the nodes.
+    ///
+    /// Only defined for DAGs. Returns all nodes in an order such that
+    /// for every directed edge u -> v, u appears before v.
+    pub fn topological_sort(&self) -> Result<Vec<u32>, String> {
+        match self {
+            GraphView::Dag(g) => Ok(g.topological_sort()),
+            GraphView::Admg(_) => Err("topological_sort is only defined for DAGs".into()),
+            GraphView::Pdag(_) => Err("topological_sort is only defined for DAGs".into()),
+            GraphView::Ug(_) => Err("topological_sort is only defined for DAGs".into()),
+            GraphView::Raw(_) => Err("topological_sort is only defined for DAGs".into()),
+        }
+    }
+
     // ---- ADMG-specific methods ----
     pub fn spouses_of(&self, i: u32) -> Result<&[u32], String> {
         match self {
