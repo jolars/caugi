@@ -42,7 +42,7 @@ reference:
   - title: Conversions
     contents:
       - has_concept("conversions")
-  - title: Operatoins
+  - title: Operations
     contents:
       - has_concept("operations")
   - title: Importing and Exporting to and from Other Formats
