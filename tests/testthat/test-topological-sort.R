@@ -75,7 +75,9 @@ test_that("topological_sort works with isolated nodes", {
 
 test_that("topological_sort works on empty DAG (no edges)", {
   cg <- caugi(
-    A, B, C,
+    A,
+    B,
+    C,
     class = "DAG"
   )
 
@@ -233,7 +235,6 @@ test_that("topological_sort returns all nodes exactly once", {
 
   expect_setequal(order, c("A", "B", "C", "D", "E"))
 
-
   # No duplicates
   expect_equal(length(order), length(unique(order)))
 })
@@ -254,4 +255,3 @@ test_that("topological_sort builds the graph if needed", {
   expect_equal(length(order), 3L)
   expect_true(verify_topo_order(cg, order))
 })
-
