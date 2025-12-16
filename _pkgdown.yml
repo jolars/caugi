@@ -1,12 +1,15 @@
 url: https://caugi.org/
 title: "caugi"
+
 home:
   title: "Causal Graph Interface"
   description: Create, query, and modify causal graphs. 'caugi' (Causal Graph Interface) is a causality-first, high performance graph package that provides a simple interface to build, structure, and examine causal relationships.
+  opengraph:
+    title: "caugi: Causal Graph Interface"
+
 template:
   bootstrap: 5
   opengraph:
-  title: "caugi: Causal Graph Interface"
     image:
       src: man/figures/og.png
       alt: "The name 'caugi' on the left and a graph on the right with corgi dogs as nodes."
