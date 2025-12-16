@@ -334,6 +334,14 @@ fn exogenous_nodes_of_ptr(g: ExternalPtr<GraphView>, undirected_as_parents: Rboo
         .unwrap_or_else(|e| throw_r_error(e))
 }
 
+#[extendr]
+fn topological_sort_ptr(g: ExternalPtr<GraphView>) -> Robj {
+    g.as_ref()
+        .topological_sort()
+        .map(|v| v.iter().map(|&x| x as i32).collect_robj())
+        .unwrap_or_else(|e| throw_r_error(e))
+}
+
 // ── Validation / class checks ────────────────────────────────────────────────────────────────
 #[extendr]
 fn is_dag_type_ptr(g: ExternalPtr<GraphView>) -> bool {
@@ -916,6 +924,7 @@ extendr_module! {
     fn descendants_of_ptr;
     fn markov_blanket_of_ptr;
     fn exogenous_nodes_of_ptr;
+    fn topological_sort_ptr;
     fn induced_subgraph_ptr;
 
     // graph properties

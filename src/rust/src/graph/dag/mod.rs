@@ -11,6 +11,7 @@ use crate::graph::alg::bitset;
 use crate::graph::alg::csr;
 use crate::graph::alg::directed_part_is_acyclic;
 use crate::graph::alg::moral;
+use crate::graph::alg::topological_sort;
 use crate::graph::alg::traversal;
 use std::sync::Arc;
 
@@ -172,6 +173,15 @@ impl Dag {
         (0..self.n())
             .filter(|&i| self.parents_of(i).is_empty())
             .collect()
+    }
+
+    /// Returns a topological ordering of the nodes.
+    ///
+    /// Since this is a valid DAG, all nodes will be included in the ordering.
+    /// For every edge u -> v, u will appear before v in the returned vector.
+    #[inline]
+    pub fn topological_sort(&self) -> Vec<u32> {
+        topological_sort(&self.core)
     }
 
     /// Access the underlying CSR.
@@ -356,5 +366,33 @@ mod tests {
 
         let g = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
         assert_eq!(g.descendants_of(0), vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn dag_topological_sort() {
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        // Diamond: 0 -> 1, 0 -> 2, 1 -> 3, 2 -> 3
+        let mut b = GraphBuilder::new_with_registry(4, true, &reg);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(0, 2, d).unwrap();
+        b.add_edge(1, 3, d).unwrap();
+        b.add_edge(2, 3, d).unwrap();
+
+        let g = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+        let order = g.topological_sort();
+
+        // All 4 nodes should be in the order
+        assert_eq!(order.len(), 4);
+
+        // Check ordering constraints
+        let pos: std::collections::HashMap<u32, usize> =
+            order.iter().enumerate().map(|(i, &v)| (v, i)).collect();
+        assert!(pos[&0] < pos[&1]); // 0 -> 1
+        assert!(pos[&0] < pos[&2]); // 0 -> 2
+        assert!(pos[&1] < pos[&3]); // 1 -> 3
+        assert!(pos[&2] < pos[&3]); // 2 -> 3
     }
 }

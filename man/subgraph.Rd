@@ -55,6 +55,7 @@ Other queries:
 \code{\link{nodes}()},
 \code{\link{parents}()},
 \code{\link{same_nodes}()},
-\code{\link{spouses}()}
+\code{\link{spouses}()},
+\code{\link{topological_sort}()}
 }
 \concept{queries}

@@ -52,6 +52,7 @@ Other queries:
 \code{\link{parents}()},
 \code{\link{same_nodes}()},
 \code{\link{spouses}()},
-\code{\link{subgraph}()}
+\code{\link{subgraph}()},
+\code{\link{topological_sort}()}
 }
 \concept{queries}
