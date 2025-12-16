@@ -6,6 +6,7 @@ home:
 template:
   bootstrap: 5
   opengraph:
+  title: "caugi: Causal Graph Interface"
     image:
       src: man/figures/og.png
       alt: "The name 'caugi' on the left and a graph on the right with corgi dogs as nodes."
