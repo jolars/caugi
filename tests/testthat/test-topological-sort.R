@@ -97,10 +97,10 @@ test_that("topological_sort works on single node DAG", {
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
-# ─────────────────────────────────── ADMG ─────────────────────────────────────
+# ────────────────────────────────── Errors ────────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
-test_that("topological_sort works on ADMG (ignores bidirected edges)", {
+test_that("topological_sort errors on ADMG", {
   cg <- caugi(
     L %-->% X,
     X %-->% Y,
@@ -108,51 +108,19 @@ test_that("topological_sort works on ADMG (ignores bidirected edges)", {
     class = "ADMG"
   )
 
-  order <- topological_sort(cg)
-
-  expect_equal(length(order), 3L)
-  expect_setequal(order, c("L", "X", "Y"))
-  expect_true(verify_topo_order(cg, order))
+  expect_error(topological_sort(cg), "only defined for DAGs")
 })
 
-test_that("topological_sort works on ADMG with bidirected confounding", {
-  # Classic confounding scenario: X -> Y, X <-> Z, Z -> Y
-  cg <- caugi(
-    X %-->% Y,
-    X %<->% Z, # bidirected edge should be ignored for topological sort
-    Z %-->% Y,
-    class = "ADMG"
-  )
-
-  order <- topological_sort(cg)
-
-  expect_equal(length(order), 3L)
-  expect_setequal(order, c("X", "Y", "Z"))
-  expect_true(verify_topo_order(cg, order))
-})
-
-# ──────────────────────────────────────────────────────────────────────────────
-# ─────────────────────────────────── PDAG ─────────────────────────────────────
-# ──────────────────────────────────────────────────────────────────────────────
-
-test_that("topological_sort works on PDAG (ignores undirected edges)", {
+test_that("topological_sort errors on PDAG", {
   cg <- caugi(
     A %-->% B,
-    B %---% C, # undirected edge should be ignored
+    B %---% C,
     C %-->% D,
     class = "PDAG"
   )
 
-  order <- topological_sort(cg)
-
-  expect_equal(length(order), 4L)
-  expect_setequal(order, c("A", "B", "C", "D"))
-  expect_true(verify_topo_order(cg, order))
+  expect_error(topological_sort(cg), "only defined for DAGs")
 })
-
-# ──────────────────────────────────────────────────────────────────────────────
-# ────────────────────────────────── Errors ────────────────────────────────────
-# ──────────────────────────────────────────────────────────────────────────────
 
 test_that("topological_sort errors on UG", {
   cg <- caugi(
@@ -161,7 +129,7 @@ test_that("topological_sort errors on UG", {
     class = "UG"
   )
 
-  expect_error(topological_sort(cg), "UG")
+  expect_error(topological_sort(cg), "only defined for DAGs")
 })
 
 test_that("topological_sort errors on non-caugi input", {

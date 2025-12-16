@@ -111,20 +111,17 @@ impl GraphView {
         }
     }
 
-    /// Returns a topological ordering of the nodes based on directed edges.
+    /// Returns a topological ordering of the nodes.
     ///
-    /// For DAG, ADMG, and PDAG: returns all nodes in an order such that
+    /// Only defined for DAGs. Returns all nodes in an order such that
     /// for every directed edge u -> v, u appears before v.
-    ///
-    /// UG and Raw views will return an error since they either have no directed
-    /// edges or the graph class is unknown.
     pub fn topological_sort(&self) -> Result<Vec<u32>, String> {
         match self {
             GraphView::Dag(g) => Ok(g.topological_sort()),
-            GraphView::Admg(g) => Ok(g.topological_sort()),
-            GraphView::Pdag(g) => Ok(g.topological_sort()),
-            GraphView::Ug(_) => Err("topological_sort not defined for UG (no directed edges)".into()),
-            GraphView::Raw(_) => Err("topological_sort not implemented for UNKNOWN class".into()),
+            GraphView::Admg(_) => Err("topological_sort is only defined for DAGs".into()),
+            GraphView::Pdag(_) => Err("topological_sort is only defined for DAGs".into()),
+            GraphView::Ug(_) => Err("topological_sort is only defined for DAGs".into()),
+            GraphView::Raw(_) => Err("topological_sort is only defined for DAGs".into()),
         }
     }
 

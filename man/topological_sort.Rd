@@ -2,24 +2,20 @@
 % Please edit documentation in R/queries.R
 \name{topological_sort}
 \alias{topological_sort}
-\title{Get a topological ordering of a \code{caugi} graph}
+\title{Get a topological ordering of a DAG}
 \usage{
 topological_sort(cg)
 }
 \arguments{
-\item{cg}{A \code{caugi} object of class DAG, ADMG, or PDAG.}
+\item{cg}{A \code{caugi} object of class DAG.}
 }
 \value{
 A character vector of node names in topological order.
 }
 \description{
-Returns a topological ordering of the nodes in a graph based on
-directed edges. For every directed edge u -> v in the graph, u will appear
-before v in the returned ordering.
-
-This function works on DAG, ADMG, and PDAG graph classes. For ADMG and PDAG,
-only directed edges are considered (bidirected and undirected edges are
-ignored).
+Returns a topological ordering of the nodes in a DAG. For every
+directed edge u -> v in the graph, u will appear before v in the returned
+ordering.
 }
 \examples{
 # Simple DAG: A -> B -> C
@@ -38,14 +34,6 @@ cg2 <- caugi(
 )
 # Could return c("A", "B", "C") or c("B", "A", "C")
 topological_sort(cg2)
-
-# Works with ADMG (bidirected edges are ignored)
-cg_admg <- caugi(
-  X \%-->\% Y,
-  X \%<->\% Y,
-  class = "ADMG"
-)
-topological_sort(cg_admg) # Returns c("X", "Y")
 
 }
 \seealso{

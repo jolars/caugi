@@ -8,7 +8,6 @@ use super::error::PdagError;
 use super::CaugiGraph;
 use crate::edges::EdgeClass;
 use crate::graph::alg::directed_part_is_acyclic;
-use crate::graph::alg::topological_sort;
 use crate::graph::alg::traversal;
 use std::sync::Arc;
 
@@ -214,16 +213,6 @@ impl Pdag {
                 }
             })
             .collect()
-    }
-
-    /// Returns a topological ordering of the nodes based on directed edges.
-    ///
-    /// Undirected edges are ignored. Since the directed part is acyclic,
-    /// all nodes will be included in the ordering.
-    /// For every directed edge u -> v, u will appear before v in the returned vector.
-    #[inline]
-    pub fn topological_sort(&self) -> Vec<u32> {
-        topological_sort(&self.core)
     }
 
     pub fn core_ref(&self) -> &CaugiGraph {
