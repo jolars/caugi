@@ -336,7 +336,7 @@ coords <- caugi_layout(dag, method = "sugiyama")
 # The layout can be used for analysis or custom plotting
 print(coords)
 
-# Plot uses the computed layout internally
+# Plot uses the same layout, calling caugi_layout internally
 plot(dag, layout = "sugiyama")
 ```
 
