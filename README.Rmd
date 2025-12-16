@@ -12,7 +12,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# caugi
+# caugi <a href="https://caugi.org"><img src='man/figures/logo.svg' align="right" height="138" /></a>
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/frederikfabriciusbjerre/caugi/actions/workflows/R-CMD-check.yaml)

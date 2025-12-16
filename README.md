@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# caugi
+# caugi <a href="https://caugi.org"><img src='man/figures/logo.svg' align="right" height="138" /></a>
 
 <!-- badges: start -->
 
