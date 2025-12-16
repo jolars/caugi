@@ -350,8 +350,8 @@ further customization using grid functions.
 # Create a plot
 p <- plot(cg)
 
-# The plot is a grid graphics object
-class(p)
+# The grob slot is a grid graphics object
+class(p@grob)
 
 # You can manipulate it with grid functions
 library(grid)
