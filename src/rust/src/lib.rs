@@ -987,6 +987,25 @@ fn moralize_ptr(g: ExternalPtr<GraphView>) -> ExternalPtr<GraphView> {
     ExternalPtr::new(out)
 }
 
+#[extendr]
+fn latent_project_ptr(g: ExternalPtr<GraphView>, latents: Integers) -> ExternalPtr<GraphView> {
+    let latents_u: Vec<u32> = latents
+        .iter()
+        .map(|ri| rint_to_u32(ri, "latents"))
+        .collect();
+    // Bounds check
+    for &l in &latents_u {
+        if l >= g.as_ref().n() {
+            throw_r_error(format!("Latent index {} is out of bounds", l + 1));
+        }
+    }
+    let out = g
+        .as_ref()
+        .latent_project(&latents_u)
+        .unwrap_or_else(|e| throw_r_error(e));
+    ExternalPtr::new(out)
+}
+
 // ── Layout ────────────────────────────────────────────────────────────────────
 
 #[extendr]
@@ -1082,6 +1101,7 @@ extendr_module! {
     // graph operations
     fn skeleton_ptr;
     fn moralize_ptr;
+    fn latent_project_ptr;
 
     // acyclicity test and conversion
     fn is_acyclic_ptr;

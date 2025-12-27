@@ -58,6 +58,8 @@ skeleton_ptr <- function(g) .Call(wrap__skeleton_ptr, g)
 
 moralize_ptr <- function(g) .Call(wrap__moralize_ptr, g)
 
+latent_project_ptr <- function(g, latents) .Call(wrap__latent_project_ptr, g, latents)
+
 is_acyclic_ptr <- function(g) .Call(wrap__is_acyclic_ptr, g)
 
 to_cpdag_ptr <- function(g) .Call(wrap__to_cpdag_ptr, g)

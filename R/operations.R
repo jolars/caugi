@@ -67,6 +67,102 @@ skeleton <- function(cg) {
   skeleton_cg
 }
 
+#' @title Project latent variables from a DAG to an ADMG
+#'
+#' @description
+#' Projects out latent (unobserved) variables from a DAG to produce an
+#' Acyclic Directed Mixed Graph (ADMG) over the observed variables.
+#'
+#' @details
+#' The latent projection is a fundamental operation in causal inference for
+#' converting a DAG with latent variables to an ADMG representing the marginal
+#' independence structure over observed variables only.
+#'
+#' The algorithm:
+#' 1. Removes all latent nodes from the graph.
+#' 2. For each pair of observed nodes (X, Y) **without an existing directed edge**,
+#'    adds a bidirected edge X <-> Y if and only if they share a latent ancestor
+#'    (i.e., An(X) ∩ An(Y) ∩ Latents is non-empty).
+#' 3. Preserves directed edges between observed nodes.
+#'
+#' Note: Since simple graphs cannot have parallel edges, a bidirected edge is
+#' NOT added between nodes that already have a directed edge. The directed edge
+#' takes precedence.
+#'
+#' Note: The resulting ADMG will have nodes re-indexed, preserving the
+#' relative order of observed nodes from the original DAG.
+#'
+#' @param cg A `caugi` object of class `"DAG"`.
+#' @param latents Character vector of latent variable names to project out.
+#'
+#' @returns A `caugi` object of class `"ADMG"` containing only the observed
+#'   variables, with directed edges preserved and bidirected edges added where
+#'   nodes share latent ancestors.
+#'
+#' @references
+#' Evans, R. J. (2015). *Graphs for Margins of Bayesian Networks*.
+#' arXiv:1408.1809, Sections 3-4.
+#'
+#' @examples
+#' # DAG with latent confounder U
+#' dag <- caugi(
+#'   U %-->% X,
+#'   U %-->% Y,
+#'   X %-->% Y,
+#'   class = "DAG"
+#' )
+#'
+#' # Project out the latent variable
+#' admg <- latent_project(dag, latents = "U")
+#' # Result: X -> Y, X <-> Y (confounded direct effect)
+#'
+#' edges(admg)
+#'
+#' @family operations
+#' @concept operations
+#'
+#' @export
+latent_project <- function(cg, latents) {
+  is_caugi(cg, throw_error = TRUE)
+
+  if (cg@graph_class != "DAG") {
+    stop("latent_project() can only be applied to DAGs.", call. = FALSE)
+  }
+
+  if (!is.character(latents)) {
+    stop("`latents` must be a character vector of node names.", call. = FALSE)
+  }
+
+  cg <- build(cg)
+  node_names <- cg@nodes$name
+
+  # Validate latent names exist
+  missing_latents <- setdiff(latents, node_names)
+  if (length(missing_latents) > 0L) {
+    stop(
+      paste0(
+        "Unknown latent node(s): ",
+        paste(missing_latents, collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
+
+  # Get 0-based indices for latent nodes
+  latent_indices <- cg@name_index_map$mget(latents)
+  latent_indices <- as.integer(unlist(latent_indices, use.names = FALSE))
+
+  # Get observed node names (preserving order)
+  is_latent <- node_names %in% latents
+  observed_names <- node_names[!is_latent]
+
+  # Call Rust function
+  projected_ptr <- latent_project_ptr(cg@ptr, latent_indices)
+
+  # Convert result back to caugi
+  .view_to_caugi(projected_ptr, node_names = observed_names)
+}
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ──────────────────────────── Mutate caugi class ──────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────

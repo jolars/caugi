@@ -286,6 +286,27 @@ impl GraphView {
         }
     }
 
+    /// Project out latent variables from a DAG to produce an ADMG.
+    ///
+    /// For each pair of observed nodes (X, Y), adds a bidirected edge X <-> Y
+    /// if they share a latent ancestor. Directed edges between observed nodes
+    /// are preserved.
+    ///
+    /// # Arguments
+    /// * `latents` - Slice of node indices to project out (0-indexed)
+    ///
+    /// # Returns
+    /// An ADMG `GraphView` containing only the observed (non-latent) nodes.
+    pub fn latent_project(&self, latents: &[u32]) -> Result<GraphView, String> {
+        match self {
+            GraphView::Dag(d) => {
+                let admg = d.latent_project(latents)?;
+                Ok(GraphView::Admg(Arc::new(admg)))
+            }
+            _ => Err("latent_project is only defined for DAGs".into()),
+        }
+    }
+
     /// Proper backdoor graph for Xs → Ys. Defined for DAG only.
     pub fn proper_backdoor_graph(&self, xs: &[u32], ys: &[u32]) -> Result<GraphView, String> {
         match self {

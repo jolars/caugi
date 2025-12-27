@@ -245,3 +245,202 @@ test_that("mutate_caugi doesn't change class if old class is equal to new class"
   expect_equal(edges(cg_dag_mutated), edges(cg_dag))
   expect_equal(nodes(cg_dag_mutated), nodes(cg_dag))
 })
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────── Latent Projection ───────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("latent_project basic confounding: U -> X, U -> Y, X -> Y", {
+  # DAG: U -> X, U -> Y, X -> Y
+  # Project out U
+  # Result: X -> Y only (no bidirected edge because there's already a directed edge)
+  dag <- caugi(
+    U %-->% X,
+    U %-->% Y,
+    X %-->% Y,
+    class = "DAG"
+  )
+
+  admg <- latent_project(dag, latents = "U")
+
+  expect_equal(admg@graph_class, "ADMG")
+  expect_equal(length(admg), 2)
+  expect_equal(sort(nodes(admg)$name), c("X", "Y"))
+
+  # Check directed edge X -> Y preserved
+  expect_equal(parents(admg, "Y"), "X")
+  expect_equal(children(admg, "X"), "Y")
+
+  # NO bidirected edge: X and Y share latent U, but there's already X -> Y
+  expect_null(spouses(admg, "X"))
+  expect_null(spouses(admg, "Y"))
+})
+
+test_that("latent_project with no latents returns the same graph as ADMG", {
+  dag <- caugi(
+    X %-->% Y,
+    Y %-->% Z,
+    class = "DAG"
+  )
+
+  admg <- latent_project(dag, latents = character(0))
+
+  expect_equal(admg@graph_class, "ADMG")
+  expect_equal(length(admg), 3)
+  expect_equal(nodes(admg)$name, c("X", "Y", "Z"))
+
+  # Same directed edges
+  expect_equal(parents(admg, "Y"), "X")
+  expect_equal(parents(admg, "Z"), "Y")
+
+  # No bidirected edges (returns NULL when no spouses)
+  expect_null(spouses(admg, "X"))
+  expect_null(spouses(admg, "Y"))
+  expect_null(spouses(admg, "Z"))
+})
+
+test_that("latent_project with multiple latents creating bidirected edge only where no direct edge", {
+  # DAG: L1 -> X, L1 -> Y, L2 -> Y, L2 -> Z, X -> Y, Y -> Z
+  # Project out L1, L2
+  # Result: X -> Y -> Z, plus only X <-> Z
+  # (X <-> Y and Y <-> Z are NOT added because of existing directed edges)
+  dag <- caugi(
+    L1 %-->% X,
+    L1 %-->% Y,
+    L2 %-->% Y,
+    L2 %-->% Z,
+    X %-->% Y,
+    Y %-->% Z,
+    class = "DAG"
+  )
+
+  admg <- latent_project(dag, latents = c("L1", "L2"))
+
+  expect_equal(admg@graph_class, "ADMG")
+  expect_equal(length(admg), 3)
+  expect_equal(nodes(admg)$name, c("X", "Y", "Z"))
+
+  # Directed edges preserved
+  expect_equal(parents(admg, "Y"), "X")
+  expect_equal(parents(admg, "Z"), "Y")
+
+  # Bidirected edges from latent confounding:
+  # - X <-> Y: skipped (X -> Y exists)
+  # - Y <-> Z: skipped (Y -> Z exists)
+  # - X <-> Z: added (no direct edge, share L1 as ancestor)
+  expect_equal(spouses(admg, "X"), "Z")
+  expect_null(spouses(admg, "Y"))
+  expect_equal(spouses(admg, "Z"), "X")
+})
+
+test_that("latent_project with latent chain", {
+  # DAG: L1 -> L2 -> X, L2 -> Y
+  # Project out L1, L2
+  # X and Y share latent ancestor L2, so X <-> Y
+  dag <- caugi(
+    L1 %-->% L2,
+    L2 %-->% X,
+    L2 %-->% Y,
+    class = "DAG"
+  )
+
+  admg <- latent_project(dag, latents = c("L1", "L2"))
+
+  expect_equal(admg@graph_class, "ADMG")
+  expect_equal(length(admg), 2)
+  expect_equal(nodes(admg)$name, c("X", "Y"))
+
+  # No directed edges between X and Y (returns NULL when no children)
+  expect_null(children(admg, "X"))
+  expect_null(children(admg, "Y"))
+
+  # X <-> Y from shared ancestor L2
+  expect_equal(spouses(admg, "X"), "Y")
+  expect_equal(spouses(admg, "Y"), "X")
+})
+
+test_that("latent_project all nodes latent returns empty ADMG", {
+  dag <- caugi(
+    L1 %-->% L2,
+    class = "DAG"
+  )
+
+  admg <- latent_project(dag, latents = c("L1", "L2"))
+
+  expect_equal(admg@graph_class, "ADMG")
+  expect_equal(length(admg), 0)
+})
+
+test_that("latent_project no shared latent ancestors (no bidirected edges)", {
+  # DAG: U -> X, V -> Y (no shared ancestor)
+  # Project out U, V
+  # Result: X, Y (isolated nodes, no edges)
+  dag <- caugi(
+    U %-->% X,
+    V %-->% Y,
+    class = "DAG"
+  )
+
+  admg <- latent_project(dag, latents = c("U", "V"))
+
+  expect_equal(admg@graph_class, "ADMG")
+  expect_equal(length(admg), 2)
+
+  # No edges at all (returns NULL when no children/spouses)
+  expect_null(children(admg, "X"))
+  expect_null(children(admg, "Y"))
+  expect_null(spouses(admg, "X"))
+  expect_null(spouses(admg, "Y"))
+})
+
+test_that("latent_project fails on non-DAGs", {
+  cg_pdag <- caugi(
+    A %-->% B,
+    B %---% C,
+    class = "PDAG"
+  )
+
+  expect_error(
+    latent_project(cg_pdag, latents = "A"),
+    "latent_project\\(\\) can only be applied to DAGs\\."
+  )
+
+  cg_ug <- caugi(
+    A %---% B,
+    class = "UG"
+  )
+
+  expect_error(
+    latent_project(cg_ug, latents = "A"),
+    "latent_project\\(\\) can only be applied to DAGs\\."
+  )
+})
+
+test_that("latent_project fails with unknown latent names", {
+  dag <- caugi(
+    X %-->% Y,
+    class = "DAG"
+  )
+
+  expect_error(
+    latent_project(dag, latents = "Z"),
+    "Unknown latent node\\(s\\): Z"
+  )
+
+  expect_error(
+    latent_project(dag, latents = c("X", "Z", "W")),
+    "Unknown latent node\\(s\\): Z, W"
+  )
+})
+
+test_that("latent_project fails with non-character latents", {
+  dag <- caugi(
+    X %-->% Y,
+    class = "DAG"
+  )
+
+  expect_error(
+    latent_project(dag, latents = 1),
+    "`latents` must be a character vector"
+  )
+})
