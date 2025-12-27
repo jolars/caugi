@@ -993,12 +993,6 @@ fn latent_project_ptr(g: ExternalPtr<GraphView>, latents: Integers) -> ExternalP
         .iter()
         .map(|ri| rint_to_u32(ri, "latents"))
         .collect();
-    // Bounds check
-    for &l in &latents_u {
-        if l >= g.as_ref().n() {
-            throw_r_error(format!("Latent index {} is out of bounds", l + 1));
-        }
-    }
     let out = g
         .as_ref()
         .latent_project(&latents_u)

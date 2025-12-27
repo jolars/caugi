@@ -125,7 +125,7 @@ skeleton <- function(cg) {
 latent_project <- function(cg, latents) {
   is_caugi(cg, throw_error = TRUE)
 
-  if (cg@graph_class != "DAG") {
+  if (!is_dag(cg)) {
     stop("latent_project() can only be applied to DAGs.", call. = FALSE)
   }
 
