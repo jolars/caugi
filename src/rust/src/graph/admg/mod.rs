@@ -211,38 +211,29 @@ impl Admg {
     }
 
     /// Markov blanket of `i` in an ADMG:
-    /// `Pa(i) ∪ Ch(i) ∪ Sp(i) ∪ (⋃ Pa(c) \ {i} : c∈Ch(i)) ∪ (⋃ Pa(s) : s∈Sp(i))`.
+    /// `Pa(Dis(i)) ∪ (Dis(i) \ {i})`
+    ///
+    /// Where Dis(i) is the district (c-component) containing i.
     #[inline]
     pub fn markov_blanket_of(&self, i: u32) -> Vec<u32> {
         let n = self.n() as usize;
         let mut m = vec![false; n];
 
-        // Parents
-        for &p in self.parents_of(i) {
-            m[p as usize] = true;
-        }
+        // Get the district of i
+        let district = self.district_of(i);
 
-        // Children
-        for &c in self.children_of(i) {
-            m[c as usize] = true;
-            // Co-parents of children
-            for &p in self.parents_of(c) {
-                if p != i {
-                    m[p as usize] = true;
-                }
+        // Add all district members (except i) and all parents of district members
+        for &d in &district {
+            if d != i {
+                m[d as usize] = true;
             }
-        }
-
-        // Spouses (bidirected neighbors)
-        for &s in self.spouses_of(i) {
-            m[s as usize] = true;
-            // Parents of spouses (for d-separation purposes in ADMGs)
-            for &p in self.parents_of(s) {
+            // Add parents of each district member
+            for &p in self.parents_of(d) {
                 m[p as usize] = true;
             }
         }
 
-        m[i as usize] = false; // exclude self
+        m[i as usize] = false; // ensure self is excluded
         bitset::collect_from_mask(&m)
     }
 
@@ -369,8 +360,66 @@ mod tests {
 
         let admg = Admg::new(Arc::new(b.finalize().unwrap())).unwrap();
 
-        // MB(1) = Pa(1) ∪ Ch(1) ∪ Sp(1) ∪ coparents = {0, 2, 3, 4}
-        assert_eq!(admg.markov_blanket_of(1), vec![0, 2, 3, 4]);
+        // MB(1) = Pa(Dis(1)) ∪ (Dis(1) \ {1})
+        // Dis(1) = {1, 4} (nodes connected via bidirected edges)
+        // Pa(Dis(1)) = Pa(1) ∪ Pa(4) = {0, 2} ∪ {} = {0, 2}
+        // Dis(1) \ {1} = {4}
+        // MB(1) = {0, 2, 4}
+        assert_eq!(admg.markov_blanket_of(1), vec![0, 2, 4]);
+    }
+
+    #[test]
+    fn admg_markov_blanket_with_district_parents() {
+        let (reg, dir, bid) = setup();
+        let mut b = GraphBuilder::new_with_registry(5, true, &reg);
+        // Graph: 0 -> 1, 0 -> 2, 1 <-> 2, 3 -> 2, 2 -> 4
+        // District of 1: {1, 2}
+        // District of 2: {1, 2}
+        b.add_edge(0, 1, dir).unwrap();
+        b.add_edge(0, 2, dir).unwrap();
+        b.add_edge(1, 2, bid).unwrap();
+        b.add_edge(3, 2, dir).unwrap();
+        b.add_edge(2, 4, dir).unwrap();
+
+        let admg = Admg::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        // MB(1) = Pa(Dis(1)) ∪ (Dis(1) \ {1})
+        // Dis(1) = {1, 2}
+        // Pa(Dis(1)) = Pa(1) ∪ Pa(2) = {0} ∪ {0, 3} = {0, 3}
+        // Dis(1) \ {1} = {2}
+        // MB(1) = {0, 2, 3}
+        assert_eq!(admg.markov_blanket_of(1), vec![0, 2, 3]);
+
+        // MB(2) = Pa(Dis(2)) ∪ (Dis(2) \ {2})
+        // Dis(2) = {1, 2}
+        // Pa(Dis(2)) = {0, 3}
+        // Dis(2) \ {2} = {1}
+        // MB(2) = {0, 1, 3}
+        assert_eq!(admg.markov_blanket_of(2), vec![0, 1, 3]);
+    }
+
+    #[test]
+    fn admg_markov_blanket_singleton_district() {
+        let (reg, dir, _bid) = setup();
+        let mut b = GraphBuilder::new_with_registry(4, true, &reg);
+        // No bidirected edges: 0 -> 1 -> 2 -> 3
+        b.add_edge(0, 1, dir).unwrap();
+        b.add_edge(1, 2, dir).unwrap();
+        b.add_edge(2, 3, dir).unwrap();
+
+        let admg = Admg::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        // MB(1) = Pa(Dis(1)) ∪ (Dis(1) \ {1})
+        // Dis(1) = {1} (singleton, no spouses)
+        // Pa(Dis(1)) = Pa(1) = {0}
+        // Dis(1) \ {1} = {}
+        // MB(1) = {0}
+        assert_eq!(admg.markov_blanket_of(1), vec![0]);
+
+        // MB(0) = Pa(Dis(0)) ∪ (Dis(0) \ {0})
+        // Dis(0) = {0}, Pa(0) = {}
+        // MB(0) = {}
+        assert!(admg.markov_blanket_of(0).is_empty());
     }
 
     #[test]

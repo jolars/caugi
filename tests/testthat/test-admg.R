@@ -398,7 +398,7 @@ test_that("ancestors and descendants work for ADMG", {
   expect_equal(sort(descendants(admg, "A")), c("B", "C"))
 })
 
-test_that("markov_blanket includes spouses", {
+test_that("markov_blanket uses district-based definition", {
   admg <- caugi(
     L %-->% X,
     X %-->% Y,
@@ -408,10 +408,34 @@ test_that("markov_blanket includes spouses", {
 
   mb_x <- markov_blanket(admg, "X")
 
-  # MB(X) should include: Pa(X)={L}, Ch(X)={Y}, Sp(X)={Z}
-  expect_true("L" %in% mb_x)
-  expect_true("Y" %in% mb_x)
-  expect_true("Z" %in% mb_x)
+  # MB(X) = Pa(Dis(X)) ∪ (Dis(X) \ {X})
+  # Dis(X) = {X, Z} (nodes connected via bidirected edges)
+
+  # Pa(Dis(X)) = Pa(X) ∪ Pa(Z) = {L} ∪ {} = {L}
+  # Dis(X) \ {X} = {Z}
+  # MB(X) = {L, Z}
+  expect_true("L" %in% mb_x) # Parent of X
+  expect_true("Z" %in% mb_x) # Spouse (district member)
+  expect_false("Y" %in% mb_x) # Child is NOT in MB under district-based definition
+})
+
+test_that("markov_blanket includes parents of district members", {
+  admg <- caugi(
+    A %-->% X,
+    B %-->% Y,
+    X %<->% Y,
+    class = "ADMG"
+  )
+
+  mb_x <- markov_blanket(admg, "X")
+
+  # Dis(X) = {X, Y}
+  # Pa(Dis(X)) = Pa(X) ∪ Pa(Y) = {A} ∪ {B} = {A, B}
+  # Dis(X) \ {X} = {Y}
+  # MB(X) = {A, B, Y}
+  expect_true("A" %in% mb_x) # Parent of X
+  expect_true("B" %in% mb_x) # Parent of Y (in district)
+  expect_true("Y" %in% mb_x) # District member
 })
 
 test_that("exogenous returns nodes without parents", {
