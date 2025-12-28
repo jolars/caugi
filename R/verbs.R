@@ -177,23 +177,59 @@ remove_edges <- function(
   calls <- as.list(substitute(list(...)))[-1L]
   has_expr <- length(calls) > 0L
   has_vec <- !(is.null(from) && is.null(edge) && is.null(to))
+
   if (has_expr && has_vec) {
     stop(
       "Provide expressions via the infix operators (`A --> B`) ",
       "or vectors via the `from`, `edge`, and `to` arguments, ",
-      "but not both."
+      "but not both.",
+      call. = FALSE
     )
   }
   if (!has_expr && !has_vec) {
     return(cg)
   }
 
-  # build edges
-  edges <- .get_edges(from, edge, to, calls)
+  if (has_vec && is.null(edge)) {
+    if (!cg@simple) {
+      stop(
+        "When removing edges without specifying `edge`, `cg` must be simple.",
+        call. = FALSE
+      )
+    }
+    if (is.null(from) || is.null(to)) {
+      stop(
+        "`from` and `to` must be supplied when `edge` is omitted.",
+        call. = FALSE
+      )
+    }
+    if (length(from) != length(to)) {
+      stop("`from` and `to` must be equal length.", call. = FALSE)
+    }
 
-  # update via helper and return
+    pairs <- data.table::data.table(
+      from = as.character(from),
+      to = as.character(to)
+    )
+
+    # Remove both directions of the edge
+    pairs <- unique(data.table::rbindlist(list(
+      pairs,
+      pairs[, .(from = to, to = from)]
+    )))
+
+    return(.update_caugi(
+      cg,
+      edges = pairs,
+      action = "remove",
+      inplace = inplace
+    ))
+  }
+
+  edges <- .get_edges(from, edge, to, calls, simple = cg@simple)
   .update_caugi(cg, edges = edges, action = "remove", inplace = inplace)
 }
+
 
 #' @describeIn caugi_verbs Set edge type for given pair(s).
 #' @export
@@ -297,11 +333,12 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
 #' @param edge Character vector of edge types.
 #' @param to Character vector of target node names.
 #' @param calls List of calls from `...`.
+#' @param simple Logical, whether the graph is simple or not.
 #'
 #' @returns A `data.table` with columns `from`, `edge`, and `to`.
 #'
 #' @keywords internal
-.get_edges <- function(from, edge, to, calls) {
+.get_edges <- function(from, edge, to, calls, simple = TRUE) {
   has_vec <- !(is.null(from) && is.null(edge) && is.null(to))
   edges <- if (has_vec) {
     if (is.null(from) || is.null(edge) || is.null(to)) {

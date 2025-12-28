@@ -19,25 +19,6 @@ variables.
 Projects out latent (unobserved) variables from a DAG to produce an
 Acyclic Directed Mixed Graph (ADMG) over the observed variables.
 }
-\details{
-The latent projection is a fundamental operation in causal inference for
-converting a DAG with latent variables to an ADMG representing the marginal
-independence structure over observed variables only.
-
-Uses the vertex elimination algorithm: for each latent vertex v to eliminate:
-\enumerate{
-\item Add directed edge p -> c for all p in Pa(v), c in Ch(v)
-\item Add bidirected edge s <-> c for all s in Sib(v), c in Ch(v)
-\item Add bidirected edge a <-> b for all pairs a, b in Ch(v)
-\item Remove v
-}
-
-Note: The result may have both directed and bidirected edges between the
-same pair of nodes (e.g., X -> Y and X <-> Y), which is valid in ADMGs.
-
-Note: The resulting ADMG will have nodes re-indexed, preserving the
-relative order of observed nodes from the original DAG.
-}
 \examples{
 # DAG with latent confounder U
 dag <- caugi(
@@ -49,7 +30,7 @@ dag <- caugi(
 
 # Project out the latent variable
 admg <- latent_project(dag, latents = "U")
-# Result: X -> Y AND X <-> Y (children of U become bidirected-connected)
+# Result: X -> Y, X <-> Y (children of U become bidirected-connected)
 edges(admg)
 
 # DAG with directed path through latent
@@ -65,12 +46,9 @@ admg2 <- latent_project(dag2, latents = "L")
 edges(admg2)
 
 }
-\references{
-Evans, R. J. (2015). \emph{Graphs for Margins of Bayesian Networks}.
-arXiv:1408.1809, Sections 3-4.
-}
 \seealso{
 Other operations: 
+\code{\link{exogenize}()},
 \code{\link{moralize}()},
 \code{\link{mutate_caugi}()},
 \code{\link{skeleton}()}

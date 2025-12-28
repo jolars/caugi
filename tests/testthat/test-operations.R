@@ -452,3 +452,32 @@ test_that("latent_project fails with non-character latents", {
     "`latents` must be a character vector"
   )
 })
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────── Exogenize ──────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("exogenize works", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    class = "DAG"
+  )
+  exogenized_cg <- exogenize(cg, nodes = "B")
+  cg_expected <- caugi(
+    A,
+    B %-->% C,
+    class = "DAG"
+  )
+  expect_equal(edges(exogenized_cg), edges(cg_expected))
+  expect_setequal(nodes(exogenized_cg)$name, nodes(cg_expected)$name)
+})
+
+test_that("exogenize fails with nodes not in graph", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    class = "DAG"
+  )
+  expect_error(exogenize(cg, nodes = "D"), "Node D not in graph.")
+})

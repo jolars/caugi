@@ -219,3 +219,40 @@ mutate_caugi <- function(cg, class) {
     ))
   }
 }
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────── Exogenize ──────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+#' @title Exogenize a graph
+#'
+#' @description
+#' Exogenize a graph by removing all ingoing edges to the set of nodes specified.
+#'
+#' @details
+#' This function removes all ingoing edges to the set of nodes specified.
+#'
+#' @param cg A `caugi` object.
+#' @param nodes A character vector of node names to exogenize. Must be a subset of the nodes in the graph.
+#'
+#' @returns A `caugi` object representing the exogenized graph.
+#'
+#' @examples
+#' cg <- caugi(A %-->% B, class = "DAG")
+#' exogenize(cg, nodes = "B") # A, B
+#'
+#' @family operations
+#' @concept operations
+#'
+#' @export
+exogenize <- function(cg, nodes) {
+  for (node in nodes) {
+    if (!node %in% nodes(cg)$name) {
+      stop(paste0("Node ", node, " not in graph."), call. = FALSE)
+    }
+    if (length(parents(cg, node)) > 0) {
+      remove_edges(cg, from = parents(cg, node), to = node, inplace = TRUE)
+    }
+  }
+  cg
+}
