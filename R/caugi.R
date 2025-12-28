@@ -230,8 +230,11 @@ caugi <- S7::new_class(
     s <- self@`.state`
     # Allow simple = FALSE for UNKNOWN and ADMG (ADMGs from latent projection
     # can have both directed and bidirected edges between the same pair)
-    if (isFALSE(s$simple) && !identical(s$class, "UNKNOWN") &&
-        !identical(s$class, "ADMG")) {
+    if (
+      isFALSE(s$simple) &&
+        !identical(s$class, "UNKNOWN") &&
+        !identical(s$class, "ADMG")
+    ) {
       return("If simple = FALSE, class must be 'UNKNOWN' or 'ADMG'")
     }
 
@@ -379,7 +382,10 @@ caugi <- S7::new_class(
     # Allow simple = FALSE for UNKNOWN and ADMG (ADMGs from latent projection
     # can have both directed and bidirected edges between the same pair)
     if (!simple && class != "UNKNOWN" && class != "ADMG") {
-      stop("If simple = FALSE, class must be 'UNKNOWN' or 'ADMG'", call. = FALSE)
+      stop(
+        "If simple = FALSE, class must be 'UNKNOWN' or 'ADMG'",
+        call. = FALSE
+      )
     }
 
     # Parse into edges + declared nodes
