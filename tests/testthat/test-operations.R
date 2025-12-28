@@ -499,11 +499,12 @@ test_that("exogenize fails with non-character nodes", {
 })
 
 test_that("exogenize agrees with exogenous query", {
-  cg <- caugi(
-    A %-->% B,
-    B %-->% C,
-    class = "DAG"
+  cg <- generate_graph(n = 100, m = 10, class = "DAG")
+  exogenous_nodes <- exogenous(cg)
+  new_exogenous_nodes <- sample(nodes(cg)$name, size = 10)
+  exogenized_cg <- exogenize(cg, nodes = new_exogenous_nodes)
+  expect_setequal(
+    exogenous(exogenized_cg),
+    union(exogenous_nodes, new_exogenous_nodes)
   )
-  exogenized_cg <- exogenize(cg, nodes = "B")
-  expect_equal(exogenous(exogenized_cg), c("A", "B"))
 })
