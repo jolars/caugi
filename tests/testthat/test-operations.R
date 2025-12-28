@@ -252,8 +252,10 @@ test_that("mutate_caugi doesn't change class if old class is equal to new class"
 
 test_that("latent_project basic confounding: U -> X, U -> Y, X -> Y", {
   # DAG: U -> X, U -> Y, X -> Y
-  # Project out U
-  # Result: X -> Y only (no bidirected edge because there's already a directed edge)
+  # Project out U using vertex elimination:
+  # - U has Ch(U) = {X, Y}
+  # - Step 3: Add X <-> Y (children of U pair up)
+  # Result: X -> Y AND X <-> Y
   dag <- caugi(
     U %-->% X,
     U %-->% Y,
@@ -271,9 +273,9 @@ test_that("latent_project basic confounding: U -> X, U -> Y, X -> Y", {
   expect_equal(parents(admg, "Y"), "X")
   expect_equal(children(admg, "X"), "Y")
 
-  # NO bidirected edge: X and Y share latent U, but there's already X -> Y
-  expect_null(spouses(admg, "X"))
-  expect_null(spouses(admg, "Y"))
+  # X <-> Y added (children of U pair up during vertex elimination)
+  expect_equal(spouses(admg, "X"), "Y")
+  expect_equal(spouses(admg, "Y"), "X")
 })
 
 test_that("latent_project with no latents returns the same graph as ADMG", {
@@ -299,11 +301,19 @@ test_that("latent_project with no latents returns the same graph as ADMG", {
   expect_null(spouses(admg, "Z"))
 })
 
-test_that("latent_project with multiple latents creating bidirected edge only where no direct edge", {
+test_that("latent_project with multiple latents using vertex elimination", {
   # DAG: L1 -> X, L1 -> Y, L2 -> Y, L2 -> Z, X -> Y, Y -> Z
-  # Project out L1, L2
-  # Result: X -> Y -> Z, plus only X <-> Z
-  # (X <-> Y and Y <-> Z are NOT added because of existing directed edges)
+  # Project out L1, L2 using vertex elimination:
+  #
+  # Eliminate L1:
+  # - Ch(L1) = {X, Y}
+  # - Step 3: Add X <-> Y
+  #
+  # Eliminate L2:
+  # - Ch(L2) = {Y, Z}
+  # - Step 3: Add Y <-> Z
+  #
+  # Result: X -> Y -> Z (directed) + X <-> Y, Y <-> Z (bidirected)
   dag <- caugi(
     L1 %-->% X,
     L1 %-->% Y,
@@ -324,13 +334,12 @@ test_that("latent_project with multiple latents creating bidirected edge only wh
   expect_equal(parents(admg, "Y"), "X")
   expect_equal(parents(admg, "Z"), "Y")
 
-  # Bidirected edges from latent confounding:
-  # - X <-> Y: skipped (X -> Y exists)
-  # - Y <-> Z: skipped (Y -> Z exists)
-  # - X <-> Z: added (no direct edge, share L1 as ancestor)
-  expect_equal(spouses(admg, "X"), "Z")
-  expect_null(spouses(admg, "Y"))
-  expect_equal(spouses(admg, "Z"), "X")
+  # Bidirected edges from vertex elimination:
+  # - X <-> Y: added (children of L1 pair up)
+  # - Y <-> Z: added (children of L2 pair up)
+  expect_equal(spouses(admg, "X"), "Y")
+  expect_equal(sort(spouses(admg, "Y")), c("X", "Z"))
+  expect_equal(spouses(admg, "Z"), "Y")
 })
 
 test_that("latent_project with latent chain", {

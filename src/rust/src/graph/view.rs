@@ -288,9 +288,12 @@ impl GraphView {
 
     /// Project out latent variables from a DAG to produce an ADMG.
     ///
-    /// For each pair of observed nodes (X, Y), adds a bidirected edge X <-> Y
-    /// if they share a latent ancestor. Directed edges between observed nodes
-    /// are preserved.
+    /// Uses vertex elimination: for each latent vertex v, adds directed edges
+    /// from Pa(v) to Ch(v), bidirected edges from Sib(v) to Ch(v), and
+    /// bidirected edges among pairs of Ch(v), then removes v.
+    ///
+    /// Note: The result may have both directed and bidirected edges between
+    /// the same pair of nodes (e.g., X → Y and X ↔ Y), which is valid in ADMGs.
     ///
     /// # Arguments
     /// * `latents` - Slice of node indices to project out (0-indexed)

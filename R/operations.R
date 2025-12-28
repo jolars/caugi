@@ -78,16 +78,14 @@ skeleton <- function(cg) {
 #' converting a DAG with latent variables to an ADMG representing the marginal
 #' independence structure over observed variables only.
 #'
-#' The algorithm:
-#' 1. Removes all latent nodes from the graph.
-#' 2. For each pair of observed nodes (X, Y) **without an existing directed edge**,
-#'    adds a bidirected edge X <-> Y if and only if they share a latent ancestor
-#'    (i.e., An(X) ∩ An(Y) ∩ Latents is non-empty).
-#' 3. Preserves directed edges between observed nodes.
+#' Uses the vertex elimination algorithm: for each latent vertex v to eliminate:
+#' 1. Add directed edge p -> c for all p in Pa(v), c in Ch(v)
+#' 2. Add bidirected edge s <-> c for all s in Sib(v), c in Ch(v)
+#' 3. Add bidirected edge a <-> b for all pairs a, b in Ch(v)
+#' 4. Remove v
 #'
-#' Note: Since simple graphs cannot have parallel edges, a bidirected edge is
-#' NOT added between nodes that already have a directed edge. The directed edge
-#' takes precedence.
+#' Note: The result may have both directed and bidirected edges between the
+#' same pair of nodes (e.g., X -> Y and X <-> Y), which is valid in ADMGs.
 #'
 #' Note: The resulting ADMG will have nodes re-indexed, preserving the
 #' relative order of observed nodes from the original DAG.
@@ -96,8 +94,7 @@ skeleton <- function(cg) {
 #' @param latents Character vector of latent variable names to project out.
 #'
 #' @returns A `caugi` object of class `"ADMG"` containing only the observed
-#'   variables, with directed edges preserved and bidirected edges added where
-#'   nodes share latent ancestors.
+#'   variables.
 #'
 #' @references
 #' Evans, R. J. (2015). *Graphs for Margins of Bayesian Networks*.
@@ -114,9 +111,20 @@ skeleton <- function(cg) {
 #'
 #' # Project out the latent variable
 #' admg <- latent_project(dag, latents = "U")
-#' # Result: X -> Y, X <-> Y (confounded direct effect)
-#'
+#' # Result: X -> Y AND X <-> Y (children of U become bidirected-connected)
 #' edges(admg)
+#'
+#' # DAG with directed path through latent
+#' dag2 <- caugi(
+#'   X %-->% L,
+#'   L %-->% Y,
+#'   class = "DAG"
+#' )
+#'
+#' # Project out the latent variable
+#' admg2 <- latent_project(dag2, latents = "L")
+#' # Result: X -> Y (directed path X -> L -> Y becomes X -> Y)
+#' edges(admg2)
 #'
 #' @family operations
 #' @concept operations

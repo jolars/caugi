@@ -8,7 +8,7 @@ use crate::graph::alg::csr;
 use crate::graph::pdag::Pdag;
 use crate::graph::ug::Ug;
 use crate::graph::CaugiGraph;
-use std::collections::{HashSet, VecDeque};
+use std::collections::{BTreeSet, HashSet, VecDeque};
 use std::sync::Arc;
 
 impl Dag {
@@ -60,48 +60,39 @@ impl Dag {
 
     /// Project out latent variables from a DAG to produce an ADMG.
     ///
-    /// For each pair of observed nodes (X, Y) **without an existing directed edge**,
-    /// adds a bidirected edge X <-> Y if they share a latent ancestor
-    /// (i.e., An(X) ∩ An(Y) ∩ Latents is non-empty).
-    /// Directed edges between observed nodes are preserved.
+    /// Uses the vertex elimination algorithm for latent projection:
+    /// For each latent vertex v to eliminate:
+    /// 1. Add directed edge p → c for all p ∈ Pa(v), c ∈ Ch(v)
+    /// 2. Add bidirected edge s ↔ c for all s ∈ Sib(v), c ∈ Ch(v)
+    /// 3. Add bidirected edge a ↔ b for all pairs a, b ∈ Ch(v)
+    /// 4. Remove v
     ///
-    /// Note: Since simple graphs cannot have parallel edges, a bidirected edge is
-    /// NOT added between nodes that already have a directed edge. The directed edge
-    /// takes precedence.
+    /// Note: The result may have both directed and bidirected edges between
+    /// the same pair of nodes (e.g., X → Y and X ↔ Y), which is valid in ADMGs.
     ///
     /// # Arguments
     /// * `latents` - Slice of node indices to project out (0-indexed)
     ///
     /// # Returns
-    /// An `Admg` containing only the observed (non-latent) nodes with:
-    /// - Directed edges preserved from the original DAG
-    /// - Bidirected edges added where nodes share latent ancestors and have no direct edge
+    /// An `Admg` containing only the observed (non-latent) nodes.
     ///
     /// # Errors
     /// Returns an error if any latent index is out of bounds.
     pub fn latent_project(&self, latents: &[u32]) -> Result<Admg, String> {
         let n = self.n() as usize;
 
-        // Validate latent indices
-        for &l in latents {
-            if l >= self.n() {
+        // Validate and build remove mask
+        let mut remove = vec![false; n];
+        for &v in latents {
+            if v >= self.n() {
                 return Err(format!(
                     "Latent index {} is out of bounds (n = {})",
-                    l,
+                    v,
                     self.n()
                 ));
             }
+            remove[v as usize] = true;
         }
-
-        // Build latent mask
-        let mut is_latent = vec![false; n];
-        for &l in latents {
-            is_latent[l as usize] = true;
-        }
-
-        // Collect observed nodes (preserving order)
-        let observed: Vec<u32> = (0..self.n()).filter(|&i| !is_latent[i as usize]).collect();
-        let num_observed = observed.len();
 
         // Find edge codes
         let specs = &self.core_ref().registry.specs;
@@ -125,94 +116,155 @@ impl Dag {
         let dir = dir_code.ok_or("No Directed edge spec in registry")?;
         let bid = bid_code.ok_or("No Bidirected edge spec in registry")?;
 
-        if num_observed == 0 {
-            // All nodes are latent - return empty ADMG
+        // If everything removed, return empty ADMG
+        if remove.iter().all(|&x| x) {
             let core = CaugiGraph::from_csr(
                 vec![0u32],
                 vec![],
                 vec![],
                 vec![],
-                true,
+                true, // empty graph is simple
                 self.core_ref().registry.clone(),
             )?;
             return Admg::new(Arc::new(core));
         }
 
-        // Build mapping from old index to new index (only for observed nodes)
+        // Build mutable adjacency over ALL nodes (including ones to be removed later)
+        // Using BTreeSet for deterministic ordering
+        let mut pa: Vec<BTreeSet<u32>> = vec![BTreeSet::new(); n]; // parents
+        let mut ch: Vec<BTreeSet<u32>> = vec![BTreeSet::new(); n]; // children
+        let mut bi: Vec<BTreeSet<u32>> = vec![BTreeSet::new(); n]; // spouses (bidirected)
+
+        // Populate from DAG (only directed edges, no bidirected in a DAG)
+        for u in 0..(n as u32) {
+            for &c in self.children_of(u) {
+                ch[u as usize].insert(c);
+                pa[c as usize].insert(u);
+            }
+        }
+
+        // Helper closures for adding edges
+        fn add_dir(u: u32, v: u32, pa: &mut [BTreeSet<u32>], ch: &mut [BTreeSet<u32>]) {
+            if u == v {
+                return;
+            }
+            if ch[u as usize].insert(v) {
+                pa[v as usize].insert(u);
+            }
+        }
+        fn add_bi(a: u32, b: u32, bi: &mut [BTreeSet<u32>]) {
+            if a == b {
+                return;
+            }
+            bi[a as usize].insert(b);
+            bi[b as usize].insert(a);
+        }
+
+        // Eliminate in deterministic order
+        let mut elim: Vec<u32> = latents.to_vec();
+        elim.sort_unstable();
+        elim.dedup();
+
+        for &v in &elim {
+            let vi = v as usize;
+            if vi >= n {
+                continue;
+            }
+
+            // Snapshot neighborhoods of v in the CURRENT graph
+            let parents_v: Vec<u32> = pa[vi].iter().copied().collect();
+            let children_v: Vec<u32> = ch[vi].iter().copied().collect();
+            let siblings_v: Vec<u32> = bi[vi].iter().copied().collect();
+
+            // 1) Directed projections: Pa(v) -> Ch(v)
+            for &p in &parents_v {
+                for &c in &children_v {
+                    add_dir(p, c, &mut pa, &mut ch);
+                }
+            }
+
+            // 2) Bidirected projections: Sib(v) <-> Ch(v)
+            for &s in &siblings_v {
+                for &c in &children_v {
+                    add_bi(s, c, &mut bi);
+                }
+            }
+
+            // 3) Bidirected among children of v
+            for i in 0..children_v.len() {
+                for j in (i + 1)..children_v.len() {
+                    add_bi(children_v[i], children_v[j], &mut bi);
+                }
+            }
+
+            // Remove v and all incident edges
+            for &p in &parents_v {
+                ch[p as usize].remove(&v);
+            }
+            for &c in &children_v {
+                pa[c as usize].remove(&v);
+            }
+            for &s in &siblings_v {
+                bi[s as usize].remove(&v);
+            }
+
+            pa[vi].clear();
+            ch[vi].clear();
+            bi[vi].clear();
+        }
+
+        // Collect kept nodes
+        let kept: Vec<u32> = (0..self.n()).filter(|&u| !remove[u as usize]).collect();
+        let m = kept.len();
+
+        // old -> new mapping
         let mut old_to_new: Vec<Option<u32>> = vec![None; n];
-        for (new_idx, &old_idx) in observed.iter().enumerate() {
-            old_to_new[old_idx as usize] = Some(new_idx as u32);
+        for (new_i, &old_i) in kept.iter().enumerate() {
+            old_to_new[old_i as usize] = Some(new_i as u32);
         }
 
-        // Pre-compute ancestor sets for each observed node (including latent ancestors)
-        let mut ancestors_incl_self: Vec<HashSet<u32>> = Vec::with_capacity(num_observed);
-        for &obs in &observed {
-            let mut anc_set: HashSet<u32> = self.ancestors_of(obs).into_iter().collect();
-            anc_set.insert(obs); // Include self for completeness
-            ancestors_incl_self.push(anc_set);
-        }
-
-        // Build adjacency lists for the new graph
-        // Each node stores: (parents, spouses, children) as sorted vectors
-        let mut parents: Vec<Vec<u32>> = vec![Vec::new(); num_observed];
-        let mut spouses: Vec<Vec<u32>> = vec![Vec::new(); num_observed];
-        let mut children: Vec<Vec<u32>> = vec![Vec::new(); num_observed];
-
-        // Track which pairs already have a directed edge (to avoid parallel edges)
-        // has_directed_edge[i][j] means there's a directed edge between node i and node j
-        // (in either direction: i->j or j->i)
-        let mut has_directed_edge: Vec<HashSet<u32>> = vec![HashSet::new(); num_observed];
-
-        // Add directed edges between observed nodes
-        for &u in &observed {
-            for &v in self.children_of(u) {
-                if !is_latent[v as usize] {
-                    // Both u and v are observed
-                    let new_u = old_to_new[u as usize].unwrap();
-                    let new_v = old_to_new[v as usize].unwrap();
-                    children[new_u as usize].push(new_v);
-                    parents[new_v as usize].push(new_u);
-                    // Mark this pair as having a directed edge
-                    has_directed_edge[new_u as usize].insert(new_v);
-                    has_directed_edge[new_v as usize].insert(new_u);
+        // Check if the graph has parallel edges (both directed and bidirected between same pair)
+        // Only set simple=false if such pairs exist
+        let mut has_parallel_edges = false;
+        'outer: for &old_i in &kept {
+            let oi = old_i as usize;
+            // Check if any child is also a spouse (or vice versa)
+            for &c in ch[oi].iter() {
+                if bi[oi].contains(&c) {
+                    has_parallel_edges = true;
+                    break 'outer;
+                }
+            }
+            // Check if any parent is also a spouse
+            for &p in pa[oi].iter() {
+                if bi[oi].contains(&p) {
+                    has_parallel_edges = true;
+                    break 'outer;
                 }
             }
         }
 
-        // Add bidirected edges for pairs that share a latent ancestor
-        // BUT only if there's no existing directed edge between them
-        for i in 0..num_observed {
-            for j in (i + 1)..num_observed {
-                // Skip if there's already a directed edge between these nodes
-                if has_directed_edge[i].contains(&(j as u32)) {
-                    continue;
-                }
-
-                // Check if An(observed[i]) ∩ An(observed[j]) ∩ Latents is non-empty
-                let has_shared_latent_ancestor = ancestors_incl_self[i]
-                    .iter()
-                    .any(|&a| is_latent[a as usize] && ancestors_incl_self[j].contains(&a));
-
-                if has_shared_latent_ancestor {
-                    spouses[i].push(j as u32);
-                    spouses[j].push(i as u32);
-                }
-            }
-        }
-
-        // Sort all adjacency lists
-        for i in 0..num_observed {
-            parents[i].sort_unstable();
-            spouses[i].sort_unstable();
-            children[i].sort_unstable();
-        }
-
-        // Build CSR representation
-        let mut row_index = Vec::with_capacity(num_observed + 1);
+        // Build CSR for new graph
+        let mut row_index = Vec::with_capacity(m + 1);
         row_index.push(0u32);
-        for i in 0..num_observed {
-            let count = parents[i].len() + spouses[i].len() + children[i].len();
-            row_index.push(row_index[i] + count as u32);
+
+        // Precompute row lengths
+        for &old_i in &kept {
+            let oi = old_i as usize;
+            let pa_ct = pa[oi]
+                .iter()
+                .filter(|&&p| old_to_new[p as usize].is_some())
+                .count() as u32;
+            let bi_ct = bi[oi]
+                .iter()
+                .filter(|&&s| old_to_new[s as usize].is_some())
+                .count() as u32;
+            let ch_ct = ch[oi]
+                .iter()
+                .filter(|&&c| old_to_new[c as usize].is_some())
+                .count() as u32;
+            let last = *row_index.last().unwrap();
+            row_index.push(last + pa_ct + bi_ct + ch_ct);
         }
 
         let nnz = *row_index.last().unwrap() as usize;
@@ -220,31 +272,41 @@ impl Dag {
         let mut etype = vec![0u8; nnz];
         let mut side = vec![0u8; nnz];
 
-        let mut cur = row_index[..num_observed].to_vec();
-        for i in 0..num_observed {
-            // Parents (side=1 means arrow pointing at us)
-            for &p in &parents[i] {
-                let k = cur[i] as usize;
-                col_index[k] = p;
-                etype[k] = dir;
-                side[k] = 1; // head side (arrow points to this node)
-                cur[i] += 1;
+        let mut cur = row_index[..m].to_vec();
+        for (new_i, &old_i) in kept.iter().enumerate() {
+            let oi = old_i as usize;
+
+            // parents (dir, side=1)
+            for &p in pa[oi].iter() {
+                if let Some(np) = old_to_new[p as usize] {
+                    let k = cur[new_i] as usize;
+                    col_index[k] = np;
+                    etype[k] = dir;
+                    side[k] = 1;
+                    cur[new_i] += 1;
+                }
             }
-            // Spouses (bidirected, side=0 by convention for symmetric edges)
-            for &s in &spouses[i] {
-                let k = cur[i] as usize;
-                col_index[k] = s;
-                etype[k] = bid;
-                side[k] = 0;
-                cur[i] += 1;
+
+            // spouses (bid, side=0)
+            for &s in bi[oi].iter() {
+                if let Some(ns) = old_to_new[s as usize] {
+                    let k = cur[new_i] as usize;
+                    col_index[k] = ns;
+                    etype[k] = bid;
+                    side[k] = 0;
+                    cur[new_i] += 1;
+                }
             }
-            // Children (side=0 means tail, arrow pointing away)
-            for &c in &children[i] {
-                let k = cur[i] as usize;
-                col_index[k] = c;
-                etype[k] = dir;
-                side[k] = 0; // tail side (arrow points away from this node)
-                cur[i] += 1;
+
+            // children (dir, side=0)
+            for &c in ch[oi].iter() {
+                if let Some(nc) = old_to_new[c as usize] {
+                    let k = cur[new_i] as usize;
+                    col_index[k] = nc;
+                    etype[k] = dir;
+                    side[k] = 0;
+                    cur[new_i] += 1;
+                }
             }
         }
 
@@ -253,7 +315,7 @@ impl Dag {
             col_index,
             etype,
             side,
-            true,
+            !has_parallel_edges, // simple=true unless we have parallel edges
             self.core_ref().registry.clone(),
         )?;
         Admg::new(Arc::new(core))
@@ -567,7 +629,10 @@ mod tests {
     fn latent_project_basic_confounding() {
         // DAG: U -> X, U -> Y, X -> Y
         // Project out U
-        // Result: X -> Y only (no bidirected edge because there's already a directed edge)
+        // Using vertex elimination:
+        // - U has Ch(U) = {X, Y}
+        // - Step 3: Add X <-> Y (children of U pair up)
+        // Result: X -> Y AND X <-> Y
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
         let d = reg.code_of("-->").unwrap();
@@ -588,9 +653,9 @@ mod tests {
         assert_eq!(admg.parents_of(1), &[0]); // Y has parent X
         assert_eq!(admg.children_of(0), &[1]); // X has child Y
 
-        // NO bidirected edge: X and Y share latent U, but there's already X -> Y
-        assert!(admg.spouses_of(0).is_empty());
-        assert!(admg.spouses_of(1).is_empty());
+        // X <-> Y added (children of U pair up during vertex elimination)
+        assert_eq!(admg.spouses_of(0), &[1]);
+        assert_eq!(admg.spouses_of(1), &[0]);
     }
 
     #[test]
@@ -616,9 +681,17 @@ mod tests {
     #[test]
     fn latent_project_multiple_latents() {
         // DAG: L1 -> X, L1 -> Y, L2 -> Y, L2 -> Z, X -> Y, Y -> Z
-        // Project out L1, L2
-        // Result: X -> Y -> Z, plus only X <-> Z
-        // (X <-> Y and Y <-> Z are NOT added because of existing directed edges)
+        // Project out L1, L2 using vertex elimination:
+        //
+        // Eliminate L1 (sorted order):
+        // - Ch(L1) = {X, Y}
+        // - Step 3: Add X <-> Y
+        //
+        // Eliminate L2:
+        // - Ch(L2) = {Y, Z}
+        // - Step 3: Add Y <-> Z
+        //
+        // Result: X -> Y -> Z (directed) + X <-> Y, Y <-> Z (bidirected)
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
         let d = reg.code_of("-->").unwrap();
@@ -644,13 +717,12 @@ mod tests {
         assert_eq!(admg.parents_of(1), &[0]); // Y has parent X
         assert_eq!(admg.parents_of(2), &[1]); // Z has parent Y
 
-        // Bidirected edges from latent confounding:
-        // - X <-> Y: skipped (X -> Y exists)
-        // - Y <-> Z: skipped (Y -> Z exists)
-        // - X <-> Z: added (no direct edge, share L1 as ancestor)
-        assert_eq!(admg.spouses_of(0), &[2]); // X <-> Z only
-        assert!(admg.spouses_of(1).is_empty()); // Y has no spouses
-        assert_eq!(admg.spouses_of(2), &[0]); // Z <-> X only
+        // Bidirected edges from vertex elimination:
+        // - X <-> Y: added (children of L1 pair up)
+        // - Y <-> Z: added (children of L2 pair up)
+        assert_eq!(admg.spouses_of(0), &[1]); // X <-> Y
+        assert_eq!(admg.spouses_of(1), &[0, 2]); // Y <-> X, Y <-> Z
+        assert_eq!(admg.spouses_of(2), &[1]); // Z <-> Y
     }
 
     #[test]
@@ -741,5 +813,140 @@ mod tests {
         assert!(admg.children_of(1).is_empty());
         assert!(admg.spouses_of(0).is_empty());
         assert!(admg.spouses_of(1).is_empty());
+    }
+
+    #[test]
+    fn latent_project_directed_path_through_single_latent() {
+        // DAG: X -> L -> Y (L is latent)
+        // Project out L
+        // Result: X -> Y (directed path preserved)
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
+        // 0:X, 1:L, 2:Y
+        b.add_edge(0, 1, d).unwrap(); // X -> L
+        b.add_edge(1, 2, d).unwrap(); // L -> Y
+        let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        let admg = dag.latent_project(&[1]).unwrap();
+
+        // Result has 2 nodes: X=0, Y=1
+        assert_eq!(admg.n(), 2);
+
+        // X -> Y from directed path through L
+        assert_eq!(admg.children_of(0), &[1]); // X -> Y
+        assert_eq!(admg.parents_of(1), &[0]); // Y has parent X
+
+        // No bidirected edges (no shared latent ancestor)
+        assert!(admg.spouses_of(0).is_empty());
+        assert!(admg.spouses_of(1).is_empty());
+    }
+
+    #[test]
+    fn latent_project_directed_path_through_chain_of_latents() {
+        // DAG: X -> L1 -> L2 -> L3 -> Y (L1, L2, L3 are latent)
+        // Project out L1, L2, L3
+        // Result: X -> Y (directed path through latent chain)
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        let mut b = GraphBuilder::new_with_registry(5, true, &reg);
+        // 0:X, 1:L1, 2:L2, 3:L3, 4:Y
+        b.add_edge(0, 1, d).unwrap(); // X -> L1
+        b.add_edge(1, 2, d).unwrap(); // L1 -> L2
+        b.add_edge(2, 3, d).unwrap(); // L2 -> L3
+        b.add_edge(3, 4, d).unwrap(); // L3 -> Y
+        let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        let admg = dag.latent_project(&[1, 2, 3]).unwrap();
+
+        // Result has 2 nodes: X=0, Y=1
+        assert_eq!(admg.n(), 2);
+
+        // X -> Y from directed path through latent chain
+        assert_eq!(admg.children_of(0), &[1]); // X -> Y
+        assert_eq!(admg.parents_of(1), &[0]); // Y has parent X
+
+        // No bidirected edges
+        assert!(admg.spouses_of(0).is_empty());
+        assert!(admg.spouses_of(1).is_empty());
+    }
+
+    #[test]
+    fn latent_project_directed_and_bidirected() {
+        // DAG: X -> L1 -> Y, L2 -> X, L2 -> Y (L1, L2 are latent)
+        // Project out L1, L2 using vertex elimination:
+        //
+        // Eliminate L1 (index 2):
+        // - Pa(L1) = {X}, Ch(L1) = {Y}
+        // - Step 1: Add X -> Y
+        //
+        // Eliminate L2 (index 3):
+        // - Ch(L2) = {X, Y}
+        // - Step 3: Add X <-> Y
+        //
+        // Result: X -> Y AND X <-> Y
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        let mut b = GraphBuilder::new_with_registry(4, true, &reg);
+        // 0:X, 1:Y, 2:L1, 3:L2
+        b.add_edge(0, 2, d).unwrap(); // X -> L1
+        b.add_edge(2, 1, d).unwrap(); // L1 -> Y
+        b.add_edge(3, 0, d).unwrap(); // L2 -> X
+        b.add_edge(3, 1, d).unwrap(); // L2 -> Y
+        let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        let admg = dag.latent_project(&[2, 3]).unwrap();
+
+        // Result has 2 nodes: X=0, Y=1
+        assert_eq!(admg.n(), 2);
+
+        // X -> Y from directed path through L1
+        assert_eq!(admg.children_of(0), &[1]);
+        assert_eq!(admg.parents_of(1), &[0]);
+
+        // X <-> Y from L2's children pairing up
+        assert_eq!(admg.spouses_of(0), &[1]);
+        assert_eq!(admg.spouses_of(1), &[0]);
+    }
+
+    #[test]
+    fn latent_project_multiple_observed_descendants() {
+        // DAG: X -> L -> Y, L -> Z (L is latent, Y and Z are observed)
+        // Project out L
+        // Result: X -> Y, X -> Z (both via directed paths through L)
+        //         Y <-> Z (shared latent ancestor L)
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        let mut b = GraphBuilder::new_with_registry(4, true, &reg);
+        // 0:X, 1:L, 2:Y, 3:Z
+        b.add_edge(0, 1, d).unwrap(); // X -> L
+        b.add_edge(1, 2, d).unwrap(); // L -> Y
+        b.add_edge(1, 3, d).unwrap(); // L -> Z
+        let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        let admg = dag.latent_project(&[1]).unwrap();
+
+        // Result has 3 nodes: X=0, Y=1, Z=2
+        assert_eq!(admg.n(), 3);
+
+        // X -> Y and X -> Z from directed paths through L
+        assert_eq!(admg.children_of(0), &[1, 2]); // X -> Y, X -> Z
+        assert_eq!(admg.parents_of(1), &[0]); // Y has parent X
+        assert_eq!(admg.parents_of(2), &[0]); // Z has parent X
+
+        // Y <-> Z from shared latent ancestor L
+        assert_eq!(admg.spouses_of(1), &[2]); // Y <-> Z
+        assert_eq!(admg.spouses_of(2), &[1]); // Z <-> Y
+
+        // X has no spouses (X is not a child of L, so doesn't share L as ancestor)
+        assert!(admg.spouses_of(0).is_empty());
     }
 }
