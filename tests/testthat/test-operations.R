@@ -247,12 +247,12 @@ test_that("mutate_caugi doesn't change class if old class is equal to new class"
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
-# ─────────────────────────── Latent Projection ───────────────────────────────
+# ──────────────────────────── Latent Projection ───────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
 test_that("latent_project basic confounding: U -> X, U -> Y, X -> Y", {
   # DAG: U -> X, U -> Y, X -> Y
-  # Project out U using vertex elimination:
+  # Project out U:
   # - U has Ch(U) = {X, Y}
   # - Step 3: Add X <-> Y (children of U pair up)
   # Result: X -> Y AND X <-> Y
@@ -273,7 +273,7 @@ test_that("latent_project basic confounding: U -> X, U -> Y, X -> Y", {
   expect_equal(parents(admg, "Y"), "X")
   expect_equal(children(admg, "X"), "Y")
 
-  # X <-> Y added (children of U pair up during vertex elimination)
+  # X <-> Y added
   expect_equal(spouses(admg, "X"), "Y")
   expect_equal(spouses(admg, "Y"), "X")
 })
@@ -301,9 +301,9 @@ test_that("latent_project with no latents returns the same graph as ADMG", {
   expect_null(spouses(admg, "Z"))
 })
 
-test_that("latent_project with multiple latents using vertex elimination", {
+test_that("latent_project with multiple latents", {
   # DAG: L1 -> X, L1 -> Y, L2 -> Y, L2 -> Z, X -> Y, Y -> Z
-  # Project out L1, L2 using vertex elimination:
+  # Project out L1, L2
   #
   # Eliminate L1:
   # - Ch(L1) = {X, Y}
@@ -334,7 +334,6 @@ test_that("latent_project with multiple latents using vertex elimination", {
   expect_equal(parents(admg, "Y"), "X")
   expect_equal(parents(admg, "Z"), "Y")
 
-  # Bidirected edges from vertex elimination:
   # - X <-> Y: added (children of L1 pair up)
   # - Y <-> Z: added (children of L2 pair up)
   expect_equal(spouses(admg, "X"), "Y")
