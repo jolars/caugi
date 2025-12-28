@@ -248,6 +248,14 @@ mutate_caugi <- function(cg, class) {
 exogenize <- function(cg, nodes) {
   is_caugi(cg, throw_error = TRUE)
   cg <- build(cg)
+  if (!cg@simple) {
+    stop(
+      "`cg` must be a simple graph, due to the nature of the implementation. ",
+      "Please open an issue on github if you need this functionality for ",
+      "non-simple graphs.",
+      call. = FALSE
+    )
+  }
   if (!is.character(nodes) || length(nodes) == 0) {
     stop(
       "`nodes` must be a non-empty character vector of node names.",

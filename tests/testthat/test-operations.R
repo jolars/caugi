@@ -508,3 +508,12 @@ test_that("exogenize agrees with exogenous query", {
     union(exogenous_nodes, new_exogenous_nodes)
   )
 })
+
+test_that("exogenize fails with non-simple graphs", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    simple = FALSE
+  )
+  expect_error(exogenize(cg, nodes = "B"), "`cg` must be a simple graph.")
+})
