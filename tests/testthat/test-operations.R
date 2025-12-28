@@ -497,3 +497,13 @@ test_that("exogenize fails with non-character nodes", {
     "`nodes` must be a non-empty character vector of node names."
   )
 })
+
+test_that("exogenize agrees with exogenous query", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    class = "DAG"
+  )
+  exogenized_cg <- exogenize(cg, nodes = "B")
+  expect_equal(exogenous(exogenized_cg), c("A", "B"))
+})
