@@ -246,6 +246,14 @@ mutate_caugi <- function(cg, class) {
 #'
 #' @export
 exogenize <- function(cg, nodes) {
+  is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
+  if (!is.character(nodes) || length(nodes) == 0) {
+    stop(
+      "`nodes` must be a non-empty character vector of node names.",
+      call. = FALSE
+    )
+  }
   for (node in nodes) {
     if (!node %in% nodes(cg)$name) {
       stop(paste0("Node ", node, " not in graph."), call. = FALSE)

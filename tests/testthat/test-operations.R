@@ -481,3 +481,19 @@ test_that("exogenize fails with nodes not in graph", {
   )
   expect_error(exogenize(cg, nodes = "D"), "Node D not in graph.")
 })
+
+test_that("exogenize fails with non-character nodes", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    class = "DAG"
+  )
+  expect_error(
+    exogenize(cg, nodes = 1),
+    "`nodes` must be a non-empty character vector of node names."
+  )
+  expect_error(
+    exogenize(cg, nodes = character(0)),
+    "`nodes` must be a non-empty character vector of node names."
+  )
+})
