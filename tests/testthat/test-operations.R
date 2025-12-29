@@ -513,7 +513,10 @@ test_that("exogenize fails with non-simple graphs", {
   cg <- caugi(
     A %-->% B,
     B %-->% C,
-    simple = FALSE
+    class = "UNKNOWN"
   )
-  expect_error(exogenize(cg, nodes = "B"), "`cg` must be a simple graph.")
+  expect_error(
+    exogenize(cg, nodes = "B"),
+    "`cg` must be a DAG"
+  )
 })

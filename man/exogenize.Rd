@@ -7,18 +7,18 @@
 exogenize(cg, nodes)
 }
 \arguments{
-\item{cg}{A \code{caugi} object.}
+\item{cg}{A \code{caugi} object of class \code{"DAG"}.}
 
-\item{nodes}{A character vector of node names to exogenize. Must be a subset of the nodes in the graph.}
+\item{nodes}{A character vector of node names to exogenize. Must be a subset
+of the nodes in the graph.}
 }
 \value{
 A \code{caugi} object representing the exogenized graph.
 }
 \description{
-Exogenize a graph by removing all ingoing edges to the set of nodes specified.
-}
-\details{
-This function removes all ingoing edges to the set of nodes specified.
+Exogenize a graph by removing all ingoing edges to the set of nodes
+specified (i.e., make the nodes exogenous), as well as joining the
+parents of the nodes specified to the children of the nodes specified.
 }
 \examples{
 cg <- caugi(A \%-->\% B, class = "DAG")

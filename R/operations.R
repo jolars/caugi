@@ -231,7 +231,7 @@ mutate_caugi <- function(cg, class) {
 #' specified (i.e., make the nodes exogenous), as well as joining the
 #' parents of the nodes specified to the children of the nodes specified.
 #'
-#' @param cg A `caugi` object.
+#' @param cg A `caugi` object of class `"DAG"`.
 #' @param nodes A character vector of node names to exogenize. Must be a subset
 #' of the nodes in the graph.
 #'
@@ -249,11 +249,11 @@ exogenize <- function(cg, nodes) {
   is_caugi(cg, throw_error = TRUE)
   cg <- build(cg)
 
-  if (!cg@simple) {
+  if (cg@graph_class != "DAG") {
     stop(
-      "`cg` must be a simple graph, due to the nature of the implementation. ",
-      "Please open an issue on github if you need this functionality for ",
-      "non-simple graphs.",
+      "`cg` must be a DAG for `exogenize()`. The input graph is of class ",
+      cg@graph_class,
+      ".",
       call. = FALSE
     )
   }
