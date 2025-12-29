@@ -22,8 +22,8 @@ jobs:
         with:
           packages: any::rextendr
 
-      - name: Run rextendr::vendorize()
-        run: Rscript -e 'rextendr::vendorize()'
+      - name: Run rextendr::vendor_pkgs()
+        run: Rscript -e 'rextendr::vendor_pkgs()'
 
       - name: Fail if vendorize produced diffs
         run: |
