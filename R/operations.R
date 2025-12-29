@@ -227,13 +227,13 @@ mutate_caugi <- function(cg, class) {
 #' @title Exogenize a graph
 #'
 #' @description
-#' Exogenize a graph by removing all ingoing edges to the set of nodes specified.
-#'
-#' @details
-#' This function removes all ingoing edges to the set of nodes specified.
+#' Exogenize a graph by removing all ingoing edges to the set of nodes
+#' specified (i.e., make the nodes exogenous), as well as joining the
+#' parents of the nodes specified to the children of the nodes specified.
 #'
 #' @param cg A `caugi` object.
-#' @param nodes A character vector of node names to exogenize. Must be a subset of the nodes in the graph.
+#' @param nodes A character vector of node names to exogenize. Must be a subset
+#' of the nodes in the graph.
 #'
 #' @returns A `caugi` object representing the exogenized graph.
 #'
@@ -248,6 +248,7 @@ mutate_caugi <- function(cg, class) {
 exogenize <- function(cg, nodes) {
   is_caugi(cg, throw_error = TRUE)
   cg <- build(cg)
+
   if (!cg@simple) {
     stop(
       "`cg` must be a simple graph, due to the nature of the implementation. ",
@@ -256,19 +257,53 @@ exogenize <- function(cg, nodes) {
       call. = FALSE
     )
   }
+
   if (!is.character(nodes) || length(nodes) == 0) {
     stop(
       "`nodes` must be a non-empty character vector of node names.",
       call. = FALSE
     )
   }
-  for (node in nodes) {
-    if (!node %in% nodes(cg)$name) {
-      stop(paste0("Node ", node, " not in graph."), call. = FALSE)
+
+  all_nodes <- nodes(cg)$name
+
+  for (u in nodes) {
+    if (!u %in% all_nodes) {
+      stop(paste0("Node ", u, " not in graph."), call. = FALSE)
     }
-    if (length(parents(cg, node)) > 0) {
-      remove_edges(cg, from = parents(cg, node), to = node, inplace = TRUE)
+
+    pa_u <- parents(cg, u) # NULL or character vector
+    ch_u <- children(cg, u) # NULL or character vector
+
+    # Step (i): add edges from every parent of u to every child of u
+    if (!is.null(pa_u) && !is.null(ch_u)) {
+      # cross-product of pa(u) x ch(u)
+      grid <- data.table::CJ(from = pa_u, to = ch_u, unique = TRUE)
+
+      # Avoid self-loops (l -> l)
+      grid <- grid[from != to]
+
+      if (nrow(grid) > 0L) {
+        cg <- add_edges(
+          cg,
+          from = grid$from,
+          edge = rep("-->", nrow(grid)),
+          to = grid$to,
+          inplace = TRUE
+        )
+      }
+    }
+
+    # Step (ii): delete incoming edges into u (l -> u)
+    if (!is.null(pa_u) && length(pa_u) > 0L) {
+      cg <- remove_edges(
+        cg,
+        from = pa_u,
+        to = rep(u, length(pa_u)),
+        inplace = TRUE
+      )
     }
   }
+
   cg
 }
