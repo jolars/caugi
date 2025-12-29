@@ -161,6 +161,7 @@ pub fn serialize_graphml(
 }
 
 /// Deserialize a GraphML graph.
+/// Deserialize a GraphML graph.
 pub fn deserialize_graphml(
     xml: &str,
     registry: &EdgeRegistry,
@@ -168,104 +169,188 @@ pub fn deserialize_graphml(
     let mut reader = Reader::from_str(xml);
     reader.config_mut().trim_text(true);
 
-    let mut nodes = Vec::new();
-    let mut edges_from = Vec::new();
-    let mut edges_to = Vec::new();
-    let mut edges_type = Vec::new();
-    let mut graph_class = String::from("UNKNOWN");
+    let mut nodes: Vec<String> = Vec::new();
+    let mut edges_from: Vec<String> = Vec::new();
+    let mut edges_to: Vec<String> = Vec::new();
+    let mut edges_type: Vec<String> = Vec::new();
+    let mut graph_class: String = "UNKNOWN".to_string();
 
-    let mut in_graph = false;
-    let mut in_data = false;
-    let mut data_key = String::new();
-    let mut in_edge_data = false;
+    // Track whether we're inside the main <graph> element (depth == 1)
+    let mut graph_depth: usize = 0;
+
+    // Edge state (only valid while in_edge == true)
+    let mut in_edge = false;
     let mut current_edge_from = String::new();
     let mut current_edge_to = String::new();
+    let mut edge_type_seen = false;
 
-    let mut buf = Vec::new();
+    // <data> state: accumulate content across Text + GeneralRef
+    let mut in_data = false;
+    let mut data_key = String::new();
+    let mut data_value = String::new();
+
+    let mut buf: Vec<u8> = Vec::new();
+
+    fn push_general_ref(out: &mut String, name: &[u8]) {
+        match name {
+            b"lt" => out.push('<'),
+            b"gt" => out.push('>'),
+            b"amp" => out.push('&'),
+            b"apos" => out.push('\''),
+            b"quot" => out.push('"'),
+            _ => {
+                // Don’t silently drop unknown entity refs
+                out.push('&');
+                out.push_str(&String::from_utf8_lossy(name));
+                out.push(';');
+            }
+        }
+    }
+
+    fn push_node_from_attrs(nodes: &mut Vec<String>, e: &BytesStart) -> Result<(), String> {
+        for attr in e.attributes() {
+            let attr = attr.map_err(|e| e.to_string())?;
+            if attr.key.as_ref() == b"id" {
+                let v = attr.unescape_value().map_err(|e| e.to_string())?;
+                nodes.push(v.into_owned());
+                break;
+            }
+        }
+        Ok(())
+    }
 
     loop {
         match reader.read_event_into(&mut buf) {
             Ok(Event::Start(e)) => match e.name().as_ref() {
-                b"graph" => in_graph = true,
-                b"data" if in_graph => {
-                    in_data = true;
-                    for attr in e.attributes() {
-                        let attr = attr.map_err(|e| e.to_string())?;
-                        if attr.key.as_ref() == b"key" {
-                            data_key = String::from_utf8_lossy(&attr.value).to_string();
-                        }
-                    }
+                b"graph" => {
+                    graph_depth += 1;
                 }
-                b"edge" => {
+
+                b"node" if graph_depth == 1 => {
+                    push_node_from_attrs(&mut nodes, &e)?;
+                }
+
+                b"edge" if graph_depth == 1 => {
+                    in_edge = true;
+                    edge_type_seen = false;
+                    current_edge_from.clear();
+                    current_edge_to.clear();
+
                     for attr in e.attributes() {
                         let attr = attr.map_err(|e| e.to_string())?;
                         match attr.key.as_ref() {
                             b"source" => {
-                                let unescaped = attr.unescape_value().map_err(|e| e.to_string())?;
-                                current_edge_from = unescaped.to_string();
+                                let v = attr.unescape_value().map_err(|e| e.to_string())?;
+                                current_edge_from = v.into_owned();
                             }
                             b"target" => {
-                                let unescaped = attr.unescape_value().map_err(|e| e.to_string())?;
-                                current_edge_to = unescaped.to_string();
+                                let v = attr.unescape_value().map_err(|e| e.to_string())?;
+                                current_edge_to = v.into_owned();
                             }
                             _ => {}
                         }
                     }
-                    in_edge_data = true;
+                }
+
+                b"data" if graph_depth == 1 => {
+                    in_data = true;
+                    data_key.clear();
+                    data_value.clear();
+
+                    for attr in e.attributes() {
+                        let attr = attr.map_err(|e| e.to_string())?;
+                        if attr.key.as_ref() == b"key" {
+                            let v = attr.unescape_value().map_err(|e| e.to_string())?;
+                            data_key = v.into_owned();
+                        }
+                    }
+                }
+
+                _ => {}
+            },
+
+            Ok(Event::Empty(e)) => match e.name().as_ref() {
+                b"node" if graph_depth == 1 => {
+                    push_node_from_attrs(&mut nodes, &e)?;
                 }
                 _ => {}
             },
-            Ok(Event::Empty(e)) => {
-                if e.name().as_ref() == b"node" {
-                    for attr in e.attributes() {
-                        let attr = attr.map_err(|e| e.to_string())?;
-                        if attr.key.as_ref() == b"id" {
-                            let unescaped = attr.unescape_value().map_err(|e| e.to_string())?;
-                            nodes.push(unescaped.to_string());
-                        }
-                    }
-                }
-            }
+
             Ok(Event::Text(e)) => {
                 if in_data {
-                    let text = e.unescape().map_err(|e| e.to_string())?.to_string();
-                    if data_key == "graph_class" {
-                        graph_class = text;
-                    } else if data_key == "edge_type" && in_edge_data {
-                        // Validate edge type
-                        if registry.code_of(&text).is_err() {
-                            return Err(format!("Unknown edge type: {}", text));
+                    let t = e.decode().map_err(|e| e.to_string())?;
+                    data_value.push_str(&t);
+                }
+            }
+
+            Ok(Event::GeneralRef(e)) => {
+                if in_data {
+                    push_general_ref(&mut data_value, e.as_ref());
+                }
+            }
+
+            Ok(Event::End(e)) => match e.name().as_ref() {
+                b"graph" => {
+                    if graph_depth > 0 {
+                        graph_depth -= 1;
+                    }
+                }
+
+                b"data" => {
+                    if in_data {
+                        in_data = false;
+
+                        // Interpret the full <data> payload here (after Text+GeneralRef accumulation)
+                        if data_key == "graph_class" && !in_edge {
+                            graph_class = data_value.clone();
+                        } else if data_key == "edge_type" && in_edge {
+                            let value = data_value.clone();
+
+                            if registry.code_of(&value).is_err() {
+                                return Err(format!("Unknown edge type: {}", value));
+                            }
+
+                            if !edge_type_seen {
+                                edges_from.push(current_edge_from.clone());
+                                edges_to.push(current_edge_to.clone());
+                                edges_type.push(value);
+                                edge_type_seen = true;
+                            } else if let Some(last) = edges_type.last_mut() {
+                                // In case multiple edge_type fields appear, keep the latest
+                                *last = value;
+                            }
+                        }
+
+                        data_key.clear();
+                        data_value.clear();
+                    }
+                }
+
+                b"edge" => {
+                    if in_edge && !edge_type_seen {
+                        let default = "-->";
+                        if registry.code_of(default).is_err() {
+                            return Err(format!("Unknown default edge type: {}", default));
                         }
                         edges_from.push(current_edge_from.clone());
                         edges_to.push(current_edge_to.clone());
-                        edges_type.push(text);
+                        edges_type.push(default.to_string());
                     }
-                }
-            }
-            Ok(Event::End(e)) => match e.name().as_ref() {
-                b"graph" => in_graph = false,
-                b"data" => {
-                    in_data = false;
-                    data_key.clear();
-                }
-                b"edge" => {
-                    // If no edge_type was found, use default
-                    if in_edge_data && (edges_from.last() != Some(&current_edge_from))
-                    {
-                        edges_from.push(current_edge_from.clone());
-                        edges_to.push(current_edge_to.clone());
-                        edges_type.push("-->".to_string());
-                    }
-                    in_edge_data = false;
+
+                    in_edge = false;
+                    edge_type_seen = false;
                     current_edge_from.clear();
                     current_edge_to.clear();
                 }
+
                 _ => {}
             },
+
             Ok(Event::Eof) => break,
             Err(e) => return Err(format!("XML parsing error: {}", e)),
             _ => {}
         }
+
         buf.clear();
     }
 
@@ -290,6 +375,7 @@ pub fn deserialize_graphml(
         graph_class,
     })
 }
+
 
 #[cfg(test)]
 mod tests {
