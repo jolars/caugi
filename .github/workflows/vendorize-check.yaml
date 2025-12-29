@@ -4,15 +4,29 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   vendorize:
     if: github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
+      - name: Determine target branch
+        id: branch
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "branch=${{ github.head_ref }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "branch=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ steps.branch.outputs.branch }}
 
       - uses: r-lib/actions/setup-r@v2
 
@@ -20,12 +34,67 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          packages: any::rextendr
+          packages: |
+            any::rextendr
+            any::devtools
 
       - name: Run rextendr::vendor_pkgs()
+        id: vendor
         run: Rscript -e 'rextendr::vendor_pkgs()'
 
-      - name: Fail if vendorize produced diffs
+      - name: Run devtools::check()
+        id: check
+        continue-on-error: true
+        run: Rscript -e 'devtools::check(check_dir = "check")'
+
+      - name: Upload R check results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r-check-results
+          path: check
+
+      - name: Commit & push vendorization (only if check passed)
+        if: steps.check.outcome == 'success'
         run: |
           git status --porcelain
-          git diff --exit-code
+
+          # Nothing to commit?
+          if git diff --quiet; then
+            echo "No vendor changes detected; nothing to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+          git commit -m "chore: vendor rextendr packages"
+
+          # Push back to the same branch
+          git push origin HEAD:${{ steps.branch.outputs.branch }}
+
+      - name: Comment on PR if check failed
+        if: steps.check.outcome != 'success' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: [
+                "❌ `devtools::check()` failed after running `rextendr::vendor_pkgs()`.",
+                "",
+                `Workflow logs: ${runUrl}`,
+                "",
+                "An artifact named **r-check-results** was uploaded from this run (see the run page)."
+              ].join("\n")
+            });
+
+      - name: Fail workflow if check failed (no commit)
+        if: steps.check.outcome != 'success'
+        run: |
+          echo "devtools::check() failed; vendorization was NOT committed."
+          exit 1
