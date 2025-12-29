@@ -349,7 +349,8 @@ S7::method(
     # Correct pcalg PAG code mapping:
     # 1 = circle, 2 = arrowhead, 3 = tail (codes refer to the COLUMN end)
     mark_sym <- function(k) {
-      switch(as.character(k),
+      switch(
+        as.character(k),
         "1" = "o", # circle
         "2" = ">", # arrowhead
         "3" = "-", # tail
@@ -400,7 +401,8 @@ S7::method(
           lj <- tmp
         }
 
-        glyph <- switch(paste0(lf, rt),
+        glyph <- switch(
+          paste0(lf, rt),
           "--" = "---",
           "->" = "-->",
           "-o" = "--o",
@@ -638,7 +640,8 @@ S7::method(
   }
 
   map_glyph <- function(s) {
-    switch(s,
+    switch(
+      s,
       "->" = "-->",
       "<->" = "<->",
       "--" = "---",
