@@ -465,7 +465,7 @@ test_that("exogenize works", {
   )
   exogenized_cg <- exogenize(cg, nodes = "B")
   cg_expected <- caugi(
-    A,
+    A %-->% C,
     B %-->% C,
     class = "DAG"
   )
