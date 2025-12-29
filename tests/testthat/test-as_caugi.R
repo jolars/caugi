@@ -473,13 +473,20 @@ test_that("as_caugi with bnlearn with both directed and undirected edges and col
   bn <- bnlearn::empty.graph(nodes)
   bnlearn::arcs(bn) <- matrix(
     c(
-      "x", "v",
-      "x", "w",
-      "v", "x",
-      "v", "z",
-      "w", "x",
-      "w", "z",
-      "z", "s"
+      "x",
+      "v",
+      "x",
+      "w",
+      "v",
+      "x",
+      "v",
+      "z",
+      "w",
+      "x",
+      "w",
+      "z",
+      "z",
+      "s"
     ),
     ncol = 2,
     byrow = TRUE,
@@ -493,7 +500,7 @@ test_that("as_caugi with bnlearn with both directed and undirected edges and col
   expected <- data.table::data.table(
     from = c("v", "v", "w", "w", "z"),
     edge = c("---", "-->", "---", "-->", "-->"),
-    to   = c("x", "z", "x", "z", "s")
+    to = c("x", "z", "x", "z", "s")
   )
 
   data.table::setorder(actual, from, to, edge)
