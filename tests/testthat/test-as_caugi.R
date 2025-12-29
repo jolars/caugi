@@ -463,3 +463,41 @@ test_that("as_caugi with bnlearn and collapse = TRUE", {
   expect_equal(nrow(cg@edges), 1L)
   expect_equal(unique(cg@edges$edge), "---")
 })
+
+test_that("as_caugi with bnlearn with both directed and undirected edges and collapse = TRUE", {
+  skip_if_not_installed("igraph")
+  skip_if_not_installed("bnlearn")
+
+  nodes <- c("x", "v", "w", "z", "s")
+
+  bn <- bnlearn::empty.graph(nodes)
+  bnlearn::arcs(bn) <- matrix(
+    c(
+      "x", "v",
+      "x", "w",
+      "v", "x",
+      "v", "z",
+      "w", "x",
+      "w", "z",
+      "z", "s"
+    ),
+    ncol = 2,
+    byrow = TRUE,
+    dimnames = list(NULL, c("from", "to"))
+  )
+
+  cg <- as_caugi(bn, class = "PDAG", collapse = TRUE)
+
+  actual <- edges(cg)
+
+  expected <- data.table::data.table(
+    from = c("v", "v", "w", "w", "z"),
+    edge = c("---", "-->", "---", "-->", "-->"),
+    to   = c("x", "z", "x", "z", "s")
+  )
+
+  data.table::setorder(actual, from, to, edge)
+  data.table::setorder(expected, from, to, edge)
+
+  expect_identical(actual, expected)
+})

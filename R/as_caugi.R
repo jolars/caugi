@@ -349,8 +349,7 @@ S7::method(
     # Correct pcalg PAG code mapping:
     # 1 = circle, 2 = arrowhead, 3 = tail (codes refer to the COLUMN end)
     mark_sym <- function(k) {
-      switch(
-        as.character(k),
+      switch(as.character(k),
         "1" = "o", # circle
         "2" = ">", # arrowhead
         "3" = "-", # tail
@@ -401,8 +400,7 @@ S7::method(
           lj <- tmp
         }
 
-        glyph <- switch(
-          paste0(lf, rt),
+        glyph <- switch(paste0(lf, rt),
           "--" = "---",
           "->" = "-->",
           "-o" = "--o",
@@ -640,8 +638,7 @@ S7::method(
   }
 
   map_glyph <- function(s) {
-    switch(
-      s,
+    switch(s,
       "->" = "-->",
       "<->" = "<->",
       "--" = "---",
@@ -749,13 +746,18 @@ S7::method(
   if (collapse) {
     is_edge_symmetric(collapse_to)
 
-    has_rev <- (from != to) & match(pair_key, rev_key, nomatch = 0L) > 0L
-    keep_rep <- !duplicated(key) & (from == canon_from)
-    keep <- !has_rev | keep_rep
+    has_rev <- (from != to) & pair_key %in% rev_key
+    rep_idx <- has_rev & !duplicated(key)
 
-    from <- ifelse(has_rev & keep, canon_from, from)[keep]
-    to <- ifelse(has_rev & keep, canon_to, to)[keep]
-    edge <- ifelse(has_rev & keep, collapse_to, edge)[keep]
+    from[rep_idx] <- canon_from[rep_idx]
+    to[rep_idx] <- canon_to[rep_idx]
+    edge[rep_idx] <- collapse_to
+
+    keep <- !has_rev | rep_idx
+
+    from <- from[keep]
+    to <- to[keep]
+    edge <- edge[keep]
   }
 
   caugi(
