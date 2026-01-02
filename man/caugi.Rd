@@ -13,7 +13,7 @@ caugi(
   edges_df = NULL,
   simple = TRUE,
   build = TRUE,
-  class = c("UNKNOWN", "DAG", "PDAG", "ADMG", "UG"),
+  class = c("AUTO", "DAG", "UG", "PDAG", "ADMG", "UNKNOWN"),
   state = NULL
 )
 }
@@ -53,7 +53,10 @@ if calling \code{\link[=build]{build()}}. \strong{Note}: Even if \code{build = T
 nodes are provided, the graph will not be built and the pointer will be
 \code{NULL}.}
 
-\item{class}{Character; one of \code{"UNKNOWN"}, \code{"DAG"}, \code{"PDAG"}, or \code{"UG"}.}
+\item{class}{Character; one of \code{"AUTO"}, \code{"DAG"}, \code{"UG"}, \code{"PDAG"}, \code{"ADMG"},
+or \code{"UNKNOWN"}. \code{"AUTO"} will automatically pick the appropriate class based
+on the first match in the order of \code{"DAG"}, \code{"UG"}, \code{"PDAG"}, and \code{"ADMG"}.
+It will default to \code{"UNKNOWN"} if no match is found.}
 
 \item{state}{For internal use. Build a graph by supplying a pre-constructed
 state environment.}
