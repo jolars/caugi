@@ -44,7 +44,10 @@
 #' if calling [build()]. __Note__: Even if `build = TRUE`, if no edges or
 #' nodes are provided, the graph will not be built and the pointer will be
 #' `NULL`.
-#' @param class Character; one of `"UNKNOWN"`, `"DAG"`, `"PDAG"`, or `"UG"`.
+#' @param class Character; one of `"AUTO"`, `"DAG"`, `"UG"`, `"PDAG"`, `"ADMG"`,
+#' or `"UNKNOWN"`. `"AUTO"` will automatically pick the appropriate class based
+#' on the first match in the order of `"DAG"`, `"UG"`, `"PDAG"`, and `"ADMG"`.
+#' It will default to `"UNKNOWN"` if no match is found.
 #' @param state For internal use. Build a graph by supplying a pre-constructed
 #' state environment.
 #'
@@ -281,7 +284,7 @@ caugi <- S7::new_class(
     edges_df = NULL,
     simple = TRUE,
     build = TRUE,
-    class = c("UNKNOWN", "DAG", "PDAG", "ADMG", "UG"),
+    class = c("AUTO", "DAG", "UG", "PDAG", "ADMG", "UNKNOWN"),
     state = NULL
   ) {
     if (!is.null(state)) {
@@ -457,6 +460,11 @@ caugi <- S7::new_class(
 
       gptr <- graph_builder_build_view(b, class)
       built <- TRUE
+
+      # resolve AUTO to actual class from Rust
+      if (class == "AUTO") {
+        class <- graph_class_ptr(gptr)
+      }
     }
 
     # initialize fastmap for name to index mapping

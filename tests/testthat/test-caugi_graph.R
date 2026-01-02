@@ -263,6 +263,23 @@ test_that("building PDAG with bidirected edges results in error", {
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────────── AUTO tests ──────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("AUTO class picks the correct class", {
+  cg <- caugi(A %-->% B, class = "AUTO")
+  expect_equal(cg@graph_class, "DAG")
+  cg <- caugi(A %---% B, class = "AUTO")
+  expect_equal(cg@graph_class, "UG")
+  cg <- caugi(A %<->% B, class = "AUTO")
+  expect_equal(cg@graph_class, "ADMG")
+  cg <- caugi(A %o->% B, class = "AUTO")
+  expect_equal(cg@graph_class, "UNKNOWN")
+  cg <- caugi(A %-->% B %---% C, class = "AUTO")
+  expect_equal(cg@graph_class, "PDAG")
+})
+
+# ──────────────────────────────────────────────────────────────────────────────
 # ──────────────────────── Standard evaluation input ───────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 

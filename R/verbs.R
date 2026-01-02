@@ -75,6 +75,11 @@ S7::method(build, caugi) <- function(cg, ...) {
 
   p <- graph_builder_build_view(b, s$class)
 
+  # resolve AUTO to actual class from Rust
+  if (s$class == "AUTO") {
+    s$class <- graph_class_ptr(p)
+  }
+
   # normalize edge order
   s$edges <- .edge_constructor(
     from = s$edges$from,

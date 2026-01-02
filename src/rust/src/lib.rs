@@ -168,27 +168,40 @@ fn graph_builder_add_edges(
 
 // ── Constructors for class views ────────────────────────────────────────────────────────────────
 fn graphview_new(core: ExternalPtr<CaugiGraph>, class: &str) -> ExternalPtr<GraphView> {
+    let core_arc = Arc::new(core.as_ref().clone());
+    
     match class.trim().to_ascii_uppercase().as_str() {
         "DAG" => {
-            let dag =
-                Dag::new(Arc::new(core.as_ref().clone())).unwrap_or_else(|e| throw_r_error(e));
+            let dag = Dag::new(Arc::clone(&core_arc)).unwrap_or_else(|e| throw_r_error(e));
             ExternalPtr::new(GraphView::Dag(Arc::new(dag)))
         }
         "PDAG" | "CPDAG" => {
-            let pdag =
-                Pdag::new(Arc::new(core.as_ref().clone())).unwrap_or_else(|e| throw_r_error(e));
+            let pdag = Pdag::new(Arc::clone(&core_arc)).unwrap_or_else(|e| throw_r_error(e));
             ExternalPtr::new(GraphView::Pdag(Arc::new(pdag)))
         }
         "UG" => {
-            let ug = Ug::new(Arc::new(core.as_ref().clone())).unwrap_or_else(|e| throw_r_error(e));
+            let ug = Ug::new(Arc::clone(&core_arc)).unwrap_or_else(|e| throw_r_error(e));
             ExternalPtr::new(GraphView::Ug(Arc::new(ug)))
         }
         "ADMG" => {
-            let admg =
-                Admg::new(Arc::new(core.as_ref().clone())).unwrap_or_else(|e| throw_r_error(e));
+            let admg = Admg::new(Arc::clone(&core_arc)).unwrap_or_else(|e| throw_r_error(e));
             ExternalPtr::new(GraphView::Admg(Arc::new(admg)))
         }
-        _ => ExternalPtr::new(GraphView::Raw(Arc::new(core.as_ref().clone()))),
+        "AUTO" => {
+            // Try each class in order: DAG → UG → PDAG → ADMG → Raw
+            if let Ok(dag) = Dag::new(Arc::clone(&core_arc)) {
+                ExternalPtr::new(GraphView::Dag(Arc::new(dag)))
+            } else if let Ok(ug) = Ug::new(Arc::clone(&core_arc)) {
+                ExternalPtr::new(GraphView::Ug(Arc::new(ug)))
+            } else if let Ok(pdag) = Pdag::new(Arc::clone(&core_arc)) {
+                ExternalPtr::new(GraphView::Pdag(Arc::new(pdag)))
+            } else if let Ok(admg) = Admg::new(Arc::clone(&core_arc)) {
+                ExternalPtr::new(GraphView::Admg(Arc::new(admg)))
+            } else {
+                ExternalPtr::new(GraphView::Raw(core_arc))
+            }
+        }
+        _ => ExternalPtr::new(GraphView::Raw(core_arc)),
     }
 }
 
