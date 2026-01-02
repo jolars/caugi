@@ -1,6 +1,7 @@
 # caugi 0.5.0
 ## New Features
 
+* Add `simulate_data()` that enables simulation from DAGs using SEMs. Standard linear Gaussian SEMs are defaults, but more importantly custom SEMs are available. 
 * Add `"AUTO"` parameter for `class` in `caugi` objects. This automatically picks the graph class in order `DAG`, `UG`, `PDAG`, `ADMG`. 
 * Add `exogenize()` function that exogenizes variables for any graph type. Current implementation is written in R, but it is so simple that it might be preferable over a Rust implementation. This might be changed later. 
 * Add `latent_project()` function that does latent projection from DAGs to ADMGs. 
