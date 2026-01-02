@@ -1,6 +1,7 @@
 # caugi 0.5.0
 ## New Features
 
+* Add `"AUTO"` parameter for `class` in `caugi` objects. This automatically picks the graph class in order `DAG`, `UG`, `PDAG`, `ADMG`. 
 * Add `exogenize()` function that exogenizes variables for any graph type. Current implementation is written in R, but it is so simple that it might be preferable over a Rust implementation. This might be changed later. 
 * Add `latent_project()` function that does latent projection from DAGs to ADMGs. 
 * Add native caugi serialization format for saving and loading graphs. New functions: `write_caugi()`, `read_caugi()`, `caugi_serialize()`, and `caugi_deserialize()`. The format is a versioned JSON schema that captures graph structure, class, and optional metadata (comments and tags).
