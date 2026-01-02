@@ -75,3 +75,157 @@ generate_graph <- function(n, m = NULL, p = NULL, class = c("DAG", "CPDAG")) {
   }
   .view_to_caugi(ptr)
 }
+
+#' @title Simulate data from a `caugi` DAG.
+#'
+#' @description Simulate data from a `caugi` object of class DAG using a
+#' linear structural equation model (SEM). As standard, the data is
+#' simulated from a DAG, where each node is generated as a linear combination
+#' of its parents plus Gaussian noise, following the topological order of the
+#' graph. Nodes without custom equations are simulated using auto-generated
+#' linear Gaussian relationships.
+#'
+#' @param cg A `caugi` object of class DAG.
+#' @param n Integer; number of observations to simulate.
+#' @param ... Named expressions for custom structural equations. Names must
+#'   match node names in the graph. Expressions can reference parent node names
+#'   and the variable `n` (sample size). Nodes without custom equations use
+#'   auto-generated linear Gaussian relationships.
+#' @param standardize Logical; if `TRUE`, standardize all variables to have
+#'   mean 0 and standard deviation 1. Default is `TRUE`.
+#' @param coef_range Numeric vector of length 2; range for random edge
+#'   coefficients that will be sampled uniformly. Default is `c(0.1, 0.9)`.
+#' @param error_sd Numeric; standard deviation for error terms in
+#'   auto-generated equations. Default is `1`.
+#' @param seed Optional integer; random seed for reproducibility.
+#'
+#' @returns A `data.frame` with `n` rows and one column per node, ordered
+#'   according to the node order in the graph.
+#'
+#' @examples
+#' cg <- caugi(A %-->% B, B %-->% C, A %-->% C, class = "DAG")
+#'
+#' # Fully automatic simulation
+#' df <- simulate_data(cg, n = 100)
+#'
+#' # With standardization
+#' df <- simulate_data(cg, n = 100, standardize = TRUE)
+#'
+#' # Custom equations for some nodes
+#' df <- simulate_data(cg, n = 100,
+#'   A = rnorm(n, mean = 10, sd = 2),
+#'   B = 0.5 * A + rnorm(n, sd = 0.5)
+#' )
+#'
+#' # Reproducible simulation
+#' df <- simulate_data(cg, n = 100, seed = 42)
+#'
+#' @family simulation functions
+#' @concept simulation
+#'
+#' @export
+simulate_data <- function(
+  cg,
+  n,
+  ...,
+  standardize = TRUE,
+  coef_range = c(0.1, 0.9),
+  error_sd = 1,
+  seed = NULL
+) {
+  is_caugi(cg, throw_error = TRUE)
+  if (cg@graph_class != "DAG") {
+    stop(
+      "`simulate_data` currently only supports DAGs. ",
+      "Graph class is: ",
+      cg@graph_class,
+      call. = FALSE
+    )
+  }
+  cg <- build(cg)
+  if (is_empty_caugi(cg)) {
+    stop("Cannot simulate data from an empty graph", call. = FALSE)
+  }
+
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
+
+  n <- as.integer(n)
+  if (length(n) != 1L || n <= 0L) {
+    stop("n must be a single integer > 0", call. = FALSE)
+  }
+
+  # capture custom equations
+  equations <- as.list(substitute(list(...)))[-1L]
+  node_order <- topological_sort(cg)
+  node_names <- nodes(cg)$name
+
+  # validate equation names
+  eq_names <- names(equations)
+  if (length(eq_names) > 0L) {
+    unknown <- setdiff(eq_names, node_names)
+    if (length(unknown) > 0L) {
+      stop(
+        "Unknown node(s) in equations: ",
+        paste(unknown, collapse = ", "),
+        call. = FALSE
+      )
+    }
+  }
+
+  # create evaluation environment
+  env <- new.env(parent = parent.frame())
+  env$n <- n
+
+  data <- list()
+
+  for (node in node_order) {
+    pa <- parents(cg, node)
+    if (is.null(pa)) {
+      pa <- character(0)
+    }
+
+    if (node %in% eq_names) {
+      # user-specified equation: make parent data available
+      for (p in pa) {
+        env[[p]] <- data[[p]]
+      }
+      data[[node]] <- eval(equations[[node]], envir = env)
+
+      if (length(data[[node]]) != n) {
+        stop(
+          sprintf(
+            "Equation for '%s' produced %d values, expected %d.",
+            node,
+            length(data[[node]]),
+            n
+          ),
+          call. = FALSE
+        )
+      }
+    } else {
+      # auto-generate using linear Gaussian model
+      if (length(pa) == 0L) {
+        # exogenous node
+        data[[node]] <- stats::rnorm(n, sd = error_sd)
+      } else {
+        coefs <- stats::runif(length(pa), coef_range[1], coef_range[2])
+        pa_mat <- do.call(cbind, data[pa])
+        data[[node]] <- as.vector(pa_mat %*% coefs) +
+          stats::rnorm(n, sd = error_sd)
+      }
+    }
+  }
+
+  # build data.frame in original node order
+  out <- as.data.frame(data)[, node_names, drop = FALSE]
+
+  if (standardize) {
+    out <- as.data.frame(lapply(out, function(x) {
+      (x - mean(x)) / sd(x)
+    }))
+  }
+
+  out
+}

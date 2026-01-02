@@ -32,5 +32,9 @@ dag <- generate_graph(n = 5, m = 4, class = "DAG")
 cpdag <- generate_graph(n = 5, p = 0.3, class = "CPDAG")
 
 }
+\seealso{
+Other simulation functions: 
+\code{\link{simulate_data}()}
+}
 \concept{simulation}
 \concept{simulation functions}
