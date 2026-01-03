@@ -131,6 +131,27 @@ test_that("simulate_data: errors on equation length mismatch", {
   )
 })
 
+test_that("simulate_data: errors when custom equation doesn't reference all parents", {
+  cg <- caugi(A %-->% B, C %-->% B, class = "DAG")
+
+  # Missing both parents
+  expect_error(
+    simulate_data(cg, n = 10, B = rnorm(n)),
+    "must reference all parent nodes"
+  )
+
+  # Missing one parent
+  expect_error(
+    simulate_data(cg, n = 10, B = 0.5 * A + rnorm(n)),
+    "Missing: C"
+  )
+
+  # All parents referenced - should work
+  expect_no_error(
+    simulate_data(cg, n = 10, B = 0.5 * A + 0.3 * C + rnorm(n))
+  )
+})
+
 # ─────────────────────────── Output structure ─────────────────────────────────
 
 test_that("simulate_data: returns data.frame with correct dimensions", {

@@ -191,6 +191,23 @@ simulate_data <- function(
       for (p in pa) {
         env[[p]] <- data[[p]]
       }
+
+      # validate that all parents are referenced in the equation
+      if (length(pa) > 0L) {
+        eq_vars <- all.vars(equations[[node]])
+        missing_parents <- setdiff(pa, eq_vars)
+        if (length(missing_parents) > 0L) {
+          stop(
+            sprintf(
+              "Equation for '%s' must reference all parent nodes. Missing: %s",
+              node,
+              paste(missing_parents, collapse = ", ")
+            ),
+            call. = FALSE
+          )
+        }
+      }
+
       data[[node]] <- eval(equations[[node]], envir = env)
 
       if (length(data[[node]]) != n) {
