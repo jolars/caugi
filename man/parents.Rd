@@ -40,18 +40,8 @@ parents(cg, c("B", "C"))
 #> $C
 #> [1] "B"
 
-# Also works for UNKNOWN graphs
-cg_unknown <- caugi(
-  A \%-->\% B,
-  B \%---\% C,
-  class = "UNKNOWN"
-)
-parents(cg_unknown, "B") # "A"
-
 }
 \seealso{
-\code{\link[=neighbors]{neighbors()}} for the underlying function with more options.
-
 Other queries: 
 \code{\link{ancestors}()},
 \code{\link{children}()},

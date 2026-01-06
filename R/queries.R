@@ -536,16 +536,6 @@ edge_types <- function(cg) {
 #' #> $C
 #' #> [1] "B"
 #'
-#' # Also works for UNKNOWN graphs
-#' cg_unknown <- caugi(
-#'   A %-->% B,
-#'   B %---% C,
-#'   class = "UNKNOWN"
-#' )
-#' parents(cg_unknown, "B") # "A"
-#'
-#' @seealso [neighbors()] for the underlying function with more options.
-#'
 #' @family queries
 #' @concept queries
 #'
@@ -617,16 +607,6 @@ parents <- function(cg, nodes = NULL, index = NULL) {
 #' #>
 #' #> $C
 #' #> NULL
-#'
-#' # Also works for UNKNOWN graphs
-#' cg_unknown <- caugi(
-#'   A %-->% B,
-#'   B %---% C,
-#'   class = "UNKNOWN"
-#' )
-#' children(cg_unknown, "A") # "B"
-#'
-#' @seealso [neighbors()] for the underlying function with more options.
 #'
 #' @family queries
 #' @concept queries

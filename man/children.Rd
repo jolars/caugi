@@ -39,18 +39,8 @@ children(cg, c("B", "C"))
 #> $C
 #> NULL
 
-# Also works for UNKNOWN graphs
-cg_unknown <- caugi(
-  A \%-->\% B,
-  B \%---\% C,
-  class = "UNKNOWN"
-)
-children(cg_unknown, "A") # "B"
-
 }
 \seealso{
-\code{\link[=neighbors]{neighbors()}} for the underlying function with more options.
-
 Other queries: 
 \code{\link{ancestors}()},
 \code{\link{descendants}()},
