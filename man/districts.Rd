@@ -10,7 +10,8 @@ districts(cg)
 \item{cg}{A \code{caugi} object of class ADMG.}
 }
 \value{
-A list of character vectors, each containing the nodes in a district.
+A list of character vectors,
+each containing the nodes in a district.
 }
 \description{
 Get the districts (c-components) of an ADMG.

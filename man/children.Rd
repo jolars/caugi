@@ -20,7 +20,8 @@ requested) or a list of character vectors (if multiple nodes are requested).
 }
 \description{
 Get children of node in a graph (nodes with directed edges pointing OUT
-from the target node). This is equivalent to \code{neighbors(cg, nodes, mode = "out")}.
+from the target node).
+This is equivalent to \code{neighbors(cg, nodes, mode = "out")}.
 }
 \examples{
 cg <- caugi(

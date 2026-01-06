@@ -591,7 +591,8 @@ parents <- function(cg, nodes = NULL, index = NULL) {
 #'
 #' @description
 #' Get children of node in a graph (nodes with directed edges pointing OUT
-#' from the target node). This is equivalent to `neighbors(cg, nodes, mode = "out")`.
+#' from the target node).
+#' This is equivalent to `neighbors(cg, nodes, mode = "out")`.
 #'
 #' @param cg A `caugi` object.
 #' @param nodes A vector of node names, a vector of unquoted
@@ -761,7 +762,7 @@ neighbors <- function(
     cg <- build(cg)
   }
 
-  mode <- match.arg(mode)[[1L]] # Ensure single scalar string
+  mode <- match.arg(mode)
 
   if (index_supplied) {
     return(.getter_output(
@@ -1143,7 +1144,8 @@ spouses <- function(cg, nodes = NULL, index = NULL) {
 #'
 #' @param cg A `caugi` object of class ADMG.
 #'
-#' @returns A list of character vectors, each containing the nodes in a district.
+#' @returns A list of character vectors,
+#' each containing the nodes in a district.
 #'
 #' @examples
 #' cg <- caugi(
@@ -1171,7 +1173,7 @@ districts <- function(cg) {
 #' @description Test whether two sets of nodes are m-separated given a
 #' conditioning set in an ADMG.
 #'
-#' M-separation generalizes d-separation to ADMGs (Acyclic Directed Mixed Graphs).
+#' M-separation generalizes d-separation to ADMGs.
 #'
 #' @param cg A `caugi` object of class ADMG or DAG.
 #' @param x A character vector of node names (the "source" set).
