@@ -70,12 +70,8 @@ impl GraphView {
     }
 
     // ---- queries ----
-    // Note: parents_of, children_of, undirected_of, spouses_of, and bidirected_of are
-    // NOT supported for Raw (UNKNOWN) graphs. For UNKNOWN graphs, use neighbors_mode_of
-    // or the R-level neighbors() function with explicit mode parameter.
 
-    /// Get parents of node `i` (nodes with directed edges pointing INTO `i`).
-    /// Not supported for UNKNOWN graphs - use neighbors_mode_of with NeighborMode::In instead.
+    /// Get parents of node `i` (nodes with directed edges pointing INTO `i`)..
     pub fn parents_of(&self, i: u32) -> Result<Vec<u32>, String> {
         if matches!(self, GraphView::Raw(_)) {
             return Err("parents_of is not defined for UNKNOWN graphs; use neighbors(..., mode = 'in') instead".into());
@@ -84,7 +80,6 @@ impl GraphView {
     }
 
     /// Get children of node `i` (nodes with directed edges pointing OUT from `i`).
-    /// Not supported for UNKNOWN graphs - use neighbors_mode_of with NeighborMode::Out instead.
     pub fn children_of(&self, i: u32) -> Result<Vec<u32>, String> {
         if matches!(self, GraphView::Raw(_)) {
             return Err("children_of is not defined for UNKNOWN graphs; use neighbors(..., mode = 'out') instead".into());
@@ -93,7 +88,6 @@ impl GraphView {
     }
 
     /// Get undirected neighbors of node `i` (nodes connected via `---` edges).
-    /// Not supported for UNKNOWN graphs - use neighbors_mode_of with NeighborMode::Undirected instead.
     /// Note: For ADMG, use `bidirected_of` or `spouses_of` instead.
     pub fn undirected_of(&self, i: u32) -> Result<Vec<u32>, String> {
         if matches!(self, GraphView::Raw(_)) {
@@ -103,7 +97,6 @@ impl GraphView {
     }
 
     /// Get bidirected neighbors of node `i` (nodes connected via `<->` edges, i.e., spouses).
-    /// Not supported for UNKNOWN graphs - use neighbors_mode_of with NeighborMode::Bidirected instead.
     pub fn bidirected_of(&self, i: u32) -> Result<Vec<u32>, String> {
         if matches!(self, GraphView::Raw(_)) {
             return Err("bidirected_of is not defined for UNKNOWN graphs; use neighbors(..., mode = 'bidirected') instead".into());
@@ -112,7 +105,6 @@ impl GraphView {
     }
 
     /// Get all neighbors of node `i` regardless of edge type.
-    /// This is the only semantic wrapper that works for all graph types including UNKNOWN.
     pub fn neighbors_of(&self, i: u32) -> Result<Vec<u32>, String> {
         self.neighbors_mode_of(i, NeighborMode::All)
     }
@@ -201,56 +193,31 @@ impl GraphView {
         for k in core.row_range(i) {
             let neighbor = core.col_index[k];
             let etype = core.etype[k];
-            let my_side = core.side[k]; // 0 = non-Arrow, 1 = Arrow
+            let my_position = core.side[k]; // 0 = tail position, 1 = head position
 
             let spec = &core.registry.specs[etype as usize];
 
+            // Determine my mark and neighbor's mark based on position.
+            // my_position == 0 means I'm at tail position (my mark = spec.tail, neighbor = spec.head)
+            // my_position == 1 means I'm at head position (my mark = spec.head, neighbor = spec.tail)
+            let (my_mark, neighbor_mark) = if my_position == 0 {
+                (spec.tail, spec.head)
+            } else {
+                (spec.head, spec.tail)
+            };
+
             // Determine whether to include this neighbor based on the mode.
-            // We use a combination of the side value and edge class/marks.
             let include = match mode {
                 NeighborMode::All => true,
 
                 NeighborMode::In => {
                     // Ingoing: I have an Arrow mark (something points INTO me)
-                    // side == 1 means I have Arrow
-                    my_side == 1
+                    my_mark == Mark::Arrow
                 }
 
                 NeighborMode::Out => {
                     // Outgoing: neighbor has Arrow mark (something points INTO neighbor)
-                    // This is true if:
-                    // - For symmetric edges: if I have Arrow, so does neighbor
-                    // - For asymmetric edges: if the non-Arrow end, neighbor has Arrow
-                    if spec.symmetric {
-                        my_side == 1 // both ends same
-                    } else {
-                        // Asymmetric: check if neighbor's mark is Arrow
-                        // If I have side==1 (Arrow), then I'm at the Arrow end
-                        // For edges like -->, my Arrow means neighbor has Tail
-                        // For edges like <->, both have Arrow
-                        // For edges like o->, my side==1 means I'm at head (Arrow)
-                        let tail_is_arrow = spec.tail == Mark::Arrow;
-                        let head_is_arrow = spec.head == Mark::Arrow;
-                        if my_side == 1 {
-                            // I have Arrow
-                            if tail_is_arrow && head_is_arrow {
-                                true // bidirected-like
-                            } else if tail_is_arrow {
-                                false // I'm at tail, neighbor at head has non-Arrow
-                            } else {
-                                false // I'm at head, neighbor at tail has non-Arrow
-                            }
-                        } else {
-                            // I have non-Arrow
-                            if tail_is_arrow {
-                                true // neighbor at tail has Arrow
-                            } else if head_is_arrow {
-                                true // neighbor at head has Arrow
-                            } else {
-                                false // neither has Arrow
-                            }
-                        }
-                    }
+                    neighbor_mark == Mark::Arrow
                 }
 
                 NeighborMode::Undirected => {
@@ -265,43 +232,7 @@ impl GraphView {
 
                 NeighborMode::Partial => {
                     // Partial: I have Circle mark
-                    // For this, we need to check if my mark is Circle.
-                    // Since side only tells us Arrow vs non-Arrow, we need the edge class.
-                    match spec.class {
-                        EdgeClass::Partial => true, // o-o: both have Circle
-                        EdgeClass::PartiallyDirected => {
-                            // o->: tail has Circle, head has Arrow
-                            // If my side == 0 (non-Arrow), I'm at tail (Circle)
-                            my_side == 0
-                        }
-                        EdgeClass::PartiallyUndirected => {
-                            // --o: tail has Tail, head has Circle
-                            // If my side == 0 (non-Arrow), I could be Tail or Circle
-                            // Need to determine: I'm at Circle end if neighbor is at Tail end
-                            // Since both are non-Arrow, check node ordering from neighbor's perspective
-                            // This is a limitation - for now, use heuristic:
-                            // If I'm at head position (i > neighbor for the original edge), I have Circle
-                            // But we don't store the original direction...
-                            // Use another heuristic: check the neighbor's mark
-                            // For --o, one end has Tail, one has Circle
-                            // We can't distinguish without additional info, so use edge class heuristic
-                            // Assume: head position = second endpoint = typically larger node index in sorted edges
-                            // This is imprecise; for now, include both ends for --o partial check
-                            // Actually, the correct approach: check if this is the Circle end
-                            // We know tail=Tail, head=Circle. If at head, my mark is Circle.
-                            // Problem: we don't know if we're at head.
-                            //
-                            // Fallback: always return false for --o when checking Partial from my perspective
-                            // But that's wrong too.
-                            //
-                            // Best approach: look up neighbor's side from their half-edge
-                            // But that's expensive. For now, use a simpler heuristic:
-                            // Only return true if this edge has Circle somewhere AND we're likely at Circle end
-                            // Since --o has Circle at head, check if we're "head-ish" by comparing node indices
-                            i > neighbor // heuristic: head end typically has larger index when added as add_edge(smaller, larger)
-                        }
-                        _ => false,
-                    }
+                    my_mark == Mark::Circle
                 }
             };
 
