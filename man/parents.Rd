@@ -19,8 +19,10 @@ Either a character vector of node names (if a single node is
 requested) or a list of character vectors (if multiple nodes are requested).
 }
 \description{
-Get parents of node in a graph. Note that not both nodes and index can be
-given.
+Get parents of node in a graph (nodes with directed edges pointing INTO
+the target node). This is equivalent to \code{neighbors(cg, nodes, mode = "in")}.
+
+Note that not both nodes and index can be given.
 }
 \examples{
 cg <- caugi(
@@ -38,8 +40,18 @@ parents(cg, c("B", "C"))
 #> $C
 #> [1] "B"
 
+# Also works for UNKNOWN graphs
+cg_unknown <- caugi(
+  A \%-->\% B,
+  B \%---\% C,
+  class = "UNKNOWN"
+)
+parents(cg_unknown, "B") # "A"
+
 }
 \seealso{
+\code{\link[=neighbors]{neighbors()}} for the underlying function with more options.
+
 Other queries: 
 \code{\link{ancestors}()},
 \code{\link{children}()},

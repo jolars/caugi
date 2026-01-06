@@ -5,9 +5,19 @@
 \alias{neighbours}
 \title{Get neighbors of nodes in a \code{caugi}}
 \usage{
-neighbors(cg, nodes = NULL, index = NULL)
+neighbors(
+  cg,
+  nodes = NULL,
+  index = NULL,
+  mode = c("all", "in", "ingoing", "out", "outgoing", "undirected", "partial")
+)
 
-neighbours(cg, nodes = NULL, index = NULL)
+neighbours(
+  cg,
+  nodes = NULL,
+  index = NULL,
+  mode = c("all", "in", "ingoing", "out", "outgoing", "undirected", "partial")
+)
 }
 \arguments{
 \item{cg}{A \code{caugi} object.}
@@ -16,13 +26,27 @@ neighbours(cg, nodes = NULL, index = NULL)
 node names, or an expression combining these with \code{+} and \code{c()}.}
 
 \item{index}{A vector of node indexes.}
+
+\item{mode}{Character; specifies which types of neighbors to return:
+\describe{
+\item{\code{"all"}}{All neighbors (default)}
+\item{\code{"in"} or \code{"ingoing"}}{Parents: nodes with directed edges pointing
+INTO the target node (equivalent to \code{parents()})}
+\item{\code{"out"} or \code{"outgoing"}}{Children: nodes with directed edges pointing
+OUT from the target node (equivalent to \code{children()})}
+\item{\code{"undirected"}}{Nodes connected via undirected (\verb{---}) or
+bidirected (\verb{<->}) edges}
+\item{\code{"partial"}}{Nodes connected via partial edges (edges with circle
+endpoints: \code{o-o}, \verb{o->}, \code{--o})}
+}}
 }
 \value{
 Either a character vector of node names (if a single node is
 requested) or a list of character vectors (if multiple nodes are requested).
 }
 \description{
-Get neighbors of nodes in a \code{caugi}
+Get neighbors of a node in the graph, optionally filtered by edge direction
+or type. This function works for all graph classes including \code{UNKNOWN}.
 }
 \examples{
 cg <- caugi(
@@ -39,6 +63,21 @@ neighbors(cg, c("B", "C"))
 #>
 #> $C
 #> [1] "B"
+
+# Using mode to filter by edge direction
+neighbors(cg, "B", mode = "in") # "A" (parents)
+neighbors(cg, "B", mode = "out") # "C" (children)
+
+# Works for UNKNOWN graphs too
+cg_unknown <- caugi(
+  A \%-->\% B,
+  B \%---\% C,
+  C \%o->\% D,
+  class = "UNKNOWN"
+)
+neighbors(cg_unknown, "B", mode = "in") # "A"
+neighbors(cg_unknown, "B", mode = "undirected") # "C"
+neighbors(cg_unknown, "C", mode = "partial") # "D"
 
 }
 \seealso{

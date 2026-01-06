@@ -494,3 +494,234 @@ test_that("subgraph with index matches nodes variant", {
   expect_identical(s1@edges, s2@edges)
   expect_true(s1@built && s2@built)
 })
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ─────────────────────── UNKNOWN graph neighbor queries ──────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("neighbors mode 'all' works for UNKNOWN graphs", {
+  cg <- caugi(
+    A %-->% B,
+    B %---% C,
+    C %<->% D,
+    class = "UNKNOWN"
+  )
+
+  # All neighbors
+  expect_setequal(neighbors(cg, "B", mode = "all"), c("A", "C"))
+  expect_setequal(neighbors(cg, "C", mode = "all"), c("B", "D"))
+})
+
+test_that("neighbors mode 'in' and 'out' work for UNKNOWN graphs", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    class = "UNKNOWN"
+  )
+
+  # In mode (parents)
+  expect_null(neighbors(cg, "A", mode = "in"))
+  expect_identical(neighbors(cg, "B", mode = "in"), "A")
+  expect_identical(neighbors(cg, "C", mode = "in"), "B")
+
+  # Out mode (children)
+  expect_identical(neighbors(cg, "A", mode = "out"), "B")
+  expect_identical(neighbors(cg, "B", mode = "out"), "C")
+  expect_null(neighbors(cg, "C", mode = "out"))
+})
+
+test_that("neighbors mode 'undirected' works for UNKNOWN graphs", {
+  cg <- caugi(
+    A %-->% B,
+    B %---% C,
+    C %<->% D,
+    class = "UNKNOWN"
+  )
+
+  # Undirected mode (--- and <->)
+  expect_null(neighbors(cg, "A", mode = "undirected"))
+  expect_identical(neighbors(cg, "B", mode = "undirected"), "C")
+  expect_setequal(neighbors(cg, "C", mode = "undirected"), c("B", "D"))
+  expect_identical(neighbors(cg, "D", mode = "undirected"), "C")
+})
+
+test_that("neighbors mode 'partial' works for UNKNOWN graphs", {
+  cg <- caugi(
+    A %-->% B,
+    B %o->% C,
+    C %o-o% D,
+    D %--o% E,
+    class = "UNKNOWN"
+  )
+
+  # Partial mode (o-o, o->, --o)
+  expect_null(neighbors(cg, "A", mode = "partial"))
+  expect_identical(neighbors(cg, "B", mode = "partial"), "C")
+  expect_setequal(neighbors(cg, "C", mode = "partial"), c("B", "D"))
+  expect_setequal(neighbors(cg, "D", mode = "partial"), c("C", "E"))
+  expect_identical(neighbors(cg, "E", mode = "partial"), "D")
+})
+
+test_that("parents and children work for UNKNOWN graphs", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    B %---% D,
+    class = "UNKNOWN"
+  )
+
+  # parents is equivalent to neighbors(..., mode = "in")
+  expect_null(parents(cg, "A"))
+  expect_identical(parents(cg, "B"), "A")
+  expect_identical(parents(cg, "C"), "B")
+  expect_null(parents(cg, "D"))
+
+  # children is equivalent to neighbors(..., mode = "out")
+  expect_identical(children(cg, "A"), "B")
+  expect_identical(children(cg, "B"), "C")
+  expect_null(children(cg, "C"))
+  expect_null(children(cg, "D"))
+})
+
+test_that("neighbors mode aliases work", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    class = "UNKNOWN"
+  )
+
+  # "ingoing" is alias for "in"
+  expect_identical(
+    neighbors(cg, "B", mode = "ingoing"),
+    neighbors(cg, "B", mode = "in")
+  )
+
+  # "outgoing" is alias for "out"
+  expect_identical(
+    neighbors(cg, "B", mode = "outgoing"),
+    neighbors(cg, "B", mode = "out")
+  )
+})
+
+test_that("neighbors mode with index works for UNKNOWN graphs", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    class = "UNKNOWN"
+  )
+
+  # Using index parameter
+  expect_identical(neighbors(cg, index = 2, mode = "in"), "A")
+  expect_identical(neighbors(cg, index = 2, mode = "out"), "C")
+})
+
+test_that("neighbors mode works with multiple nodes for UNKNOWN graphs", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    C %-->% D,
+    class = "UNKNOWN"
+  )
+
+  result <- neighbors(cg, c("B", "C"), mode = "in")
+  expect_identical(names(result), c("B", "C"))
+  expect_identical(result$B, "A")
+  expect_identical(result$C, "B")
+})
+
+test_that("neighbors mode 'all' is default for UNKNOWN graphs", {
+  cg <- caugi(
+    A %-->% B,
+    B %---% C,
+    class = "UNKNOWN"
+  )
+
+  # Default should be "all"
+  expect_identical(
+    neighbors(cg, "B"),
+    neighbors(cg, "B", mode = "all")
+  )
+})
+
+test_that("neighbors mode validation for DAG", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    class = "DAG"
+  )
+
+  # Valid modes for DAG: in, out, all
+  expect_identical(neighbors(cg, "B", mode = "in"), "A")
+  expect_identical(neighbors(cg, "B", mode = "out"), "C")
+  expect_setequal(neighbors(cg, "B", mode = "all"), c("A", "C"))
+
+  # Invalid modes for DAG: undirected, partial
+  expect_error(neighbors(cg, "B", mode = "undirected"), "not valid for DAG")
+  expect_error(neighbors(cg, "B", mode = "partial"), "not valid for DAG")
+})
+
+test_that("neighbors mode validation for PDAG", {
+  cg <- caugi(
+    A %-->% B,
+    B %---% C,
+    class = "PDAG"
+  )
+
+  # Valid modes for PDAG: in, out, undirected, all
+  expect_identical(neighbors(cg, "B", mode = "in"), "A")
+  expect_null(neighbors(cg, "B", mode = "out"))
+  expect_identical(neighbors(cg, "B", mode = "undirected"), "C")
+  expect_setequal(neighbors(cg, "B", mode = "all"), c("A", "C"))
+
+  # Invalid modes for PDAG: partial
+  expect_error(neighbors(cg, "B", mode = "partial"), "not valid for PDAG")
+})
+
+test_that("neighbors mode validation for UG", {
+  cg <- caugi(
+    A %---% B,
+    B %---% C,
+    class = "UG"
+  )
+
+  # Valid modes for UG: undirected, all
+  expect_setequal(neighbors(cg, "B", mode = "undirected"), c("A", "C"))
+  expect_setequal(neighbors(cg, "B", mode = "all"), c("A", "C"))
+
+  # Invalid modes for UG: in, out, partial
+  expect_error(neighbors(cg, "B", mode = "in"), "not defined for UG")
+  expect_error(neighbors(cg, "B", mode = "out"), "not defined for UG")
+  expect_error(neighbors(cg, "B", mode = "partial"), "not valid for UG")
+})
+
+test_that("neighbors mode validation for ADMG", {
+  cg <- caugi(
+    A %-->% B,
+    B %<->% C,
+    class = "ADMG"
+  )
+
+  # Valid modes for ADMG: in, out, undirected (spouses), all
+  expect_identical(neighbors(cg, "B", mode = "in"), "A")
+  expect_null(neighbors(cg, "B", mode = "out"))
+  expect_identical(neighbors(cg, "B", mode = "undirected"), "C") # bidirected
+  expect_setequal(neighbors(cg, "B", mode = "all"), c("A", "C"))
+
+  # Invalid modes for ADMG: partial
+  expect_error(neighbors(cg, "B", mode = "partial"), "not valid for ADMG")
+})
+
+test_that("spouses works for UNKNOWN graphs", {
+  cg <- caugi(
+    A %-->% B,
+    B %<->% C,
+    C %---% D,
+    class = "UNKNOWN"
+  )
+
+  # spouses returns only bidirected edges
+  expect_null(spouses(cg, "A"))
+  expect_identical(spouses(cg, "B"), "C")
+  expect_identical(spouses(cg, "C"), "B")
+  expect_null(spouses(cg, "D"))
+})

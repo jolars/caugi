@@ -19,7 +19,8 @@ Either a character vector of node names (if a single node is
 requested) or a list of character vectors (if multiple nodes are requested).
 }
 \description{
-Get children of nodes in a \code{caugi}
+Get children of node in a graph (nodes with directed edges pointing OUT
+from the target node). This is equivalent to \code{neighbors(cg, nodes, mode = "out")}.
 }
 \examples{
 cg <- caugi(
@@ -37,8 +38,18 @@ children(cg, c("B", "C"))
 #> $C
 #> NULL
 
+# Also works for UNKNOWN graphs
+cg_unknown <- caugi(
+  A \%-->\% B,
+  B \%---\% C,
+  class = "UNKNOWN"
+)
+children(cg_unknown, "A") # "B"
+
 }
 \seealso{
+\code{\link[=neighbors]{neighbors()}} for the underlying function with more options.
+
 Other queries: 
 \code{\link{ancestors}()},
 \code{\link{descendants}()},

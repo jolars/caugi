@@ -3,7 +3,37 @@ use super::dag::Dag;
 use super::pdag::Pdag;
 use super::ug::Ug;
 use super::CaugiGraph;
+use crate::edges::EdgeClass;
 use std::sync::Arc;
+
+/// Mode for neighbor queries, specifying which edge types to include.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NeighborMode {
+    /// All neighbors (union of all edge types)
+    All,
+    /// Ingoing directed edges (parents: edges pointing INTO the node)
+    In,
+    /// Outgoing directed edges (children: edges pointing OUT from the node)
+    Out,
+    /// Undirected and bidirected edges
+    Undirected,
+    /// Partial edges (circle endpoints: o-o, o->, --o)
+    Partial,
+}
+
+impl NeighborMode {
+    /// Parse mode from string, with alias support.
+    pub fn from_str(s: &str) -> Result<Self, String> {
+        match s.to_lowercase().as_str() {
+            "all" => Ok(NeighborMode::All),
+            "in" | "ingoing" => Ok(NeighborMode::In),
+            "out" | "outgoing" => Ok(NeighborMode::Out),
+            "undirected" => Ok(NeighborMode::Undirected),
+            "partial" => Ok(NeighborMode::Partial),
+            _ => Err(format!("Unknown neighbor mode: '{}'", s)),
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum GraphView {
@@ -38,42 +68,138 @@ impl GraphView {
     }
 
     // ---- queries ----
-    pub fn parents_of(&self, i: u32) -> Result<&[u32], String> {
-        match self {
-            GraphView::Dag(g) => Ok(g.parents_of(i)),
-            GraphView::Pdag(g) => Ok(g.parents_of(i)),
-            GraphView::Admg(g) => Ok(g.parents_of(i)),
-            GraphView::Ug(_) => Err("parents_of not defined for UG".into()),
-            GraphView::Raw(_) => Err("parents_of not implemented for UNKNOWN class".into()),
+    // Note: parents_of, children_of, undirected_of, and spouses_of are thin wrappers
+    // around neighbors_mode_of for Raw graphs. For typed graphs, they return optimized slices.
+
+    /// Get parents of node `i` (nodes with directed edges pointing INTO `i`).
+    /// This is equivalent to `neighbors_mode_of(i, NeighborMode::In)`.
+    pub fn parents_of(&self, i: u32) -> Result<Vec<u32>, String> {
+        self.neighbors_mode_of(i, NeighborMode::In)
+    }
+
+    /// Get children of node `i` (nodes with directed edges pointing OUT from `i`).
+    /// This is equivalent to `neighbors_mode_of(i, NeighborMode::Out)`.
+    pub fn children_of(&self, i: u32) -> Result<Vec<u32>, String> {
+        self.neighbors_mode_of(i, NeighborMode::Out)
+    }
+
+    /// Get undirected neighbors of node `i` (nodes connected via undirected edges).
+    /// For ADMG, this returns spouses (bidirected edges).
+    /// This is equivalent to `neighbors_mode_of(i, NeighborMode::Undirected)`.
+    pub fn undirected_of(&self, i: u32) -> Result<Vec<u32>, String> {
+        self.neighbors_mode_of(i, NeighborMode::Undirected)
+    }
+
+    /// Get all neighbors of node `i` regardless of edge type.
+    /// This is equivalent to `neighbors_mode_of(i, NeighborMode::All)`.
+    pub fn neighbors_of(&self, i: u32) -> Result<Vec<u32>, String> {
+        self.neighbors_mode_of(i, NeighborMode::All)
+    }
+
+    /// Get neighbors of node `i` filtered by mode.
+    ///
+    /// This method works for all graph types including Raw (UNKNOWN class).
+    /// For typed graphs (DAG, PDAG, etc.), it delegates to optimized methods when possible.
+    /// For Raw graphs, it iterates over CSR entries and filters by edge class.
+    ///
+    /// Mode restrictions per graph type:
+    /// - DAG: in, out, all (no undirected or partial edges exist)
+    /// - PDAG: in, out, undirected, all (no partial edges exist)
+    /// - UG: undirected, all (no directed or partial edges exist)
+    /// - ADMG: in, out, undirected (bidirected/spouses), all (no partial edges exist)
+    /// - UNKNOWN (Raw): all modes allowed
+    pub fn neighbors_mode_of(&self, i: u32, mode: NeighborMode) -> Result<Vec<u32>, String> {
+        // Validate mode for graph type and dispatch to optimized methods
+        match (self, mode) {
+            // DAG: only in, out, all
+            (GraphView::Dag(g), NeighborMode::All) => Ok(g.neighbors_of(i).to_vec()),
+            (GraphView::Dag(g), NeighborMode::In) => Ok(g.parents_of(i).to_vec()),
+            (GraphView::Dag(g), NeighborMode::Out) => Ok(g.children_of(i).to_vec()),
+            (GraphView::Dag(_), NeighborMode::Undirected) => {
+                Err("mode 'undirected' not valid for DAG (no undirected edges)".into())
+            }
+            (GraphView::Dag(_), NeighborMode::Partial) => {
+                Err("mode 'partial' not valid for DAG (no partial edges)".into())
+            }
+
+            // PDAG: in, out, undirected, all (no partial)
+            (GraphView::Pdag(g), NeighborMode::All) => Ok(g.neighbors_of(i).to_vec()),
+            (GraphView::Pdag(g), NeighborMode::In) => Ok(g.parents_of(i).to_vec()),
+            (GraphView::Pdag(g), NeighborMode::Out) => Ok(g.children_of(i).to_vec()),
+            (GraphView::Pdag(g), NeighborMode::Undirected) => Ok(g.undirected_of(i).to_vec()),
+            (GraphView::Pdag(_), NeighborMode::Partial) => {
+                Err("mode 'partial' not valid for PDAG (no partial edges)".into())
+            }
+
+            // UG: only undirected, all
+            (GraphView::Ug(g), NeighborMode::All) => Ok(g.neighbors_of(i).to_vec()),
+            (GraphView::Ug(_), NeighborMode::In) => {
+                Err("mode 'in' (parents) not defined for UG".into())
+            }
+            (GraphView::Ug(_), NeighborMode::Out) => {
+                Err("mode 'out' (children) not defined for UG".into())
+            }
+            (GraphView::Ug(g), NeighborMode::Undirected) => Ok(g.neighbors_of(i).to_vec()),
+            (GraphView::Ug(_), NeighborMode::Partial) => {
+                Err("mode 'partial' not valid for UG (no partial edges)".into())
+            }
+
+            // ADMG: in, out, undirected (spouses), all (no partial)
+            (GraphView::Admg(g), NeighborMode::All) => Ok(g.neighbors_of(i).to_vec()),
+            (GraphView::Admg(g), NeighborMode::In) => Ok(g.parents_of(i).to_vec()),
+            (GraphView::Admg(g), NeighborMode::Out) => Ok(g.children_of(i).to_vec()),
+            (GraphView::Admg(g), NeighborMode::Undirected) => Ok(g.spouses_of(i).to_vec()),
+            (GraphView::Admg(_), NeighborMode::Partial) => {
+                Err("mode 'partial' not valid for ADMG (no partial edges)".into())
+            }
+
+            // Raw (UNKNOWN): all modes allowed, iterate CSR
+            (GraphView::Raw(_), _) => self.neighbors_mode_of_raw(i, mode),
         }
     }
-    pub fn children_of(&self, i: u32) -> Result<&[u32], String> {
-        match self {
-            GraphView::Dag(g) => Ok(g.children_of(i)),
-            GraphView::Pdag(g) => Ok(g.children_of(i)),
-            GraphView::Admg(g) => Ok(g.children_of(i)),
-            GraphView::Ug(_) => Err("children_of not defined for UG".into()),
-            GraphView::Raw(_) => Err("children_of not implemented for UNKNOWN class".into()),
+
+    /// Generic implementation for Raw graphs - iterates CSR and filters by edge class.
+    fn neighbors_mode_of_raw(&self, i: u32, mode: NeighborMode) -> Result<Vec<u32>, String> {
+        let core = self.core();
+        let mut result = Vec::new();
+
+        for k in core.row_range(i) {
+            let neighbor = core.col_index[k];
+            let etype = core.etype[k];
+            let side = core.side[k];
+
+            let spec = &core.registry.specs[etype as usize];
+
+            let include = match mode {
+                NeighborMode::All => true,
+                NeighborMode::In => {
+                    // Ingoing: directed edges where we are at the head (side == 1)
+                    spec.class == EdgeClass::Directed && side == 1
+                }
+                NeighborMode::Out => {
+                    // Outgoing: directed edges where we are at the tail (side == 0)
+                    spec.class == EdgeClass::Directed && side == 0
+                }
+                NeighborMode::Undirected => {
+                    // Undirected and bidirected edges
+                    spec.class == EdgeClass::Undirected || spec.class == EdgeClass::Bidirected
+                }
+                NeighborMode::Partial => {
+                    // Partial edges (any with circle endpoints)
+                    spec.class == EdgeClass::Partial
+                        || spec.class == EdgeClass::PartiallyDirected
+                        || spec.class == EdgeClass::PartiallyUndirected
+                }
+            };
+
+            if include {
+                result.push(neighbor);
+            }
         }
+
+        Ok(result)
     }
-    pub fn undirected_of(&self, i: u32) -> Result<&[u32], String> {
-        match self {
-            GraphView::Dag(_) => Err("undirected_of not defined for Dag".into()),
-            GraphView::Admg(_) => Err("undirected_of not defined for ADMG".into()),
-            GraphView::Pdag(g) => Ok(g.undirected_of(i)),
-            GraphView::Ug(g) => Ok(g.neighbors_of(i)),
-            GraphView::Raw(_) => Err("undirected_of not implemented for UNKNOWN class".into()),
-        }
-    }
-    pub fn neighbors_of(&self, i: u32) -> Result<&[u32], String> {
-        match self {
-            GraphView::Dag(g) => Ok(g.neighbors_of(i)),
-            GraphView::Pdag(g) => Ok(g.neighbors_of(i)),
-            GraphView::Ug(g) => Ok(g.neighbors_of(i)),
-            GraphView::Admg(g) => Ok(g.neighbors_of(i)),
-            GraphView::Raw(_) => Err("neighbors_of not implemented for UNKNOWN class".into()),
-        }
-    }
+
     pub fn ancestors_of(&self, i: u32) -> Result<Vec<u32>, String> {
         match self {
             GraphView::Dag(g) => Ok(g.ancestors_of(i)),
@@ -126,10 +252,27 @@ impl GraphView {
     }
 
     // ---- ADMG-specific methods ----
-    pub fn spouses_of(&self, i: u32) -> Result<&[u32], String> {
+    /// Get spouses of node `i` (nodes connected via bidirected edges).
+    /// For ADMG, this is equivalent to `neighbors_mode_of(i, NeighborMode::Undirected)`.
+    /// For UNKNOWN graphs, returns nodes connected via bidirected (`<->`) edges.
+    pub fn spouses_of(&self, i: u32) -> Result<Vec<u32>, String> {
         match self {
-            GraphView::Admg(g) => Ok(g.spouses_of(i)),
-            _ => Err("spouses_of is only defined for ADMGs".into()),
+            GraphView::Admg(g) => Ok(g.spouses_of(i).to_vec()),
+            GraphView::Raw(_) => {
+                // For Raw graphs, filter for bidirected edges only
+                let core = self.core();
+                let mut result = Vec::new();
+                for k in core.row_range(i) {
+                    let neighbor = core.col_index[k];
+                    let etype = core.etype[k];
+                    let spec = &core.registry.specs[etype as usize];
+                    if spec.class == EdgeClass::Bidirected {
+                        result.push(neighbor);
+                    }
+                }
+                Ok(result)
+            }
+            _ => Err("spouses_of is only defined for ADMGs and UNKNOWN graphs".into()),
         }
     }
 
@@ -384,13 +527,13 @@ mod tests {
         let dag = Arc::new(Dag::new(dag_core.clone()).unwrap());
         let v_dag = GraphView::Dag(dag);
         assert_eq!(v_dag.n(), 3);
-        assert_eq!(v_dag.parents_of(1).unwrap(), &[0]);
-        assert_eq!(v_dag.children_of(0).unwrap(), &[1, 2]);
-        assert_eq!(v_dag.neighbors_of(0).unwrap(), &[1, 2]);
+        assert_eq!(v_dag.parents_of(1).unwrap(), vec![0]);
+        assert_eq!(v_dag.children_of(0).unwrap(), vec![1, 2]);
+        assert_eq!(v_dag.neighbors_of(0).unwrap(), vec![1, 2]);
         assert_eq!(v_dag.descendants_of(0).unwrap(), vec![1, 2]);
         assert_eq!(v_dag.ancestors_of(2).unwrap(), vec![0]);
         let e = v_dag.undirected_of(0).unwrap_err();
-        assert_eq!(e, "undirected_of not defined for Dag");
+        assert_eq!(e, "mode 'undirected' not valid for DAG (no undirected edges)");
         let v_dag_core = v_dag.core();
         assert_eq!(v_dag_core.n(), 3);
 
@@ -403,28 +546,27 @@ mod tests {
         let pdag = Arc::new(Pdag::new(pdag_core.clone()).unwrap());
         let v_pdag = GraphView::Pdag(pdag);
         assert_eq!(v_pdag.n(), 4);
-        assert_eq!(v_pdag.parents_of(1).unwrap(), &[0]);
-        assert_eq!(v_pdag.children_of(0).unwrap(), &[1]);
-        assert_eq!(v_pdag.undirected_of(1).unwrap(), &[2]);
-        assert_eq!(v_pdag.neighbors_of(1).unwrap(), &[0, 2, 3]);
+        assert_eq!(v_pdag.parents_of(1).unwrap(), vec![0]);
+        assert_eq!(v_pdag.children_of(0).unwrap(), vec![1]);
+        assert_eq!(v_pdag.undirected_of(1).unwrap(), vec![2]);
+        assert_eq!(v_pdag.neighbors_of(1).unwrap(), vec![0, 2, 3]);
         assert_eq!(v_pdag.descendants_of(0).unwrap(), vec![1, 3]);
         assert_eq!(v_pdag.ancestors_of(3).unwrap(), vec![0, 1]);
         let v_pdag_core = v_pdag.core();
         assert_eq!(v_pdag_core.n(), 4);
 
-        // Raw view uses UNKNOWN class fallbacks
+        // Raw view now supports parents_of, children_of, undirected_of, neighbors_of via neighbors_mode_of
+        // The pdag_core has: 0->1, 1---2, 1->3
         let v_raw = GraphView::Raw(pdag_core);
         assert_eq!(v_raw.n(), 4);
-        let e1 = v_raw.parents_of(0).unwrap_err();
-        let e2 = v_raw.children_of(0).unwrap_err();
-        let e3 = v_raw.undirected_of(0).unwrap_err();
-        assert_eq!(e1, "parents_of not implemented for UNKNOWN class");
-        assert_eq!(e2, "children_of not implemented for UNKNOWN class");
-        assert_eq!(e3, "undirected_of not implemented for UNKNOWN class");
-        assert_eq!(
-            v_raw.neighbors_of(0).unwrap_err(),
-            "neighbors_of not implemented for UNKNOWN class"
-        );
+        // parents_of(1) should return [0] (from 0->1)
+        assert_eq!(v_raw.parents_of(1).unwrap(), vec![0]);
+        // children_of(0) should return [1] (from 0->1)
+        assert_eq!(v_raw.children_of(0).unwrap(), vec![1]);
+        // undirected_of(1) should return [2] (from 1---2)
+        assert_eq!(v_raw.undirected_of(1).unwrap(), vec![2]);
+        // neighbors_of(0) should return [1] (all neighbors)
+        assert_eq!(v_raw.neighbors_of(0).unwrap(), vec![1]);
 
         let v_raw_core = v_raw.core();
         assert_eq!(v_raw_core.n(), 4);
@@ -790,5 +932,147 @@ mod tests {
             v_ug.moralize().unwrap_err(),
             "moralize is only defined for DAGs"
         );
+    }
+
+    #[test]
+    fn neighbor_mode_from_str_parses_correctly() {
+        assert_eq!(NeighborMode::from_str("all").unwrap(), NeighborMode::All);
+        assert_eq!(NeighborMode::from_str("ALL").unwrap(), NeighborMode::All);
+        assert_eq!(NeighborMode::from_str("in").unwrap(), NeighborMode::In);
+        assert_eq!(NeighborMode::from_str("ingoing").unwrap(), NeighborMode::In);
+        assert_eq!(NeighborMode::from_str("INGOING").unwrap(), NeighborMode::In);
+        assert_eq!(NeighborMode::from_str("out").unwrap(), NeighborMode::Out);
+        assert_eq!(
+            NeighborMode::from_str("outgoing").unwrap(),
+            NeighborMode::Out
+        );
+        assert_eq!(
+            NeighborMode::from_str("undirected").unwrap(),
+            NeighborMode::Undirected
+        );
+        assert_eq!(
+            NeighborMode::from_str("partial").unwrap(),
+            NeighborMode::Partial
+        );
+        assert!(NeighborMode::from_str("invalid").is_err());
+    }
+
+    #[test]
+    fn neighbors_mode_of_dag() {
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap();
+        let d = r.code_of("-->").unwrap();
+
+        // 0 -> 1, 0 -> 2
+        let mut b = GraphBuilder::new_with_registry(3, true, &r);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(0, 2, d).unwrap();
+        let v = GraphView::Dag(Arc::new(Dag::new(Arc::new(b.finalize().unwrap())).unwrap()));
+
+        // Node 0: has children 1,2 (out), no parents (in)
+        assert_eq!(v.neighbors_mode_of(0, NeighborMode::All).unwrap(), vec![1, 2]);
+        assert_eq!(v.neighbors_mode_of(0, NeighborMode::In).unwrap(), Vec::<u32>::new());
+        assert_eq!(v.neighbors_mode_of(0, NeighborMode::Out).unwrap(), vec![1, 2]);
+        // DAG doesn't have undirected or partial edges - should error
+        assert!(v.neighbors_mode_of(0, NeighborMode::Undirected).is_err());
+        assert!(v.neighbors_mode_of(0, NeighborMode::Partial).is_err());
+
+        // Node 1: has parent 0 (in), no children (out)
+        assert_eq!(v.neighbors_mode_of(1, NeighborMode::All).unwrap(), vec![0]);
+        assert_eq!(v.neighbors_mode_of(1, NeighborMode::In).unwrap(), vec![0]);
+        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Out).unwrap(), Vec::<u32>::new());
+    }
+
+    #[test]
+    fn neighbors_mode_of_pdag() {
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap();
+        let d = r.code_of("-->").unwrap();
+        let u = r.code_of("---").unwrap();
+
+        // 0 -> 1, 1 --- 2
+        let mut b = GraphBuilder::new_with_registry(3, true, &r);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(1, 2, u).unwrap();
+        let v = GraphView::Pdag(Arc::new(Pdag::new(Arc::new(b.finalize().unwrap())).unwrap()));
+
+        // Node 1: parent 0 (in), undirected 2
+        assert_eq!(v.neighbors_mode_of(1, NeighborMode::In).unwrap(), vec![0]);
+        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Out).unwrap(), Vec::<u32>::new());
+        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Undirected).unwrap(), vec![2]);
+        // PDAG doesn't have partial edges - should error
+        assert!(v.neighbors_mode_of(1, NeighborMode::Partial).is_err());
+    }
+
+    #[test]
+    fn neighbors_mode_of_raw_mixed_edges() {
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap();
+        let d = r.code_of("-->").unwrap();
+        let u = r.code_of("---").unwrap();
+        let bi = r.code_of("<->").unwrap();
+        let po = r.code_of("o->").unwrap();
+        let oo = r.code_of("o-o").unwrap();
+
+        // Graph: 0 -> 1, 1 --- 2, 1 <-> 3, 1 o-> 4, 1 o-o 5
+        let mut b = GraphBuilder::new_with_registry(6, false, &r);
+        b.add_edge(0, 1, d).unwrap(); // 0 -> 1
+        b.add_edge(1, 2, u).unwrap(); // 1 --- 2
+        b.add_edge(1, 3, bi).unwrap(); // 1 <-> 3
+        b.add_edge(1, 4, po).unwrap(); // 1 o-> 4
+        b.add_edge(1, 5, oo).unwrap(); // 1 o-o 5
+        let core = Arc::new(b.finalize().unwrap());
+        let v = GraphView::Raw(core);
+
+        // Node 1 neighbors:
+        // - All: 0, 2, 3, 4, 5
+        let all = v.neighbors_mode_of(1, NeighborMode::All).unwrap();
+        assert_eq!(all.len(), 5);
+        assert!(all.contains(&0));
+        assert!(all.contains(&2));
+        assert!(all.contains(&3));
+        assert!(all.contains(&4));
+        assert!(all.contains(&5));
+
+        // - In (parents): 0 (directed edge 0->1, node 1 is at head)
+        // Note: o-> is PartiallyDirected, not Directed, so it's not counted here
+        let in_neigh = v.neighbors_mode_of(1, NeighborMode::In).unwrap();
+        assert_eq!(in_neigh, vec![0]);
+
+        // - Out (children): empty, because 1 has no pure directed outgoing edges
+        // Note: o-> (1 o-> 4) is PartiallyDirected, which is counted as Partial, not Out
+        let out_neigh = v.neighbors_mode_of(1, NeighborMode::Out).unwrap();
+        assert!(out_neigh.is_empty());
+
+        // - Undirected: 2, 3 (--- and <->)
+        let und_neigh = v.neighbors_mode_of(1, NeighborMode::Undirected).unwrap();
+        assert_eq!(und_neigh.len(), 2);
+        assert!(und_neigh.contains(&2));
+        assert!(und_neigh.contains(&3));
+
+        // - Partial: 4, 5 (o-> and o-o - both have circle endpoints)
+        let part_neigh = v.neighbors_mode_of(1, NeighborMode::Partial).unwrap();
+        assert_eq!(part_neigh.len(), 2);
+        assert!(part_neigh.contains(&4));
+        assert!(part_neigh.contains(&5));
+    }
+
+    #[test]
+    fn neighbors_mode_of_raw_directed_only() {
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap();
+        let d = r.code_of("-->").unwrap();
+
+        // Simple graph: 0 -> 1 -> 2
+        let mut b = GraphBuilder::new_with_registry(3, true, &r);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(1, 2, d).unwrap();
+        let core = Arc::new(b.finalize().unwrap());
+        let v = GraphView::Raw(core);
+
+        // Node 1: parent 0 (in), child 2 (out)
+        assert_eq!(v.neighbors_mode_of(1, NeighborMode::In).unwrap(), vec![0]);
+        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Out).unwrap(), vec![2]);
+        assert_eq!(v.neighbors_mode_of(1, NeighborMode::All).unwrap().len(), 2);
     }
 }

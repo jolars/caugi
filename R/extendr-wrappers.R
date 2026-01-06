@@ -38,6 +38,8 @@ undirected_of_ptr <- function(g, idxs) .Call(wrap__undirected_of_ptr, g, idxs)
 
 neighbors_of_ptr <- function(g, idxs) .Call(wrap__neighbors_of_ptr, g, idxs)
 
+neighbors_mode_of_ptr <- function(g, idxs, mode) .Call(wrap__neighbors_mode_of_ptr, g, idxs, mode)
+
 ancestors_of_ptr <- function(g, idxs) .Call(wrap__ancestors_of_ptr, g, idxs)
 
 descendants_of_ptr <- function(g, idxs) .Call(wrap__descendants_of_ptr, g, idxs)

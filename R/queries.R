@@ -507,8 +507,10 @@ edge_types <- function(cg) {
 #' @title Get parents of nodes in a `caugi`
 #'
 #' @description
-#' Get parents of node in a graph. Note that not both nodes and index can be
-#' given.
+#' Get parents of node in a graph (nodes with directed edges pointing INTO
+#' the target node). This is equivalent to `neighbors(cg, nodes, mode = "in")`.
+#'
+#' Note that not both nodes and index can be given.
 #'
 #' @param cg A `caugi` object.
 #' @param nodes A vector of node names, a vector of unquoted
@@ -533,6 +535,16 @@ edge_types <- function(cg) {
 #' #>
 #' #> $C
 #' #> [1] "B"
+#'
+#' # Also works for UNKNOWN graphs
+#' cg_unknown <- caugi(
+#'   A %-->% B,
+#'   B %---% C,
+#'   class = "UNKNOWN"
+#' )
+#' parents(cg_unknown, "B") # "A"
+#'
+#' @seealso [neighbors()] for the underlying function with more options.
 #'
 #' @family queries
 #' @concept queries
@@ -577,6 +589,10 @@ parents <- function(cg, nodes = NULL, index = NULL) {
 
 #' @title Get children of nodes in a `caugi`
 #'
+#' @description
+#' Get children of node in a graph (nodes with directed edges pointing OUT
+#' from the target node). This is equivalent to `neighbors(cg, nodes, mode = "out")`.
+#'
 #' @param cg A `caugi` object.
 #' @param nodes A vector of node names, a vector of unquoted
 #' node names, or an expression combining these with `+` and `c()`.
@@ -600,6 +616,16 @@ parents <- function(cg, nodes = NULL, index = NULL) {
 #' #>
 #' #> $C
 #' #> NULL
+#'
+#' # Also works for UNKNOWN graphs
+#' cg_unknown <- caugi(
+#'   A %-->% B,
+#'   B %---% C,
+#'   class = "UNKNOWN"
+#' )
+#' children(cg_unknown, "A") # "B"
+#'
+#' @seealso [neighbors()] for the underlying function with more options.
 #'
 #' @family queries
 #' @concept queries
@@ -644,10 +670,26 @@ children <- function(cg, nodes = NULL, index = NULL) {
 
 #' @title Get neighbors of nodes in a `caugi`
 #'
+#' @description
+#' Get neighbors of a node in the graph, optionally filtered by edge direction
+#' or type. This function works for all graph classes including `UNKNOWN`.
+#'
 #' @param cg A `caugi` object.
 #' @param nodes A vector of node names, a vector of unquoted
 #' node names, or an expression combining these with `+` and `c()`.
 #' @param index A vector of node indexes.
+#' @param mode Character; specifies which types of neighbors to return:
+#' \describe{
+#'   \item{`"all"`}{All neighbors (default)}
+#'   \item{`"in"` or `"ingoing"`}{Parents: nodes with directed edges pointing
+#'     INTO the target node (equivalent to `parents()`)}
+#'   \item{`"out"` or `"outgoing"`}{Children: nodes with directed edges pointing
+#'     OUT from the target node (equivalent to `children()`)}
+#'   \item{`"undirected"`}{Nodes connected via undirected (`---`) or
+#'     bidirected (`<->`) edges}
+#'   \item{`"partial"`}{Nodes connected via partial edges (edges with circle
+#'     endpoints: `o-o`, `o->`, `--o`)}
+#' }
 #'
 #' @returns Either a character vector of node names (if a single node is
 #' requested) or a list of character vectors (if multiple nodes are requested).
@@ -668,11 +710,31 @@ children <- function(cg, nodes = NULL, index = NULL) {
 #' #> $C
 #' #> [1] "B"
 #'
+#' # Using mode to filter by edge direction
+#' neighbors(cg, "B", mode = "in") # "A" (parents)
+#' neighbors(cg, "B", mode = "out") # "C" (children)
+#'
+#' # Works for UNKNOWN graphs too
+#' cg_unknown <- caugi(
+#'   A %-->% B,
+#'   B %---% C,
+#'   C %o->% D,
+#'   class = "UNKNOWN"
+#' )
+#' neighbors(cg_unknown, "B", mode = "in") # "A"
+#' neighbors(cg_unknown, "B", mode = "undirected") # "C"
+#' neighbors(cg_unknown, "C", mode = "partial") # "D"
+#'
 #' @family queries
 #' @concept queries
 #'
 #' @export
-neighbors <- function(cg, nodes = NULL, index = NULL) {
+neighbors <- function(
+  cg,
+  nodes = NULL,
+  index = NULL,
+  mode = c("all", "in", "ingoing", "out", "outgoing", "undirected", "partial")
+) {
   nodes_supplied <- !missing(nodes)
   index_supplied <- !missing(index) && !is.null(index)
   if (nodes_supplied && index_supplied) {
@@ -681,10 +743,13 @@ neighbors <- function(cg, nodes = NULL, index = NULL) {
   if (!cg@built) {
     cg <- build(cg)
   }
+
+  mode <- match.arg(mode)[[1L]] # Ensure single scalar string
+
   if (index_supplied) {
     return(.getter_output(
       cg,
-      neighbors_of_ptr(cg@ptr, as.integer(index - 1L)),
+      neighbors_mode_of_ptr(cg@ptr, as.integer(index - 1L), mode),
       cg@nodes$name[index]
     ))
   }
@@ -706,7 +771,11 @@ neighbors <- function(cg, nodes = NULL, index = NULL) {
     )
   )
 
-  .getter_output(cg, neighbors_of_ptr(cg@ptr, as.integer(index)), nodes)
+  .getter_output(
+    cg,
+    neighbors_mode_of_ptr(cg@ptr, as.integer(index), mode),
+    nodes
+  )
 }
 
 #' @rdname neighbors
