@@ -271,32 +271,20 @@ fn undirected_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
 }
 
 #[extendr]
-fn neighbors_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
-    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
-    for ri in idxs.iter() {
-        let i = rint_to_u32(ri, "idxs");
-        if i >= g.as_ref().n() {
-            throw_r_error(format!("Index {} is out of bounds", i));
-        }
-        let v = g
-            .as_ref()
-            .neighbors_of(i)
-            .unwrap_or_else(|e| throw_r_error(e));
-        out.push(v.iter().map(|&x| x as i32).collect_robj());
-    }
-    extendr_api::prelude::List::from_values(out).into_robj()
-}
-
-#[extendr]
-fn neighbors_mode_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers, mode: Strings) -> Robj {
+fn neighbors_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers, mode: Strings) -> Robj {
     use graph::NeighborMode;
 
-    if mode.len() != 1 {
-        throw_r_error("mode must be a single string".to_string());
-    }
-    let mode_rstr = mode.elt(0);
-    let mode_str = mode_rstr.as_str();
-    let neighbor_mode = NeighborMode::from_str(mode_str).unwrap_or_else(|e| throw_r_error(e));
+    // Default to "all" if mode is empty or NA
+    let neighbor_mode = if mode.len() == 0 {
+        NeighborMode::All
+    } else {
+        let mode_rstr = mode.elt(0);
+        if mode_rstr.is_na() {
+            NeighborMode::All
+        } else {
+            NeighborMode::from_str(mode_rstr.as_str()).unwrap_or_else(|e| throw_r_error(e))
+        }
+    };
 
     let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
     for ri in idxs.iter() {
@@ -306,7 +294,7 @@ fn neighbors_mode_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers, mode: String
         }
         let v = g
             .as_ref()
-            .neighbors_mode_of(i, neighbor_mode)
+            .neighbors_of(i, neighbor_mode)
             .unwrap_or_else(|e| throw_r_error(e));
         out.push(v.iter().map(|&x| x as i32).collect_robj());
     }
@@ -1120,7 +1108,6 @@ extendr_module! {
     fn children_of_ptr;
     fn undirected_of_ptr;
     fn neighbors_of_ptr;
-    fn neighbors_mode_of_ptr;
     fn ancestors_of_ptr;
     fn descendants_of_ptr;
     fn markov_blanket_of_ptr;

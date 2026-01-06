@@ -747,7 +747,7 @@ neighbors <- function(
   if (index_supplied) {
     return(.getter_output(
       cg,
-      neighbors_mode_of_ptr(cg@ptr, as.integer(index - 1L), mode),
+      neighbors_of_ptr(cg@ptr, as.integer(index - 1L), mode),
       cg@nodes$name[index]
     ))
   }
@@ -771,7 +771,7 @@ neighbors <- function(
 
   .getter_output(
     cg,
-    neighbors_mode_of_ptr(cg@ptr, as.integer(index), mode),
+    neighbors_of_ptr(cg@ptr, as.integer(index), mode),
     nodes
   )
 }

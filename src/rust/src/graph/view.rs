@@ -76,7 +76,7 @@ impl GraphView {
         if matches!(self, GraphView::Raw(_)) {
             return Err("parents_of is not defined for UNKNOWN graphs; use neighbors(..., mode = 'in') instead".into());
         }
-        self.neighbors_mode_of(i, NeighborMode::In)
+        self.neighbors_of(i, NeighborMode::In)
     }
 
     /// Get children of node `i` (nodes with directed edges pointing OUT from `i`).
@@ -84,7 +84,7 @@ impl GraphView {
         if matches!(self, GraphView::Raw(_)) {
             return Err("children_of is not defined for UNKNOWN graphs; use neighbors(..., mode = 'out') instead".into());
         }
-        self.neighbors_mode_of(i, NeighborMode::Out)
+        self.neighbors_of(i, NeighborMode::Out)
     }
 
     /// Get undirected neighbors of node `i` (nodes connected via `---` edges).
@@ -93,7 +93,7 @@ impl GraphView {
         if matches!(self, GraphView::Raw(_)) {
             return Err("undirected_of is not defined for UNKNOWN graphs; use neighbors(..., mode = 'undirected') instead".into());
         }
-        self.neighbors_mode_of(i, NeighborMode::Undirected)
+        self.neighbors_of(i, NeighborMode::Undirected)
     }
 
     /// Get bidirected neighbors of node `i` (nodes connected via `<->` edges, i.e., spouses).
@@ -101,12 +101,7 @@ impl GraphView {
         if matches!(self, GraphView::Raw(_)) {
             return Err("bidirected_of is not defined for UNKNOWN graphs; use neighbors(..., mode = 'bidirected') instead".into());
         }
-        self.neighbors_mode_of(i, NeighborMode::Bidirected)
-    }
-
-    /// Get all neighbors of node `i` regardless of edge type.
-    pub fn neighbors_of(&self, i: u32) -> Result<Vec<u32>, String> {
-        self.neighbors_mode_of(i, NeighborMode::All)
+        self.neighbors_of(i, NeighborMode::Bidirected)
     }
 
     /// Get neighbors of node `i` filtered by mode.
@@ -115,13 +110,15 @@ impl GraphView {
     /// For typed graphs (DAG, PDAG, etc.), it delegates to optimized methods when possible.
     /// For Raw graphs, it iterates over CSR entries and filters by edge class.
     ///
+    /// Use `NeighborMode::All` to get all neighbors regardless of edge type.
+    ///
     /// Mode restrictions per graph type:
     /// - DAG: in, out, all (no undirected or partial edges exist)
     /// - PDAG: in, out, undirected, all (no partial edges exist)
     /// - UG: undirected, all (no directed or partial edges exist)
     /// - ADMG: in, out, undirected (bidirected/spouses), all (no partial edges exist)
     /// - UNKNOWN (Raw): all modes allowed
-    pub fn neighbors_mode_of(&self, i: u32, mode: NeighborMode) -> Result<Vec<u32>, String> {
+    pub fn neighbors_of(&self, i: u32, mode: NeighborMode) -> Result<Vec<u32>, String> {
         // Validate mode for graph type and dispatch to optimized methods
         match (self, mode) {
             // DAG: only in, out, all (no undirected, bidirected, or partial)
@@ -302,7 +299,7 @@ impl GraphView {
         if matches!(self, GraphView::Raw(_)) {
             return Err("spouses_of is not defined for UNKNOWN graphs; use neighbors(..., mode = 'bidirected') instead".into());
         }
-        self.neighbors_mode_of(i, NeighborMode::Bidirected)
+        self.neighbors_of(i, NeighborMode::Bidirected)
     }
 
     pub fn districts(&self) -> Result<Vec<Vec<u32>>, String> {
@@ -558,7 +555,7 @@ mod tests {
         assert_eq!(v_dag.n(), 3);
         assert_eq!(v_dag.parents_of(1).unwrap(), vec![0]);
         assert_eq!(v_dag.children_of(0).unwrap(), vec![1, 2]);
-        assert_eq!(v_dag.neighbors_of(0).unwrap(), vec![1, 2]);
+        assert_eq!(v_dag.neighbors_of(0, NeighborMode::All).unwrap(), vec![1, 2]);
         assert_eq!(v_dag.descendants_of(0).unwrap(), vec![1, 2]);
         assert_eq!(v_dag.ancestors_of(2).unwrap(), vec![0]);
         let e = v_dag.undirected_of(0).unwrap_err();
@@ -578,7 +575,7 @@ mod tests {
         assert_eq!(v_pdag.parents_of(1).unwrap(), vec![0]);
         assert_eq!(v_pdag.children_of(0).unwrap(), vec![1]);
         assert_eq!(v_pdag.undirected_of(1).unwrap(), vec![2]);
-        assert_eq!(v_pdag.neighbors_of(1).unwrap(), vec![0, 2, 3]);
+        assert_eq!(v_pdag.neighbors_of(1, NeighborMode::All).unwrap(), vec![0, 2, 3]);
         assert_eq!(v_pdag.descendants_of(0).unwrap(), vec![1, 3]);
         assert_eq!(v_pdag.ancestors_of(3).unwrap(), vec![0, 1]);
         let v_pdag_core = v_pdag.core();
@@ -594,11 +591,11 @@ mod tests {
         assert!(v_raw.children_of(0).is_err());
         assert!(v_raw.undirected_of(1).is_err());
 
-        // neighbors_of and neighbors_mode_of still work
-        assert_eq!(v_raw.neighbors_of(0).unwrap(), vec![1]);
-        assert_eq!(v_raw.neighbors_mode_of(1, NeighborMode::In).unwrap(), vec![0]);
-        assert_eq!(v_raw.neighbors_mode_of(0, NeighborMode::Out).unwrap(), vec![1]);
-        assert_eq!(v_raw.neighbors_mode_of(1, NeighborMode::Undirected).unwrap(), vec![2]);
+        // neighbors_of still works
+        assert_eq!(v_raw.neighbors_of(0, NeighborMode::All).unwrap(), vec![1]);
+        assert_eq!(v_raw.neighbors_of(1, NeighborMode::In).unwrap(), vec![0]);
+        assert_eq!(v_raw.neighbors_of(0, NeighborMode::Out).unwrap(), vec![1]);
+        assert_eq!(v_raw.neighbors_of(1, NeighborMode::Undirected).unwrap(), vec![2]);
 
         let v_raw_core = v_raw.core();
         assert_eq!(v_raw_core.n(), 4);
@@ -1002,17 +999,17 @@ mod tests {
         let v = GraphView::Dag(Arc::new(Dag::new(Arc::new(b.finalize().unwrap())).unwrap()));
 
         // Node 0: has children 1,2 (out), no parents (in)
-        assert_eq!(v.neighbors_mode_of(0, NeighborMode::All).unwrap(), vec![1, 2]);
-        assert_eq!(v.neighbors_mode_of(0, NeighborMode::In).unwrap(), Vec::<u32>::new());
-        assert_eq!(v.neighbors_mode_of(0, NeighborMode::Out).unwrap(), vec![1, 2]);
+        assert_eq!(v.neighbors_of(0, NeighborMode::All).unwrap(), vec![1, 2]);
+        assert_eq!(v.neighbors_of(0, NeighborMode::In).unwrap(), Vec::<u32>::new());
+        assert_eq!(v.neighbors_of(0, NeighborMode::Out).unwrap(), vec![1, 2]);
         // DAG doesn't have undirected or partial edges - should error
-        assert!(v.neighbors_mode_of(0, NeighborMode::Undirected).is_err());
-        assert!(v.neighbors_mode_of(0, NeighborMode::Partial).is_err());
+        assert!(v.neighbors_of(0, NeighborMode::Undirected).is_err());
+        assert!(v.neighbors_of(0, NeighborMode::Partial).is_err());
 
         // Node 1: has parent 0 (in), no children (out)
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::All).unwrap(), vec![0]);
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::In).unwrap(), vec![0]);
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Out).unwrap(), Vec::<u32>::new());
+        assert_eq!(v.neighbors_of(1, NeighborMode::All).unwrap(), vec![0]);
+        assert_eq!(v.neighbors_of(1, NeighborMode::In).unwrap(), vec![0]);
+        assert_eq!(v.neighbors_of(1, NeighborMode::Out).unwrap(), Vec::<u32>::new());
     }
 
     #[test]
@@ -1029,11 +1026,11 @@ mod tests {
         let v = GraphView::Pdag(Arc::new(Pdag::new(Arc::new(b.finalize().unwrap())).unwrap()));
 
         // Node 1: parent 0 (in), undirected 2
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::In).unwrap(), vec![0]);
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Out).unwrap(), Vec::<u32>::new());
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Undirected).unwrap(), vec![2]);
+        assert_eq!(v.neighbors_of(1, NeighborMode::In).unwrap(), vec![0]);
+        assert_eq!(v.neighbors_of(1, NeighborMode::Out).unwrap(), Vec::<u32>::new());
+        assert_eq!(v.neighbors_of(1, NeighborMode::Undirected).unwrap(), vec![2]);
         // PDAG doesn't have partial edges - should error
-        assert!(v.neighbors_mode_of(1, NeighborMode::Partial).is_err());
+        assert!(v.neighbors_of(1, NeighborMode::Partial).is_err());
     }
 
     #[test]
@@ -1064,7 +1061,7 @@ mod tests {
 
         // Node 1 neighbors:
         // - All: 0, 2, 3, 4, 5
-        let all = v.neighbors_mode_of(1, NeighborMode::All).unwrap();
+        let all = v.neighbors_of(1, NeighborMode::All).unwrap();
         assert_eq!(all.len(), 5);
         assert!(all.contains(&0));
         assert!(all.contains(&2));
@@ -1073,36 +1070,36 @@ mod tests {
         assert!(all.contains(&5));
 
         // - In: node 1 has Arrow mark in edges 0->1 (arrow at 1) and 1<->3 (arrow at 1)
-        let in_neigh = v.neighbors_mode_of(1, NeighborMode::In).unwrap();
+        let in_neigh = v.neighbors_of(1, NeighborMode::In).unwrap();
         assert_eq!(in_neigh.len(), 2);
         assert!(in_neigh.contains(&0)); // 0 -> 1
         assert!(in_neigh.contains(&3)); // 1 <-> 3 (arrow at both ends)
 
         // - Out: neighbor has Arrow mark in edges 1<->3 (arrow at 3) and 1o->4 (arrow at 4)
-        let out_neigh = v.neighbors_mode_of(1, NeighborMode::Out).unwrap();
+        let out_neigh = v.neighbors_of(1, NeighborMode::Out).unwrap();
         assert_eq!(out_neigh.len(), 2);
         assert!(out_neigh.contains(&3)); // 1 <-> 3 (arrow at 3)
         assert!(out_neigh.contains(&4)); // 1 o-> 4 (arrow at 4)
 
         // - Undirected: node 1 has Tail mark in edge 1---2
-        let und_neigh = v.neighbors_mode_of(1, NeighborMode::Undirected).unwrap();
+        let und_neigh = v.neighbors_of(1, NeighborMode::Undirected).unwrap();
         assert_eq!(und_neigh, vec![2]);
 
         // - Bidirected: both node 1 AND neighbor have Arrow marks (only 1<->3)
-        let bi_neigh = v.neighbors_mode_of(1, NeighborMode::Bidirected).unwrap();
+        let bi_neigh = v.neighbors_of(1, NeighborMode::Bidirected).unwrap();
         assert_eq!(bi_neigh, vec![3]);
 
         // - Partial: node 1 has Circle mark in edges 1o->4 and 1o-o5
-        let part_neigh = v.neighbors_mode_of(1, NeighborMode::Partial).unwrap();
+        let part_neigh = v.neighbors_of(1, NeighborMode::Partial).unwrap();
         assert_eq!(part_neigh.len(), 2);
         assert!(part_neigh.contains(&4));
         assert!(part_neigh.contains(&5));
 
         // Now test from node 4's perspective (4 is at head of 1 o-> 4)
         // 4 has Arrow mark, 1 has Circle mark
-        assert_eq!(v.neighbors_mode_of(4, NeighborMode::In).unwrap(), vec![1]); // arrow at 4, so 1 goes IN
-        assert!(v.neighbors_mode_of(4, NeighborMode::Out).unwrap().is_empty()); // no arrow at 1
-        assert!(v.neighbors_mode_of(4, NeighborMode::Partial).unwrap().is_empty()); // no circle at 4
+        assert_eq!(v.neighbors_of(4, NeighborMode::In).unwrap(), vec![1]); // arrow at 4, so 1 goes IN
+        assert!(v.neighbors_of(4, NeighborMode::Out).unwrap().is_empty()); // no arrow at 1
+        assert!(v.neighbors_of(4, NeighborMode::Partial).unwrap().is_empty()); // no circle at 4
     }
 
     #[test]
@@ -1119,9 +1116,9 @@ mod tests {
         let v = GraphView::Raw(core);
 
         // Node 1: parent 0 (in), child 2 (out)
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::In).unwrap(), vec![0]);
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Out).unwrap(), vec![2]);
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::All).unwrap().len(), 2);
+        assert_eq!(v.neighbors_of(1, NeighborMode::In).unwrap(), vec![0]);
+        assert_eq!(v.neighbors_of(1, NeighborMode::Out).unwrap(), vec![2]);
+        assert_eq!(v.neighbors_of(1, NeighborMode::All).unwrap().len(), 2);
     }
 
     #[test]
@@ -1137,18 +1134,18 @@ mod tests {
         let v = GraphView::Ug(Arc::new(Ug::new(Arc::new(b.finalize().unwrap())).unwrap()));
 
         // UG only allows undirected and all modes
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Undirected).unwrap(), vec![0, 2]);
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::All).unwrap(), vec![0, 2]);
+        assert_eq!(v.neighbors_of(1, NeighborMode::Undirected).unwrap(), vec![0, 2]);
+        assert_eq!(v.neighbors_of(1, NeighborMode::All).unwrap(), vec![0, 2]);
 
         // Invalid modes for UG should error
-        assert!(v.neighbors_mode_of(1, NeighborMode::In).is_err());
-        assert!(v.neighbors_mode_of(1, NeighborMode::Out).is_err());
-        assert!(v.neighbors_mode_of(1, NeighborMode::Partial).is_err());
+        assert!(v.neighbors_of(1, NeighborMode::In).is_err());
+        assert!(v.neighbors_of(1, NeighborMode::Out).is_err());
+        assert!(v.neighbors_of(1, NeighborMode::Partial).is_err());
 
         // Check error messages
-        let e_in = v.neighbors_mode_of(1, NeighborMode::In).unwrap_err();
+        let e_in = v.neighbors_of(1, NeighborMode::In).unwrap_err();
         assert!(e_in.contains("not defined for UG"));
-        let e_out = v.neighbors_mode_of(1, NeighborMode::Out).unwrap_err();
+        let e_out = v.neighbors_of(1, NeighborMode::Out).unwrap_err();
         assert!(e_out.contains("not defined for UG"));
     }
 
@@ -1167,28 +1164,28 @@ mod tests {
         let v = GraphView::Admg(Arc::new(Admg::new(Arc::new(b.finalize().unwrap())).unwrap()));
 
         // Node 1: parent 0 (in), spouse 2 (bidirected), no children (out)
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::In).unwrap(), vec![0]);
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Out).unwrap(), Vec::<u32>::new());
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Bidirected).unwrap(), vec![2]); // spouses
+        assert_eq!(v.neighbors_of(1, NeighborMode::In).unwrap(), vec![0]);
+        assert_eq!(v.neighbors_of(1, NeighborMode::Out).unwrap(), Vec::<u32>::new());
+        assert_eq!(v.neighbors_of(1, NeighborMode::Bidirected).unwrap(), vec![2]); // spouses
 
         // All neighbors
-        let all = v.neighbors_mode_of(1, NeighborMode::All).unwrap();
+        let all = v.neighbors_of(1, NeighborMode::All).unwrap();
         assert_eq!(all.len(), 2);
         assert!(all.contains(&0));
         assert!(all.contains(&2));
 
         // ADMG doesn't have undirected or partial edges - should error
-        assert!(v.neighbors_mode_of(1, NeighborMode::Undirected).is_err());
-        assert!(v.neighbors_mode_of(1, NeighborMode::Partial).is_err());
-        let e_und = v.neighbors_mode_of(1, NeighborMode::Undirected).unwrap_err();
-        let e_part = v.neighbors_mode_of(1, NeighborMode::Partial).unwrap_err();
+        assert!(v.neighbors_of(1, NeighborMode::Undirected).is_err());
+        assert!(v.neighbors_of(1, NeighborMode::Partial).is_err());
+        let e_und = v.neighbors_of(1, NeighborMode::Undirected).unwrap_err();
+        let e_part = v.neighbors_of(1, NeighborMode::Partial).unwrap_err();
         assert!(e_und.contains("not valid for ADMG"));
         assert!(e_part.contains("not valid for ADMG"));
 
         // Node 0: no parents, child 1, spouse 2
-        assert_eq!(v.neighbors_mode_of(0, NeighborMode::In).unwrap(), Vec::<u32>::new());
-        assert_eq!(v.neighbors_mode_of(0, NeighborMode::Out).unwrap(), vec![1]);
-        assert_eq!(v.neighbors_mode_of(0, NeighborMode::Bidirected).unwrap(), vec![2]);
+        assert_eq!(v.neighbors_of(0, NeighborMode::In).unwrap(), Vec::<u32>::new());
+        assert_eq!(v.neighbors_of(0, NeighborMode::Out).unwrap(), vec![1]);
+        assert_eq!(v.neighbors_of(0, NeighborMode::Bidirected).unwrap(), vec![2]);
     }
 
     #[test]
@@ -1206,7 +1203,7 @@ mod tests {
         // Test thin wrappers
         assert_eq!(v.parents_of(1).unwrap(), vec![0]);
         assert_eq!(v.children_of(1).unwrap(), vec![2]);
-        assert_eq!(v.neighbors_of(1).unwrap(), vec![0, 2]);
+        assert_eq!(v.neighbors_of(1, NeighborMode::All).unwrap(), vec![0, 2]);
 
         // undirected_of should error for DAG
         assert!(v.undirected_of(1).is_err());
@@ -1232,7 +1229,7 @@ mod tests {
         assert_eq!(v.parents_of(1).unwrap(), vec![0]);
         assert_eq!(v.children_of(1).unwrap(), Vec::<u32>::new());
         assert_eq!(v.undirected_of(1).unwrap(), vec![2]);
-        assert_eq!(v.neighbors_of(1).unwrap(), vec![0, 2]);
+        assert_eq!(v.neighbors_of(1, NeighborMode::All).unwrap(), vec![0, 2]);
 
         // spouses_of should error for PDAG
         assert!(v.spouses_of(1).is_err());
@@ -1252,7 +1249,7 @@ mod tests {
 
         // Test thin wrappers
         assert_eq!(v.undirected_of(1).unwrap(), vec![0, 2]);
-        assert_eq!(v.neighbors_of(1).unwrap(), vec![0, 2]);
+        assert_eq!(v.neighbors_of(1, NeighborMode::All).unwrap(), vec![0, 2]);
 
         // parents_of and children_of should error for UG
         assert!(v.parents_of(1).is_err());
@@ -1284,7 +1281,7 @@ mod tests {
         // undirected_of should error for ADMG
         assert!(v.undirected_of(1).is_err());
 
-        let all = v.neighbors_of(1).unwrap();
+        let all = v.neighbors_of(1, NeighborMode::All).unwrap();
         assert_eq!(all.len(), 2);
         assert!(all.contains(&0));
         assert!(all.contains(&2));
@@ -1316,21 +1313,21 @@ mod tests {
         assert!(v.bidirected_of(1).is_err());
         assert!(v.spouses_of(1).is_err());
 
-        // But neighbors_of and neighbors_mode_of work
-        let all = v.neighbors_of(1).unwrap();
+        // But neighbors_of works with explicit mode
+        let all = v.neighbors_of(1, NeighborMode::All).unwrap();
         assert_eq!(all.len(), 3);
         assert!(all.contains(&0));
         assert!(all.contains(&2));
         assert!(all.contains(&3));
 
-        // neighbors_mode_of allows explicit mode selection
-        let in_neigh = v.neighbors_mode_of(1, NeighborMode::In).unwrap();
+        // neighbors_of allows explicit mode selection
+        let in_neigh = v.neighbors_of(1, NeighborMode::In).unwrap();
         assert_eq!(in_neigh.len(), 2);
         assert!(in_neigh.contains(&0)); // 0 -> 1
         assert!(in_neigh.contains(&3)); // 1 <-> 3 (arrow at 1)
 
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Undirected).unwrap(), vec![2]);
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Bidirected).unwrap(), vec![3]);
+        assert_eq!(v.neighbors_of(1, NeighborMode::Undirected).unwrap(), vec![2]);
+        assert_eq!(v.neighbors_of(1, NeighborMode::Bidirected).unwrap(), vec![3]);
     }
 
     #[test]
@@ -1347,18 +1344,18 @@ mod tests {
         let v = GraphView::Raw(Arc::new(b.finalize().unwrap()));
 
         // From A's perspective (side 0): my_mark = Circle, neighbor_mark = Arrow
-        assert!(v.neighbors_mode_of(0, NeighborMode::In).unwrap().is_empty()); // A has no Arrow
-        assert_eq!(v.neighbors_mode_of(0, NeighborMode::Out).unwrap(), vec![1]); // B has Arrow (pointing in)
-        assert!(v.neighbors_mode_of(0, NeighborMode::Undirected).unwrap().is_empty()); // A has no Tail
-        assert!(v.neighbors_mode_of(0, NeighborMode::Bidirected).unwrap().is_empty()); // Not both Arrow
-        assert_eq!(v.neighbors_mode_of(0, NeighborMode::Partial).unwrap(), vec![1]); // A has Circle
+        assert!(v.neighbors_of(0, NeighborMode::In).unwrap().is_empty()); // A has no Arrow
+        assert_eq!(v.neighbors_of(0, NeighborMode::Out).unwrap(), vec![1]); // B has Arrow (pointing in)
+        assert!(v.neighbors_of(0, NeighborMode::Undirected).unwrap().is_empty()); // A has no Tail
+        assert!(v.neighbors_of(0, NeighborMode::Bidirected).unwrap().is_empty()); // Not both Arrow
+        assert_eq!(v.neighbors_of(0, NeighborMode::Partial).unwrap(), vec![1]); // A has Circle
 
         // From B's perspective (side 1): my_mark = Arrow, neighbor_mark = Circle
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::In).unwrap(), vec![0]); // B has Arrow (pointing in)
-        assert!(v.neighbors_mode_of(1, NeighborMode::Out).unwrap().is_empty()); // A has no Arrow
-        assert!(v.neighbors_mode_of(1, NeighborMode::Undirected).unwrap().is_empty()); // B has no Tail
-        assert!(v.neighbors_mode_of(1, NeighborMode::Bidirected).unwrap().is_empty()); // Not both Arrow
-        assert!(v.neighbors_mode_of(1, NeighborMode::Partial).unwrap().is_empty()); // B has no Circle
+        assert_eq!(v.neighbors_of(1, NeighborMode::In).unwrap(), vec![0]); // B has Arrow (pointing in)
+        assert!(v.neighbors_of(1, NeighborMode::Out).unwrap().is_empty()); // A has no Arrow
+        assert!(v.neighbors_of(1, NeighborMode::Undirected).unwrap().is_empty()); // B has no Tail
+        assert!(v.neighbors_of(1, NeighborMode::Bidirected).unwrap().is_empty()); // Not both Arrow
+        assert!(v.neighbors_of(1, NeighborMode::Partial).unwrap().is_empty()); // B has no Circle
     }
 
     #[test]
@@ -1375,19 +1372,19 @@ mod tests {
         let v = GraphView::Raw(Arc::new(b.finalize().unwrap()));
 
         // From A's perspective (side 0): my_mark = Tail, neighbor_mark = Circle
-        assert!(v.neighbors_mode_of(0, NeighborMode::In).unwrap().is_empty()); // A has no Arrow
-        assert!(v.neighbors_mode_of(0, NeighborMode::Out).unwrap().is_empty()); // B has no Arrow
+        assert!(v.neighbors_of(0, NeighborMode::In).unwrap().is_empty()); // A has no Arrow
+        assert!(v.neighbors_of(0, NeighborMode::Out).unwrap().is_empty()); // B has no Arrow
         // Undirected requires BOTH to have Tail, but B has Circle, so empty
-        assert!(v.neighbors_mode_of(0, NeighborMode::Undirected).unwrap().is_empty());
-        assert!(v.neighbors_mode_of(0, NeighborMode::Bidirected).unwrap().is_empty());
-        assert!(v.neighbors_mode_of(0, NeighborMode::Partial).unwrap().is_empty()); // A has no Circle
+        assert!(v.neighbors_of(0, NeighborMode::Undirected).unwrap().is_empty());
+        assert!(v.neighbors_of(0, NeighborMode::Bidirected).unwrap().is_empty());
+        assert!(v.neighbors_of(0, NeighborMode::Partial).unwrap().is_empty()); // A has no Circle
 
         // From B's perspective (side 1): my_mark = Circle, neighbor_mark = Tail
-        assert!(v.neighbors_mode_of(1, NeighborMode::In).unwrap().is_empty()); // B has no Arrow
-        assert!(v.neighbors_mode_of(1, NeighborMode::Out).unwrap().is_empty()); // A has no Arrow
-        assert!(v.neighbors_mode_of(1, NeighborMode::Undirected).unwrap().is_empty()); // B has Circle, not Tail
-        assert!(v.neighbors_mode_of(1, NeighborMode::Bidirected).unwrap().is_empty());
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Partial).unwrap(), vec![0]); // B has Circle
+        assert!(v.neighbors_of(1, NeighborMode::In).unwrap().is_empty()); // B has no Arrow
+        assert!(v.neighbors_of(1, NeighborMode::Out).unwrap().is_empty()); // A has no Arrow
+        assert!(v.neighbors_of(1, NeighborMode::Undirected).unwrap().is_empty()); // B has Circle, not Tail
+        assert!(v.neighbors_of(1, NeighborMode::Bidirected).unwrap().is_empty());
+        assert_eq!(v.neighbors_of(1, NeighborMode::Partial).unwrap(), vec![0]); // B has Circle
     }
 
     #[test]
@@ -1411,35 +1408,35 @@ mod tests {
 
         // Test partial mode: returns neighbors where current node has Circle mark
         // Node 0: position 0 in o-o, so my_mark = Circle -> returns 1
-        assert_eq!(v.neighbors_mode_of(0, NeighborMode::Partial).unwrap(), vec![1]);
+        assert_eq!(v.neighbors_of(0, NeighborMode::Partial).unwrap(), vec![1]);
 
         // Node 1: position 1 in o-o (Circle) and position 0 in o-> (Circle)
-        let p1 = v.neighbors_mode_of(1, NeighborMode::Partial).unwrap();
+        let p1 = v.neighbors_of(1, NeighborMode::Partial).unwrap();
         assert_eq!(p1.len(), 2);
         assert!(p1.contains(&0)); // from o-o (Circle at position 1)
         assert!(p1.contains(&2)); // from o-> (Circle at position 0)
 
         // Node 2: position 1 in o-> (Arrow) and position 0 in --o (Tail)
         // Neither has Circle, so partial is empty for node 2
-        assert!(v.neighbors_mode_of(2, NeighborMode::Partial).unwrap().is_empty());
+        assert!(v.neighbors_of(2, NeighborMode::Partial).unwrap().is_empty());
 
         // Node 3: position 1 in --o (Circle) -> returns 2
-        assert_eq!(v.neighbors_mode_of(3, NeighborMode::Partial).unwrap(), vec![2]);
+        assert_eq!(v.neighbors_of(3, NeighborMode::Partial).unwrap(), vec![2]);
 
         // In mode: returns neighbors where current node has Arrow mark
         // Node 2: position 1 in o-> (Arrow) -> returns 1
-        assert_eq!(v.neighbors_mode_of(2, NeighborMode::In).unwrap(), vec![1]);
-        assert!(v.neighbors_mode_of(1, NeighborMode::In).unwrap().is_empty()); // no Arrow at node 1
+        assert_eq!(v.neighbors_of(2, NeighborMode::In).unwrap(), vec![1]);
+        assert!(v.neighbors_of(1, NeighborMode::In).unwrap().is_empty()); // no Arrow at node 1
 
         // Out mode: returns neighbors where neighbor has Arrow mark
         // Node 1: neighbor 2 has Arrow (from o->) -> returns 2
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Out).unwrap(), vec![2]);
-        assert!(v.neighbors_mode_of(2, NeighborMode::Out).unwrap().is_empty()); // neighbor 3 has Circle, not Arrow
+        assert_eq!(v.neighbors_of(1, NeighborMode::Out).unwrap(), vec![2]);
+        assert!(v.neighbors_of(2, NeighborMode::Out).unwrap().is_empty()); // neighbor 3 has Circle, not Arrow
 
         // Undirected mode: returns neighbors where BOTH nodes have Tail mark
         // Node 2: position 0 in --o, my_mark = Tail, but neighbor 3's mark = Circle
         // So undirected is empty (--o is not a truly undirected edge)
-        assert!(v.neighbors_mode_of(2, NeighborMode::Undirected).unwrap().is_empty());
+        assert!(v.neighbors_of(2, NeighborMode::Undirected).unwrap().is_empty());
     }
 
     #[test]
@@ -1472,8 +1469,8 @@ mod tests {
         let v = GraphView::Dag(Arc::new(Dag::new(Arc::new(b.finalize().unwrap())).unwrap()));
 
         // DAG doesn't have bidirected edges - should error
-        assert!(v.neighbors_mode_of(0, NeighborMode::Bidirected).is_err());
-        let e = v.neighbors_mode_of(0, NeighborMode::Bidirected).unwrap_err();
+        assert!(v.neighbors_of(0, NeighborMode::Bidirected).is_err());
+        let e = v.neighbors_of(0, NeighborMode::Bidirected).unwrap_err();
         assert!(e.contains("not valid for DAG"));
     }
 
@@ -1490,8 +1487,8 @@ mod tests {
         let v = GraphView::Pdag(Arc::new(Pdag::new(Arc::new(b.finalize().unwrap())).unwrap()));
 
         // PDAG doesn't have bidirected edges - should error
-        assert!(v.neighbors_mode_of(0, NeighborMode::Bidirected).is_err());
-        let e = v.neighbors_mode_of(0, NeighborMode::Bidirected).unwrap_err();
+        assert!(v.neighbors_of(0, NeighborMode::Bidirected).is_err());
+        let e = v.neighbors_of(0, NeighborMode::Bidirected).unwrap_err();
         assert!(e.contains("not valid for PDAG"));
     }
 
@@ -1506,8 +1503,8 @@ mod tests {
         let v = GraphView::Ug(Arc::new(Ug::new(Arc::new(b.finalize().unwrap())).unwrap()));
 
         // UG doesn't have bidirected edges - should error
-        assert!(v.neighbors_mode_of(0, NeighborMode::Bidirected).is_err());
-        let e = v.neighbors_mode_of(0, NeighborMode::Bidirected).unwrap_err();
+        assert!(v.neighbors_of(0, NeighborMode::Bidirected).is_err());
+        let e = v.neighbors_of(0, NeighborMode::Bidirected).unwrap_err();
         assert!(e.contains("not valid for UG"));
     }
 
@@ -1524,8 +1521,8 @@ mod tests {
         let v = GraphView::Admg(Arc::new(Admg::new(Arc::new(b.finalize().unwrap())).unwrap()));
 
         // ADMG doesn't have undirected edges - should error
-        assert!(v.neighbors_mode_of(1, NeighborMode::Undirected).is_err());
-        let e = v.neighbors_mode_of(1, NeighborMode::Undirected).unwrap_err();
+        assert!(v.neighbors_of(1, NeighborMode::Undirected).is_err());
+        let e = v.neighbors_of(1, NeighborMode::Undirected).unwrap_err();
         assert!(e.contains("not valid for ADMG"));
     }
 
@@ -1543,8 +1540,8 @@ mod tests {
         let v = GraphView::Raw(Arc::new(b.finalize().unwrap()));
 
         // Bidirected mode only returns <-> edges
-        assert!(v.neighbors_mode_of(0, NeighborMode::Bidirected).unwrap().is_empty());
-        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Bidirected).unwrap(), vec![2]);
-        assert_eq!(v.neighbors_mode_of(2, NeighborMode::Bidirected).unwrap(), vec![1]);
+        assert!(v.neighbors_of(0, NeighborMode::Bidirected).unwrap().is_empty());
+        assert_eq!(v.neighbors_of(1, NeighborMode::Bidirected).unwrap(), vec![2]);
+        assert_eq!(v.neighbors_of(2, NeighborMode::Bidirected).unwrap(), vec![1]);
     }
 }
