@@ -534,15 +534,30 @@ test_that("neighbors mode 'undirected' works for UNKNOWN graphs", {
   cg <- caugi(
     A %-->% B,
     B %---% C,
-    C %<->% D,
+    C %---% D,
     class = "UNKNOWN"
   )
 
-  # Undirected mode (--- and <->)
+  # Undirected mode (--- only, not <->)
   expect_null(neighbors(cg, "A", mode = "undirected"))
   expect_identical(neighbors(cg, "B", mode = "undirected"), "C")
   expect_setequal(neighbors(cg, "C", mode = "undirected"), c("B", "D"))
   expect_identical(neighbors(cg, "D", mode = "undirected"), "C")
+})
+
+test_that("neighbors mode 'bidirected' works for UNKNOWN graphs", {
+  cg <- caugi(
+    A %-->% B,
+    B %<->% C,
+    C %<->% D,
+    class = "UNKNOWN"
+  )
+
+  # Bidirected mode (<-> only)
+  expect_null(neighbors(cg, "A", mode = "bidirected"))
+  expect_identical(neighbors(cg, "B", mode = "bidirected"), "C")
+  expect_setequal(neighbors(cg, "C", mode = "bidirected"), c("B", "D"))
+  expect_identical(neighbors(cg, "D", mode = "bidirected"), "C")
 })
 
 test_that("neighbors mode 'partial' works for UNKNOWN graphs", {
@@ -655,8 +670,9 @@ test_that("neighbors mode validation for DAG", {
   expect_identical(neighbors(cg, "B", mode = "out"), "C")
   expect_setequal(neighbors(cg, "B", mode = "all"), c("A", "C"))
 
-  # Invalid modes for DAG: undirected, partial
+  # Invalid modes for DAG: undirected, bidirected, partial
   expect_error(neighbors(cg, "B", mode = "undirected"), "not valid for DAG")
+  expect_error(neighbors(cg, "B", mode = "bidirected"), "not valid for DAG")
   expect_error(neighbors(cg, "B", mode = "partial"), "not valid for DAG")
 })
 
@@ -673,7 +689,8 @@ test_that("neighbors mode validation for PDAG", {
   expect_identical(neighbors(cg, "B", mode = "undirected"), "C")
   expect_setequal(neighbors(cg, "B", mode = "all"), c("A", "C"))
 
-  # Invalid modes for PDAG: partial
+  # Invalid modes for PDAG: bidirected, partial
+  expect_error(neighbors(cg, "B", mode = "bidirected"), "not valid for PDAG")
   expect_error(neighbors(cg, "B", mode = "partial"), "not valid for PDAG")
 })
 
@@ -688,9 +705,10 @@ test_that("neighbors mode validation for UG", {
   expect_setequal(neighbors(cg, "B", mode = "undirected"), c("A", "C"))
   expect_setequal(neighbors(cg, "B", mode = "all"), c("A", "C"))
 
-  # Invalid modes for UG: in, out, partial
+  # Invalid modes for UG: in, out, bidirected, partial
   expect_error(neighbors(cg, "B", mode = "in"), "not defined for UG")
   expect_error(neighbors(cg, "B", mode = "out"), "not defined for UG")
+  expect_error(neighbors(cg, "B", mode = "bidirected"), "not valid for UG")
   expect_error(neighbors(cg, "B", mode = "partial"), "not valid for UG")
 })
 
@@ -701,13 +719,14 @@ test_that("neighbors mode validation for ADMG", {
     class = "ADMG"
   )
 
-  # Valid modes for ADMG: in, out, undirected (spouses), all
+  # Valid modes for ADMG: in, out, bidirected (spouses), all
   expect_identical(neighbors(cg, "B", mode = "in"), "A")
   expect_null(neighbors(cg, "B", mode = "out"))
-  expect_identical(neighbors(cg, "B", mode = "undirected"), "C") # bidirected
+  expect_identical(neighbors(cg, "B", mode = "bidirected"), "C")
   expect_setequal(neighbors(cg, "B", mode = "all"), c("A", "C"))
 
-  # Invalid modes for ADMG: partial
+  # Invalid modes for ADMG: undirected, partial
+  expect_error(neighbors(cg, "B", mode = "undirected"), "not valid for ADMG")
   expect_error(neighbors(cg, "B", mode = "partial"), "not valid for ADMG")
 })
 
@@ -719,9 +738,38 @@ test_that("spouses works for UNKNOWN graphs", {
     class = "UNKNOWN"
   )
 
-  # spouses returns only bidirected edges
+  # spouses returns only bidirected edges (equivalent to neighbors mode="bidirected")
   expect_null(spouses(cg, "A"))
   expect_identical(spouses(cg, "B"), "C")
   expect_identical(spouses(cg, "C"), "B")
   expect_null(spouses(cg, "D"))
+
+  # spouses is equivalent to neighbors with mode = "bidirected"
+  expect_identical(spouses(cg, "B"), neighbors(cg, "B", mode = "bidirected"))
+})
+
+test_that("spouses works for ADMG graphs", {
+  cg <- caugi(
+    A %-->% B,
+    B %<->% C,
+    class = "ADMG"
+  )
+
+  # spouses returns bidirected neighbors (same as neighbors mode="bidirected")
+  expect_null(spouses(cg, "A"))
+  expect_identical(spouses(cg, "B"), "C")
+  expect_identical(spouses(cg, "C"), "B")
+
+  # spouses is equivalent to neighbors with mode = "bidirected"
+  expect_identical(spouses(cg, "B"), neighbors(cg, "B", mode = "bidirected"))
+})
+
+test_that("spouses errors for graph types without bidirected edges", {
+  cg_dag <- caugi(A %-->% B, class = "DAG")
+  cg_pdag <- caugi(A %-->% B, B %---% C, class = "PDAG")
+  cg_ug <- caugi(A %---% B, class = "UG")
+
+  expect_error(spouses(cg_dag, "A"), "not valid for DAG")
+  expect_error(spouses(cg_pdag, "A"), "not valid for PDAG")
+  expect_error(spouses(cg_ug, "A"), "not valid for UG")
 })

@@ -685,10 +685,20 @@ children <- function(cg, nodes = NULL, index = NULL) {
 #'     INTO the target node (equivalent to `parents()`)}
 #'   \item{`"out"` or `"outgoing"`}{Children: nodes with directed edges pointing
 #'     OUT from the target node (equivalent to `children()`)}
-#'   \item{`"undirected"`}{Nodes connected via undirected (`---`) or
-#'     bidirected (`<->`) edges}
+#'   \item{`"undirected"`}{Nodes connected via undirected (`---`) edges}
+#'   \item{`"bidirected"`}{Nodes connected via bidirected (`<->`) edges
+#'     (equivalent to `spouses()` for ADMGs)}
 #'   \item{`"partial"`}{Nodes connected via partial edges (edges with circle
 #'     endpoints: `o-o`, `o->`, `--o`)}
+#' }
+#'
+#' Not all modes are valid for all graph classes:
+#' \itemize{
+#'   \item DAG: `"in"`, `"out"`, `"all"` only
+#'   \item PDAG: `"in"`, `"out"`, `"undirected"`, `"all"`
+#'   \item UG: `"undirected"`, `"all"` only
+#'   \item ADMG: `"in"`, `"out"`, `"bidirected"`, `"all"`
+#'   \item UNKNOWN: all modes allowed
 #' }
 #'
 #' @returns Either a character vector of node names (if a single node is
@@ -733,7 +743,7 @@ neighbors <- function(
   cg,
   nodes = NULL,
   index = NULL,
-  mode = c("all", "in", "ingoing", "out", "outgoing", "undirected", "partial")
+  mode = c("all", "in", "ingoing", "out", "outgoing", "undirected", "bidirected", "partial")
 ) {
   nodes_supplied <- !missing(nodes)
   index_supplied <- !missing(index) && !is.null(index)

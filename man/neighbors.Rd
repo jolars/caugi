@@ -9,14 +9,16 @@ neighbors(
   cg,
   nodes = NULL,
   index = NULL,
-  mode = c("all", "in", "ingoing", "out", "outgoing", "undirected", "partial")
+  mode = c("all", "in", "ingoing", "out", "outgoing", "undirected", "bidirected",
+    "partial")
 )
 
 neighbours(
   cg,
   nodes = NULL,
   index = NULL,
-  mode = c("all", "in", "ingoing", "out", "outgoing", "undirected", "partial")
+  mode = c("all", "in", "ingoing", "out", "outgoing", "undirected", "bidirected",
+    "partial")
 )
 }
 \arguments{
@@ -34,10 +36,20 @@ node names, or an expression combining these with \code{+} and \code{c()}.}
 INTO the target node (equivalent to \code{parents()})}
 \item{\code{"out"} or \code{"outgoing"}}{Children: nodes with directed edges pointing
 OUT from the target node (equivalent to \code{children()})}
-\item{\code{"undirected"}}{Nodes connected via undirected (\verb{---}) or
-bidirected (\verb{<->}) edges}
+\item{\code{"undirected"}}{Nodes connected via undirected (\verb{---}) edges}
+\item{\code{"bidirected"}}{Nodes connected via bidirected (\verb{<->}) edges
+(equivalent to \code{spouses()} for ADMGs)}
 \item{\code{"partial"}}{Nodes connected via partial edges (edges with circle
 endpoints: \code{o-o}, \verb{o->}, \code{--o})}
+}
+
+Not all modes are valid for all graph classes:
+\itemize{
+\item DAG: \code{"in"}, \code{"out"}, \code{"all"} only
+\item PDAG: \code{"in"}, \code{"out"}, \code{"undirected"}, \code{"all"}
+\item UG: \code{"undirected"}, \code{"all"} only
+\item ADMG: \code{"in"}, \code{"out"}, \code{"bidirected"}, \code{"all"}
+\item UNKNOWN: all modes allowed
 }}
 }
 \value{
