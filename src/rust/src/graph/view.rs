@@ -70,36 +70,49 @@ impl GraphView {
     }
 
     // ---- queries ----
-    // Note: parents_of, children_of, undirected_of, and spouses_of are thin wrappers
-    // around neighbors_mode_of for Raw graphs. For typed graphs, they return optimized slices.
+    // Note: parents_of, children_of, undirected_of, spouses_of, and bidirected_of are
+    // NOT supported for Raw (UNKNOWN) graphs. For UNKNOWN graphs, use neighbors_mode_of
+    // or the R-level neighbors() function with explicit mode parameter.
 
     /// Get parents of node `i` (nodes with directed edges pointing INTO `i`).
-    /// This is equivalent to `neighbors_mode_of(i, NeighborMode::In)`.
+    /// Not supported for UNKNOWN graphs - use neighbors_mode_of with NeighborMode::In instead.
     pub fn parents_of(&self, i: u32) -> Result<Vec<u32>, String> {
+        if matches!(self, GraphView::Raw(_)) {
+            return Err("parents_of is not defined for UNKNOWN graphs; use neighbors(..., mode = 'in') instead".into());
+        }
         self.neighbors_mode_of(i, NeighborMode::In)
     }
 
     /// Get children of node `i` (nodes with directed edges pointing OUT from `i`).
-    /// This is equivalent to `neighbors_mode_of(i, NeighborMode::Out)`.
+    /// Not supported for UNKNOWN graphs - use neighbors_mode_of with NeighborMode::Out instead.
     pub fn children_of(&self, i: u32) -> Result<Vec<u32>, String> {
+        if matches!(self, GraphView::Raw(_)) {
+            return Err("children_of is not defined for UNKNOWN graphs; use neighbors(..., mode = 'out') instead".into());
+        }
         self.neighbors_mode_of(i, NeighborMode::Out)
     }
 
     /// Get undirected neighbors of node `i` (nodes connected via `---` edges).
-    /// This is equivalent to `neighbors_mode_of(i, NeighborMode::Undirected)`.
+    /// Not supported for UNKNOWN graphs - use neighbors_mode_of with NeighborMode::Undirected instead.
     /// Note: For ADMG, use `bidirected_of` or `spouses_of` instead.
     pub fn undirected_of(&self, i: u32) -> Result<Vec<u32>, String> {
+        if matches!(self, GraphView::Raw(_)) {
+            return Err("undirected_of is not defined for UNKNOWN graphs; use neighbors(..., mode = 'undirected') instead".into());
+        }
         self.neighbors_mode_of(i, NeighborMode::Undirected)
     }
 
     /// Get bidirected neighbors of node `i` (nodes connected via `<->` edges, i.e., spouses).
-    /// This is equivalent to `neighbors_mode_of(i, NeighborMode::Bidirected)`.
+    /// Not supported for UNKNOWN graphs - use neighbors_mode_of with NeighborMode::Bidirected instead.
     pub fn bidirected_of(&self, i: u32) -> Result<Vec<u32>, String> {
+        if matches!(self, GraphView::Raw(_)) {
+            return Err("bidirected_of is not defined for UNKNOWN graphs; use neighbors(..., mode = 'bidirected') instead".into());
+        }
         self.neighbors_mode_of(i, NeighborMode::Bidirected)
     }
 
     /// Get all neighbors of node `i` regardless of edge type.
-    /// This is equivalent to `neighbors_mode_of(i, NeighborMode::All)`.
+    /// This is the only semantic wrapper that works for all graph types including UNKNOWN.
     pub fn neighbors_of(&self, i: u32) -> Result<Vec<u32>, String> {
         self.neighbors_mode_of(i, NeighborMode::All)
     }
@@ -353,8 +366,11 @@ impl GraphView {
 
     // ---- ADMG-specific methods ----
     /// Get spouses of node `i` (nodes connected via bidirected edges).
-    /// This is equivalent to `neighbors_mode_of(i, NeighborMode::Bidirected)`.
+    /// Only defined for ADMGs. For UNKNOWN graphs, use neighbors(..., mode = "bidirected").
     pub fn spouses_of(&self, i: u32) -> Result<Vec<u32>, String> {
+        if matches!(self, GraphView::Raw(_)) {
+            return Err("spouses_of is not defined for UNKNOWN graphs; use neighbors(..., mode = 'bidirected') instead".into());
+        }
         self.neighbors_mode_of(i, NeighborMode::Bidirected)
     }
 
@@ -637,18 +653,21 @@ mod tests {
         let v_pdag_core = v_pdag.core();
         assert_eq!(v_pdag_core.n(), 4);
 
-        // Raw view now supports parents_of, children_of, undirected_of, neighbors_of via neighbors_mode_of
-        // The pdag_core has: 0->1, 1---2, 1->3
+        // Raw view only supports neighbors_of and neighbors_mode_of
+        // The semantic wrappers (parents_of, children_of, etc.) should error for UNKNOWN graphs
         let v_raw = GraphView::Raw(pdag_core);
         assert_eq!(v_raw.n(), 4);
-        // parents_of(1) should return [0] (from 0->1)
-        assert_eq!(v_raw.parents_of(1).unwrap(), vec![0]);
-        // children_of(0) should return [1] (from 0->1)
-        assert_eq!(v_raw.children_of(0).unwrap(), vec![1]);
-        // undirected_of(1) should return [2] (from 1---2)
-        assert_eq!(v_raw.undirected_of(1).unwrap(), vec![2]);
-        // neighbors_of(0) should return [1] (all neighbors)
+
+        // Semantic wrappers should error for UNKNOWN graphs
+        assert!(v_raw.parents_of(1).is_err());
+        assert!(v_raw.children_of(0).is_err());
+        assert!(v_raw.undirected_of(1).is_err());
+
+        // neighbors_of and neighbors_mode_of still work
         assert_eq!(v_raw.neighbors_of(0).unwrap(), vec![1]);
+        assert_eq!(v_raw.neighbors_mode_of(1, NeighborMode::In).unwrap(), vec![0]);
+        assert_eq!(v_raw.neighbors_mode_of(0, NeighborMode::Out).unwrap(), vec![1]);
+        assert_eq!(v_raw.neighbors_mode_of(1, NeighborMode::Undirected).unwrap(), vec![2]);
 
         let v_raw_core = v_raw.core();
         assert_eq!(v_raw_core.n(), 4);
@@ -1359,31 +1378,28 @@ mod tests {
         b.add_edge(1, 3, bi).unwrap();
         let v = GraphView::Raw(Arc::new(b.finalize().unwrap()));
 
-        // Test thin wrappers for Raw graphs
-        // parents_of (In mode): node 1 has Arrow mark in 0->1 and 1<->3
-        let parents = v.parents_of(1).unwrap();
-        assert_eq!(parents.len(), 2);
-        assert!(parents.contains(&0)); // 0 -> 1
-        assert!(parents.contains(&3)); // 1 <-> 3 (arrow at 1)
+        // For UNKNOWN graphs, semantic wrappers should error
+        assert!(v.parents_of(1).is_err());
+        assert!(v.children_of(1).is_err());
+        assert!(v.undirected_of(1).is_err());
+        assert!(v.bidirected_of(1).is_err());
+        assert!(v.spouses_of(1).is_err());
 
-        // children_of (Out mode): neighbor has Arrow mark in 1<->3
-        assert_eq!(v.children_of(1).unwrap(), vec![3]); // 1 <-> 3 (arrow at 3)
-
-        // undirected_of: node 1 has Tail mark in 1---2
-        assert_eq!(v.undirected_of(1).unwrap(), vec![2]);
-
-        // bidirected_of: both ends have Arrow marks (only 1<->3)
-        assert_eq!(v.bidirected_of(1).unwrap(), vec![3]);
-
-        // spouses_of is equivalent to bidirected_of
-        assert_eq!(v.spouses_of(1).unwrap(), vec![3]);
-
-        // neighbors_of returns all
+        // But neighbors_of and neighbors_mode_of work
         let all = v.neighbors_of(1).unwrap();
         assert_eq!(all.len(), 3);
         assert!(all.contains(&0));
         assert!(all.contains(&2));
         assert!(all.contains(&3));
+
+        // neighbors_mode_of allows explicit mode selection
+        let in_neigh = v.neighbors_mode_of(1, NeighborMode::In).unwrap();
+        assert_eq!(in_neigh.len(), 2);
+        assert!(in_neigh.contains(&0)); // 0 -> 1
+        assert!(in_neigh.contains(&3)); // 1 <-> 3 (arrow at 1)
+
+        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Undirected).unwrap(), vec![2]);
+        assert_eq!(v.neighbors_mode_of(1, NeighborMode::Bidirected).unwrap(), vec![3]);
     }
 
     #[test]

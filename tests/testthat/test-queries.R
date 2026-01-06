@@ -583,7 +583,7 @@ test_that("neighbors mode 'partial' works for UNKNOWN graphs", {
   expect_identical(neighbors(cg, "E", mode = "partial"), "D")  # E has Circle in D --o E
 })
 
-test_that("parents and children work for UNKNOWN graphs", {
+test_that("parents and children error for UNKNOWN graphs", {
   cg <- caugi(
     A %-->% B,
     B %-->% C,
@@ -591,17 +591,15 @@ test_that("parents and children work for UNKNOWN graphs", {
     class = "UNKNOWN"
   )
 
-  # parents is equivalent to neighbors(..., mode = "in")
-  expect_null(parents(cg, "A"))
-  expect_identical(parents(cg, "B"), "A")
-  expect_identical(parents(cg, "C"), "B")
-  expect_null(parents(cg, "D"))
+  # parents, children, and spouses should error for UNKNOWN graphs
+  # because only the structural neighbors() query should work
+  expect_error(parents(cg, "B"), "not defined for UNKNOWN")
+  expect_error(children(cg, "A"), "not defined for UNKNOWN")
+  expect_error(spouses(cg, "A"), "not defined for UNKNOWN")
 
-  # children is equivalent to neighbors(..., mode = "out")
-  expect_identical(children(cg, "A"), "B")
-  expect_identical(children(cg, "B"), "C")
-  expect_null(children(cg, "C"))
-  expect_null(children(cg, "D"))
+  # Use neighbors() with explicit mode instead
+  expect_identical(neighbors(cg, "B", mode = "in"), "A")
+  expect_identical(neighbors(cg, "A", mode = "out"), "B")
 })
 
 test_that("neighbors mode with index works for UNKNOWN graphs", {
@@ -716,7 +714,7 @@ test_that("neighbors mode validation for ADMG", {
   expect_error(neighbors(cg, "B", mode = "partial"), "not valid for ADMG")
 })
 
-test_that("spouses works for UNKNOWN graphs", {
+test_that("spouses errors for UNKNOWN graphs", {
   cg <- caugi(
     A %-->% B,
     B %<->% C,
@@ -724,14 +722,14 @@ test_that("spouses works for UNKNOWN graphs", {
     class = "UNKNOWN"
   )
 
-  # spouses returns only bidirected edges (equivalent to neighbors mode="bidirected")
-  expect_null(spouses(cg, "A"))
-  expect_identical(spouses(cg, "B"), "C")
-  expect_identical(spouses(cg, "C"), "B")
-  expect_null(spouses(cg, "D"))
+  # spouses should error for UNKNOWN graphs
+  expect_error(spouses(cg, "B"), "not defined for UNKNOWN")
 
-  # spouses is equivalent to neighbors with mode = "bidirected"
-  expect_identical(spouses(cg, "B"), neighbors(cg, "B", mode = "bidirected"))
+  # Use neighbors with mode = "bidirected" instead
+  expect_identical(neighbors(cg, "B", mode = "bidirected"), "C")
+  expect_identical(neighbors(cg, "C", mode = "bidirected"), "B")
+  expect_null(neighbors(cg, "A", mode = "bidirected"))
+  expect_null(neighbors(cg, "D", mode = "bidirected"))
 })
 
 test_that("spouses works for ADMG graphs", {

@@ -9,16 +9,14 @@ neighbors(
   cg,
   nodes = NULL,
   index = NULL,
-  mode = c("all", "in", "ingoing", "out", "outgoing", "undirected", "bidirected",
-    "partial")
+  mode = c("all", "in", "out", "undirected", "bidirected", "partial")
 )
 
 neighbours(
   cg,
   nodes = NULL,
   index = NULL,
-  mode = c("all", "in", "ingoing", "out", "outgoing", "undirected", "bidirected",
-    "partial")
+  mode = c("all", "in", "out", "undirected", "bidirected", "partial")
 )
 }
 \arguments{
@@ -32,9 +30,9 @@ node names, or an expression combining these with \code{+} and \code{c()}.}
 \item{mode}{Character; specifies which types of neighbors to return:
 \describe{
 \item{\code{"all"}}{All neighbors (default)}
-\item{\code{"in"} or \code{"ingoing"}}{Parents: nodes with directed edges pointing
+\item{\code{"in"}}{Parents: nodes with directed edges pointing
 INTO the target node (equivalent to \code{parents()})}
-\item{\code{"out"} or \code{"outgoing"}}{Children: nodes with directed edges pointing
+\item{\code{"out"}}{Children: nodes with directed edges pointing
 OUT from the target node (equivalent to \code{children()})}
 \item{\code{"undirected"}}{Nodes connected via undirected (\verb{---}) edges}
 \item{\code{"bidirected"}}{Nodes connected via bidirected (\verb{<->}) edges
