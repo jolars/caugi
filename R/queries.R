@@ -681,9 +681,9 @@ children <- function(cg, nodes = NULL, index = NULL) {
 #' @param mode Character; specifies which types of neighbors to return:
 #' \describe{
 #'   \item{`"all"`}{All neighbors (default)}
-#'   \item{`"in"` or `"ingoing"`}{Parents: nodes with directed edges pointing
+#'   \item{`"in"`}{Parents: nodes with directed edges pointing
 #'     INTO the target node (equivalent to `parents()`)}
-#'   \item{`"out"` or `"outgoing"`}{Children: nodes with directed edges pointing
+#'   \item{`"out"`}{Children: nodes with directed edges pointing
 #'     OUT from the target node (equivalent to `children()`)}
 #'   \item{`"undirected"`}{Nodes connected via undirected (`---`) edges}
 #'   \item{`"bidirected"`}{Nodes connected via bidirected (`<->`) edges
@@ -743,7 +743,14 @@ neighbors <- function(
   cg,
   nodes = NULL,
   index = NULL,
-  mode = c("all", "in", "ingoing", "out", "outgoing", "undirected", "bidirected", "partial")
+  mode = c(
+    "all",
+    "in",
+    "out",
+    "undirected",
+    "bidirected",
+    "partial"
+  )
 ) {
   nodes_supplied <- !missing(nodes)
   index_supplied <- !missing(index) && !is.null(index)

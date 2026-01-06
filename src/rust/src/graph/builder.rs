@@ -18,9 +18,13 @@ pub struct GraphBuilder {
     pair_seen: HashSet<(u32, u32)>,
 }
 
+/// Encodes the mark type at this endpoint: 0 = non-Arrow (Tail, Circle, Other), 1 = Arrow.
+/// This is used for semantic edge direction in SHD comparisons.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 enum Side {
+    /// Non-Arrow mark (Tail, Circle, or Other)
     Tail,
+    /// Arrow mark
     Head,
 }
 

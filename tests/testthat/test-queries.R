@@ -569,12 +569,18 @@ test_that("neighbors mode 'partial' works for UNKNOWN graphs", {
     class = "UNKNOWN"
   )
 
-  # Partial mode (o-o, o->, --o)
-  expect_null(neighbors(cg, "A", mode = "partial"))
-  expect_identical(neighbors(cg, "B", mode = "partial"), "C")
-  expect_setequal(neighbors(cg, "C", mode = "partial"), c("B", "D"))
-  expect_setequal(neighbors(cg, "D", mode = "partial"), c("C", "E"))
-  expect_identical(neighbors(cg, "E", mode = "partial"), "D")
+  # Partial mode returns neighbors where the CURRENT node has a Circle mark.
+  # Edge marks:
+  # A --> B: A has Tail, B has Arrow
+  # B o-> C: B has Circle, C has Arrow
+  # C o-o D: both have Circle
+  # D --o E: D has Tail, E has Circle (head position has Circle)
+
+  expect_null(neighbors(cg, "A", mode = "partial"))  # A has Tail (no Circle)
+  expect_identical(neighbors(cg, "B", mode = "partial"), "C")  # B has Circle in B o-> C
+  expect_identical(neighbors(cg, "C", mode = "partial"), "D")  # C has Circle in C o-o D (but Arrow in B o-> C)
+  expect_identical(neighbors(cg, "D", mode = "partial"), "C")  # D has Circle in C o-o D (but Tail in D --o E)
+  expect_identical(neighbors(cg, "E", mode = "partial"), "D")  # E has Circle in D --o E
 })
 
 test_that("parents and children work for UNKNOWN graphs", {
@@ -596,26 +602,6 @@ test_that("parents and children work for UNKNOWN graphs", {
   expect_identical(children(cg, "B"), "C")
   expect_null(children(cg, "C"))
   expect_null(children(cg, "D"))
-})
-
-test_that("neighbors mode aliases work", {
-  cg <- caugi(
-    A %-->% B,
-    B %-->% C,
-    class = "UNKNOWN"
-  )
-
-  # "ingoing" is alias for "in"
-  expect_identical(
-    neighbors(cg, "B", mode = "ingoing"),
-    neighbors(cg, "B", mode = "in")
-  )
-
-  # "outgoing" is alias for "out"
-  expect_identical(
-    neighbors(cg, "B", mode = "outgoing"),
-    neighbors(cg, "B", mode = "out")
-  )
 })
 
 test_that("neighbors mode with index works for UNKNOWN graphs", {
