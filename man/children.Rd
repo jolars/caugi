@@ -19,8 +19,8 @@ Either a character vector of node names (if a single node is
 requested) or a list of character vectors (if multiple nodes are requested).
 }
 \description{
-Get children of node in a graph (nodes with directed edges pointing OUT
-from the target node).
+Get children of nodes in a graph (nodes with directed edges pointing OUT
+from the target nodes).
 This is equivalent to \code{neighbors(cg, nodes, mode = "out")}.
 }
 \examples{

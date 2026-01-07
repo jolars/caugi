@@ -19,7 +19,7 @@ Either a character vector of node names (if a single node is
 requested) or a list of character vectors (if multiple nodes are requested).
 }
 \description{
-Get parents of node in a graph (nodes with directed edges pointing INTO
+Get parents of nodes in a graph (nodes with directed edges pointing INTO
 the target node). This is equivalent to \code{neighbors(cg, nodes, mode = "in")}.
 
 Note that not both nodes and index can be given.

@@ -576,11 +576,11 @@ test_that("neighbors mode 'partial' works for UNKNOWN graphs", {
   # C o-o D: both have Circle
   # D --o E: D has Tail, E has Circle (head position has Circle)
 
-  expect_null(neighbors(cg, "A", mode = "partial"))  # A has Tail (no Circle)
-  expect_identical(neighbors(cg, "B", mode = "partial"), "C")  # B has Circle in B o-> C
-  expect_identical(neighbors(cg, "C", mode = "partial"), "D")  # C has Circle in C o-o D (but Arrow in B o-> C)
-  expect_identical(neighbors(cg, "D", mode = "partial"), "C")  # D has Circle in C o-o D (but Tail in D --o E)
-  expect_identical(neighbors(cg, "E", mode = "partial"), "D")  # E has Circle in D --o E
+  expect_null(neighbors(cg, "A", mode = "partial")) # A has Tail (no Circle)
+  expect_identical(neighbors(cg, "B", mode = "partial"), "C") # B has Circle in B o-> C
+  expect_identical(neighbors(cg, "C", mode = "partial"), "D") # C has Circle in C o-o D (but Arrow in B o-> C)
+  expect_identical(neighbors(cg, "D", mode = "partial"), "C") # D has Circle in C o-o D (but Tail in D --o E)
+  expect_identical(neighbors(cg, "E", mode = "partial"), "D") # E has Circle in D --o E
 })
 
 test_that("parents and children error for UNKNOWN graphs", {
