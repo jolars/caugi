@@ -580,8 +580,8 @@ parents <- function(cg, nodes = NULL, index = NULL) {
 #' @title Get children of nodes in a `caugi`
 #'
 #' @description
-#' Get children of node in a graph (nodes with directed edges pointing OUT
-#' from the target node).
+#' Get children of nodes in a graph (nodes with directed edges pointing OUT
+#' from the target nodes).
 #' This is equivalent to `neighbors(cg, nodes, mode = "out")`.
 #'
 #' @param cg A `caugi` object.
