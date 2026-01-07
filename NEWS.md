@@ -3,7 +3,7 @@
 
 * Add `mode` argument to `neighbors()`/`neighbours()` to filter neighbors by edge
   direction or type (`"all"`, `"in"`, `"out"`, `"undirected"`, `"bidirected"`,
-  `"partial"`). This is a structural query, and not a  semantic query!
+  `"partial"`). This is a structural query, and not a semantic query!
 * `neighbors()` now supports `class = "UNKNOWN"` graphs, including `mode`-based
   filtering.
 * Add `simulate_data()` that enables simulation from DAGs using SEMs. Standard linear Gaussian SEMs are defaults, but more importantly custom SEMs are available. 
