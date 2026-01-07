@@ -270,12 +270,17 @@ impl Pdag {
         true
     }
 
-    /// Every arrow is strongly protected (SP0..SP4).
-    fn all_arrows_strongly_protected(&self, comp: &[usize]) -> bool {
+    /// Every arrow is strongly protected (VS, SP1..SP4).
+    fn all_arrows_strongly_protected(&self, _comp: &[usize]) -> bool {
         for a in 0..self.n() {
             for &b in self.children_of(a) {
-                // SP0: across components edges have fixed direction
-                if comp[a as usize] != comp[b as usize] {
+                // VS (v-structure protection): ∃ c: c→b and c ⊥ a
+                // (another parent of b that is not adjacent to a, forming a v-structure)
+                if self
+                    .parents_of(b)
+                    .iter()
+                    .any(|&c| c != a && !self.adjacent(c, a))
+                {
                     continue;
                 }
                 // SP1: ∃ c: c->a and c !~ b
@@ -309,10 +314,8 @@ impl Pdag {
                     continue;
                 }
                 // SP4: ∃ c: a--c and c ⇒ b
-                for &c in und_a {
-                    if self.has_dir_path(c, b) {
-                        continue;
-                    }
+                if und_a.iter().any(|&c| self.has_dir_path(c, b)) {
+                    continue;
                 }
                 // not strongly protected
                 return false;
@@ -347,14 +350,17 @@ mod tests {
     }
 
     #[test]
-    fn cpdag_triangle_standard_is_cpdag() {
+    fn cpdag_triangle_partially_directed_rejected() {
+        // In a triangle (complete graph), no v-structures are possible since all
+        // nodes are adjacent. The CPDAG should be all undirected: 0—1, 0—2, 1—2.
+        // A partially directed triangle like 0→1, 0→2, 1—2 is NOT a valid CPDAG.
         let (reg, d, u) = setup();
         let mut b = GraphBuilder::new_with_registry(3, true, &reg);
         b.add_edge(0, 1, d).unwrap();
         b.add_edge(0, 2, d).unwrap();
         b.add_edge(1, 2, u).unwrap();
         let g = Pdag::new(Arc::new(b.finalize().unwrap())).unwrap();
-        assert!(g.is_cpdag());
+        assert!(!g.is_cpdag());
     }
 
     #[test]
@@ -419,14 +425,37 @@ mod tests {
     }
 
     #[test]
-    fn cpdag_pure_dag_chain_ok() {
+    fn cpdag_single_directed_edge_rejected() {
+        // A single directed edge A→B is NOT a valid CPDAG because the edge is
+        // not protected by any v-structure. The correct CPDAG would be A—B.
+        let (reg, d, _u) = setup();
+        let mut b = GraphBuilder::new_with_registry(2, true, &reg);
+        b.add_edge(0, 1, d).unwrap();
+        let g = Pdag::new(Arc::new(b.finalize().unwrap())).unwrap();
+        assert!(!g.is_cpdag());
+    }
+
+    #[test]
+    fn cpdag_single_undirected_edge_ok() {
+        // A single undirected edge A—B IS a valid CPDAG.
+        let (reg, _d, u) = setup();
+        let mut b = GraphBuilder::new_with_registry(2, true, &reg);
+        b.add_edge(0, 1, u).unwrap();
+        let g = Pdag::new(Arc::new(b.finalize().unwrap())).unwrap();
+        assert!(g.is_cpdag());
+    }
+
+    #[test]
+    fn cpdag_pure_dag_chain_rejected() {
+        // A pure directed chain is NOT a valid CPDAG because no edges are
+        // strongly protected. The correct CPDAG would have all edges undirected.
         let (reg, d, _u) = setup();
         let mut b = GraphBuilder::new_with_registry(4, true, &reg);
         b.add_edge(0, 1, d).unwrap();
         b.add_edge(1, 2, d).unwrap();
         b.add_edge(2, 3, d).unwrap();
         let g = Pdag::new(Arc::new(b.finalize().unwrap())).unwrap();
-        assert!(g.is_cpdag());
+        assert!(!g.is_cpdag());
     }
 
     #[test]
@@ -565,11 +594,13 @@ mod tests {
     }
 
     #[test]
-    fn cpdag_triangle_directed_fan_ok() {
-        let (reg, d, u) = setup();
+    fn cpdag_triangle_undirected_ok() {
+        // A fully undirected triangle IS a valid CPDAG (the equivalence class
+        // of all DAGs on a complete graph with no v-structures).
+        let (reg, _d, u) = setup();
         let mut b = GraphBuilder::new_with_registry(3, true, &reg);
-        b.add_edge(0, 1, d).unwrap();
-        b.add_edge(0, 2, d).unwrap();
+        b.add_edge(0, 1, u).unwrap();
+        b.add_edge(0, 2, u).unwrap();
         b.add_edge(1, 2, u).unwrap();
         let g = Pdag::new(Arc::new(b.finalize().unwrap())).unwrap();
         assert!(g.is_cpdag());

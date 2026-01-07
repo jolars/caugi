@@ -88,10 +88,16 @@ test_that("is_pdag works", {
 })
 
 test_that("is_cpdag works", {
+  # V-structure at C with undirected edge A--B (valid CPDAG)
   cg <- caugi(A %-->% C, B %-->% C, A %---% B, class = "PDAG")
   expect_true(is_cpdag(cg))
 
+  # A pure directed chain is NOT a valid CPDAG (edges not protected)
   cg <- caugi(A %-->% B, B %-->% C, C %-->% D, class = "DAG")
+  expect_false(is_cpdag(cg))
+
+  # V-structure 0 -> 2 <- 1 IS a valid CPDAG
+  cg <- caugi(A %-->% C, B %-->% C, class = "PDAG")
   expect_true(is_cpdag(cg))
 
   cg <- caugi(A %-->% B, B %-->% C, C %o->% D, class = "Unknown")
@@ -99,6 +105,26 @@ test_that("is_cpdag works", {
 
   cg <- caugi(A %-->% B, B %-->% C, C %---% D + E %o->% F, class = "Unknown")
   expect_false(is_cpdag(cg))
+
+  cg <- caugi(A %-->% B, class = "PDAG")
+  expect_false(is_cpdag(cg))
+
+  cg <- caugi(A, B, class = "PDAG")
+  expect_true(is_cpdag(cg))
+
+  cg <- caugi(A %-->% B, A %---% C, class = "PDAG")
+  expect_false(is_cpdag(cg))
+
+  cg <- caugi(
+    B %---% A,
+    B %---% D,
+    C %-->% E,
+    B %-->% E,
+    D %-->% F,
+    E %-->% F,
+    class = "PDAG"
+  )
+  expect_true(is_cpdag(cg))
 })
 
 test_that("same_nodes works", {

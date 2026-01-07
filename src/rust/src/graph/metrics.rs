@@ -602,13 +602,11 @@ mod tests {
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
         let d = reg.code_of("-->").unwrap();
-        let u = reg.code_of("---").unwrap();
 
-        // CPDAG: 0 -> 1, 1 -- 2
+        // CPDAG: v-structure 0 -> 2 <- 1 (collider at 2)
         let mut b = GraphBuilder::new_with_registry(3, true, &reg);
-        b.add_edge(0, 1, d).unwrap();
         b.add_edge(0, 2, d).unwrap();
-        b.add_edge(1, 2, u).unwrap();
+        b.add_edge(1, 2, d).unwrap();
         let p = Pdag::new(std::sync::Arc::new(b.finalize().unwrap())).unwrap();
         assert!(p.is_cpdag());
 
@@ -642,21 +640,18 @@ mod tests {
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
         let d = reg.code_of("-->").unwrap();
-        let u = reg.code_of("---").unwrap();
 
-        // True CPDAG: 0 -> 1, 1 -- 2
+        // True CPDAG: v-structure 0 -> 2 <- 1 (collider at 2)
         let mut bt = GraphBuilder::new_with_registry(3, true, &reg);
-        bt.add_edge(0, 1, d).unwrap();
         bt.add_edge(0, 2, d).unwrap();
-        bt.add_edge(1, 2, u).unwrap();
+        bt.add_edge(1, 2, d).unwrap();
         let p_true = Pdag::new(std::sync::Arc::new(bt.finalize().unwrap())).unwrap();
         assert!(p_true.is_cpdag());
 
-        // Guess CPDAG: change 1 -- 2 into 1 -> 2
+        // Guess CPDAG: different v-structure 0 -> 1 <- 2 (collider at 1 instead of 2)
         let mut bg = GraphBuilder::new_with_registry(3, true, &reg);
         bg.add_edge(0, 1, d).unwrap();
-        bg.add_edge(0, 2, d).unwrap();
-        bg.add_edge(1, 2, d).unwrap();
+        bg.add_edge(2, 1, d).unwrap();
         let p_guess = Pdag::new(std::sync::Arc::new(bg.finalize().unwrap())).unwrap();
         assert!(p_guess.is_cpdag());
 
@@ -750,9 +745,9 @@ mod tests {
         reg.register_builtins().unwrap();
         let d = reg.code_of("-->").unwrap();
 
-        // Build a valid CPDAG with n=3: 0->1, 1--2.
+        // Build a valid CPDAG with n=3: v-structure 0->2<-1
         let mut b = GraphBuilder::new_with_registry(3, true, &reg);
-        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(0, 2, d).unwrap();
         b.add_edge(1, 2, d).unwrap();
         let p = Pdag::new(std::sync::Arc::new(b.finalize().unwrap())).unwrap();
         assert!(p.is_cpdag());
