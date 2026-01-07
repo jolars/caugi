@@ -13,7 +13,7 @@ mod msep;
 
 use super::error::AdmgError;
 use super::CaugiGraph;
-use crate::edges::EdgeClass;
+use crate::edges::{EdgeClass, Mark};
 use crate::graph::alg::bitset;
 use crate::graph::alg::directed_part_is_acyclic;
 use crate::graph::alg::traversal;
@@ -56,16 +56,23 @@ impl Admg {
         }
 
         // Count (parents, spouses, children) per node
+        // side[k] stores position: 0 = tail position, 1 = head position.
+        // To determine parent/child, check if my mark is Arrow.
         let mut deg: Vec<(u32, u32, u32)> = vec![(0, 0, 0); n];
         for i in 0..n {
             for k in core.row_range(i as u32) {
                 let spec = &core.registry.specs[core.etype[k] as usize];
                 match spec.class {
                     EdgeClass::Directed => {
-                        if core.side[k] == 1 {
-                            deg[i].0 += 1; // parent
+                        let my_mark = if core.side[k] == 0 {
+                            spec.tail
                         } else {
-                            deg[i].2 += 1; // child
+                            spec.head
+                        };
+                        if my_mark == Mark::Arrow {
+                            deg[i].0 += 1; // parent (Arrow points INTO me)
+                        } else {
+                            deg[i].2 += 1; // child (Arrow points FROM me)
                         }
                     }
                     EdgeClass::Bidirected => {
@@ -112,7 +119,12 @@ impl Admg {
                 let spec = &core.registry.specs[core.etype[k] as usize];
                 match spec.class {
                     EdgeClass::Directed => {
-                        if core.side[k] == 1 {
+                        let my_mark = if core.side[k] == 0 {
+                            spec.tail
+                        } else {
+                            spec.head
+                        };
+                        if my_mark == Mark::Arrow {
                             let p = pcur[i];
                             neigh[p] = core.col_index[k];
                             pcur[i] += 1;

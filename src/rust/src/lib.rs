@@ -231,7 +231,7 @@ fn parents_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
             .as_ref()
             .parents_of(i)
             .unwrap_or_else(|e| throw_r_error(e));
-        out.push(v.into_iter().map(|&x| x as i32).collect_robj());
+        out.push(v.iter().map(|&x| x as i32).collect_robj());
     }
     extendr_api::prelude::List::from_values(out).into_robj()
 }
@@ -248,7 +248,7 @@ fn children_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
             .as_ref()
             .children_of(i)
             .unwrap_or_else(|e| throw_r_error(e));
-        out.push(v.into_iter().map(|&x| x as i32).collect_robj());
+        out.push(v.iter().map(|&x| x as i32).collect_robj());
     }
     extendr_api::prelude::List::from_values(out).into_robj()
 }
@@ -265,13 +265,27 @@ fn undirected_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
             .as_ref()
             .undirected_of(i)
             .unwrap_or_else(|e| throw_r_error(e));
-        out.push(v.into_iter().map(|&x| x as i32).collect_robj());
+        out.push(v.iter().map(|&x| x as i32).collect_robj());
     }
     extendr_api::prelude::List::from_values(out).into_robj()
 }
 
 #[extendr]
-fn neighbors_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
+fn neighbors_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers, mode: Strings) -> Robj {
+    use graph::NeighborMode;
+
+    // Default to "all" if mode is empty or NA
+    let neighbor_mode = if mode.len() == 0 {
+        NeighborMode::All
+    } else {
+        let mode_rstr = mode.elt(0);
+        if mode_rstr.is_na() {
+            NeighborMode::All
+        } else {
+            NeighborMode::from_str(mode_rstr.as_str()).unwrap_or_else(|e| throw_r_error(e))
+        }
+    };
+
     let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
     for ri in idxs.iter() {
         let i = rint_to_u32(ri, "idxs");
@@ -280,9 +294,9 @@ fn neighbors_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
         }
         let v = g
             .as_ref()
-            .neighbors_of(i)
+            .neighbors_of(i, neighbor_mode)
             .unwrap_or_else(|e| throw_r_error(e));
-        out.push(v.into_iter().map(|&x| x as i32).collect_robj());
+        out.push(v.iter().map(|&x| x as i32).collect_robj());
     }
     extendr_api::prelude::List::from_values(out).into_robj()
 }

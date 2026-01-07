@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 //! Topological sorting for graphs with directed edges.
 
-use crate::edges::EdgeClass;
+use crate::edges::{EdgeClass, Mark};
 use crate::graph::CaugiGraph;
 
 /// Returns a topological ordering of the directed part of the graph using Kahn's algorithm.
@@ -22,12 +22,21 @@ pub fn topological_sort(core: &CaugiGraph) -> Vec<u32> {
 
     let mut indeg = vec![0usize; n];
 
-    // Compute in-degree: count incoming directed edges (side == 1 means head of arrow)
+    // Compute in-degree: count incoming directed edges.
+    // side[k] stores position: 0 = tail position, 1 = head position.
+    // An edge is incoming if my mark is Arrow (arrow points INTO me).
     for i in 0..n {
         for k in core.row_range(i as u32) {
             let spec = &core.registry.specs[core.etype[k] as usize];
-            if matches!(spec.class, EdgeClass::Directed) && core.side[k] == 1 {
-                indeg[i] += 1;
+            if matches!(spec.class, EdgeClass::Directed) {
+                let my_mark = if core.side[k] == 0 {
+                    spec.tail
+                } else {
+                    spec.head
+                };
+                if my_mark == Mark::Arrow {
+                    indeg[i] += 1;
+                }
             }
         }
     }
@@ -39,15 +48,23 @@ pub fn topological_sort(core: &CaugiGraph) -> Vec<u32> {
     while let Some(u) = queue.pop() {
         result.push(u as u32);
 
-        // Process outgoing directed edges from u
+        // Process outgoing directed edges from u.
+        // An edge is outgoing if neighbor's mark is Arrow (arrow points INTO neighbor).
         for k in core.row_range(u as u32) {
             let spec = &core.registry.specs[core.etype[k] as usize];
-            if matches!(spec.class, EdgeClass::Directed) && core.side[k] == 0 {
-                // u -> v (tail side, so this is an outgoing edge)
-                let v = core.col_index[k] as usize;
-                indeg[v] -= 1;
-                if indeg[v] == 0 {
-                    queue.push(v);
+            if matches!(spec.class, EdgeClass::Directed) {
+                let neighbor_mark = if core.side[k] == 0 {
+                    spec.head
+                } else {
+                    spec.tail
+                };
+                if neighbor_mark == Mark::Arrow {
+                    // u -> v (outgoing edge)
+                    let v = core.col_index[k] as usize;
+                    indeg[v] -= 1;
+                    if indeg[v] == 0 {
+                        queue.push(v);
+                    }
                 }
             }
         }

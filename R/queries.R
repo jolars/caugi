@@ -507,8 +507,10 @@ edge_types <- function(cg) {
 #' @title Get parents of nodes in a `caugi`
 #'
 #' @description
-#' Get parents of node in a graph. Note that not both nodes and index can be
-#' given.
+#' Get parents of nodes in a graph (nodes with directed edges pointing INTO
+#' the target node). This is equivalent to `neighbors(cg, nodes, mode = "in")`.
+#'
+#' Note that not both nodes and index can be given.
 #'
 #' @param cg A `caugi` object.
 #' @param nodes A vector of node names, a vector of unquoted
@@ -577,6 +579,11 @@ parents <- function(cg, nodes = NULL, index = NULL) {
 
 #' @title Get children of nodes in a `caugi`
 #'
+#' @description
+#' Get children of nodes in a graph (nodes with directed edges pointing OUT
+#' from the target nodes).
+#' This is equivalent to `neighbors(cg, nodes, mode = "out")`.
+#'
 #' @param cg A `caugi` object.
 #' @param nodes A vector of node names, a vector of unquoted
 #' node names, or an expression combining these with `+` and `c()`.
@@ -644,10 +651,36 @@ children <- function(cg, nodes = NULL, index = NULL) {
 
 #' @title Get neighbors of nodes in a `caugi`
 #'
+#' @description
+#' Get neighbors of a node in the graph, optionally filtered by edge direction
+#' or type. This function works for all graph classes including `UNKNOWN`.
+#'
 #' @param cg A `caugi` object.
 #' @param nodes A vector of node names, a vector of unquoted
 #' node names, or an expression combining these with `+` and `c()`.
 #' @param index A vector of node indexes.
+#' @param mode Character; specifies which types of neighbors to return:
+#' \describe{
+#'   \item{`"all"`}{All neighbors (default)}
+#'   \item{`"in"`}{Parents: nodes with directed edges pointing
+#'     INTO the target node (equivalent to `parents()`)}
+#'   \item{`"out"`}{Children: nodes with directed edges pointing
+#'     OUT from the target node (equivalent to `children()`)}
+#'   \item{`"undirected"`}{Nodes connected via undirected (`---`) edges}
+#'   \item{`"bidirected"`}{Nodes connected via bidirected (`<->`) edges
+#'     (equivalent to `spouses()` for ADMGs)}
+#'   \item{`"partial"`}{Nodes connected via partial edges (edges with circle
+#'     endpoints: `o-o`, `o->`, `--o`)}
+#' }
+#'
+#' Not all modes are valid for all graph classes:
+#' \itemize{
+#'   \item DAG: `"in"`, `"out"`, `"all"` only
+#'   \item PDAG: `"in"`, `"out"`, `"undirected"`, `"all"`
+#'   \item UG: `"undirected"`, `"all"` only
+#'   \item ADMG: `"in"`, `"out"`, `"bidirected"`, `"all"`
+#'   \item UNKNOWN: all modes allowed
+#' }
 #'
 #' @returns Either a character vector of node names (if a single node is
 #' requested) or a list of character vectors (if multiple nodes are requested).
@@ -668,11 +701,38 @@ children <- function(cg, nodes = NULL, index = NULL) {
 #' #> $C
 #' #> [1] "B"
 #'
+#' # Using mode to filter by edge direction
+#' neighbors(cg, "B", mode = "in") # "A" (parents)
+#' neighbors(cg, "B", mode = "out") # "C" (children)
+#'
+#' # Works for UNKNOWN graphs too
+#' cg_unknown <- caugi(
+#'   A %-->% B,
+#'   B %---% C,
+#'   C %o->% D,
+#'   class = "UNKNOWN"
+#' )
+#' neighbors(cg_unknown, "B", mode = "in") # "A"
+#' neighbors(cg_unknown, "B", mode = "undirected") # "C"
+#' neighbors(cg_unknown, "C", mode = "partial") # "D"
+#'
 #' @family queries
 #' @concept queries
 #'
 #' @export
-neighbors <- function(cg, nodes = NULL, index = NULL) {
+neighbors <- function(
+  cg,
+  nodes = NULL,
+  index = NULL,
+  mode = c(
+    "all",
+    "in",
+    "out",
+    "undirected",
+    "bidirected",
+    "partial"
+  )
+) {
   nodes_supplied <- !missing(nodes)
   index_supplied <- !missing(index) && !is.null(index)
   if (nodes_supplied && index_supplied) {
@@ -681,10 +741,13 @@ neighbors <- function(cg, nodes = NULL, index = NULL) {
   if (!cg@built) {
     cg <- build(cg)
   }
+
+  mode <- match.arg(mode)
+
   if (index_supplied) {
     return(.getter_output(
       cg,
-      neighbors_of_ptr(cg@ptr, as.integer(index - 1L)),
+      neighbors_of_ptr(cg@ptr, as.integer(index - 1L), mode),
       cg@nodes$name[index]
     ))
   }
@@ -706,7 +769,11 @@ neighbors <- function(cg, nodes = NULL, index = NULL) {
     )
   )
 
-  .getter_output(cg, neighbors_of_ptr(cg@ptr, as.integer(index)), nodes)
+  .getter_output(
+    cg,
+    neighbors_of_ptr(cg@ptr, as.integer(index), mode),
+    nodes
+  )
 }
 
 #' @rdname neighbors
@@ -1057,7 +1124,8 @@ spouses <- function(cg, nodes = NULL, index = NULL) {
 #'
 #' @param cg A `caugi` object of class ADMG.
 #'
-#' @returns A list of character vectors, each containing the nodes in a district.
+#' @returns A list of character vectors,
+#' each containing the nodes in a district.
 #'
 #' @examples
 #' cg <- caugi(
@@ -1085,7 +1153,7 @@ districts <- function(cg) {
 #' @description Test whether two sets of nodes are m-separated given a
 #' conditioning set in an ADMG.
 #'
-#' M-separation generalizes d-separation to ADMGs (Acyclic Directed Mixed Graphs).
+#' M-separation generalizes d-separation to ADMGs.
 #'
 #' @param cg A `caugi` object of class ADMG or DAG.
 #' @param x A character vector of node names (the "source" set).

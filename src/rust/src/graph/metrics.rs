@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 //! Class-agnostic Structural Hamming Distance over CaugiGraph.
 
-use crate::{edges::EdgeClass, graph::CaugiGraph};
+use crate::{
+    edges::{EdgeClass, Mark},
+    graph::CaugiGraph,
+};
 
 #[derive(PartialEq, Eq)]
 enum PairKind {
@@ -25,7 +28,16 @@ fn pair_kind(core: &CaugiGraph, v: u32, mut k: usize, end: usize) -> (PairKind, 
         let kind = if spec.symmetric {
             PairKind::Sym(spec.class)
         } else {
-            PairKind::Asym(spec.class, core.side[k] == 0)
+            // Determine semantic direction: "outgoing" means neighbor has Arrow mark.
+            // side[k] stores position: 0 = tail position, 1 = head position.
+            // If side=0, neighbor mark = spec.head; if side=1, neighbor mark = spec.tail.
+            let neighbor_mark = if core.side[k] == 0 {
+                spec.head
+            } else {
+                spec.tail
+            };
+            let is_outgoing = neighbor_mark == Mark::Arrow;
+            PairKind::Asym(spec.class, is_outgoing)
         };
         return (kind, k + 1);
     }

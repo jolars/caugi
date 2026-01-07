@@ -22,7 +22,7 @@ A logical value; \code{TRUE} if \code{x} and \code{y} are m-separated given \cod
 Test whether two sets of nodes are m-separated given a
 conditioning set in an ADMG.
 
-M-separation generalizes d-separation to ADMGs (Acyclic Directed Mixed Graphs).
+M-separation generalizes d-separation to ADMGs.
 }
 \examples{
 # Classic confounding example
