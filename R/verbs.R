@@ -420,16 +420,20 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
   if (!inplace) {
     s <- cg@`.state`
 
-    # clone state
+    # clone state safely
     state_copy <- .cg_state(
-      nodes = s$nodes,
-      edges = s$edges,
+      nodes = data.table::copy(s$nodes),
+      edges = data.table::copy(s$edges),
       ptr = NULL,
       built = FALSE,
       simple = s$simple,
       class = s$class,
-      name_index_map = s$name_index_map
+      name_index_map = fastmap::fastmap()
     )
+    # populate name_index_map with keys from original
+    for (k in s$name_index_map$keys()) {
+      state_copy$name_index_map$set(k, s$name_index_map$get(k))
+    }
 
     cg_copy <- caugi(state = state_copy)
 

@@ -227,6 +227,90 @@ test_that("add_nodes, remove_nodes cover vector and expr paths", {
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────── inplace = FALSE ───────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("inplace = FALSE doesn't modify object for remove_nodes", {
+  cg <- caugi(Z %-->% X %-->% Y, U %-->% X + Y)
+  nodes_before <- cg@nodes
+  edges_before <- cg@edges
+  new_cg <- remove_nodes(cg, "U", inplace = FALSE)
+  nodes_after <- cg@nodes
+  edges_after <- cg@edges
+  expect_equal(nodes_after, nodes_before)
+  expect_equal(edges_after, edges_before)
+
+  nodes_new_object <- new_cg@nodes
+  edges_new_object <- new_cg@edges
+  expect_equal(
+    nodes_new_object,
+    data.table::data.table(name = c("Z", "X", "Y"))
+  )
+  expect_equal(nrow(edges_new_object), 2L)
+})
+
+test_that("inplace = FALSE doesn't modify object for add_nodes", {
+  cg <- caugi(Z %-->% X %-->% Y, U %-->% X + Y)
+  nodes_before <- cg@nodes
+  edges_before <- cg@edges
+  new_cg <- add_nodes(cg, "W", inplace = FALSE)
+  nodes_after <- cg@nodes
+  edges_after <- cg@edges
+  expect_equal(nodes_after, nodes_before)
+  expect_equal(edges_after, edges_before)
+
+  nodes_new_object <- new_cg@nodes
+  edges_new_object <- new_cg@edges
+  expect_equal(
+    nodes_new_object,
+    data.table::data.table(name = c("Z", "X", "U", "Y", "W"))
+  )
+  expect_equal(edges_new_object, edges_before)
+})
+
+test_that("inplace = FALSE doesn't modify object for remove_edges", {
+  cg <- caugi(Z %-->% X %-->% Y, U %-->% X + Y)
+  nodes_before <- cg@nodes
+  edges_before <- cg@edges
+  new_cg <- remove_edges(cg, from = "U", to = "X", inplace = FALSE)
+  nodes_after <- cg@nodes
+  edges_after <- cg@edges
+  expect_equal(nodes_after, nodes_before)
+  expect_equal(edges_after, edges_before)
+
+  edges_new_object <- new_cg@edges
+  expect_equal(nrow(edges_new_object), 3L)
+})
+
+test_that("inplace = FALSE doesn't modify object for add_edges", {
+  cg <- caugi(Z %-->% X %-->% Y, U %-->% X + Y)
+  nodes_before <- cg@nodes
+  edges_before <- cg@edges
+  new_cg <- add_edges(cg, Z %-->% U, inplace = FALSE)
+  nodes_after <- cg@nodes
+  edges_after <- cg@edges
+  expect_equal(nodes_after, nodes_before)
+  expect_equal(edges_after, edges_before)
+
+  edges_new_object <- new_cg@edges
+  expect_equal(nrow(edges_new_object), 5L)
+})
+
+test_that("inplace = FALSE doesn't modify object for set_edges", {
+  cg <- caugi(Z %-->% X %-->% Y, U %-->% X + Y)
+  nodes_before <- cg@nodes
+  edges_before <- cg@edges
+  new_cg <- set_edges(cg, U %---% X, inplace = FALSE)
+  nodes_after <- cg@nodes
+  edges_after <- cg@edges
+  expect_equal(nodes_after, nodes_before)
+  expect_equal(edges_after, edges_before)
+
+  edges_new_object <- new_cg@edges
+  expect_equal(edges_new_object$edge, c("-->", "-->", "-->", "---"))
+})
+
+# ──────────────────────────────────────────────────────────────────────────────
 # ───────────────────────────── Hashmap updating ───────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
