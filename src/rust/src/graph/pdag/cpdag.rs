@@ -270,7 +270,7 @@ impl Pdag {
         true
     }
 
-    /// Every arrow is strongly protected (VS, SP1..SP4).
+    /// Every arrow is strongly protected (VS, SP1, SP2, SP3).
     fn all_arrows_strongly_protected(&self, _comp: &[usize]) -> bool {
         for a in 0..self.n() {
             for &b in self.children_of(a) {
@@ -311,10 +311,6 @@ impl Pdag {
                     }
                 }
                 if sp3 {
-                    continue;
-                }
-                // SP4: ∃ c: a--c and c ⇒ b
-                if und_a.iter().any(|&c| self.has_dir_path(c, b)) {
                     continue;
                 }
                 // not strongly protected
@@ -469,6 +465,20 @@ mod tests {
     }
 
     #[test]
+    fn cpdag_triangle_with_adjacent_parents_rejected() {
+        // Regression test: A->B, C->B, A--C (triangle with directed edges into B).
+        // Since A and C are adjacent (via the undirected edge), there's NO v-structure
+        // at B. The directed edges A->B and C->B are not protected. NOT a valid CPDAG.
+        let (reg, d, u) = setup();
+        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
+        b.add_edge(0, 1, d).unwrap(); // A -> B
+        b.add_edge(2, 1, d).unwrap(); // C -> B
+        b.add_edge(0, 2, u).unwrap(); // A -- C
+        let g = Pdag::new(Arc::new(b.finalize().unwrap())).unwrap();
+        assert!(!g.is_cpdag());
+    }
+
+    #[test]
     fn cpdag_undirected_tree_ok() {
         let (reg, _d, u) = setup();
         let mut b = GraphBuilder::new_with_registry(5, true, &reg);
@@ -518,7 +528,10 @@ mod tests {
     }
 
     #[test]
-    fn cpdag_component_dag_two_components_ok() {
+    fn cpdag_component_dag_two_components_no_vstruct_rejected() {
+        // Two chain components {0,1} and {2,3} with all cross-edges directed.
+        // Since all nodes are pairwise adjacent (complete K4), no v-structure
+        // is possible, so the directed edges are not protected.
         let (reg, d, u) = setup();
         let mut b = GraphBuilder::new_with_registry(4, true, &reg);
         b.add_edge(0, 1, u).unwrap();
@@ -528,7 +541,7 @@ mod tests {
         b.add_edge(1, 2, d).unwrap();
         b.add_edge(1, 3, d).unwrap();
         let g = Pdag::new(Arc::new(b.finalize().unwrap())).unwrap();
-        assert!(g.is_cpdag());
+        assert!(!g.is_cpdag());
     }
 
     #[test]
@@ -580,7 +593,10 @@ mod tests {
     }
 
     #[test]
-    fn cpdag_mixed_components_chordal_ok() {
+    fn cpdag_triangle_with_directed_edges_into_fourth_rejected() {
+        // Triangle {0,1,2} undirected with all edges pointing to node 3.
+        // Since 0, 1, 2 are all pairwise adjacent, no v-structure at 3,
+        // so the directed edges are not protected. This is NOT a valid CPDAG.
         let (reg, d, u) = setup();
         let mut b = GraphBuilder::new_with_registry(4, true, &reg);
         b.add_edge(0, 1, u).unwrap();
@@ -590,7 +606,7 @@ mod tests {
         b.add_edge(1, 3, d).unwrap();
         b.add_edge(2, 3, d).unwrap();
         let g = Pdag::new(Arc::new(b.finalize().unwrap())).unwrap();
-        assert!(g.is_cpdag());
+        assert!(!g.is_cpdag());
     }
 
     #[test]
@@ -607,7 +623,10 @@ mod tests {
     }
 
     #[test]
-    fn cpdag_component_dag_multilevel_ok() {
+    fn cpdag_component_dag_multilevel_no_vstruct_rejected() {
+        // Three chain components {0,1}, {2}, {3,4} with edges between them.
+        // At node 2: parents 0 and 1 are adjacent (0—1), so no v-structure.
+        // The directed edges into 2 are not protected. NOT a valid CPDAG.
         let (reg, d, u) = setup();
         let mut b = GraphBuilder::new_with_registry(5, true, &reg);
         b.add_edge(0, 1, u).unwrap();
@@ -617,7 +636,7 @@ mod tests {
         b.add_edge(2, 3, d).unwrap();
         b.add_edge(2, 4, d).unwrap();
         let g = Pdag::new(Arc::new(b.finalize().unwrap())).unwrap();
-        assert!(g.is_cpdag());
+        assert!(!g.is_cpdag());
     }
 
     #[test]

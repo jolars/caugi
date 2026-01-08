@@ -88,9 +88,17 @@ test_that("is_pdag works", {
 })
 
 test_that("is_cpdag works", {
-  # V-structure at C with undirected edge A--B (valid CPDAG)
+  # Triangle with A--B undirected and A->C, B->C directed.
+  # Since A and B are adjacent, there's NO v-structure at C.
+  # Directed edges are not protected, so NOT a valid CPDAG.
   cg <- caugi(A %-->% C, B %-->% C, A %---% B, class = "PDAG")
-  expect_true(is_cpdag(cg))
+  expect_false(is_cpdag(cg))
+
+  # Regression test: A->B, C->B with A--C undirected (triangle).
+  # Same reasoning: A and C are adjacent, so no v-structure at B.
+  # The directed edges A->B and C->B are not protected.
+  cg <- caugi(A %-->% B, C %-->% B, C %---% A, class = "PDAG")
+  expect_false(is_cpdag(cg))
 
   # A pure directed chain is NOT a valid CPDAG (edges not protected)
   cg <- caugi(A %-->% B, B %-->% C, C %-->% D, class = "DAG")
