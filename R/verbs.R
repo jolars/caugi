@@ -428,13 +428,8 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
       built = FALSE,
       simple = s$simple,
       class = s$class,
-      name_index_map = fastmap::fastmap()
+      name_index_map = s$name_index_map$clone()
     )
-    # populate name_index_map with keys from original
-    for (k in s$name_index_map$keys()) {
-      state_copy$name_index_map$set(k, s$name_index_map$get(k))
-    }
-
     cg_copy <- caugi(state = state_copy)
 
     # reuse the in-place path on the copy
