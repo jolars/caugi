@@ -259,6 +259,15 @@ impl GraphView {
             GraphView::Raw(_) => Err("descendants_of not implemented for UNKNOWN class".into()),
         }
     }
+    pub fn anteriors_of(&self, i: u32) -> Result<Vec<u32>, String> {
+        match self {
+            GraphView::Dag(g) => Ok(g.anteriors_of(i)),
+            GraphView::Pdag(g) => Ok(g.anteriors_of(i)),
+            GraphView::Admg(_) => Err("anteriors_of not defined for ADMG".into()),
+            GraphView::Ug(_) => Err("anteriors_of not defined for UG".into()),
+            GraphView::Raw(_) => Err("anteriors_of not implemented for UNKNOWN class".into()),
+        }
+    }
     pub fn markov_blanket_of(&self, i: u32) -> Result<Vec<u32>, String> {
         match self {
             GraphView::Dag(g) => Ok(g.markov_blanket_of(i)),

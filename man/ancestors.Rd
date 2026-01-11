@@ -40,6 +40,7 @@ ancestors(cg, c("B", "C"))
 }
 \seealso{
 Other queries: 
+\code{\link{anteriors}()},
 \code{\link{children}()},
 \code{\link{descendants}()},
 \code{\link{districts}()},

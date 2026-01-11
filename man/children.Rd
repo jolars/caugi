@@ -43,6 +43,7 @@ children(cg, c("B", "C"))
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},
+\code{\link{anteriors}()},
 \code{\link{descendants}()},
 \code{\link{districts}()},
 \code{\link{edge_types}()},

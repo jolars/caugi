@@ -34,6 +34,7 @@ nodes(cg) # returns the data.table with nodes A, B, C, D
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},
+\code{\link{anteriors}()},
 \code{\link{children}()},
 \code{\link{descendants}()},
 \code{\link{districts}()},

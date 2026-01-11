@@ -35,6 +35,7 @@ all(edges(sub_cg) == edges(cg2)) # TRUE
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},
+\code{\link{anteriors}()},
 \code{\link{children}()},
 \code{\link{descendants}()},
 \code{\link{districts}()},

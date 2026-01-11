@@ -914,6 +914,88 @@ descendants <- function(cg, nodes = NULL, index = NULL) {
   .getter_output(cg, descendants_of_ptr(cg@ptr, as.integer(index)), nodes)
 }
 
+#' @title Get anteriors of nodes in a `caugi`
+#'
+#' @description
+#' Get the anterior set of nodes in a graph. The anterior set (Richardson and
+#' Spirtes, 2002) includes all nodes reachable by following paths where every
+#' edge is either undirected or directed toward the target node.
+#'
+#' For DAGs, the anterior set equals the ancestor set (since there are no
+#' undirected edges). For PDAGs, it includes both ancestors and nodes reachable
+#' via undirected edges.
+#'
+#' @param cg A `caugi` object of class DAG or PDAG.
+#' @param nodes A vector of node names, a vector of unquoted
+#' node names, or an expression combining these with `+` and `c()`.
+#' @param index A vector of node indexes.
+#'
+#' @returns Either a character vector of node names (if a single node is
+#' requested) or a list of character vectors (if multiple nodes are requested).
+#'
+#' @examples
+#' # PDAG example with directed and undirected edges
+#' cg <- caugi(
+#'   A %-->% B %---% C,
+#'   B %-->% D,
+#'   class = "PDAG"
+#' )
+#' anteriors(cg, "A") # NULL (no anteriors)
+#' anteriors(cg, "C") # A, B
+#' anteriors(cg, "D") # A, B, C
+#'
+#' # For DAGs, anteriors equals ancestors
+#' cg_dag <- caugi(
+#'   A %-->% B %-->% C,
+#'   class = "DAG"
+#' )
+#' anteriors(cg_dag, "C") # A, B
+#'
+#' @references
+#' Richardson, T. and Spirtes, P. (2002). Ancestral graph Markov models.
+#' \emph{The Annals of Statistics}, 30(4):962-1030.
+#'
+#' @family queries
+#' @concept queries
+#'
+#' @export
+anteriors <- function(cg, nodes = NULL, index = NULL) {
+  nodes_supplied <- !missing(nodes)
+  index_supplied <- !missing(index) && !is.null(index)
+  if (nodes_supplied && index_supplied) {
+    stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
+  }
+  if (!cg@built) {
+    cg <- build(cg)
+  }
+  if (index_supplied) {
+    return(.getter_output(
+      cg,
+      anteriors_of_ptr(cg@ptr, as.integer(index - 1L)),
+      cg@nodes$name[index]
+    ))
+  }
+  if (!nodes_supplied) {
+    stop("Supply one of `nodes` or `index`.", call. = FALSE)
+  }
+  if (!is.character(nodes)) {
+    stop("`nodes` must be a character vector of node names.", call. = FALSE)
+  }
+
+  index <- cg@name_index_map$mget(
+    nodes,
+    missing = stop(
+      paste(
+        "Non-existent node name:",
+        paste(setdiff(nodes, cg@nodes$name), collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  )
+
+  .getter_output(cg, anteriors_of_ptr(cg@ptr, as.integer(index)), nodes)
+}
+
 #' @title Get Markov blanket of nodes in a `caugi`
 #'
 #' @param cg A `caugi` object.

@@ -37,6 +37,7 @@ is_cpdag(cg_not_cpdag) # FALSE
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},
+\code{\link{anteriors}()},
 \code{\link{children}()},
 \code{\link{descendants}()},
 \code{\link{districts}()},

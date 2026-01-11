@@ -34,6 +34,7 @@ is_empty_caugi(cg_no_edges_but_has_nodes) # FALSE
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},
+\code{\link{anteriors}()},
 \code{\link{children}()},
 \code{\link{descendants}()},
 \code{\link{districts}()},

@@ -13,8 +13,8 @@ downloads](https://cranlogs.r-pkg.org/badges/caugi)](https://cran.r-project.org/
 [![extendr](https://img.shields.io/badge/extendr-%5E0.8.1-276DC2)](https://extendr.rs/extendr/extendr_api/)
 <!-- badges: end -->
 
-> **Causal Graph Interface (for R)** — a blazingly fast, tidy toolbox
-> for building, coercing and analyzing causal graphs.
+> **Causal Graph Interface (for R)** — a fast and flexible toolbox for
+> building, coercing and analyzing causal graphs.
 
 ## What is `caugi`?
 
@@ -100,7 +100,7 @@ register_caugi_edge(
 )
 
 caugi(A %-->% B, B %<--% C, class = "DAG")
-#> <caugi object; 3 nodes, 2 edges; simple: TRUE; built: TRUE; ptr=0x576e04ebe990>
+#> <caugi object; 3 nodes, 2 edges; simple: TRUE; built: TRUE; ptr=0x60a885eb53e0>
 #>   graph_class: DAG
 #>   nodes: A, B, C
 #>   edges: A-->B, B<--C

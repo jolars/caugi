@@ -175,6 +175,14 @@ impl Dag {
         traversal::descendants_of(self.n(), i, |u| self.children_of(u))
     }
 
+    /// All anteriors of `i`, returned in ascending order.
+    ///
+    /// For DAGs, the anterior set equals the ancestor set (no undirected edges).
+    #[inline]
+    pub fn anteriors_of(&self, i: u32) -> Vec<u32> {
+        self.ancestors_of(i)
+    }
+
     /// Markov blanket of `i`: `Pa(i) ∪ Ch(i) ∪ (⋃ Pa(c) \ {i : c∈Ch(i)})`.
     #[inline]
     pub fn markov_blanket_of(&self, i: u32) -> Vec<u32> {

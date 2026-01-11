@@ -194,6 +194,11 @@ impl Pdag {
     }
 
     #[inline]
+    pub fn anteriors_of(&self, i: u32) -> Vec<u32> {
+        traversal::anteriors_of(self.n(), i, |u| self.parents_of(u), |u| self.undirected_of(u))
+    }
+
+    #[inline]
     pub fn markov_blanket_of(&self, i: u32) -> Vec<u32> {
         let mut mb: Vec<u32> = Vec::new();
         // DAG part

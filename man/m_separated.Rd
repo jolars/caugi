@@ -39,6 +39,7 @@ m_separated(cg, "X", "Y", "L") # TRUE (L blocks the path)
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},
+\code{\link{anteriors}()},
 \code{\link{children}()},
 \code{\link{descendants}()},
 \code{\link{districts}()},

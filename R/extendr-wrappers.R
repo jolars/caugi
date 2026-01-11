@@ -42,6 +42,8 @@ ancestors_of_ptr <- function(g, idxs) .Call(wrap__ancestors_of_ptr, g, idxs)
 
 descendants_of_ptr <- function(g, idxs) .Call(wrap__descendants_of_ptr, g, idxs)
 
+anteriors_of_ptr <- function(g, idxs) .Call(wrap__anteriors_of_ptr, g, idxs)
+
 markov_blanket_of_ptr <- function(g, idxs) .Call(wrap__markov_blanket_of_ptr, g, idxs)
 
 exogenous_nodes_of_ptr <- function(g, undirected_as_parents) .Call(wrap__exogenous_nodes_of_ptr, g, undirected_as_parents)

@@ -44,6 +44,7 @@ is_acyclic(cg_cyclic) # FALSE
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},
+\code{\link{anteriors}()},
 \code{\link{children}()},
 \code{\link{descendants}()},
 \code{\link{districts}()},

@@ -336,6 +336,23 @@ fn descendants_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
 }
 
 #[extendr]
+fn anteriors_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
+    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
+    for ri in idxs.iter() {
+        let i = rint_to_u32(ri, "idxs");
+        if i >= g.as_ref().n() {
+            throw_r_error(format!("Index {} is out of bounds", i));
+        }
+        let v = g
+            .as_ref()
+            .anteriors_of(i)
+            .unwrap_or_else(|e| throw_r_error(e));
+        out.push(v.iter().map(|&x| x as i32).collect_robj());
+    }
+    extendr_api::prelude::List::from_values(out).into_robj()
+}
+
+#[extendr]
 fn markov_blanket_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
     let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
     for ri in idxs.iter() {
@@ -1110,6 +1127,7 @@ extendr_module! {
     fn neighbors_of_ptr;
     fn ancestors_of_ptr;
     fn descendants_of_ptr;
+    fn anteriors_of_ptr;
     fn markov_blanket_of_ptr;
     fn exogenous_nodes_of_ptr;
     fn topological_sort_ptr;

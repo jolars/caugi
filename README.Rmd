@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 [![extendr](https://img.shields.io/badge/extendr-^0.8.1-276DC2)](https://extendr.rs/extendr/extendr_api/)
 <!-- badges: end -->
 
-> **Causal Graph Interface (for R)** — a blazingly fast, tidy toolbox for building, coercing and analyzing causal graphs.
+> **Causal Graph Interface (for R)** — a fast and flexible toolbox for building, coercing and analyzing causal graphs.
 
 ## What is `caugi`?
 
