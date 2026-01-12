@@ -791,3 +791,80 @@ test_that("spouses errors for graph types without bidirected edges", {
   expect_error(spouses(cg_pdag, "A"), "not valid for PDAG")
   expect_error(spouses(cg_ug, "A"), "not valid for UG")
 })
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────── Anteriors tests ───────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("anteriors works for DAG (equals ancestors)", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    class = "DAG"
+  )
+  expect_null(anteriors(cg, "A"))
+  expect_equal(anteriors(cg, "B"), "A")
+  expect_equal(sort(anteriors(cg, "C")), c("A", "B"))
+})
+
+test_that("anteriors works for PDAG with mixed edges", {
+  # PDAG: A -> B --- C, B -> D
+  cg <- caugi(
+    A %-->% B %---% C,
+    B %-->% D,
+    class = "PDAG"
+  )
+  # A has no anteriors
+  expect_null(anteriors(cg, "A"))
+  # B's anteriors: A (parent) and C (undirected)
+  expect_equal(sort(anteriors(cg, "B")), c("A", "C"))
+  # C's anteriors: B (undirected) -> A (parent of B)
+  expect_equal(sort(anteriors(cg, "C")), c("A", "B"))
+  # D's anteriors: B (parent) -> A (parent of B), C (undirected of B)
+  expect_equal(sort(anteriors(cg, "D")), c("A", "B", "C"))
+})
+
+test_that("anteriors works for PDAG with undirected cycle", {
+  # PDAG: A --- B --- C --- A (triangle)
+  cg <- caugi(
+    A %---% B,
+    B %---% C,
+    C %---% A,
+    class = "PDAG"
+  )
+  # All nodes can reach all others via undirected edges
+  expect_equal(sort(anteriors(cg, "A")), c("B", "C"))
+  expect_equal(sort(anteriors(cg, "B")), c("A", "C"))
+  expect_equal(sort(anteriors(cg, "C")), c("A", "B"))
+})
+
+test_that("anteriors not defined for UG", {
+  cg <- caugi(
+    A %---% B,
+    B %---% C,
+    class = "UG"
+  )
+  expect_error(anteriors(cg, "B"), "not defined for UG")
+})
+
+test_that("anteriors not defined for ADMG", {
+  cg <- caugi(
+    A %-->% B,
+    A %<->% C,
+    class = "ADMG"
+  )
+  expect_error(anteriors(cg, "B"), "not defined for ADMG")
+})
+
+test_that("anteriors returns list for multiple nodes", {
+  cg <- caugi(
+    A %-->% B %---% C,
+    B %-->% D,
+    class = "PDAG"
+  )
+  result <- anteriors(cg, c("A", "D"))
+  expect_type(result, "list")
+  expect_named(result, c("A", "D"))
+  expect_null(result$A)
+  expect_equal(sort(result$D), c("A", "B", "C"))
+})
