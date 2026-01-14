@@ -1,16 +1,38 @@
 // SPDX-License-Identifier: MIT
 //! Class-agnostic Structural Hamming Distance over CaugiGraph.
 
+use std::collections::HashMap;
+
 use crate::{
     edges::{EdgeClass, Mark},
     graph::CaugiGraph,
 };
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 enum PairKind {
     None,
     Sym(EdgeClass),
     Asym(EdgeClass, bool),
+}
+
+/// Compute the PairKind for an edge at position k in the graph's CSR storage.
+#[inline]
+fn edge_kind_at(core: &CaugiGraph, k: usize) -> PairKind {
+    let spec = &core.registry.specs[core.etype[k] as usize];
+    if spec.symmetric {
+        PairKind::Sym(spec.class)
+    } else {
+        // Determine semantic direction: "outgoing" means neighbor has Arrow mark.
+        // side[k] stores position: 0 = tail position, 1 = head position.
+        // If side=0, neighbor mark = spec.head; if side=1, neighbor mark = spec.tail.
+        let neighbor_mark = if core.side[k] == 0 {
+            spec.head
+        } else {
+            spec.tail
+        };
+        let is_outgoing = neighbor_mark == Mark::Arrow;
+        PairKind::Asym(spec.class, is_outgoing)
+    }
 }
 
 #[inline]
@@ -77,21 +99,27 @@ pub fn shd_with_perm(t: &CaugiGraph, g: &CaugiGraph, perm: &[u32]) -> (f64, usiz
             let r = t.row_range(u as u32);
             (r.start, r.end)
         };
-        let u_g = perm[u] as usize;
-        let (gs, ge) = {
-            let r = g.row_range(u_g as u32);
-            (r.start, r.end)
-        };
-        let (mut kt, mut kg) = (ts, gs);
+        let u_g = perm[u] as u32;
+
+        // Build a HashMap for g's row: neighbor -> PairKind
+        // This is necessary because perm[v] values are not in sorted order,
+        // so we cannot use the sorted cursor traversal optimization.
+        let mut g_edges: HashMap<u32, PairKind> = HashMap::new();
+        for k in g.row_range(u_g) {
+            let v_g = g.col_index[k];
+            let kind = edge_kind_at(g, k);
+            g_edges.insert(v_g, kind);
+        }
+
+        let mut kt = ts;
         for v in (u + 1)..n {
             let (a, kt2) = pair_kind(t, v as u32, kt, te);
             let v_g = perm[v];
-            let (b, kg2) = pair_kind(g, v_g, kg, ge);
+            let b = g_edges.get(&v_g).cloned().unwrap_or(PairKind::None);
             if a != b {
                 dist += 1;
             }
             kt = kt2;
-            kg = kg2;
         }
     }
     let comps = n * (n - 1) / 2;
@@ -756,5 +784,155 @@ mod tests {
         let bad_inv = [0usize, 1usize];
         let err = oset_aid_align(AidInput::Pdag(&p), AidInput::Pdag(&p), &bad_inv).unwrap_err();
         assert!(err.contains("index map length does not match graph size"));
+    }
+
+    /// Test that shd_with_perm correctly handles non-identity permutations.
+    /// This is the exact bug case: same edges but different node orderings.
+    /// Graph t: nodes A=0, B=1, C=2, D=3 with edges A---B, A-->C, D-->C
+    /// Graph g: nodes D=0, C=1, A=2, B=3 with same logical edges
+    /// Permutation maps t's indices to g's: perm = [2, 3, 1, 0]
+    #[test]
+    fn shd_with_perm_different_node_order_same_edges() {
+        use crate::edges::EdgeRegistry;
+        use crate::graph::builder::GraphBuilder;
+
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let dir = reg.code_of("-->").unwrap();
+        let und = reg.code_of("---").unwrap();
+
+        // Graph t: A=0, B=1, C=2, D=3
+        // Edges: A---B (0---1), A-->C (0-->2), D-->C (3-->2)
+        let mut bt = GraphBuilder::new_with_registry(4, true, &reg);
+        bt.add_edge(0, 1, und).unwrap(); // A --- B
+        bt.add_edge(0, 2, dir).unwrap(); // A --> C
+        bt.add_edge(3, 2, dir).unwrap(); // D --> C
+        let t = bt.finalize().unwrap();
+
+        // Graph g: D=0, C=1, A=2, B=3
+        // Same logical edges: A---B (2---3), A-->C (2-->1), D-->C (0-->1)
+        let mut bg = GraphBuilder::new_with_registry(4, true, &reg);
+        bg.add_edge(2, 3, und).unwrap(); // A --- B
+        bg.add_edge(2, 1, dir).unwrap(); // A --> C
+        bg.add_edge(0, 1, dir).unwrap(); // D --> C
+        let g = bg.finalize().unwrap();
+
+        // perm[i] = index in g that corresponds to node i in t
+        // t: A=0 -> g: A=2, so perm[0] = 2
+        // t: B=1 -> g: B=3, so perm[1] = 3
+        // t: C=2 -> g: C=1, so perm[2] = 1
+        // t: D=3 -> g: D=0, so perm[3] = 0
+        let perm = [2u32, 3, 1, 0];
+
+        let (norm, count) = shd_with_perm(&t, &g, &perm);
+        assert_eq!(count, 0, "Same edges with different node order should have SHD=0");
+        assert_eq!(norm, 0.0);
+    }
+
+    /// Test shd_with_perm with reversed permutation.
+    #[test]
+    fn shd_with_perm_reversed_order() {
+        use crate::edges::EdgeRegistry;
+        use crate::graph::builder::GraphBuilder;
+
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let dir = reg.code_of("-->").unwrap();
+
+        // Graph t: 0->1->2
+        let mut bt = GraphBuilder::new_with_registry(3, true, &reg);
+        bt.add_edge(0, 1, dir).unwrap();
+        bt.add_edge(1, 2, dir).unwrap();
+        let t = bt.finalize().unwrap();
+
+        // Graph g: same structure but nodes reversed: 2->1->0
+        // In g's indexing: 0->1->2 (same as t)
+        // But we'll build it as if logical order is reversed
+        let mut bg = GraphBuilder::new_with_registry(3, true, &reg);
+        bg.add_edge(2, 1, dir).unwrap(); // logical 0->1
+        bg.add_edge(1, 0, dir).unwrap(); // logical 1->2
+        let g = bg.finalize().unwrap();
+
+        // perm: t's node i corresponds to g's node (2-i)
+        let perm = [2u32, 1, 0];
+
+        let (norm, count) = shd_with_perm(&t, &g, &perm);
+        assert_eq!(count, 0);
+        assert_eq!(norm, 0.0);
+    }
+
+    /// Test shd_with_perm correctly detects differences with permutation.
+    #[test]
+    fn shd_with_perm_detects_difference() {
+        use crate::edges::EdgeRegistry;
+        use crate::graph::builder::GraphBuilder;
+
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let dir = reg.code_of("-->").unwrap();
+        let und = reg.code_of("---").unwrap();
+
+        // Graph t: 0->1, 0->2
+        let mut bt = GraphBuilder::new_with_registry(3, true, &reg);
+        bt.add_edge(0, 1, dir).unwrap();
+        bt.add_edge(0, 2, dir).unwrap();
+        let t = bt.finalize().unwrap();
+
+        // Graph g: 0->1, 0---2 (undirected instead of directed)
+        // With permutation [1, 2, 0] (rotated)
+        // In g's ordering: node 1 in t -> node 2 in g, etc.
+        let mut bg = GraphBuilder::new_with_registry(3, true, &reg);
+        bg.add_edge(1, 2, dir).unwrap(); // corresponds to 0->1 in t
+        bg.add_edge(1, 0, und).unwrap(); // corresponds to 0---2 in t (DIFFERENT!)
+        let g = bg.finalize().unwrap();
+
+        let perm = [1u32, 2, 0];
+
+        let (_, count) = shd_with_perm(&t, &g, &perm);
+        assert_eq!(count, 1, "Should detect one difference: directed vs undirected");
+    }
+
+    /// Test shd_with_perm with larger graph and complex permutation.
+    #[test]
+    fn shd_with_perm_larger_graph() {
+        use crate::edges::EdgeRegistry;
+        use crate::graph::builder::GraphBuilder;
+
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let dir = reg.code_of("-->").unwrap();
+        let und = reg.code_of("---").unwrap();
+        let bi = reg.code_of("<->").unwrap();
+
+        // Graph t: 6 nodes with various edges
+        // 0->1, 1->2, 2---3, 3<->4, 4->5
+        let mut bt = GraphBuilder::new_with_registry(6, true, &reg);
+        bt.add_edge(0, 1, dir).unwrap();
+        bt.add_edge(1, 2, dir).unwrap();
+        bt.add_edge(2, 3, und).unwrap();
+        bt.add_edge(3, 4, bi).unwrap();
+        bt.add_edge(4, 5, dir).unwrap();
+        let t = bt.finalize().unwrap();
+
+        // Graph g: same edges but with permutation [3, 5, 1, 4, 0, 2]
+        // t's node 0 -> g's node 3
+        // t's node 1 -> g's node 5
+        // t's node 2 -> g's node 1
+        // t's node 3 -> g's node 4
+        // t's node 4 -> g's node 0
+        // t's node 5 -> g's node 2
+        let mut bg = GraphBuilder::new_with_registry(6, true, &reg);
+        bg.add_edge(3, 5, dir).unwrap(); // 0->1 in t
+        bg.add_edge(5, 1, dir).unwrap(); // 1->2 in t
+        bg.add_edge(1, 4, und).unwrap(); // 2---3 in t
+        bg.add_edge(4, 0, bi).unwrap(); // 3<->4 in t
+        bg.add_edge(0, 2, dir).unwrap(); // 4->5 in t
+        let g = bg.finalize().unwrap();
+
+        let perm = [3u32, 5, 1, 4, 0, 2];
+
+        let (norm, count) = shd_with_perm(&t, &g, &perm);
+        assert_eq!(count, 0, "Same edges with complex permutation should have SHD=0");
+        assert_eq!(norm, 0.0);
     }
 }

@@ -61,11 +61,75 @@ test_that("HD: same graphs but written in different ways work with shd", {
   reset_caugi_registry()
 
   register_caugi_edge("<--", "arrow", "tail", "directed", FALSE)
+
   cg1 <- caugi(A %-->% B, B %-->% C)
   cg2 <- caugi(C %<--% B, B %<--% A)
 
   expect_equal(shd(cg1, cg2), 0)
   reset_caugi_registry()
+})
+
+test_that("SHD: different edge declaration order gives SHD 0 (PDAG)", {
+  # This is the exact bug case from the issue
+  cg1 <- caugi(A %---% B, A %-->% C, D %-->% C, class = "PDAG")
+  cg2 <- caugi(D %-->% C, A %---% B, A %-->% C, class = "PDAG")
+  expect_equal(shd(cg1, cg2), 0)
+  expect_equal(shd(cg1, cg2, normalized = TRUE), 0)
+})
+
+test_that("SHD: different edge declaration order gives SHD 0 (DAG)", {
+  cg1 <- caugi(A %-->% B, B %-->% C, D %-->% C, class = "DAG")
+  cg2 <- caugi(D %-->% C, B %-->% C, A %-->% B, class = "DAG")
+  expect_equal(shd(cg1, cg2), 0)
+})
+
+test_that("SHD: completely reversed edge order gives SHD 0", {
+  cg1 <- caugi(A %-->% B, B %-->% C, C %-->% D, D %-->% E, class = "DAG")
+  cg2 <- caugi(D %-->% E, C %-->% D, B %-->% C, A %-->% B, class = "DAG")
+  expect_equal(shd(cg1, cg2), 0)
+})
+
+test_that("SHD: shuffled edge order gives SHD 0 for mixed edge types", {
+  # Mix of directed, undirected, and bidirected edges
+  cg1 <- caugi(A %-->% B, B %---% C, C %<->% D, D %-->% E)
+  cg2 <- caugi(C %<->% D, A %-->% B, D %-->% E, B %---% C)
+  expect_equal(shd(cg1, cg2), 0)
+})
+
+test_that("SHD: same graph with explicit node order gives SHD 0", {
+  cg1 <- caugi(A %-->% B, B %-->% C, nodes = c("A", "B", "C"))
+  cg2 <- caugi(A %-->% B, B %-->% C, nodes = c("C", "B", "A"))
+  expect_equal(shd(cg1, cg2), 0)
+})
+
+test_that("SHD: detects actual differences despite different edge order", {
+  # cg1 has A-->B, cg2 has A---B (different edge type)
+  cg1 <- caugi(A %-->% B, B %-->% C, class = "PDAG")
+  cg2 <- caugi(B %-->% C, A %---% B, class = "PDAG")
+  expect_equal(shd(cg1, cg2), 1)
+})
+
+test_that("SHD: larger graph with shuffled edges gives SHD 0", {
+  # 6-node graph with multiple edges, shuffled order
+  cg1 <- caugi(
+    A %-->% B,
+    B %-->% C,
+    C %-->% D,
+    D %-->% E,
+    E %-->% F,
+    A %-->% F,
+    class = "DAG"
+  )
+  cg2 <- caugi(
+    E %-->% F,
+    A %-->% F,
+    C %-->% D,
+    A %-->% B,
+    D %-->% E,
+    B %-->% C,
+    class = "DAG"
+  )
+  expect_equal(shd(cg1, cg2), 0)
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
