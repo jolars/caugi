@@ -76,6 +76,10 @@ is_ug_type_ptr <- function(g) .Call(wrap__is_ug_type_ptr, g)
 
 is_admg_type_ptr <- function(g) .Call(wrap__is_admg_type_ptr, g)
 
+is_ag_type_ptr <- function(g) .Call(wrap__is_ag_type_ptr, g)
+
+is_mag_ptr <- function(g) .Call(wrap__is_mag_ptr, g)
+
 spouses_of_ptr <- function(g, idxs) .Call(wrap__spouses_of_ptr, g, idxs)
 
 districts_ptr <- function(g) .Call(wrap__districts_ptr, g)

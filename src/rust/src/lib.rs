@@ -13,7 +13,7 @@ use graph::metrics::aid;
 use graph::metrics::{hd, shd_with_perm};
 
 use graph::view::GraphView;
-use graph::{admg::Admg, dag::Dag, pdag::Pdag, ug::Ug, CaugiGraph};
+use graph::{admg::Admg, ag::Ag, dag::Dag, pdag::Pdag, ug::Ug, CaugiGraph};
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -187,8 +187,12 @@ fn graphview_new(core: ExternalPtr<CaugiGraph>, class: &str) -> ExternalPtr<Grap
             let admg = Admg::new(Arc::clone(&core_arc)).unwrap_or_else(|e| throw_r_error(e));
             ExternalPtr::new(GraphView::Admg(Arc::new(admg)))
         }
+        "AG" => {
+            let ag = Ag::new(Arc::clone(&core_arc)).unwrap_or_else(|e| throw_r_error(e));
+            ExternalPtr::new(GraphView::Ag(Arc::new(ag)))
+        }
         "AUTO" => {
-            // Try each class in order: DAG → UG → PDAG → ADMG → Raw
+            // Try each class in order: DAG → UG → PDAG → ADMG → AG → Raw
             if let Ok(dag) = Dag::new(Arc::clone(&core_arc)) {
                 ExternalPtr::new(GraphView::Dag(Arc::new(dag)))
             } else if let Ok(ug) = Ug::new(Arc::clone(&core_arc)) {
@@ -197,6 +201,8 @@ fn graphview_new(core: ExternalPtr<CaugiGraph>, class: &str) -> ExternalPtr<Grap
                 ExternalPtr::new(GraphView::Pdag(Arc::new(pdag)))
             } else if let Ok(admg) = Admg::new(Arc::clone(&core_arc)) {
                 ExternalPtr::new(GraphView::Admg(Arc::new(admg)))
+            } else if let Ok(ag) = Ag::new(Arc::clone(&core_arc)) {
+                ExternalPtr::new(GraphView::Ag(Arc::new(ag)))
             } else {
                 ExternalPtr::new(GraphView::Raw(core_arc))
             }
@@ -412,12 +418,28 @@ fn is_admg_type_ptr(g: ExternalPtr<GraphView>) -> bool {
 }
 
 #[extendr]
+fn is_ag_type_ptr(g: ExternalPtr<GraphView>) -> bool {
+    let core = g.as_ref().core();
+    Ag::new(Arc::new(core.clone())).is_ok()
+}
+
+#[extendr]
+fn is_mag_ptr(g: ExternalPtr<GraphView>) -> bool {
+    let core = g.as_ref().core();
+    match Ag::new(Arc::new(core.clone())) {
+        Ok(ag) => ag.is_mag(),
+        Err(_) => false,
+    }
+}
+
+#[extendr]
 fn graph_class_ptr(g: ExternalPtr<GraphView>) -> String {
     match g.as_ref() {
         GraphView::Dag(_) => "DAG",
         GraphView::Pdag(_) => "PDAG",
         GraphView::Ug(_) => "UG",
         GraphView::Admg(_) => "ADMG",
+        GraphView::Ag(_) => "AG",
         GraphView::Raw(_) => "UNKNOWN",
     }
     .to_string()
@@ -1152,6 +1174,8 @@ extendr_module! {
     fn is_pdag_type_ptr;
     fn is_ug_type_ptr;
     fn is_admg_type_ptr;
+    fn is_ag_type_ptr;
+    fn is_mag_ptr;
 
     // ADMG-specific queries
     fn spouses_of_ptr;

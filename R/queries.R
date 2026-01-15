@@ -404,6 +404,92 @@ is_admg <- function(cg, force_check = FALSE) {
   is_it
 }
 
+#' @title Is the `caugi` graph an AG?
+#'
+#' @description Checks if the given `caugi` graph is an
+#' Ancestral Graph (AG).
+#'
+#' An AG contains directed (`-->`), bidirected (`<->`), and undirected (`---`)
+#' edges, and must satisfy ancestral graph constraints (no directed cycles,
+#' anterior constraint, and undirected constraint).
+#'
+#' @param cg A `caugi` object.
+#' @param force_check Logical; if `TRUE`, the function will test if the graph is
+#' an AG, if `FALSE` (default), it will look at the graph class and match
+#' it, if possible.
+#'
+#' @returns A logical value indicating whether the graph is an AG.
+#'
+#' @examples
+#' cg_ag <- caugi(
+#'   A %-->% B,
+#'   C %<->% D,
+#'   E %---% F,
+#'   class = "AG"
+#' )
+#' is_ag(cg_ag) # TRUE
+#'
+#' cg_ug <- caugi(
+#'   A %---% B,
+#'   class = "UG"
+#' )
+#' is_ag(cg_ug) # TRUE (UGs are valid AGs)
+#'
+#' @family queries
+#' @concept queries
+#'
+#' @export
+is_ag <- function(cg, force_check = FALSE) {
+  is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
+  if (identical(cg@graph_class, "AG") && !force_check) {
+    is_it <- TRUE
+  } else {
+    # if we can't be sure from the class, we check
+    is_it <- is_ag_type_ptr(cg@ptr)
+  }
+  is_it
+}
+
+#' @title Is the `caugi` graph a MAG?
+#'
+#' @description Checks if the given `caugi` graph is a
+#' Maximal Ancestral Graph (MAG).
+#'
+#' A MAG is an ancestral graph where no additional edge can be added without
+#' violating the ancestral graph constraints or changing the encoded
+#' independence model.
+#'
+#' @param cg A `caugi` object.
+#' @param force_check Logical; if `TRUE`, the function will test if the graph is
+#' a MAG, if `FALSE` (default), it will look at the graph class and match
+#' it, if possible.
+#'
+#' @returns A logical value indicating whether the graph is a MAG.
+#'
+#' @examples
+#' cg_ag <- caugi(
+#'   A %-->% B,
+#'   B %-->% C,
+#'   class = "AG"
+#' )
+#' is_mag(cg_ag) # TRUE (0 and 2 are m-separated by {B})
+#'
+#' @family queries
+#' @concept queries
+#'
+#' @export
+is_mag <- function(cg, force_check = FALSE) {
+  is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
+  if (identical(cg@graph_class, "MAG") && !force_check) {
+    is_it <- TRUE
+  } else {
+    is_it <- is_mag_ptr(cg@ptr)
+  }
+  is_it
+}
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ───────────────────────────── Nodes and edges ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────

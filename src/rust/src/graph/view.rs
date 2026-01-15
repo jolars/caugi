@@ -1,4 +1,5 @@
 use super::admg::Admg;
+use super::ag::Ag;
 use super::dag::Dag;
 use super::pdag::Pdag;
 use super::ug::Ug;
@@ -43,6 +44,7 @@ pub enum GraphView {
     Pdag(Arc<Pdag>),
     Ug(Arc<Ug>),
     Admg(Arc<Admg>),
+    Ag(Arc<Ag>),
     Raw(Arc<CaugiGraph>),
 }
 
@@ -54,6 +56,7 @@ impl GraphView {
             GraphView::Pdag(p) => p.core_ref(),
             GraphView::Ug(u) => u.core_ref(),
             GraphView::Admg(a) => a.core_ref(),
+            GraphView::Ag(g) => g.core_ref(),
             GraphView::Raw(c) => c,
         }
     }
@@ -65,6 +68,7 @@ impl GraphView {
             GraphView::Pdag(g) => g.n(),
             GraphView::Ug(g) => g.n(),
             GraphView::Admg(g) => g.n(),
+            GraphView::Ag(g) => g.n(),
             GraphView::Raw(core) => core.n(),
         }
     }
@@ -117,6 +121,7 @@ impl GraphView {
     /// - PDAG: in, out, undirected, all (no partial edges exist)
     /// - UG: undirected, all (no directed or partial edges exist)
     /// - ADMG: in, out, undirected (bidirected/spouses), all (no partial edges exist)
+    /// - AG: in, out, undirected, bidirected, all (no partial edges exist)
     /// - UNKNOWN (Raw): all modes allowed
     pub fn neighbors_of(&self, i: u32, mode: NeighborMode) -> Result<Vec<u32>, String> {
         // Validate mode for graph type and dispatch to optimized methods
@@ -173,6 +178,16 @@ impl GraphView {
             (GraphView::Admg(g), NeighborMode::Bidirected) => Ok(g.spouses_of(i).to_vec()),
             (GraphView::Admg(_), NeighborMode::Partial) => {
                 Err("mode 'partial' not valid for ADMG (no partial edges)".into())
+            }
+
+            // AG: in, out, undirected, bidirected, all (no partial edges)
+            (GraphView::Ag(g), NeighborMode::All) => Ok(g.neighbors_of(i).to_vec()),
+            (GraphView::Ag(g), NeighborMode::In) => Ok(g.parents_of(i).to_vec()),
+            (GraphView::Ag(g), NeighborMode::Out) => Ok(g.children_of(i).to_vec()),
+            (GraphView::Ag(g), NeighborMode::Undirected) => Ok(g.undirected_of(i).to_vec()),
+            (GraphView::Ag(g), NeighborMode::Bidirected) => Ok(g.spouses_of(i).to_vec()),
+            (GraphView::Ag(_), NeighborMode::Partial) => {
+                Err("mode 'partial' not valid for AG (no partial edges)".into())
             }
 
             // Raw (UNKNOWN): all modes allowed, iterate CSR
@@ -246,6 +261,7 @@ impl GraphView {
             GraphView::Dag(g) => Ok(g.ancestors_of(i)),
             GraphView::Pdag(g) => Ok(g.ancestors_of(i)),
             GraphView::Admg(g) => Ok(g.ancestors_of(i)),
+            GraphView::Ag(g) => Ok(g.ancestors_of(i)),
             GraphView::Ug(_) => Err("ancestors_of not defined for UG".into()),
             GraphView::Raw(_) => Err("ancestors_of not implemented for UNKNOWN class".into()),
         }
@@ -255,6 +271,7 @@ impl GraphView {
             GraphView::Dag(g) => Ok(g.descendants_of(i)),
             GraphView::Pdag(g) => Ok(g.descendants_of(i)),
             GraphView::Admg(g) => Ok(g.descendants_of(i)),
+            GraphView::Ag(g) => Ok(g.descendants_of(i)),
             GraphView::Ug(_) => Err("descendants_of not defined for UG".into()),
             GraphView::Raw(_) => Err("descendants_of not implemented for UNKNOWN class".into()),
         }
@@ -264,6 +281,7 @@ impl GraphView {
             GraphView::Dag(g) => Ok(g.anteriors_of(i)),
             GraphView::Pdag(g) => Ok(g.anteriors_of(i)),
             GraphView::Admg(_) => Err("anteriors_of not defined for ADMG".into()),
+            GraphView::Ag(g) => Ok(g.anteriors_of(i)),
             GraphView::Ug(_) => Err("anteriors_of not defined for UG".into()),
             GraphView::Raw(_) => Err("anteriors_of not implemented for UNKNOWN class".into()),
         }
@@ -274,6 +292,7 @@ impl GraphView {
             GraphView::Pdag(g) => Ok(g.markov_blanket_of(i)),
             GraphView::Ug(g) => Ok(g.markov_blanket_of(i)),
             GraphView::Admg(g) => Ok(g.markov_blanket_of(i)),
+            GraphView::Ag(g) => Ok(g.markov_blanket_of(i)),
             GraphView::Raw(_) => Err("markov_blanket_of not implemented for UNKNOWN class".into()),
         }
     }
@@ -283,6 +302,15 @@ impl GraphView {
             GraphView::Pdag(g) => Ok(g.exogenous_nodes(undirected_as_parents)),
             GraphView::Ug(g) => Ok(g.exogenous_nodes()),
             GraphView::Admg(g) => Ok(g.exogenous_nodes()),
+            GraphView::Ag(g) => {
+                if undirected_as_parents {
+                    Ok((0..g.n())
+                        .filter(|&i| g.parents_of(i).is_empty() && g.undirected_of(i).is_empty())
+                        .collect())
+                } else {
+                    Ok(g.exogenous_nodes())
+                }
+            }
             GraphView::Raw(_) => Err("exogenous_nodes not implemented for UNKNOWN class".into()),
         }
     }
@@ -329,7 +357,8 @@ impl GraphView {
         match self {
             GraphView::Admg(g) => Ok(g.m_separated(xs, ys, z)),
             GraphView::Dag(d) => Ok(d.d_separated(xs, ys, z)), // d-sep is m-sep for DAGs
-            _ => Err("m_separated is only defined for ADMGs and DAGs".into()),
+            GraphView::Ag(g) => Ok(g.m_separated(xs, ys, z)),
+            _ => Err("m_separated is only defined for ADMGs, AGs, and DAGs".into()),
         }
     }
 
@@ -421,6 +450,10 @@ impl GraphView {
             GraphView::Admg(_) => {
                 let a = super::admg::Admg::new(std::sync::Arc::new(core2))?;
                 GraphView::Admg(std::sync::Arc::new(a))
+            }
+            GraphView::Ag(_) => {
+                let g = super::ag::Ag::new(std::sync::Arc::new(core2))?;
+                GraphView::Ag(std::sync::Arc::new(g))
             }
             GraphView::Raw(_) => GraphView::Raw(std::sync::Arc::new(core2)),
         };
@@ -536,7 +569,13 @@ impl GraphView {
                 let keep = bitset::collect_from_mask(&mask);
                 self.induced_subgraph(&keep)
             }
-            _ => Err("ancestral_reduction is only defined for DAGs, PDAGs, and ADMGs".into()),
+            GraphView::Ag(g) => {
+                use crate::graph::alg::bitset;
+                let mask = bitset::ancestors_mask(seeds, |u| g.parents_of(u), g.n());
+                let keep = bitset::collect_from_mask(&mask);
+                self.induced_subgraph(&keep)
+            }
+            _ => Err("ancestral_reduction is only defined for DAGs, PDAGs, ADMGs, and AGs".into()),
         }
     }
 }
@@ -1195,6 +1234,39 @@ mod tests {
         assert_eq!(v.neighbors_of(0, NeighborMode::In).unwrap(), Vec::<u32>::new());
         assert_eq!(v.neighbors_of(0, NeighborMode::Out).unwrap(), vec![1]);
         assert_eq!(v.neighbors_of(0, NeighborMode::Bidirected).unwrap(), vec![2]);
+    }
+
+    #[test]
+    fn neighbors_mode_of_ag() {
+        let mut r = EdgeRegistry::new();
+        r.register_builtins().unwrap();
+        let d = r.code_of("-->").unwrap();
+        let bi = r.code_of("<->").unwrap();
+        let u = r.code_of("---").unwrap();
+
+        // Graph: 0 -> 1, 2 <-> 3, 4 --- 5
+        let mut b = GraphBuilder::new_with_registry(6, true, &r);
+        b.add_edge(0, 1, d).unwrap();
+        b.add_edge(2, 3, bi).unwrap();
+        b.add_edge(4, 5, u).unwrap();
+        let v = GraphView::Ag(Arc::new(
+            super::ag::Ag::new(Arc::new(b.finalize().unwrap())).unwrap(),
+        ));
+
+        // Directed part
+        assert_eq!(v.neighbors_of(1, NeighborMode::In).unwrap(), vec![0]);
+        assert_eq!(v.neighbors_of(0, NeighborMode::Out).unwrap(), vec![1]);
+
+        // Bidirected part
+        assert_eq!(v.neighbors_of(2, NeighborMode::Bidirected).unwrap(), vec![3]);
+        assert_eq!(v.neighbors_of(3, NeighborMode::Bidirected).unwrap(), vec![2]);
+
+        // Undirected part
+        assert_eq!(v.neighbors_of(4, NeighborMode::Undirected).unwrap(), vec![5]);
+        assert_eq!(v.neighbors_of(5, NeighborMode::Undirected).unwrap(), vec![4]);
+
+        // Partial should error
+        assert!(v.neighbors_of(0, NeighborMode::Partial).is_err());
     }
 
     #[test]

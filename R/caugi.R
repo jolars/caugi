@@ -45,9 +45,18 @@
 #' nodes are provided, the graph will not be built and the pointer will be
 #' `NULL`.
 #' @param class Character; one of `"AUTO"`, `"DAG"`, `"UG"`, `"PDAG"`, `"ADMG"`,
-#' or `"UNKNOWN"`. `"AUTO"` will automatically pick the appropriate class based
-#' on the first match in the order of `"DAG"`, `"UG"`, `"PDAG"`, and `"ADMG"`.
+#' `"AG"`, or `"UNKNOWN"`. `"AUTO"` will automatically pick the appropriate
+#' class based on the first match in the order of `"DAG"`, `"UG"`, `"PDAG"`,
+<<<<<<< Current (Your changes)
+<<<<<<< Current (Your changes)
+#' `"ADMG"`, and `"AG"`.
 #' It will default to `"UNKNOWN"` if no match is found.
+=======
+#' `"ADMG"`, and `"AG"`. It will default to `"UNKNOWN"` if no match is found.
+>>>>>>> Incoming (Background Agent changes)
+=======
+#' `"ADMG"`, and `"AG"`. It will default to `"UNKNOWN"` if no match is found.
+>>>>>>> Incoming (Background Agent changes)
 #' @param state For internal use. Build a graph by supplying a pre-constructed
 #' state environment.
 #'
@@ -231,14 +240,14 @@ caugi <- S7::new_class(
   ),
   validator = function(self) {
     s <- self@`.state`
-    # Allow simple = FALSE for UNKNOWN and ADMG (ADMGs from latent projection
-    # can have both directed and bidirected edges between the same pair)
+    # Allow simple = FALSE for UNKNOWN, ADMG, and AG (mixed edges can share pairs)
     if (
       isFALSE(s$simple) &&
         !identical(s$class, "UNKNOWN") &&
-        !identical(s$class, "ADMG")
+        !identical(s$class, "ADMG") &&
+        !identical(s$class, "AG")
     ) {
-      return("If simple = FALSE, class must be 'UNKNOWN' or 'ADMG'")
+      return("If simple = FALSE, class must be 'UNKNOWN', 'ADMG', or 'AG'")
     }
 
     if (is.null(self@ptr) && s$built) {
@@ -284,7 +293,7 @@ caugi <- S7::new_class(
     edges_df = NULL,
     simple = TRUE,
     build = TRUE,
-    class = c("AUTO", "DAG", "UG", "PDAG", "ADMG", "UNKNOWN"),
+    class = c("AUTO", "DAG", "UG", "PDAG", "ADMG", "AG", "UNKNOWN"),
     state = NULL
   ) {
     if (!is.null(state)) {
@@ -382,11 +391,10 @@ caugi <- S7::new_class(
       }
     }
 
-    # Allow simple = FALSE for UNKNOWN and ADMG (ADMGs from latent projection
-    # can have both directed and bidirected edges between the same pair)
-    if (!simple && class != "UNKNOWN" && class != "ADMG") {
+    # Allow simple = FALSE for UNKNOWN, ADMG, and AG (mixed edges can share pairs)
+    if (!simple && class != "UNKNOWN" && class != "ADMG" && class != "AG") {
       stop(
-        "If simple = FALSE, class must be 'UNKNOWN' or 'ADMG'",
+        "If simple = FALSE, class must be 'UNKNOWN', 'ADMG', or 'AG'",
         call. = FALSE
       )
     }
@@ -568,7 +576,7 @@ caugi <- S7::new_class(
 #' @param built Logical; whether the graph has been built.
 #' @param simple Logical; whether the graph is simple
 #' (no parallel edges or self-loops).
-#' @param class Character; one of `"UNKNOWN"`, `"DAG"`, or `"PDAG"`.
+#' @param class Character; one of `"UNKNOWN"`, `"DAG"`, `"UG"`, `"PDAG"`, `"ADMG"`, or `"AG"`.
 #' @param name_index_map A `fastmap` mapping node names to their zero indexed
 #' indices.
 #'
