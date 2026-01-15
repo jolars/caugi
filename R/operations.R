@@ -307,3 +307,98 @@ exogenize <- function(cg, nodes) {
 
   cg
 }
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────Marginalize and condition ──────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+#' Marginalize and/or condition on variables in a DAG
+#'
+#' Marginalize variables out of a DAG, and/or condition on variables.
+#' Depending on the structure, it could produce a graph with directed, bidirected, and undirected edges.
+#'
+#' @param cg A caugi graph of class "DAG"
+#' @param condvars Character vector of nodes to condition on
+#' @param margvars Character vector of nodes to marginalize over
+#' @returns A `caugi` object of class "DAG", "ADMG", or "UNKNOWN", depending on what type of edges are in the result
+#' @export
+#' @family operations
+#' @concept operations
+#'
+#' @references Definition 4.2.1 in Thomas Richardson. Peter Spirtes. "Ancestral graph Markov models." Ann. Statist. 30 (4) 962 - 1030, August 2002. <https://doi.org/10.1214/aos/1031689015>
+#' @examples
+#'
+#' mg <- caugi(U %-->% X + Y,
+#'             A %-->% X,
+#'             B %-->% Y, class = "DAG")
+#'
+#' condition_marginalize(mg, margvars = "U") # ADMG
+#' condition_marginalize(mg, condvars = "U") # DAG
+#'
+condition_marginalize <- function(cg, condvars = NULL, margvars = NULL) {
+
+  stopifnot(is_dag(cg))
+  stopifnot(length(intersect(condvars, margvars)) == 0)
+  if(is.null(condvars) & is.null(margvars)) return(cg)
+
+  newnodes <- setdiff(V(cg)$name, union(condvars, margvars))
+  allpairs <- combn(length(newnodes), 2)
+  edges_df <- data.frame(from = character(0), edge = character(0), to = character(0))
+
+  for(j in 1:ncol(allpairs)) {
+
+    ab <- newnodes[allpairs[, j]]
+
+    ## check if d-separated given any subset of Zsa union condvarss
+    Zsa <- setdiff(newnodes, ab)
+    Zsasets <- c(list(NULL), list(Zsa), do.call(c, c(lapply((length(Zsa) - 1):1,
+                                                            \(nn) combn(Zsa, nn, simplify = FALSE)))))
+
+    abadj <- ab[1] %in% neighbors(cg, nodes = ab[2])
+    if(!abadj) {
+      d_sepchks <- rep(NA, length(Zsasets))
+      for(i in 1:length(Zsasets)) {
+
+        d_sepchks[i] <- !d_separated(cg, ab[1], ab[2], Z = c(condvars, Zsasets[[i]]))
+
+      }
+      abadj <- all(d_sepchks)
+    }
+
+
+    if(abadj) {
+
+      achk <- ab[1] %in% union(union(ab[2], condvars), unlist(ancestors(cg, union(ab[2], condvars))))
+      bchk <- ab[2] %in% union(union(ab[1], condvars), unlist(ancestors(cg, union(ab[1], condvars))))
+
+      if(!achk & !bchk) {
+        edges_df <- rbind(edges_df,
+                          data.frame(from = ab[1], edge = "<->", to = ab[2]))
+      } else if (achk & bchk) {
+        edges_df <- rbind(edges_df,
+                          data.frame(from = ab[1], edge = "---", to = ab[2]))
+      } else if (achk) {
+        edges_df <- rbind(edges_df,
+                          data.frame(from = ab[1], edge = "-->", to = ab[2]))
+      } else if (bchk) {
+        edges_df <- rbind(edges_df,
+                          data.frame(from = ab[2], edge = "-->", to = ab[1]))
+      }
+
+    }
+
+  }
+
+  edgetypes <- unique(edges_df$edge)
+  classy <- if(all(c("<->", "---") %in% edgetypes)){
+    "UNKNOWN"
+  } else if("<->" %in% edgetypes & !"---" %in% edgetypes) {
+    "ADMG"
+  }  else if("---" %in% edgetypes & !"<->" %in% edgetypes) {
+    "PDAG"
+  } else "DAG"
+  caugi(edges_df = edges_df, class = classy)
+
+}
+
