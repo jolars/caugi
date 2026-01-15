@@ -312,6 +312,9 @@ exogenize <- function(cg, nodes) {
 # ─────────────────────────────Marginalize and condition ──────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
+#' @importFrom utils combn
+NULL
+
 #' Marginalize and/or condition on variables in a DAG
 #'
 #' Marginalize variables out of a DAG, and/or condition on variables.
@@ -376,7 +379,7 @@ condition_marginalize <- function(cg, condvars = NULL, margvars = NULL) {
     Zsa <- setdiff(newnodes, ab)
     Zsasets <- c(list(NULL), list(Zsa), do.call(c, c(lapply(
       (length(Zsa) - 1):1,
-      \(nn) combn(Zsa, nn, simplify = FALSE)
+      \(nn) utils::combn(Zsa, nn, simplify = FALSE)
     ))))
 
     abadj <- ab[1] %in% neighbors(cg, nodes = ab[2])
