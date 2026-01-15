@@ -36,6 +36,7 @@ dependencies = [
  "gadjid",
  "quick-xml",
  "rust-sugiyama",
+ "rustc-hash",
  "serde",
  "serde_json",
 ]
