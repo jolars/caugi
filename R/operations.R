@@ -196,6 +196,8 @@ mutate_caugi <- function(cg, class) {
     "DAG" = is_dag(cg),
     "PDAG" = is_pdag(cg),
     "UG" = is_ug(cg),
+    "ADMG" = is_admg(cg),
+    "AG" = is_ag(cg),
     "UNKNOWN" = TRUE,
     stop(paste0("Unknown target class: ", class))
   )
