@@ -2,12 +2,12 @@
 % Please edit documentation in R/queries.R
 \name{m_separated}
 \alias{m_separated}
-\title{M-separation test for ADMGs}
+\title{M-separation test for AGs and ADMGs}
 \usage{
 m_separated(cg, x, y, z = character(0))
 }
 \arguments{
-\item{cg}{A \code{caugi} object of class ADMG or DAG.}
+\item{cg}{A \code{caugi} object of class AG, ADMG, or DAG.}
 
 \item{x}{A character vector of node names (the "source" set).}
 
@@ -20,9 +20,9 @@ A logical value; \code{TRUE} if \code{x} and \code{y} are m-separated given \cod
 }
 \description{
 Test whether two sets of nodes are m-separated given a
-conditioning set in an ADMG.
+conditioning set in an ancestral graph (AG) or an ADMG.
 
-M-separation generalizes d-separation to ADMGs.
+M-separation generalizes d-separation to AGs/ADMGs and applies to DAGs.
 }
 \examples{
 # Classic confounding example

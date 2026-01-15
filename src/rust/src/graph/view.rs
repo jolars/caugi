@@ -1252,9 +1252,7 @@ mod tests {
         b.add_edge(0, 1, d).unwrap();
         b.add_edge(2, 3, bi).unwrap();
         b.add_edge(4, 5, u).unwrap();
-        let v = GraphView::Ag(Arc::new(
-            super::ag::Ag::new(Arc::new(b.finalize().unwrap())).unwrap(),
-        ));
+        let v = GraphView::Ag(Arc::new(Ag::new(Arc::new(b.finalize().unwrap())).unwrap()));
 
         // Directed part
         assert_eq!(v.neighbors_of(1, NeighborMode::In).unwrap(), vec![0]);

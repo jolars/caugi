@@ -57,60 +57,79 @@ impl Ag {
         mask
     }
 
-    /// Build a moral adjacency for m-separation in an ancestral graph.
+    /// Returns true if `from` has an arrowhead at `to`.
+    #[inline]
+    fn arrowhead_at(&self, at: u32, from: u32) -> bool {
+        self.parents_of(at).binary_search(&from).is_ok()
+            || self.spouses_of(at).binary_search(&from).is_ok()
+    }
+
+    /// Build an augmented adjacency for m-separation in an ancestral graph.
     ///
-    /// This extends the standard moralization to handle all three edge types:
-    /// 1. Connect parents with children (directed edges become undirected)
-    /// 2. Marry parents of common children
-    /// 3. Add bidirected edges as undirected edges (spouses connect)
-    /// 4. Keep undirected edges as-is
-    fn moral_adj_ag(&self, mask: &[bool]) -> Vec<Vec<u32>> {
+    /// The augmented graph connects endpoints of any collider path in the
+    /// anterior subgraph (and keeps all original adjacencies).
+    fn augmented_adj_ag(&self, mask: &[bool]) -> Vec<Vec<u32>> {
+        use std::collections::VecDeque;
+
         let n = self.n() as usize;
         let mut adj = vec![Vec::<u32>::new(); n];
 
-        for v in 0..n as u32 {
-            if !mask[v as usize] {
+        // visited pairs (prev, curr) for collider-path exploration
+        let mut visited = vec![0u32; n * n];
+        let mut stamp: u32 = 1;
+
+        for s in 0..n as u32 {
+            if !mask[s as usize] {
                 continue;
             }
 
-            // Connect with parents (as in standard moralization)
-            let pa = self.parents_of(v);
-            for &p in pa {
-                if mask[p as usize] {
-                    adj[v as usize].push(p);
-                    adj[p as usize].push(v);
-                }
+            // Rotate stamp to avoid clearing the visited array each time.
+            if stamp == u32::MAX {
+                visited.fill(0);
+                stamp = 1;
+            } else {
+                stamp += 1;
             }
 
-            // Marry parents of common children
-            for i in 0..pa.len() {
-                let pi = pa[i] as usize;
-                if !mask[pi] {
+            let mut q: VecDeque<(u32, u32)> = VecDeque::new();
+
+            // Start from direct neighbors (collider path length 1).
+            for &v in self.neighbors_of(s) {
+                if !mask[v as usize] || v == s {
                     continue;
                 }
-                for j in i + 1..pa.len() {
-                    let pj = pa[j] as usize;
-                    if !mask[pj] {
+                adj[s as usize].push(v);
+                adj[v as usize].push(s);
+
+                let idx = (s as usize) * n + v as usize;
+                if visited[idx] != stamp {
+                    visited[idx] = stamp;
+                    q.push_back((s, v));
+                }
+            }
+
+            while let Some((prev, curr)) = q.pop_front() {
+                for &next in self.neighbors_of(curr) {
+                    if next == prev || !mask[next as usize] {
                         continue;
                     }
-                    adj[pi].push(pa[j]);
-                    adj[pj].push(pa[i]);
-                }
-            }
 
-            // Add bidirected edges as undirected (spouses connect in moral graph)
-            for &s in self.spouses_of(v) {
-                if mask[s as usize] {
-                    adj[v as usize].push(s);
-                    // Note: the reverse will be added when we process node s
-                }
-            }
+                    // Extend only through collider nodes.
+                    if !(self.arrowhead_at(curr, prev) && self.arrowhead_at(curr, next)) {
+                        continue;
+                    }
 
-            // Keep undirected edges (they are already symmetric)
-            for &u in self.undirected_of(v) {
-                if mask[u as usize] {
-                    adj[v as usize].push(u);
-                    // Note: the reverse will be added when we process node u
+                    let idx = (curr as usize) * n + next as usize;
+                    if visited[idx] == stamp {
+                        continue;
+                    }
+                    visited[idx] = stamp;
+                    q.push_back((curr, next));
+
+                    if next != s {
+                        adj[s as usize].push(next);
+                        adj[next as usize].push(s);
+                    }
                 }
             }
         }
@@ -123,9 +142,9 @@ impl Ag {
         adj
     }
 
-    /// BFS reachability check over moral graph.
+    /// BFS reachability check over augmented graph.
     /// Returns true if any node in `src` can reach any node in `tgt` while avoiding `blocked`.
-    fn reachable_in_moral(
+    fn reachable_in_augmented(
         adj: &[Vec<u32>],
         mask: &[bool],
         src: &[u32],
@@ -174,7 +193,7 @@ impl Ag {
     /// M-separation generalizes d-separation to ancestral graphs by:
     /// 1. Taking the anterior subgraph of `xs ∪ ys ∪ z` (anteriors include nodes
     ///    reachable via undirected edges, not just directed ancestors)
-    /// 2. Moralizing it (marrying parents, keeping bidirected and undirected edges)
+    /// 2. Building the augmented graph (connect endpoints of collider paths)
     /// 3. Removing conditioning nodes
     /// 4. Testing path connectivity
     ///
@@ -194,8 +213,8 @@ impl Ag {
         // Get anterior mask (includes undirected paths)
         let mask = self.anteriors_mask(&seeds);
 
-        // Build moral adjacency
-        let adj = self.moral_adj_ag(&mask);
+        // Build augmented adjacency
+        let adj = self.augmented_adj_ag(&mask);
 
         // Block conditioned nodes
         let mut blocked = vec![false; self.n() as usize];
@@ -203,8 +222,8 @@ impl Ag {
             blocked[v as usize] = true;
         }
 
-        // Check if xs can reach ys in the moral graph
-        !Self::reachable_in_moral(&adj, &mask, xs, &blocked, ys)
+        // Check if xs can reach ys in the augmented graph
+        !Self::reachable_in_augmented(&adj, &mask, xs, &blocked, ys)
     }
 }
 
@@ -338,14 +357,30 @@ mod tests {
 
         let ag = Ag::new(Arc::new(b.finalize().unwrap())).unwrap();
 
-        // M-separation uses the ancestral subgraph (through directed edges only).
-        // Since there are no directed edges, An({0,2}) = {0,2} (node 1 is not included).
+        // M-separation uses the anterior subgraph (directed-into + undirected edges).
+        // Since there are no such edges, Ant({0,2}) = {0,2} (node 1 is not included).
         // In this subgraph, 0 and 2 have no connecting edges, so they are m-separated.
         assert!(ag.m_separated(&[0], &[2], &[]));
 
-        // When conditioning on 1, the ancestral subgraph includes An({0,1,2}) = {0,1,2}.
-        // In this subgraph, the bidirected edges create moral edges 0-1 and 1-2.
-        // But node 1 is blocked, so 0 and 2 are still m-separated.
-        assert!(ag.m_separated(&[0], &[2], &[1]));
+        // When conditioning on 1, the collider path 0 <-> 1 <-> 2 opens.
+        assert!(!ag.m_separated(&[0], &[2], &[1]));
+    }
+
+    #[test]
+    fn msep_multi_collider_bidirected_chain() {
+        let (reg, _dir, bid, _und) = setup();
+        let mut b = GraphBuilder::new_with_registry(4, true, &reg);
+        // Chain of bidirected: 0 <-> 1 <-> 2 <-> 3
+        b.add_edge(0, 1, bid).unwrap();
+        b.add_edge(1, 2, bid).unwrap();
+        b.add_edge(2, 3, bid).unwrap();
+
+        let ag = Ag::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        // Colliders block the path unless conditioned on.
+        assert!(ag.m_separated(&[0], &[3], &[]));
+
+        // Conditioning on both colliders opens the collider path.
+        assert!(!ag.m_separated(&[0], &[3], &[1, 2]));
     }
 }

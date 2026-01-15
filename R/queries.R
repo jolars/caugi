@@ -1316,14 +1316,14 @@ districts <- function(cg) {
   lapply(idx0_list, function(idx0) cg@nodes$name[idx0 + 1L])
 }
 
-#' @title M-separation test for ADMGs
+#' @title M-separation test for AGs and ADMGs
 #'
 #' @description Test whether two sets of nodes are m-separated given a
-#' conditioning set in an ADMG.
+#' conditioning set in an ancestral graph (AG) or an ADMG.
 #'
-#' M-separation generalizes d-separation to ADMGs.
+#' M-separation generalizes d-separation to AGs/ADMGs and applies to DAGs.
 #'
-#' @param cg A `caugi` object of class ADMG or DAG.
+#' @param cg A `caugi` object of class AG, ADMG, or DAG.
 #' @param x A character vector of node names (the "source" set).
 #' @param y A character vector of node names (the "target" set).
 #' @param z A character vector of node names to condition on (default: empty).

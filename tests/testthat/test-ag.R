@@ -228,6 +228,19 @@ test_that("m_separated handles bidirected confounding in AG", {
   expect_true(m_separated(ag, "A", "C"))
 })
 
+test_that("m_separated opens collider paths in bidirected chains", {
+  ag <- caugi(
+    A %<->% B %<->% C %<->% D,
+    class = "AG"
+  )
+
+  # Colliders block the path unless conditioned on.
+  expect_true(m_separated(ag, "A", "D"))
+
+  # Conditioning on colliders opens the path.
+  expect_false(m_separated(ag, "A", "D", c("B", "C")))
+})
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Districts
 # ─────────────────────────────────────────────────────────────────────────────
