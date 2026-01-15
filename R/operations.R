@@ -191,8 +191,7 @@ mutate_caugi <- function(cg, class) {
     return(caugi(class = class))
   }
 
-  is_mutation_possible <- switch(
-    class,
+  is_mutation_possible <- switch(class,
     "DAG" = is_dag(cg),
     "PDAG" = is_pdag(cg),
     "UG" = is_ug(cg),
@@ -330,75 +329,103 @@ exogenize <- function(cg, nodes) {
 #' @examples
 #'
 #' mg <- caugi(U %-->% X + Y,
-#'             A %-->% X,
-#'             B %-->% Y, class = "DAG")
+#'   A %-->% X,
+#'   B %-->% Y,
+#'   class = "DAG"
+#' )
 #'
 #' condition_marginalize(mg, margvars = "U") # ADMG
 #' condition_marginalize(mg, condvars = "U") # DAG
 #'
 condition_marginalize <- function(cg, condvars = NULL, margvars = NULL) {
 
-  stopifnot(is_dag(cg))
-  stopifnot(length(intersect(condvars, margvars)) == 0)
-  if(is.null(condvars) & is.null(margvars)) return(cg)
+  if (cg@graph_class != "DAG") {
+    stop(
+      "`cg` must be a DAG for `condition_marginalize()`. The input graph is of class ",
+      cg@graph_class,
+      ".",
+      call. = FALSE
+    )
+  }
+
+  if ((!is.character(condvars) || length(condvars) == 0) &
+      (!is.character(margvars) || length(margvars) == 0)){
+    stop(
+      "Either `condvars` or `margvars` must be a non-empty character vector of node names.",
+      call. = FALSE
+    )
+  }
+
+  if(length(intersect(condvars, margvars)) > 0) {
+    stop(
+      "`condvars` and `margvars` must be disjoint.",
+      call. = FALSE
+    )
+  }
+
+
 
   newnodes <- setdiff(V(cg)$name, union(condvars, margvars))
   allpairs <- combn(length(newnodes), 2)
   edges_df <- data.frame(from = character(0), edge = character(0), to = character(0))
 
-  for(j in 1:ncol(allpairs)) {
-
+  for (j in 1:ncol(allpairs)) {
     ab <- newnodes[allpairs[, j]]
 
     ## check if d-separated given any subset of Zsa union condvarss
     Zsa <- setdiff(newnodes, ab)
-    Zsasets <- c(list(NULL), list(Zsa), do.call(c, c(lapply((length(Zsa) - 1):1,
-                                                            \(nn) combn(Zsa, nn, simplify = FALSE)))))
+    Zsasets <- c(list(NULL), list(Zsa), do.call(c, c(lapply(
+      (length(Zsa) - 1):1,
+      \(nn) combn(Zsa, nn, simplify = FALSE)
+    ))))
 
     abadj <- ab[1] %in% neighbors(cg, nodes = ab[2])
-    if(!abadj) {
+    if (!abadj) {
       d_sepchks <- rep(NA, length(Zsasets))
-      for(i in 1:length(Zsasets)) {
-
+      for (i in 1:length(Zsasets)) {
         d_sepchks[i] <- !d_separated(cg, ab[1], ab[2], Z = c(condvars, Zsasets[[i]]))
-
       }
       abadj <- all(d_sepchks)
     }
 
 
-    if(abadj) {
-
+    if (abadj) {
       achk <- ab[1] %in% union(union(ab[2], condvars), unlist(ancestors(cg, union(ab[2], condvars))))
       bchk <- ab[2] %in% union(union(ab[1], condvars), unlist(ancestors(cg, union(ab[1], condvars))))
 
-      if(!achk & !bchk) {
-        edges_df <- rbind(edges_df,
-                          data.frame(from = ab[1], edge = "<->", to = ab[2]))
+      if (!achk & !bchk) {
+        edges_df <- rbind(
+          edges_df,
+          data.frame(from = ab[1], edge = "<->", to = ab[2])
+        )
       } else if (achk & bchk) {
-        edges_df <- rbind(edges_df,
-                          data.frame(from = ab[1], edge = "---", to = ab[2]))
+        edges_df <- rbind(
+          edges_df,
+          data.frame(from = ab[1], edge = "---", to = ab[2])
+        )
       } else if (achk) {
-        edges_df <- rbind(edges_df,
-                          data.frame(from = ab[1], edge = "-->", to = ab[2]))
+        edges_df <- rbind(
+          edges_df,
+          data.frame(from = ab[1], edge = "-->", to = ab[2])
+        )
       } else if (bchk) {
-        edges_df <- rbind(edges_df,
-                          data.frame(from = ab[2], edge = "-->", to = ab[1]))
+        edges_df <- rbind(
+          edges_df,
+          data.frame(from = ab[2], edge = "-->", to = ab[1])
+        )
       }
-
     }
-
   }
 
   edgetypes <- unique(edges_df$edge)
-  classy <- if(all(c("<->", "---") %in% edgetypes)){
+  classy <- if (all(c("<->", "---") %in% edgetypes)) {
     "UNKNOWN"
-  } else if("<->" %in% edgetypes & !"---" %in% edgetypes) {
+  } else if ("<->" %in% edgetypes & !"---" %in% edgetypes) {
     "ADMG"
-  }  else if("---" %in% edgetypes & !"<->" %in% edgetypes) {
+  } else if ("---" %in% edgetypes & !"<->" %in% edgetypes) {
     "PDAG"
-  } else "DAG"
+  } else {
+    "DAG"
+  }
   caugi(edges_df = edges_df, class = classy)
-
 }
-
