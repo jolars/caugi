@@ -1,4 +1,4 @@
-# caugi 0.5.0
+# caugi 1.0.0
 ## New Features
 
 * Add `mode` argument to `neighbors()`/`neighbours()` to filter neighbors by edge
@@ -40,6 +40,7 @@
   improving correctness of direction-dependent algorithms/metrics (e.g.
   topological sorting and structural Hamming distance computations).
 * Fix bug in `is_cpdag` function that return `TRUE` on non-complete PDAGs. 
+* Fix bug in `shd` returning positive values for equivalent graphs given in shuffled order. 
 
 # caugi 0.4.0
 
