@@ -325,6 +325,7 @@ impl GraphView {
             GraphView::Admg(_) => Err("topological_sort is only defined for DAGs".into()),
             GraphView::Pdag(_) => Err("topological_sort is only defined for DAGs".into()),
             GraphView::Ug(_) => Err("topological_sort is only defined for DAGs".into()),
+            GraphView::Ag(_) => Err("topological_sort is only defined for DAGs".into()),
             GraphView::Raw(_) => Err("topological_sort is only defined for DAGs".into()),
         }
     }
@@ -342,14 +343,16 @@ impl GraphView {
     pub fn districts(&self) -> Result<Vec<Vec<u32>>, String> {
         match self {
             GraphView::Admg(g) => Ok(g.districts()),
-            _ => Err("districts is only defined for ADMGs".into()),
+            GraphView::Ag(g) => Ok(g.districts()),
+            _ => Err("districts is only defined for ADMGs and AGs".into()),
         }
     }
 
     pub fn district_of(&self, i: u32) -> Result<Vec<u32>, String> {
         match self {
             GraphView::Admg(g) => Ok(g.district_of(i)),
-            _ => Err("district_of is only defined for ADMGs".into()),
+            GraphView::Ag(g) => Ok(g.district_of(i)),
+            _ => Err("district_of is only defined for ADMGs and AGs".into()),
         }
     }
 
