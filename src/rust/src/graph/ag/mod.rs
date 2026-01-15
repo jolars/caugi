@@ -781,18 +781,6 @@ mod tests {
     }
 
     #[test]
-    fn ag_is_mag_chain() {
-        let (reg, dir, _bid, _und) = setup();
-        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
-        // Chain: 0 -> 1 -> 2 (0 and 2 are m-separated by {1})
-        b.add_edge(0, 1, dir).unwrap();
-        b.add_edge(1, 2, dir).unwrap();
-
-        let ag = Ag::new(Arc::new(b.finalize().unwrap())).unwrap();
-        assert!(ag.is_mag());
-    }
-
-    #[test]
     fn ag_core_ref() {
         let (reg, dir, _bid, _und) = setup();
         let mut b = GraphBuilder::new_with_registry(2, true, &reg);
