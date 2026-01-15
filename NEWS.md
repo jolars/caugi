@@ -11,14 +11,7 @@
   filtering.
 * Add `simulate_data()` that enables simulation from DAGs using SEMs. Standard linear Gaussian SEMs are defaults, but more importantly custom SEMs are available. 
 * Add `"AUTO"` parameter for `class` in `caugi` objects. This automatically picks the graph class in order `DAG`, `UG`, `PDAG`, `ADMG`, `AG`. 
-<<<<<<< Current (Your changes)
-<<<<<<< Current (Your changes)
-=======
 * Add Ancestral Graphs (AG) with support for directed, bidirected, and undirected edges, plus new queries `is_ag()` and `is_mag()` and m-separation for AGs.
->>>>>>> Incoming (Background Agent changes)
-=======
-* Add Ancestral Graphs (AG) with support for directed, bidirected, and undirected edges, plus new queries `is_ag()` and `is_mag()` and m-separation for AGs.
->>>>>>> Incoming (Background Agent changes)
 * Add `exogenize()` function that exogenizes variables for any graph type. Current implementation is written in R, but it is so simple that it might be preferable over a Rust implementation. This might be changed later. 
 * Add `latent_project()` function that does latent projection from DAGs to ADMGs. 
 * Add native caugi serialization format for saving and loading graphs. New functions: `write_caugi()`, `read_caugi()`, `caugi_serialize()`, and `caugi_deserialize()`. The format is a versioned JSON schema that captures graph structure, class, and optional metadata (comments and tags).

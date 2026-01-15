@@ -47,16 +47,8 @@
 #' @param class Character; one of `"AUTO"`, `"DAG"`, `"UG"`, `"PDAG"`, `"ADMG"`,
 #' `"AG"`, or `"UNKNOWN"`. `"AUTO"` will automatically pick the appropriate
 #' class based on the first match in the order of `"DAG"`, `"UG"`, `"PDAG"`,
-<<<<<<< Current (Your changes)
-<<<<<<< Current (Your changes)
 #' `"ADMG"`, and `"AG"`.
 #' It will default to `"UNKNOWN"` if no match is found.
-=======
-#' `"ADMG"`, and `"AG"`. It will default to `"UNKNOWN"` if no match is found.
->>>>>>> Incoming (Background Agent changes)
-=======
-#' `"ADMG"`, and `"AG"`. It will default to `"UNKNOWN"` if no match is found.
->>>>>>> Incoming (Background Agent changes)
 #' @param state For internal use. Build a graph by supplying a pre-constructed
 #' state environment.
 #'
