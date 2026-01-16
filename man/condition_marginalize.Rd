@@ -2,22 +2,22 @@
 % Please edit documentation in R/operations.R
 \name{condition_marginalize}
 \alias{condition_marginalize}
-\title{Marginalize and/or condition on variables in a DAG}
+\title{Marginalize and/or condition on variables in an ancestral graph (AG)}
 \usage{
 condition_marginalize(cg, condvars = NULL, margvars = NULL)
 }
 \arguments{
-\item{cg}{A caugi graph of class "DAG"}
+\item{cg}{A caugi ancestral graph; is_ag(cg, force_check = TRUE) must return TRUE}
 
 \item{condvars}{Character vector of nodes to condition on}
 
 \item{margvars}{Character vector of nodes to marginalize over}
 }
 \value{
-A \code{caugi} object of class "DAG", "ADMG", or "UNKNOWN", depending on what type of edges are in the result
+A \code{caugi} object of class "AG"
 }
 \description{
-Marginalize variables out of a DAG, and/or condition on variables.
+Marginalize variables out of a AG, and/or condition on variables.
 Depending on the structure, it could produce a graph with directed, bidirected, and undirected edges.
 }
 \examples{

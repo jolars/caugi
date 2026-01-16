@@ -532,7 +532,7 @@ test_that("Marginalization and conditioning work", {
   )
 
   mgmu <- condition_marginalize(mg, margvars = "U")
-  resmu <- caugi(A %-->% X, B %-->% Y, X %<->% Y)
+  resmu <- caugi(A %-->% X, B %-->% Y, X %<->% Y, class = "AG")
 
   same_graphs <- function(cg1, cg2) {
     if (!cg1@graph_class == cg2@graph_class) FALSE
@@ -567,20 +567,25 @@ test_that("Marginalization and conditioning work", {
 
   f11.ii <- caugi(A %---% L1, L1 %---% L2 + B, L2 %---% B,
                   L2 %-->% C, D %-->% C,
-                  class = "PDAG"
+                  class = "AG"
   )
   f11.iii <- caugi(A %-->% B + C, B %-->% S + C,
                    S %-->% D, D %-->% C,
-                   class = "DAG"
+                   class = "AG"
   )
   f11.iv <- caugi(A %---% B, A %-->% C, B %-->% C,
                   D %-->% C,
-                  class = "PDAG"
+                  class = "AG"
   )
 
   expect_true(same_graphs(f11.cS, f11.ii))
   expect_true(same_graphs(f11.mL1L2, f11.iii))
   expect_true(same_graphs(f11.cSmL1L2, f11.iv))
+
+  ## order doesn't matter
+
+  expect_true(same_graphs(condition_marginalize(f11.cS, margvars = c("L1", "L2")), f11.cSmL1L2))
+  expect_true(same_graphs(condition_marginalize(f11.mL1L2, condvars = "S"), f11.cSmL1L2))
 
 
   ## error checking
@@ -589,9 +594,9 @@ test_that("Marginalization and conditioning work", {
                     A %-->% X,
                     B %-->% Y,
                K %<->% Y,
-                    class = "ADMG")
+                    class = "AG")
 
-  expect_error(condition_marginalize(emg, condvars = "U"))
+  expect_no_error(condition_marginalize(emg, condvars = "U"))
   expect_error(condition_marginalize(f11, condvars = c("S", "L1"),
                                      margvars = c("L1")))
 

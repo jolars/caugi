@@ -315,15 +315,15 @@ exogenize <- function(cg, nodes) {
 #' @importFrom utils combn
 NULL
 
-#' Marginalize and/or condition on variables in a DAG
+#' Marginalize and/or condition on variables in an ancestral graph (AG)
 #'
-#' Marginalize variables out of a DAG, and/or condition on variables.
+#' Marginalize variables out of a AG, and/or condition on variables.
 #' Depending on the structure, it could produce a graph with directed, bidirected, and undirected edges.
 #'
-#' @param cg A caugi graph of class "DAG"
+#' @param cg A caugi ancestral graph; is_ag(cg, force_check = TRUE) must return TRUE
 #' @param condvars Character vector of nodes to condition on
 #' @param margvars Character vector of nodes to marginalize over
-#' @returns A `caugi` object of class "DAG", "ADMG", or "UNKNOWN", depending on what type of edges are in the result
+#' @returns A `caugi` object of class "AG"
 #' @export
 #' @family operations
 #' @concept operations
@@ -342,9 +342,9 @@ NULL
 #'
 condition_marginalize <- function(cg, condvars = NULL, margvars = NULL) {
 
-  if (cg@graph_class != "DAG") {
+  if (isFALSE(is_ag(cg, force_check = TRUE))) {
     stop(
-      "`cg` must be a DAG for `condition_marginalize()`. The input graph is of class ",
+      "`cg` must be an AG for `condition_marginalize()`. The input graph is of class ",
       cg@graph_class,
       ".",
       call. = FALSE
@@ -384,17 +384,17 @@ condition_marginalize <- function(cg, condvars = NULL, margvars = NULL) {
 
     abadj <- ab[1] %in% neighbors(cg, nodes = ab[2])
     if (!abadj) {
-      d_sepchks <- rep(NA, length(Zsasets))
+      m_sepchks <- rep(NA, length(Zsasets))
       for (i in 1:length(Zsasets)) {
-        d_sepchks[i] <- !d_separated(cg, ab[1], ab[2], Z = c(condvars, Zsasets[[i]]))
+        m_sepchks[i] <- !m_separated(cg, ab[1], ab[2], z = c(condvars, Zsasets[[i]]) %||% character(0))
       }
-      abadj <- all(d_sepchks)
+      abadj <- all(m_sepchks)
     }
 
 
     if (abadj) {
-      achk <- ab[1] %in% union(union(ab[2], condvars), unlist(ancestors(cg, union(ab[2], condvars))))
-      bchk <- ab[2] %in% union(union(ab[1], condvars), unlist(ancestors(cg, union(ab[1], condvars))))
+      achk <- ab[1] %in% union(union(ab[2], condvars), unlist(anteriors(cg, union(ab[2], condvars))))
+      bchk <- ab[2] %in% union(union(ab[1], condvars), unlist(anteriors(cg, union(ab[1], condvars))))
 
       if (!achk & !bchk) {
         edges_df <- rbind(
@@ -420,15 +420,15 @@ condition_marginalize <- function(cg, condvars = NULL, margvars = NULL) {
     }
   }
 
-  edgetypes <- unique(edges_df$edge)
-  classy <- if (all(c("<->", "---") %in% edgetypes)) {
-    "UNKNOWN"
-  } else if ("<->" %in% edgetypes & !"---" %in% edgetypes) {
-    "ADMG"
-  } else if ("---" %in% edgetypes & !"<->" %in% edgetypes) {
-    "PDAG"
-  } else {
-    "DAG"
-  }
-  caugi(edges_df = edges_df, class = classy)
+  # edgetypes <- unique(edges_df$edge)
+  # classy <- if (all(c("<->", "---") %in% edgetypes)) {
+  #   "UNKNOWN"
+  # } else if ("<->" %in% edgetypes & !"---" %in% edgetypes) {
+  #   "ADMG"
+  # } else if ("---" %in% edgetypes & !"<->" %in% edgetypes) {
+  #   "PDAG"
+  # } else {
+  #   "DAG"
+  # }
+  caugi(edges_df = edges_df, class = "AG")
 }
