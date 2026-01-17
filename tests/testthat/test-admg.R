@@ -131,10 +131,10 @@ test_that("m_separated works for chain structures", {
   )
 
   # A and C not separated unconditionally
-  expect_false(m_separated(admg, "A", "C"))
+  expect_false(m_separated(admg, X = "A", Y = "C"))
 
   # A and C separated given B
-  expect_true(m_separated(admg, "A", "C", "B"))
+  expect_true(m_separated(admg, X = "A", Y = "C", Z = "B"))
 })
 
 test_that("m_separated works for collider structures", {
@@ -145,10 +145,10 @@ test_that("m_separated works for collider structures", {
   )
 
   # A and B are m-separated unconditionally (collider at C blocks)
-  expect_true(m_separated(admg, "A", "B"))
+  expect_true(m_separated(admg, X = "A", Y = "B"))
 
   # A and B NOT m-separated given C (conditioning on collider opens)
-  expect_false(m_separated(admg, "A", "B", "C"))
+  expect_false(m_separated(admg, X = "A", Y = "B", Z = "C"))
 })
 
 test_that("m_separated handles bidirected confounding", {
@@ -161,10 +161,10 @@ test_that("m_separated handles bidirected confounding", {
   )
 
   # X and Y not m-separated unconditionally (confounding via L)
-  expect_false(m_separated(admg, "X", "Y"))
+  expect_false(m_separated(admg, X = "X", Y = "Y"))
 
   # X and Y m-separated given L (blocks the confounding path)
-  expect_true(m_separated(admg, "X", "Y", "L"))
+  expect_true(m_separated(admg, X = "X", Y = "Y", Z = "L"))
 
   # With direct edge: L --> X --> Y, L --> Y
   admg2 <- caugi(
@@ -175,7 +175,7 @@ test_that("m_separated handles bidirected confounding", {
   )
 
   # X and Y NOT m-separated even given L (direct edge X --> Y remains)
-  expect_false(m_separated(admg2, "X", "Y", "L"))
+  expect_false(m_separated(admg2, X = "X", Y = "Y", Z = "L"))
 })
 
 # ─────────────────────────────────────────────────────────────────────────────

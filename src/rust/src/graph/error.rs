@@ -103,6 +103,46 @@ impl std::fmt::Display for UgError {
 
 impl std::error::Error for UgError {}
 
+// ── AG Errors ────────────────────────────────────────────────────────────────
+
+/// Errors that can occur when constructing or validating an Ancestral Graph.
+#[derive(Debug, Clone)]
+pub enum AgError {
+    /// The directed part of the graph contains a cycle.
+    DirectedCycle,
+    /// An invalid edge type was found (only directed, bidirected, and undirected are allowed).
+    InvalidEdgeType { found: String },
+    /// Anterior constraint violated: a node with an arrowhead is an anterior of the source.
+    AnteriorConstraintViolation { source: u32, target: u32 },
+    /// Undirected constraint violated: a node has both undirected and arrowhead edges.
+    UndirectedConstraintViolation { node: u32 },
+}
+
+impl std::fmt::Display for AgError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::DirectedCycle => write!(f, "Ancestral graph contains a directed cycle"),
+            Self::InvalidEdgeType { found } => write!(
+                f,
+                "Ancestral graph can only contain directed, bidirected, and undirected edges, found: {}",
+                found
+            ),
+            Self::AnteriorConstraintViolation { source, target } => write!(
+                f,
+                "Anterior constraint violated: node {} has arrowhead from {} but is an anterior of {}",
+                target, source, source
+            ),
+            Self::UndirectedConstraintViolation { node } => write!(
+                f,
+                "Undirected constraint violated: node {} has both undirected and arrowhead edges",
+                node
+            ),
+        }
+    }
+}
+
+impl std::error::Error for AgError {}
+
 // ── Builder Errors ────────────────────────────────────────────────────────────
 
 /// Errors that can occur when building a graph.
@@ -259,6 +299,45 @@ mod tests {
             .to_string()
             .contains("UG can only contain undirected edges"));
         assert!(err.to_string().contains("-->"));
+    }
+
+    // ── AG Error Tests ────────────────────────────────────────────────────────
+
+    #[test]
+    fn ag_error_display_directed_cycle() {
+        let err = AgError::DirectedCycle;
+        assert_eq!(
+            err.to_string(),
+            "Ancestral graph contains a directed cycle"
+        );
+    }
+
+    #[test]
+    fn ag_error_display_invalid_edge_type() {
+        let err = AgError::InvalidEdgeType {
+            found: "o->".to_string(),
+        };
+        assert!(err.to_string().contains(
+            "Ancestral graph can only contain directed, bidirected, and undirected edges"
+        ));
+        assert!(err.to_string().contains("o->"));
+    }
+
+    #[test]
+    fn ag_error_display_anterior_constraint_violation() {
+        let err = AgError::AnteriorConstraintViolation {
+            source: 0,
+            target: 1,
+        };
+        assert!(err.to_string().contains("Anterior constraint violated"));
+        assert!(err.to_string().contains("node 1"));
+    }
+
+    #[test]
+    fn ag_error_display_undirected_constraint_violation() {
+        let err = AgError::UndirectedConstraintViolation { node: 2 };
+        assert!(err.to_string().contains("Undirected constraint violated"));
+        assert!(err.to_string().contains("node 2"));
     }
 
     // ── Builder Error Tests ───────────────────────────────────────────────────
