@@ -13,7 +13,7 @@ caugi(
   edges_df = NULL,
   simple = TRUE,
   build = TRUE,
-  class = c("AUTO", "DAG", "UG", "PDAG", "ADMG", "UNKNOWN"),
+  class = c("AUTO", "DAG", "UG", "PDAG", "ADMG", "AG", "UNKNOWN"),
   state = NULL
 )
 }
@@ -54,8 +54,9 @@ nodes are provided, the graph will not be built and the pointer will be
 \code{NULL}.}
 
 \item{class}{Character; one of \code{"AUTO"}, \code{"DAG"}, \code{"UG"}, \code{"PDAG"}, \code{"ADMG"},
-or \code{"UNKNOWN"}. \code{"AUTO"} will automatically pick the appropriate class based
-on the first match in the order of \code{"DAG"}, \code{"UG"}, \code{"PDAG"}, and \code{"ADMG"}.
+\code{"AG"}, or \code{"UNKNOWN"}. \code{"AUTO"} will automatically pick the appropriate
+class based on the first match in the order of \code{"DAG"}, \code{"UG"}, \code{"PDAG"},
+\code{"ADMG"}, and \code{"AG"}.
 It will default to \code{"UNKNOWN"} if no match is found.}
 
 \item{state}{For internal use. Build a graph by supplying a pre-constructed
