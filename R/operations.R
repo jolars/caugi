@@ -191,7 +191,8 @@ mutate_caugi <- function(cg, class) {
     return(caugi(class = class))
   }
 
-  is_mutation_possible <- switch(class,
+  is_mutation_possible <- switch(
+    class,
     "DAG" = is_dag(cg),
     "PDAG" = is_pdag(cg),
     "UG" = is_ug(cg),
@@ -317,120 +318,240 @@ exogenize <- function(cg, nodes) {
 #' @importFrom utils combn
 NULL
 
-#' Marginalize and/or condition on variables in an ancestral graph (AG)
+#' @title Marginalize and/or condition on variables in an ancestral graph (AG)
 #'
-#' Marginalize variables out of a AG, and/or condition on variables.
-#' Depending on the structure, it could produce a graph with directed, bidirected, and undirected edges.
+#' @description
+#' Marginalize variables out of an AG, and/or condition on variables.
+#' Depending on the structure, it could produce a graph with directed,
+#' bidirected, and undirected edges.
 #'
-#' @param cg A caugi ancestral graph; is_ag(cg, force_check = TRUE) must return TRUE
-#' @param condvars Character vector of nodes to condition on
-#' @param margvars Character vector of nodes to marginalize over
-#' @returns A `caugi` object of class "AG"
-#' @export
+#' @param cg A `caugi` ancestral graph of class `"AG"`.
+#' @param cond_vars Character vector of nodes to condition on.
+#' @param marg_vars Character vector of nodes to marginalize over.
+#'
+#' @returns A `caugi` object of class `"AG"`.
+#'
 #' @family operations
 #' @concept operations
 #'
-#' @references Definition 4.2.1 in Thomas Richardson. Peter Spirtes. "Ancestral graph Markov models." Ann. Statist. 30 (4) 962 - 1030, August 2002. <https://doi.org/10.1214/aos/1031689015>
-#' @examples
+#' @references
+#' Definition 4.2.1 in Thomas Richardson. Peter Spirtes. "Ancestral graph
+#' Markov models." Ann. Statist. 30 (4) 962 - 1030, August 2002.
+#' <https://doi.org/10.1214/aos/1031689015>
 #'
-#' mg <- caugi(U %-->% X + Y,
+#' @examples
+#' mg <- caugi(
+#'   U %-->% X + Y,
 #'   A %-->% X,
 #'   B %-->% Y,
 #'   class = "DAG"
 #' )
 #'
-#' condition_marginalize(mg, margvars = "U") # ADMG
-#' condition_marginalize(mg, condvars = "U") # DAG
+#' condition_marginalize(mg, marg_vars = "U") # ADMG
+#' condition_marginalize(mg, cond_vars = "U") # DAG
 #'
-condition_marginalize <- function(cg, condvars = NULL, margvars = NULL) {
+#' @export
+condition_marginalize <- function(cg, cond_vars = NULL, marg_vars = NULL) {
+  is_caugi(cg, throw_error = TRUE)
 
-  if (isFALSE(is_ag(cg, force_check = TRUE))) {
+  if (!is_ag(cg)) {
     stop(
-      "`cg` must be an AG for `condition_marginalize()`. The input graph is of class ",
+      "`cg` must be an AG for `condition_marginalize()`. ",
+      "The input graph is of class ",
       cg@graph_class,
       ".",
       call. = FALSE
     )
   }
 
-  if ((!is.character(condvars) || length(condvars) == 0) &
-      (!is.character(margvars) || length(margvars) == 0)){
+  cond_vars_valid <- is.character(cond_vars) && length(cond_vars) > 0L
+  marg_vars_valid <- is.character(marg_vars) && length(marg_vars) > 0L
+
+  if (!cond_vars_valid && !marg_vars_valid) {
     stop(
-      "Either `condvars` or `margvars` must be a non-empty character vector of node names.",
+      "Either `cond_vars` or `marg_vars` must be a non-empty character vector ",
+      "of node names.",
       call. = FALSE
     )
   }
 
-  if(length(intersect(condvars, margvars)) > 0) {
-    stop(
-      "`condvars` and `margvars` must be disjoint.",
-      call. = FALSE
+  if (length(intersect(cond_vars, marg_vars)) > 0L) {
+    stop("`cond_vars` and `marg_vars` must be disjoint.", call. = FALSE)
+  }
+
+  # Compute remaining nodes after removing conditioned and marginalized vars
+  all_node_names <- nodes(cg)$name
+  removed_vars <- union(cond_vars, marg_vars)
+  remaining_nodes <- setdiff(all_node_names, removed_vars)
+  n_remaining <- length(remaining_nodes)
+
+  # Early exit for trivial cases
+  if (n_remaining < 2L) {
+    return(caugi(nodes = remaining_nodes, class = "AG"))
+  }
+
+  # Pre-compute anteriors for all relevant nodes
+  nodes_for_anteriors <- union(remaining_nodes, cond_vars)
+  anteriors_list <- anteriors(cg, nodes_for_anteriors)
+  if (!is.list(anteriors_list)) {
+    # Single node case: wrap in named list
+    anteriors_list <- setNames(list(anteriors_list), nodes_for_anteriors)
+  }
+
+  # Generate all pairs of remaining nodes
+  pair_indices <- combn(n_remaining, 2L)
+  n_pairs <- ncol(pair_indices)
+
+  # Pre-allocate edge list
+  edge_list <- vector("list", n_pairs)
+
+  for (j in seq_len(n_pairs)) {
+    node_a <- remaining_nodes[pair_indices[1L, j]]
+    node_b <- remaining_nodes[pair_indices[2L, j]]
+
+    # Check if nodes are adjacent in the original graph
+    is_adjacent <- node_a %in% neighbors(cg, nodes = node_b)
+
+    if (!is_adjacent) {
+      # Check m-separation for all subsets of (other remaining nodes ∪ cond_vars)
+      # Nodes are adjacent if NOT m-separated for ANY conditioning subset
+      other_nodes <- setdiff(remaining_nodes, c(node_a, node_b))
+      is_adjacent <- .not_m_separated_for_all_subsets(
+        cg,
+        node_a,
+        node_b,
+        other_nodes,
+        cond_vars
+      )
+    }
+
+    if (is_adjacent) {
+      edge_list[[j]] <- .edge_type_from_anteriors(
+        node_a,
+        node_b,
+        cond_vars,
+        anteriors_list
+      )
+    }
+  }
+
+  # Combine edges efficiently using data.table
+  non_null <- !vapply(edge_list, is.null, logical(1L))
+  edges_df <- data.table::rbindlist(edge_list[non_null])
+
+  caugi(edges_df = edges_df, nodes = remaining_nodes, class = "AG")
+}
+
+#' @title
+#' Check if nodes are NOT m-separated for all conditioning subsets
+#'
+#' @description
+#' Tests whether two nodes fail to be m-separated for every possible
+#' conditioning set formed from `other_nodes` combined with `cond_vars`.
+#' If they are never separated, they must be adjacent in the resulting graph.
+#'
+#' @param cg A `caugi` object.
+#' @param node_a First node name.
+#' @param node_b Second node name.
+#' @param other_nodes Other remaining nodes to form conditioning sets from.
+#' @param cond_vars Conditioning variables (always included in conditioning).
+#'
+#' @returns `TRUE` if nodes are not m-separated for any subset (i.e., adjacent).
+#'
+#' @keywords internal
+.not_m_separated_for_all_subsets <- function(
+  cg,
+  node_a,
+  node_b,
+  other_nodes,
+  cond_vars
+) {
+  n_other <- length(other_nodes)
+
+  # Generate all subsets of other_nodes
+  subsets <- if (n_other == 0L) {
+    list(NULL)
+  } else {
+    # Build subsets from largest to smallest (often finds separation faster)
+    c(
+      list(other_nodes),
+      if (n_other > 1L) {
+        unlist(
+          lapply(
+            seq_len(n_other - 1L),
+            function(k) combn(other_nodes, n_other - k, simplify = FALSE)
+          ),
+          recursive = FALSE
+        )
+      },
+      list(NULL)
     )
   }
 
+  # Check each conditioning set
 
-
-  newnodes <- setdiff(V(cg)$name, union(condvars, margvars))
-  allpairs <- combn(length(newnodes), 2)
-  edges_df <- data.frame(from = character(0), edge = character(0), to = character(0))
-
-  for (j in 1:ncol(allpairs)) {
-    ab <- newnodes[allpairs[, j]]
-
-    ## check if d-separated given any subset of Zsa union condvarss
-    Zsa <- setdiff(newnodes, ab)
-    Zsasets <- c(list(NULL), list(Zsa), do.call(c, c(lapply(
-      (length(Zsa) - 1):1,
-      \(nn) utils::combn(Zsa, nn, simplify = FALSE)
-    ))))
-
-    abadj <- ab[1] %in% neighbors(cg, nodes = ab[2])
-    if (!abadj) {
-      m_sepchks <- rep(NA, length(Zsasets))
-      for (i in 1:length(Zsasets)) {
-        m_sepchks[i] <- !m_separated(cg, ab[1], ab[2], z = c(condvars, Zsasets[[i]]) %||% character(0))
-      }
-      abadj <- all(m_sepchks)
+  for (subset in subsets) {
+    conditioning_set <- c(cond_vars, subset)
+    if (length(conditioning_set) == 0L) {
+      conditioning_set <- NULL
     }
 
-
-    if (abadj) {
-      achk <- ab[1] %in% union(union(ab[2], condvars), unlist(anteriors(cg, union(ab[2], condvars))))
-      bchk <- ab[2] %in% union(union(ab[1], condvars), unlist(anteriors(cg, union(ab[1], condvars))))
-
-      if (!achk & !bchk) {
-        edges_df <- rbind(
-          edges_df,
-          data.frame(from = ab[1], edge = "<->", to = ab[2])
-        )
-      } else if (achk & bchk) {
-        edges_df <- rbind(
-          edges_df,
-          data.frame(from = ab[1], edge = "---", to = ab[2])
-        )
-      } else if (achk) {
-        edges_df <- rbind(
-          edges_df,
-          data.frame(from = ab[1], edge = "-->", to = ab[2])
-        )
-      } else if (bchk) {
-        edges_df <- rbind(
-          edges_df,
-          data.frame(from = ab[2], edge = "-->", to = ab[1])
-        )
-      }
+    if (m_separated(cg, node_a, node_b, Z = conditioning_set)) {
+      # Found a set that m-separates them: no edge needed
+      return(FALSE)
     }
   }
 
-  # edgetypes <- unique(edges_df$edge)
-  # classy <- if (all(c("<->", "---") %in% edgetypes)) {
-  #   "UNKNOWN"
-  # } else if ("<->" %in% edgetypes & !"---" %in% edgetypes) {
-  #   "ADMG"
-  # } else if ("---" %in% edgetypes & !"<->" %in% edgetypes) {
-  #   "PDAG"
-  # } else {
-  #   "DAG"
-  # }
-  caugi(edges_df = edges_df, class = "AG")
+  # Not m-separated for any conditioning set: edge is required
+
+  TRUE
+}
+
+#' @title
+#' Infer edge type from anterior relationships
+#'
+#' @description
+#' Given two adjacent nodes, infers the edge type (directed, bidirected,
+#' or undirected) based on whether each node is in the anterior of the other
+#' combined with the conditioning set.
+#'
+#' @param node_a First node name.
+#' @param node_b Second node name.
+#' @param cond_vars Conditioning variables.
+#' @param anteriors_list Pre-computed list of anteriors for all nodes.
+#'
+#' @returns A single-row `data.table` with `from`, `edge`, `to` columns.
+#'
+#' @keywords internal
+.edge_type_from_anteriors <- function(
+  node_a,
+  node_b,
+  cond_vars,
+  anteriors_list
+) {
+  # Check if a is in ant(b ∪ S): a is in {b ∪ S} or in anteriors of {b ∪ S}
+  nodes_with_b <- c(node_b, cond_vars)
+  u
+  anteriors_of_b <- unlist(anteriors_list[nodes_with_b], use.names = FALSE)
+  a_in_anterior_of_b <- node_a %in% nodes_with_b || node_a %in% anteriors_of_b
+
+  # Check if b is in ant(a ∪ S)
+
+  nodes_with_a <- c(node_a, cond_vars)
+  anteriors_of_a <- unlist(anteriors_list[nodes_with_a], use.names = FALSE)
+  b_in_anterior_of_a <- node_b %in% nodes_with_a || node_b %in% anteriors_of_a
+
+  if (!a_in_anterior_of_b && !b_in_anterior_of_a) {
+    # Neither in anterior of the other: bidirected edge
+    data.table::data.table(from = node_a, edge = "<->", to = node_b)
+  } else if (a_in_anterior_of_b && b_in_anterior_of_a) {
+    # Both in anterior of each other: undirected edge
+    data.table::data.table(from = node_a, edge = "---", to = node_b)
+  } else if (a_in_anterior_of_b) {
+    # a is in anterior of b: a --> b
+    data.table::data.table(from = node_a, edge = "-->", to = node_b)
+  } else {
+    # b is in anterior of a: b --> a
+    data.table::data.table(from = node_b, edge = "-->", to = node_a)
+  }
 }

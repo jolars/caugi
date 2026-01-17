@@ -4,36 +4,39 @@
 \alias{condition_marginalize}
 \title{Marginalize and/or condition on variables in an ancestral graph (AG)}
 \usage{
-condition_marginalize(cg, condvars = NULL, margvars = NULL)
+condition_marginalize(cg, cond_vars = NULL, marg_vars = NULL)
 }
 \arguments{
-\item{cg}{A caugi ancestral graph; is_ag(cg, force_check = TRUE) must return TRUE}
+\item{cg}{A \code{caugi} ancestral graph of class \code{"AG"}.}
 
-\item{condvars}{Character vector of nodes to condition on}
+\item{cond_vars}{Character vector of nodes to condition on.}
 
-\item{margvars}{Character vector of nodes to marginalize over}
+\item{marg_vars}{Character vector of nodes to marginalize over.}
 }
 \value{
-A \code{caugi} object of class "AG"
+A \code{caugi} object of class \code{"AG"}.
 }
 \description{
-Marginalize variables out of a AG, and/or condition on variables.
-Depending on the structure, it could produce a graph with directed, bidirected, and undirected edges.
+Marginalize variables out of an AG, and/or condition on variables.
+Depending on the structure, it could produce a graph with directed,
+bidirected, and undirected edges.
 }
 \examples{
-
-mg <- caugi(U \%-->\% X + Y,
+mg <- caugi(
+  U \%-->\% X + Y,
   A \%-->\% X,
   B \%-->\% Y,
   class = "DAG"
 )
 
-condition_marginalize(mg, margvars = "U") # ADMG
-condition_marginalize(mg, condvars = "U") # DAG
+condition_marginalize(mg, marg_vars = "U") # ADMG
+condition_marginalize(mg, cond_vars = "U") # DAG
 
 }
 \references{
-Definition 4.2.1 in Thomas Richardson. Peter Spirtes. "Ancestral graph Markov models." Ann. Statist. 30 (4) 962 - 1030, August 2002. \url{https://doi.org/10.1214/aos/1031689015}
+Definition 4.2.1 in Thomas Richardson. Peter Spirtes. "Ancestral graph
+Markov models." Ann. Statist. 30 (4) 962 - 1030, August 2002.
+\url{https://doi.org/10.1214/aos/1031689015}
 }
 \seealso{
 Other operations: 

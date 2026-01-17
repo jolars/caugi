@@ -27,6 +27,7 @@ moralize(cg) # A -- B, A -- C, B -- C
 }
 \seealso{
 Other operations: 
+\code{\link{condition_marginalize}()},
 \code{\link{exogenize}()},
 \code{\link{latent_project}()},
 \code{\link{mutate_caugi}()},
