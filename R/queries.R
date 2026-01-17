@@ -404,6 +404,92 @@ is_admg <- function(cg, force_check = FALSE) {
   is_it
 }
 
+#' @title Is the `caugi` graph an AG?
+#'
+#' @description Checks if the given `caugi` graph is an
+#' Ancestral Graph (AG).
+#'
+#' An AG contains directed (`-->`), bidirected (`<->`), and undirected (`---`)
+#' edges, and must satisfy ancestral graph constraints (no directed cycles,
+#' anterior constraint, and undirected constraint).
+#'
+#' @param cg A `caugi` object.
+#' @param force_check Logical; if `TRUE`, the function will test if the graph is
+#' an AG, if `FALSE` (default), it will look at the graph class and match
+#' it, if possible.
+#'
+#' @returns A logical value indicating whether the graph is an AG.
+#'
+#' @examples
+#' cg_ag <- caugi(
+#'   A %-->% B,
+#'   C %<->% D,
+#'   E %---% F,
+#'   class = "AG"
+#' )
+#' is_ag(cg_ag) # TRUE
+#'
+#' cg_ug <- caugi(
+#'   A %---% B,
+#'   class = "UG"
+#' )
+#' is_ag(cg_ug) # TRUE (UGs are valid AGs)
+#'
+#' @family queries
+#' @concept queries
+#'
+#' @export
+is_ag <- function(cg, force_check = FALSE) {
+  is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
+  if (identical(cg@graph_class, "AG") && !force_check) {
+    is_it <- TRUE
+  } else {
+    # if we can't be sure from the class, we check
+    is_it <- is_ag_type_ptr(cg@ptr)
+  }
+  is_it
+}
+
+#' @title Is the `caugi` graph a MAG?
+#'
+#' @description Checks if the given `caugi` graph is a
+#' Maximal Ancestral Graph (MAG).
+#'
+#' A MAG is an ancestral graph where no additional edge can be added without
+#' violating the ancestral graph constraints or changing the encoded
+#' independence model.
+#'
+#' @param cg A `caugi` object.
+#' @param force_check Logical; if `TRUE`, the function will test if the graph is
+#' a MAG, if `FALSE` (default), it will look at the graph class and match
+#' it, if possible.
+#'
+#' @returns A logical value indicating whether the graph is a MAG.
+#'
+#' @examples
+#' cg_ag <- caugi(
+#'   A %-->% B,
+#'   B %-->% C,
+#'   class = "AG"
+#' )
+#' is_mag(cg_ag) # TRUE (0 and 2 are m-separated by {B})
+#'
+#' @family queries
+#' @concept queries
+#'
+#' @export
+is_mag <- function(cg, force_check = FALSE) {
+  is_caugi(cg, throw_error = TRUE)
+  cg <- build(cg)
+  if (identical(cg@graph_class, "MAG") && !force_check) {
+    is_it <- TRUE
+  } else {
+    is_it <- is_mag_ptr(cg@ptr)
+  }
+  is_it
+}
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ───────────────────────────── Nodes and edges ────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1230,19 +1316,21 @@ districts <- function(cg) {
   lapply(idx0_list, function(idx0) cg@nodes$name[idx0 + 1L])
 }
 
-#' @title M-separation test for ADMGs
+#' @title M-separation test for AGs and ADMGs
 #'
 #' @description Test whether two sets of nodes are m-separated given a
-#' conditioning set in an ADMG.
+#' conditioning set in an ancestral graph (AG) or an ADMG.
 #'
-#' M-separation generalizes d-separation to ADMGs.
+#' M-separation generalizes d-separation to AGs/ADMGs and applies to DAGs.
 #'
-#' @param cg A `caugi` object of class ADMG or DAG.
-#' @param x A character vector of node names (the "source" set).
-#' @param y A character vector of node names (the "target" set).
-#' @param z A character vector of node names to condition on (default: empty).
+#' @param cg A `caugi` object of class AG, ADMG, or DAG.
+#' @param X,Y,Z Node selectors: character vector of names, unquoted expression
+#'   (supports `+` and `c()`), or `NULL`. Use `*_index` to pass 1-based indices.
+#'   If `Z` is `NULL` or missing, no nodes are conditioned on.
+#' @param X_index,Y_index,Z_index Optional numeric 1-based indices (exclusive
+#'   with `X`,`Y`,`Z` respectively).
 #'
-#' @returns A logical value; `TRUE` if `x` and `y` are m-separated given `z`.
+#' @returns A logical value; `TRUE` if `X` and `Y` are m-separated given `Z`.
 #'
 #' @examples
 #' # Classic confounding example
@@ -1252,63 +1340,30 @@ districts <- function(cg) {
 #'   L %-->% Y,
 #'   class = "ADMG"
 #' )
-#' m_separated(cg, "X", "Y") # FALSE (connected via L)
-#' m_separated(cg, "X", "Y", "L") # TRUE (L blocks the path)
+#' m_separated(cg, X = "X", Y = "Y") # FALSE (connected via L)
+#' m_separated(cg, X = "X", Y = "Y", Z = "L") # TRUE (L blocks the path)
 #'
 #' @family queries
 #' @concept queries
 #'
 #' @export
-m_separated <- function(cg, x, y, z = character(0)) {
+m_separated <- function(
+  cg,
+  X = NULL,
+  Y = NULL,
+  Z = NULL,
+  X_index = NULL,
+  Y_index = NULL,
+  Z_index = NULL
+) {
   is_caugi(cg, throw_error = TRUE)
   cg <- build(cg)
 
-  if (!is.character(x) || !is.character(y) || !is.character(z)) {
-    stop("`x`, `y`, and `z` must be character vectors.", call. = FALSE)
-  }
+  X_idx0 <- .resolve_idx0_mget(cg@name_index_map, X, X_index)
+  Y_idx0 <- .resolve_idx0_mget(cg@name_index_map, Y, Y_index)
+  Z_idx0 <- .resolve_idx0_mget(cg@name_index_map, Z, Z_index)
 
-  # Convert node names to indices
-  x_idx <- cg@name_index_map$mget(
-    x,
-    missing = stop(
-      paste(
-        "Unknown node in x:",
-        paste(setdiff(x, cg@nodes$name), collapse = ", ")
-      ),
-      call. = FALSE
-    )
-  )
-  y_idx <- cg@name_index_map$mget(
-    y,
-    missing = stop(
-      paste(
-        "Unknown node in y:",
-        paste(setdiff(y, cg@nodes$name), collapse = ", ")
-      ),
-      call. = FALSE
-    )
-  )
-  z_idx <- if (length(z) > 0) {
-    cg@name_index_map$mget(
-      z,
-      missing = stop(
-        paste(
-          "Unknown node in z:",
-          paste(setdiff(z, cg@nodes$name), collapse = ", ")
-        ),
-        call. = FALSE
-      )
-    )
-  } else {
-    integer(0)
-  }
-
-  m_separated_ptr(
-    cg@ptr,
-    as.integer(x_idx),
-    as.integer(y_idx),
-    as.integer(z_idx)
-  )
+  m_separated_ptr(cg@ptr, X_idx0, Y_idx0, Z_idx0)
 }
 
 # ──────────────────────────────────────────────────────────────────────────────

@@ -2,27 +2,36 @@
 % Please edit documentation in R/queries.R
 \name{m_separated}
 \alias{m_separated}
-\title{M-separation test for ADMGs}
+\title{M-separation test for AGs and ADMGs}
 \usage{
-m_separated(cg, x, y, z = character(0))
+m_separated(
+  cg,
+  X = NULL,
+  Y = NULL,
+  Z = NULL,
+  X_index = NULL,
+  Y_index = NULL,
+  Z_index = NULL
+)
 }
 \arguments{
-\item{cg}{A \code{caugi} object of class ADMG or DAG.}
+\item{cg}{A \code{caugi} object of class AG, ADMG, or DAG.}
 
-\item{x}{A character vector of node names (the "source" set).}
+\item{X, Y, Z}{Node selectors: character vector of names, unquoted expression
+(supports \code{+} and \code{c()}), or \code{NULL}. Use \verb{*_index} to pass 1-based indices.
+If \code{Z} is \code{NULL} or missing, no nodes are conditioned on.}
 
-\item{y}{A character vector of node names (the "target" set).}
-
-\item{z}{A character vector of node names to condition on (default: empty).}
+\item{X_index, Y_index, Z_index}{Optional numeric 1-based indices (exclusive
+with \code{X},\code{Y},\code{Z} respectively).}
 }
 \value{
-A logical value; \code{TRUE} if \code{x} and \code{y} are m-separated given \code{z}.
+A logical value; \code{TRUE} if \code{X} and \code{Y} are m-separated given \code{Z}.
 }
 \description{
 Test whether two sets of nodes are m-separated given a
-conditioning set in an ADMG.
+conditioning set in an ancestral graph (AG) or an ADMG.
 
-M-separation generalizes d-separation to ADMGs.
+M-separation generalizes d-separation to AGs/ADMGs and applies to DAGs.
 }
 \examples{
 # Classic confounding example
@@ -32,8 +41,8 @@ cg <- caugi(
   L \%-->\% Y,
   class = "ADMG"
 )
-m_separated(cg, "X", "Y") # FALSE (connected via L)
-m_separated(cg, "X", "Y", "L") # TRUE (L blocks the path)
+m_separated(cg, X = "X", Y = "Y") # FALSE (connected via L)
+m_separated(cg, X = "X", Y = "Y", Z = "L") # TRUE (L blocks the path)
 
 }
 \seealso{
@@ -48,10 +57,12 @@ Other queries:
 \code{\link{exogenous}()},
 \code{\link{is_acyclic}()},
 \code{\link{is_admg}()},
+\code{\link{is_ag}()},
 \code{\link{is_caugi}()},
 \code{\link{is_cpdag}()},
 \code{\link{is_dag}()},
 \code{\link{is_empty_caugi}()},
+\code{\link{is_mag}()},
 \code{\link{is_pdag}()},
 \code{\link{is_ug}()},
 \code{\link{markov_blanket}()},
