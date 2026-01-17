@@ -48,6 +48,7 @@ edges(admg2)
 }
 \seealso{
 Other operations: 
+\code{\link{condition_marginalize}()},
 \code{\link{exogenize}()},
 \code{\link{moralize}()},
 \code{\link{mutate_caugi}()},

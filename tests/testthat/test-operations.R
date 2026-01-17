@@ -520,3 +520,95 @@ test_that("exogenize fails with non-simple graphs", {
     "`cg` must be a DAG"
   )
 })
+
+
+test_that("Marginalization and conditioning work", {
+  ## Examples from Figure 10 of Richardson and Spirtes 2002
+
+  mg <- caugi(U %-->% X + Y, A %-->% X, B %-->% Y, class = "DAG")
+
+  mgmu <- condition_marginalize(mg, marg_vars = "U")
+  resmu <- caugi(A %-->% X, B %-->% Y, X %<->% Y, class = "AG")
+
+  same_graphs <- function(cg1, cg2) {
+    if (!cg1@graph_class == cg2@graph_class) {
+      FALSE
+    }
+    if (!setequal(nodes(cg1)$name, nodes(cg2)$name)) {
+      FALSE
+    }
+
+    shd(cg1, cg2) == 0
+  }
+
+  expect_true(same_graphs(mgmu, resmu))
+
+  rescu <- caugi(A %-->% X, B %-->% Y)
+  mgcu <- condition_marginalize(mg, cond_vars = "U")
+
+  expect_true(same_graphs(rescu, mgcu))
+
+  expect_error(condition_marginalize(mg, cond_vars = NULL, marg_vars = NULL))
+
+  # Figure 11
+
+  f11 <- caugi(
+    A %-->% L1,
+    L1 %-->% B,
+    L2 %-->% B + C,
+    B %-->% S,
+    S %-->% D,
+    D %-->% C
+  )
+
+  f11.cS <- condition_marginalize(f11, cond_vars = "S")
+  f11.mL1L2 <- condition_marginalize(f11, marg_vars = c("L1", "L2"))
+  f11.cSmL1L2 <- condition_marginalize(
+    f11,
+    marg_vars = c("L1", "L2"),
+    cond_vars = "S"
+  )
+
+  f11.ii <- caugi(
+    A %---% L1,
+    L1 %---% L2 + B,
+    L2 %---% B,
+    L2 %-->% C,
+    D %-->% C,
+    class = "AG"
+  )
+  f11.iii <- caugi(
+    A %-->% B + C,
+    B %-->% S + C,
+    S %-->% D,
+    D %-->% C,
+    class = "AG"
+  )
+  f11.iv <- caugi(A %---% B, A %-->% C, B %-->% C, D %-->% C, class = "AG")
+
+  expect_true(same_graphs(f11.cS, f11.ii))
+  expect_true(same_graphs(f11.mL1L2, f11.iii))
+  expect_true(same_graphs(f11.cSmL1L2, f11.iv))
+
+  ## order doesn't matter
+
+  expect_true(same_graphs(
+    condition_marginalize(f11.cS, marg_vars = c("L1", "L2")),
+    f11.cSmL1L2
+  ))
+  expect_true(same_graphs(
+    condition_marginalize(f11.mL1L2, cond_vars = "S"),
+    f11.cSmL1L2
+  ))
+
+  ## error checking
+
+  emg <- caugi(U %-->% X + Y, A %-->% X, B %-->% Y, K %<->% Y, class = "AG")
+
+  expect_no_error(condition_marginalize(emg, cond_vars = "U"))
+  expect_error(condition_marginalize(
+    f11,
+    cond_vars = c("S", "L1"),
+    marg_vars = c("L1")
+  ))
+})
