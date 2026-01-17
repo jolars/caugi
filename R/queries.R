@@ -1324,11 +1324,13 @@ districts <- function(cg) {
 #' M-separation generalizes d-separation to AGs/ADMGs and applies to DAGs.
 #'
 #' @param cg A `caugi` object of class AG, ADMG, or DAG.
-#' @param x A character vector of node names (the "source" set).
-#' @param y A character vector of node names (the "target" set).
-#' @param z A character vector of node names to condition on (default: empty).
+#' @param X,Y,Z Node selectors: character vector of names, unquoted expression
+#'   (supports `+` and `c()`), or `NULL`. Use `*_index` to pass 1-based indices.
+#'   If `Z` is `NULL` or missing, no nodes are conditioned on.
+#' @param X_index,Y_index,Z_index Optional numeric 1-based indices (exclusive
+#'   with `X`,`Y`,`Z` respectively).
 #'
-#' @returns A logical value; `TRUE` if `x` and `y` are m-separated given `z`.
+#' @returns A logical value; `TRUE` if `X` and `Y` are m-separated given `Z`.
 #'
 #' @examples
 #' # Classic confounding example
@@ -1338,63 +1340,30 @@ districts <- function(cg) {
 #'   L %-->% Y,
 #'   class = "ADMG"
 #' )
-#' m_separated(cg, "X", "Y") # FALSE (connected via L)
-#' m_separated(cg, "X", "Y", "L") # TRUE (L blocks the path)
+#' m_separated(cg, X = "X", Y = "Y") # FALSE (connected via L)
+#' m_separated(cg, X = "X", Y = "Y", Z = "L") # TRUE (L blocks the path)
 #'
 #' @family queries
 #' @concept queries
 #'
 #' @export
-m_separated <- function(cg, x, y, z = character(0)) {
+m_separated <- function(
+  cg,
+  X = NULL,
+  Y = NULL,
+  Z = NULL,
+  X_index = NULL,
+  Y_index = NULL,
+  Z_index = NULL
+) {
   is_caugi(cg, throw_error = TRUE)
   cg <- build(cg)
 
-  if (!is.character(x) || !is.character(y) || !is.character(z)) {
-    stop("`x`, `y`, and `z` must be character vectors.", call. = FALSE)
-  }
+  X_idx0 <- .resolve_idx0_mget(cg@name_index_map, X, X_index)
+  Y_idx0 <- .resolve_idx0_mget(cg@name_index_map, Y, Y_index)
+  Z_idx0 <- .resolve_idx0_mget(cg@name_index_map, Z, Z_index)
 
-  # Convert node names to indices
-  x_idx <- cg@name_index_map$mget(
-    x,
-    missing = stop(
-      paste(
-        "Unknown node in x:",
-        paste(setdiff(x, cg@nodes$name), collapse = ", ")
-      ),
-      call. = FALSE
-    )
-  )
-  y_idx <- cg@name_index_map$mget(
-    y,
-    missing = stop(
-      paste(
-        "Unknown node in y:",
-        paste(setdiff(y, cg@nodes$name), collapse = ", ")
-      ),
-      call. = FALSE
-    )
-  )
-  z_idx <- if (length(z) > 0) {
-    cg@name_index_map$mget(
-      z,
-      missing = stop(
-        paste(
-          "Unknown node in z:",
-          paste(setdiff(z, cg@nodes$name), collapse = ", ")
-        ),
-        call. = FALSE
-      )
-    )
-  } else {
-    integer(0)
-  }
-
-  m_separated_ptr(
-    cg@ptr,
-    as.integer(x_idx),
-    as.integer(y_idx),
-    as.integer(z_idx)
-  )
+  m_separated_ptr(cg@ptr, X_idx0, Y_idx0, Z_idx0)
 }
 
 # ──────────────────────────────────────────────────────────────────────────────

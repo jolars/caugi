@@ -181,10 +181,10 @@ test_that("m_separated works for chain structures in AG", {
   )
 
   # A and C not separated unconditionally
-  expect_false(m_separated(ag, "A", "C"))
+  expect_false(m_separated(ag, X = "A", Y = "C"))
 
   # A and C separated given B
-  expect_true(m_separated(ag, "A", "C", "B"))
+  expect_true(m_separated(ag, X = "A", Y = "C", Z = "B"))
 })
 
 test_that("m_separated works for collider structures in AG", {
@@ -195,10 +195,10 @@ test_that("m_separated works for collider structures in AG", {
   )
 
   # A and B are m-separated unconditionally (collider at C blocks)
-  expect_true(m_separated(ag, "A", "B"))
+  expect_true(m_separated(ag, X = "A", Y = "B"))
 
   # A and B NOT m-separated given C (conditioning on collider opens)
-  expect_false(m_separated(ag, "A", "B", "C"))
+  expect_false(m_separated(ag, X = "A", Y = "B", Z = "C"))
 })
 
 test_that("m_separated works for undirected paths in AG", {
@@ -208,10 +208,10 @@ test_that("m_separated works for undirected paths in AG", {
   )
 
   # A and C not m-separated unconditionally (connected via undirected)
-  expect_false(m_separated(ag, "A", "C"))
+  expect_false(m_separated(ag, X = "A", Y = "C"))
 
   # A and C m-separated given B
-  expect_true(m_separated(ag, "A", "C", "B"))
+  expect_true(m_separated(ag, X = "A", Y = "C", Z = "B"))
 })
 
 test_that("m_separated handles bidirected confounding in AG", {
@@ -222,10 +222,10 @@ test_that("m_separated handles bidirected confounding in AG", {
   )
 
   # C and D are not m-separated (directly connected via bidirected)
-  expect_false(m_separated(ag, "C", "D"))
+  expect_false(m_separated(ag, X = "C", Y = "D"))
 
   # A and C are m-separated (no path)
-  expect_true(m_separated(ag, "A", "C"))
+  expect_true(m_separated(ag, X = "A", Y = "C"))
 })
 
 test_that("m_separated opens collider paths in bidirected chains", {
@@ -235,10 +235,10 @@ test_that("m_separated opens collider paths in bidirected chains", {
   )
 
   # Colliders block the path unless conditioned on.
-  expect_true(m_separated(ag, "A", "D"))
+  expect_true(m_separated(ag, X = "A", Y = "D"))
 
   # Conditioning on colliders opens the path.
-  expect_false(m_separated(ag, "A", "D", c("B", "C")))
+  expect_false(m_separated(ag, X = "A", Y = "D", Z = c("B", "C")))
 })
 
 # ─────────────────────────────────────────────────────────────────────────────
