@@ -531,7 +531,6 @@ condition_marginalize <- function(cg, cond_vars = NULL, marg_vars = NULL) {
 ) {
   # Check if a is in ant(b ∪ S): a is in {b ∪ S} or in anteriors of {b ∪ S}
   nodes_with_b <- c(node_b, cond_vars)
-  u
   anteriors_of_b <- unlist(anteriors_list[nodes_with_b], use.names = FALSE)
   a_in_anterior_of_b <- node_a %in% nodes_with_b || node_a %in% anteriors_of_b
 
