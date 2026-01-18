@@ -320,7 +320,6 @@ test_that("is_mag correctly identifies complete graph as MAG", {
 # ─────────────────────────────────────────────────────────────────────────────
 
 test_that("is_mag works with directed and bidirected edges", {
-
   # Directed + bidirected in separate components
   ag_mixed <- caugi(
     A %-->% B,
