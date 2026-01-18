@@ -395,7 +395,7 @@ condition_marginalize <- function(cg, cond_vars = NULL, marg_vars = NULL) {
   anteriors_list <- anteriors(cg, nodes_for_anteriors)
   if (!is.list(anteriors_list)) {
     # Single node case: wrap in named list
-    anteriors_list <- setNames(list(anteriors_list), nodes_for_anteriors)
+    anteriors_list <- .set_names(list(anteriors_list), nodes_for_anteriors)
   }
 
   # Generate all pairs of remaining nodes

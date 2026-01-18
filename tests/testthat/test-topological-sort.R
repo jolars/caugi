@@ -12,7 +12,7 @@ verify_topo_order <- function(cg, order) {
     return(TRUE)
   }
 
-  pos <- setNames(seq_along(order), order)
+  pos <- .set_names(seq_along(order), order)
 
   for (i in seq_len(nrow(directed_edges))) {
     from_node <- directed_edges$from[i]
