@@ -5,12 +5,14 @@
 \alias{E}
 \title{Get edges of a \code{caugi}.}
 \usage{
-edges(cg)
+edges(cg, ...)
 
-E(cg)
+E(cg, ...)
 }
 \arguments{
 \item{cg}{A \code{caugi} object.}
+
+\item{...}{Additional arguments (currently unused).}
 }
 \value{
 A \code{data.table} with columns \code{from}, \code{edge}, and \code{to}.
