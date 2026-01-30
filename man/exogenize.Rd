@@ -28,6 +28,7 @@ exogenize(cg, nodes = "B") # A, B
 \seealso{
 Other operations: 
 \code{\link{condition_marginalize}()},
+\code{\link{dag_from_pdag}()},
 \code{\link{latent_project}()},
 \code{\link{moralize}()},
 \code{\link{mutate_caugi}()},
