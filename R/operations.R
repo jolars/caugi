@@ -602,29 +602,33 @@ dag_from_pdag <- function(PDAG) {
     stop("Input must be a caugi PDAG graph")
   }
 
-  G_prime <- PDAG
-  A <- PDAG
+  output_graph <- PDAG
+  temp_graph <- PDAG
 
-  nodes_left <- nodes(A)$name
+  nodes_left <- nodes(temp_graph)$name
 
   while (length(nodes_left) > 0) {
     found_sink <- FALSE
 
     for (x in nodes_left) {
-      all_edges <- edges(A)
+      all_edges <- edges(temp_graph)
 
       # Condition (a): no outgoing directed edges from x
-      if (length(children(A, x)) > 0) {
+      if (length(children(temp_graph, x)) > 0) {
         next
       }
 
       # Condition (b): undirected neighbors all connected
-      undirected_neighbors <- neighbors(A, x, mode = "undirected")
+      undirected_neighbors <- neighbors(temp_graph, x, mode = "undirected")
 
       if (length(undirected_neighbors) > 1) {
         neighbor_pairs <- combn(undirected_neighbors, 2, simplify = FALSE)
         if (
-          any(!sapply(neighbor_pairs, function(p) are_connected(A, p[1], p[2])))
+          any(
+            !sapply(neighbor_pairs, function(p) {
+              are_connected(temp_graph, p[1], p[2])
+            })
+          )
         ) {
           next
         }
@@ -632,11 +636,11 @@ dag_from_pdag <- function(PDAG) {
 
       # x is a valid sink
       found_sink <- TRUE
-      # Orient all undirected edges toward x in G_prime
+      # Orient all undirected edges toward x in output_graph
       if (length(undirected_neighbors) > 0) {
         # Ensure to also remove A---B if adding B-->A
         remove_edges(
-          G_prime,
+          output_graph,
           from = rep(x, length(undirected_neighbors)),
           to = undirected_neighbors,
           edge = "---",
@@ -644,7 +648,7 @@ dag_from_pdag <- function(PDAG) {
         )
 
         set_edges(
-          G_prime,
+          output_graph,
           from = undirected_neighbors,
           to = rep(x, length(undirected_neighbors)),
           edge = "-->",
@@ -653,7 +657,7 @@ dag_from_pdag <- function(PDAG) {
       }
 
       # Remove x from working graph
-      A <- do.call(remove_nodes, list(A, as.name(x)))
+      temp_graph <- do.call(remove_nodes, list(temp_graph, as.name(x)))
       nodes_left <- setdiff(nodes_left, x)
       break
     }
@@ -661,5 +665,5 @@ dag_from_pdag <- function(PDAG) {
     if (!found_sink) stop("PDAG cannot be extended to a DAG (Dor-Tarsi failed)")
   }
 
-  mutate_caugi(G_prime, "DAG")
+  mutate_caugi(output_graph, "DAG")
 }
