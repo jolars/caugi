@@ -612,3 +612,38 @@ test_that("Marginalization and conditioning work", {
     marg_vars = c("L1")
   ))
 })
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────────── DAG from PDAG ──────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("dag_from_pdag converts a valid PDAG to a DAG", {
+  PDAG <- caugi(
+    A %---% B,
+    B %---% C,
+    class = "PDAG"
+  )
+  DAG <- dag_from_pdag(PDAG)
+  edges_DAG <- edges(DAG)
+  expect_true(all(edges_DAG$edge == "-->"))
+})
+
+test_that("dag_from_pdag errors on non-PDAG input", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    class = "DAG"
+  )
+  expect_error(dag_from_pdag(cg), "Input must be a caugi PDAG graph")
+})
+
+test_that("dag_from_pdag errors if PDAG cannot be extended to a DAG", {
+  PDAG <- caugi(
+    A %---% B,
+    A %---% D,
+    B %---% C,
+    C %---% D,
+    class = "PDAG"
+  )
+  expect_error(dag_from_pdag(PDAG), "PDAG cannot be extended to a DAG")
+})

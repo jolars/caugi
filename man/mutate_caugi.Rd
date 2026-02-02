@@ -31,6 +31,7 @@ cg_dag <- mutate_caugi(cg, "DAG")
 \seealso{
 Other operations: 
 \code{\link{condition_marginalize}()},
+\code{\link{dag_from_pdag}()},
 \code{\link{exogenize}()},
 \code{\link{latent_project}()},
 \code{\link{moralize}()},

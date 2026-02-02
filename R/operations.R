@@ -554,3 +554,116 @@ condition_marginalize <- function(cg, cond_vars = NULL, marg_vars = NULL) {
     data.table::data.table(from = node_b, edge = "-->", to = node_a)
   }
 }
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ───────────────────────────── Extend a PDAG to a DAG ──────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+#' @title Check if two nodes are connected by an edge
+#' @keywords internal
+#' @noRd
+are_connected <- function(cg, u, v) {
+  v %in% neighbors(cg, u, mode = "all")
+}
+
+#' @title Extend a PDAG to a DAG using the Dor-Tarsi Algorithm
+#' @description
+#' Given a Partially Directed Acyclic Graph (PDAG), this function attempts to
+#' extend it to a Directed Acyclic Graph (DAG) by orienting the undirected edges
+#' while preserving acyclicity and all existing directed edges.
+#' The procedure implements the Dor-Tarsi algorithm.
+#'
+#' If the PDAG cannot be consistently extended to a DAG, the function will raise an error.
+#'
+#' @param PDAG A `caugi` object of class `"PDAG"`.
+#'
+#' @returns A `caugi` object of class `"DAG"` representing a DAG extension
+#' of the input PDAG.
+#'
+#' @family operations
+#' @concept operations
+#'
+#' @examples
+#' PDAG <- caugi(
+#'   A %---% B,
+#'   B %---% C,
+#'   class = "PDAG"
+#' )
+#' DAG <- dag_from_pdag(PDAG)
+#' edges(DAG)
+#'
+#' @references
+#' Dor, D., & Tarsi, M. (1992). "A simple algorithm to construct a consistent
+#' extension of a partially directed acyclic graph",
+#' <https://api.semanticscholar.org/CorpusID:122949140>.
+#'
+#' @export
+dag_from_pdag <- function(PDAG) {
+  if (PDAG@graph_class != "PDAG") {
+    stop("Input must be a caugi PDAG graph")
+  }
+
+  output_graph <- PDAG
+  temp_graph <- PDAG
+
+  nodes_left <- nodes(temp_graph)$name
+
+  while (length(nodes_left) > 0) {
+    found_sink <- FALSE
+
+    for (x in nodes_left) {
+      all_edges <- edges(temp_graph)
+
+      # Condition (a): no outgoing directed edges from x
+      if (length(children(temp_graph, x)) > 0) {
+        next
+      }
+
+      # Condition (b): undirected neighbors all connected
+      undirected_neighbors <- neighbors(temp_graph, x, mode = "undirected")
+
+      if (length(undirected_neighbors) > 1) {
+        neighbor_pairs <- combn(undirected_neighbors, 2, simplify = FALSE)
+        if (
+          any(
+            !sapply(neighbor_pairs, function(p) {
+              are_connected(temp_graph, p[1], p[2])
+            })
+          )
+        ) {
+          next
+        }
+      }
+
+      # x is a valid sink
+      found_sink <- TRUE
+      # Orient all undirected edges toward x in output_graph
+      if (length(undirected_neighbors) > 0) {
+        # Ensure to also remove A---B if adding B-->A
+        remove_edges(
+          output_graph,
+          from = rep(x, length(undirected_neighbors)),
+          to = undirected_neighbors,
+          edge = "---",
+          inplace = TRUE
+        )
+
+        set_edges(
+          output_graph,
+          from = undirected_neighbors,
+          to = rep(x, length(undirected_neighbors)),
+          edge = "-->",
+          inplace = TRUE
+        )
+      }
+
+      # Remove x from working graph
+      temp_graph <- do.call(remove_nodes, list(temp_graph, as.name(x)))
+      nodes_left <- setdiff(nodes_left, x)
+      break
+    }
+
+    if (!found_sink) stop("PDAG cannot be extended to a DAG (Dor-Tarsi failed)")
+  }
+
+  mutate_caugi(output_graph, "DAG")
+}
