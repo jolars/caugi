@@ -562,8 +562,7 @@ condition_marginalize <- function(cg, cond_vars = NULL, marg_vars = NULL) {
 #' @keywords internal
 #' @noRd
 are_connected <- function(cg, u, v) {
-  e <- edges(cg)
-  any((e$from == u & e$to == v) | (e$from == v & e$to == u))
+  v %in% neighbors(cg, u, mode = "all")
 }
 
 #' @title Extend a PDAG to a DAG using the Dor-Tarsi Algorithm
@@ -615,15 +614,12 @@ dag_from_pdag <- function(PDAG) {
       all_edges <- edges(A)
 
       # Condition (a): no outgoing directed edges from x
-      if (any(all_edges$from == x & all_edges$edge == "-->")) {
+      if (length(children(A, x)) > 0) {
         next
       }
 
       # Condition (b): undirected neighbors all connected
-      undirected_neighbors <- unique(c(
-        all_edges$to[all_edges$from == x & all_edges$edge == "---"],
-        all_edges$from[all_edges$to == x & all_edges$edge == "---"]
-      ))
+      undirected_neighbors <- neighbors(A, x, mode = "undirected")
 
       if (length(undirected_neighbors) > 1) {
         neighbor_pairs <- combn(undirected_neighbors, 2, simplify = FALSE)
@@ -636,11 +632,24 @@ dag_from_pdag <- function(PDAG) {
 
       # x is a valid sink
       found_sink <- TRUE
-
       # Orient all undirected edges toward x in G_prime
-      for (y in undirected_neighbors) {
-        G_prime <- remove_edges(G_prime, from = x, to = y)
-        G_prime <- add_edges(G_prime, from = y, to = x, edge = "-->")
+      if (length(undirected_neighbors) > 0) {
+        # Ensure to also remove A---B if adding B-->A
+        remove_edges(
+          G_prime,
+          from = rep(x, length(undirected_neighbors)),
+          to = undirected_neighbors,
+          edge = "---",
+          inplace = TRUE
+        )
+
+        set_edges(
+          G_prime,
+          from = undirected_neighbors,
+          to = rep(x, length(undirected_neighbors)),
+          edge = "-->",
+          inplace = TRUE
+        )
       }
 
       # Remove x from working graph
@@ -652,6 +661,5 @@ dag_from_pdag <- function(PDAG) {
     if (!found_sink) stop("PDAG cannot be extended to a DAG (Dor-Tarsi failed)")
   }
 
-  G_prime <- mutate_caugi(G_prime, "DAG")
-  return(G_prime)
+  mutate_caugi(G_prime, "DAG")
 }
