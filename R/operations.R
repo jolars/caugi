@@ -203,14 +203,16 @@ mutate_caugi <- function(cg, class) {
   )
 
   if (!is_mutation_possible) {
-    stop(paste0(
-      "Cannot convert caugi of class '",
-      old_class,
-      "' to '",
-      class,
-      "'.",
+    stop(
+      paste0(
+        "Cannot convert caugi of class '",
+        old_class,
+        "' to '",
+        class,
+        "'."
+      ),
       call. = FALSE
-    ))
+    )
   } else {
     return(caugi(
       nodes = nodes(cg),
