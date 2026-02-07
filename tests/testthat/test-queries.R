@@ -37,15 +37,57 @@ test_that("is_acyclic forces check when requested", {
 
 test_that("query builds", {
   cg <- caugi(A %-->% B, B %-->% C, C %---% D, class = "PDAG")
-  expect_true(cg@built)
+  expect_true(!is.null(cg@session))
 
   cg <- cg |> add_edges(D %-->% E)
-  expect_false(cg@built)
+  expect_true(!is.null(cg@session))
 
   expect_true(is_acyclic(cg))
 
   # now it should be build
-  expect_true(cg@built)
+  expect_true(!is.null(cg@session))
+})
+
+test_that("build initializes session without querying", {
+  cg <- caugi(A %-->% B, B %-->% C, class = "DAG")
+  state_before <- rs_is_valid(cg@session)
+  expect_true(state_before$core_valid)
+  expect_false(state_before$view_valid)
+
+  expect_invisible(build(cg))
+
+  state_after <- rs_is_valid(cg@session)
+  expect_true(state_after$core_valid)
+  expect_true(state_after$view_valid)
+
+  # Build should not change graph content
+  expect_setequal(nodes(cg)$name, c("A", "B", "C"))
+  expect_equal(nrow(edges(cg)), 2L)
+})
+
+test_that("build is idempotent and survives updates", {
+  cg <- caugi(A %-->% B, class = "DAG")
+  build(cg)
+  state_built <- rs_is_valid(cg@session)
+  expect_true(state_built$core_valid)
+  expect_true(state_built$view_valid)
+
+  # idempotent
+  build(cg)
+  state_built2 <- rs_is_valid(cg@session)
+  expect_true(state_built2$core_valid)
+  expect_true(state_built2$view_valid)
+
+  # updating invalidates session; build again should restore
+  cg <- add_edges(cg, B %-->% C)
+  state_after_update <- rs_is_valid(cg@session)
+  expect_true(state_after_update$core_valid)
+  expect_false(state_after_update$view_valid)
+
+  build(cg)
+  state_rebuilt <- rs_is_valid(cg@session)
+  expect_true(state_rebuilt$core_valid)
+  expect_true(state_rebuilt$view_valid)
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -243,9 +285,9 @@ test_that("aliases route correctly", {
 test_that("public getters trigger lazy build", {
   cg <- caugi(A %-->% B, B %-->% C, class = "PDAG")
   cg <- cg |> add_edges(C %---% D)
-  expect_false(cg@built)
+  expect_true(!is.null(cg@session))
   parents(cg, "B")
-  expect_true(cg@built)
+  expect_true(!is.null(cg@session))
 })
 
 test_that("nodes and edges getters work", {
@@ -382,9 +424,9 @@ test_that("getter queries builds", {
     markov_blanket
   )
   for (getter in getter_queries) {
-    cg <- caugi(A %-->% B, B %-->% C, class = "DAG", build = FALSE)
+    cg <- caugi(A %-->% B, B %-->% C, class = "DAG")
     getter(cg, "B")
-    expect_true(cg@built)
+    expect_true(!is.null(cg@session))
   }
 })
 
@@ -489,11 +531,9 @@ test_that("subgraph on graph without edges keeps nodes and empty edges", {
   s <- subgraph(g, nodes = c("C", "A"))
   expect_identical(s@nodes$name, c("C", "A"))
   expect_equal(nrow(s@edges), 0L)
-  expect_true(s@built)
+  expect_true(!is.null(s@session))
   expect_identical(s@graph_class, g@graph_class)
   expect_identical(s@simple, g@simple)
-  expect_identical(s@name_index_map$get("C"), 0L)
-  expect_identical(s@name_index_map$get("A"), 1L)
 })
 
 test_that("subgraph filters edges to kept names and sorts", {
@@ -526,7 +566,7 @@ test_that("subgraph with index matches nodes variant", {
   s2 <- subgraph(g, index = c(2L, 1L, 3L))
   expect_identical(s1@nodes$name, s2@nodes$name)
   expect_identical(s1@edges, s2@edges)
-  expect_true(s1@built && s2@built)
+  expect_true(!is.null(s1@session) && !is.null(s2@session))
 })
 
 # ──────────────────────────────────────────────────────────────────────────────

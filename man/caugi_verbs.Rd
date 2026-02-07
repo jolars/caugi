@@ -9,15 +9,15 @@
 \alias{remove_nodes}
 \title{Manipulate nodes and edges of a \code{caugi}}
 \usage{
-add_edges(cg, ..., from = NULL, edge = NULL, to = NULL, inplace = FALSE)
+add_edges(cg, ..., from = NULL, edge = NULL, to = NULL)
 
-remove_edges(cg, ..., from = NULL, edge = NULL, to = NULL, inplace = FALSE)
+remove_edges(cg, ..., from = NULL, edge = NULL, to = NULL)
 
-set_edges(cg, ..., from = NULL, edge = NULL, to = NULL, inplace = FALSE)
+set_edges(cg, ..., from = NULL, edge = NULL, to = NULL)
 
-add_nodes(cg, ..., name = NULL, inplace = FALSE)
+add_nodes(cg, ..., name = NULL)
 
-remove_nodes(cg, ..., name = NULL, inplace = FALSE)
+remove_nodes(cg, ..., name = NULL)
 }
 \arguments{
 \item{cg}{A \code{caugi} object.}
@@ -30,9 +30,6 @@ or nodes to add using unquoted names, vectors via \code{c()}, or \code{+} compos
 \item{edge}{Character vector of edge types. Default is \code{NULL}.}
 
 \item{to}{Character vector of target node names. Default is \code{NULL}.}
-
-\item{inplace}{Logical, whether to modify the graph inplace or not.
-If \code{FALSE} (default), a copy of the \code{caugi} is made and modified.}
 
 \item{name}{Character vector of node names. Default is \code{NULL}.}
 }
@@ -73,10 +70,8 @@ cg <- cg |>
 cg <- remove_edges(cg, B \%---\% C) |> # A --> B, C, D, E
   remove_nodes(c("C", "D", "E")) # A --> B
 
-# verbs do not build the Rust backend
-cg@built # FALSE
-build(cg)
-cg@built # TRUE
+# Graphs are now built lazily when needed
+parents(cg, "B") # triggers compilation
 
 }
 \seealso{
