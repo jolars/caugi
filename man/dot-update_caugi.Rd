@@ -4,7 +4,13 @@
 \alias{.update_caugi}
 \title{Update nodes and edges of a \code{caugi}}
 \usage{
-.update_caugi(cg, nodes = NULL, edges = NULL, action = c("add", "remove"))
+.update_caugi(
+  cg,
+  nodes = NULL,
+  edges = NULL,
+  action = c("add", "remove"),
+  inplace = FALSE
+)
 }
 \arguments{
 \item{cg}{A \code{caugi} object.}
@@ -15,6 +21,8 @@
 add/remove.}
 
 \item{action}{One of \code{"add"} or \code{"remove"}.}
+
+\item{inplace}{Logical, whether to modify the graph inplace or not.}
 }
 \value{
 The updated \code{caugi} object.

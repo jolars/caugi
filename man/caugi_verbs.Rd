@@ -9,15 +9,15 @@
 \alias{remove_nodes}
 \title{Manipulate nodes and edges of a \code{caugi}}
 \usage{
-add_edges(cg, ..., from = NULL, edge = NULL, to = NULL)
+add_edges(cg, ..., from = NULL, edge = NULL, to = NULL, inplace = FALSE)
 
-remove_edges(cg, ..., from = NULL, edge = NULL, to = NULL)
+remove_edges(cg, ..., from = NULL, edge = NULL, to = NULL, inplace = FALSE)
 
-set_edges(cg, ..., from = NULL, edge = NULL, to = NULL)
+set_edges(cg, ..., from = NULL, edge = NULL, to = NULL, inplace = FALSE)
 
-add_nodes(cg, ..., name = NULL)
+add_nodes(cg, ..., name = NULL, inplace = FALSE)
 
-remove_nodes(cg, ..., name = NULL)
+remove_nodes(cg, ..., name = NULL, inplace = FALSE)
 }
 \arguments{
 \item{cg}{A \code{caugi} object.}
@@ -30,6 +30,9 @@ or nodes to add using unquoted names, vectors via \code{c()}, or \code{+} compos
 \item{edge}{Character vector of edge types. Default is \code{NULL}.}
 
 \item{to}{Character vector of target node names. Default is \code{NULL}.}
+
+\item{inplace}{Logical, whether to modify the graph inplace or not.
+If \code{FALSE} (default), a copy of the \code{caugi} is made and modified.}
 
 \item{name}{Character vector of node names. Default is \code{NULL}.}
 }

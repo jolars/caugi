@@ -1,41 +1,23 @@
-# caugi 2.0.0
+# caugi (development version)
 
-## Breaking Changes
+## Improvements
 
-- Removed the `inplace` argument from node and edge verbs (`add_*`, `remove_*`,
-  `set_edges`); they always return a new `caugi` object.
-- Removed `@name_index_map` property from `caugi` objects. Name-to-index lookups
-  are now handled internally by the Rust backend. This provides better
-  performance and eliminates redundant state synchronization.
-- The `@nodes` and `@edges` properties are now computed lazily from the Rust
-  session, rather than being stored in R. This means each access retrieves
-  fresh data from the canonical Rust representation. They still return `data.table`
-  objects. This will make retrieval of these not be constant in runtime, but this will
-  save memory.
-- Removed the `.state` environment property. The `session` property is now stored
-  directly on the caugi S7 object. The `@simple` and `@graph_class` properties
-  are now computed from the session.
+- Rust remains the single source of truth for graph state. Graph properties
+  (`simple`, `graph_class`, `nodes`, `edges`) are sourced from the `session`.
 
-## Internal Changes
-
-- Rust is now the single source of truth for graph state. All graph properties
-  (`simple`, `graph_class`, `nodes`, `edges`) are read directly from the Rust
-  session.
-- Added `graph_session_simple()` Rust function for lightweight access to the
-  declared `simple` flag without building the graph core.
-- Added `graph_session_index_of()` and `graph_session_indices_of()` Rust
-  functions for fast name-to-index lookups.
-- Removed `fastmap` dependency as it is no longer needed for name-index mapping.
-- Session is now always created, even for empty graphs (n = 0). This simplifies
-  property access since session is never NULL.
-- Added `all.equal` and `compare_proxy` methods for caugi objects to enable
-  proper object comparison in testthat (comparing graph content rather than
-  session pointer identity).
+  - Session is always created, including empty graphs (n = 0), which simplifies
+    property access.
+  - Deprecated compatibility properties `@.state`, `@name_index_map`, `@built`,
+    and `@ptr` now warn on access and return `NULL`.
+  - Deprecated compatibility constructor arguments `build` and `state` in
+    `caugi()` now warn and are ignored.
+- Added `all.equal` and `compare_proxy` methods for caugi objects to support
+  graph-content comparison in tests.
 - Add `asp` parameter to `plot()` for controlling aspect ratio. When `asp = 1`,
   the plot respects equal units on both axes, preserving the layout
   coordinates. Works like base R's `asp` parameter (y/x aspect ratio) (#195).
-- Add `pdag_to_dag()` function that generates a random DAG consistent with a given
-  CPDAG/PDAG structure if possible (#201).
+- Add `pdag_to_dag()` function that generates a random DAG consistent with a
+  given CPDAG/PDAG structure if possible (#201).
 
 ## Bug Fixes
 

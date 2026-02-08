@@ -12,7 +12,9 @@ caugi(
   nodes = NULL,
   edges_df = NULL,
   simple = TRUE,
+  build = NULL,
   class = c("AUTO", "DAG", "UG", "PDAG", "ADMG", "AG", "UNKNOWN"),
+  state = NULL,
   .session = NULL
 )
 }
@@ -51,8 +53,8 @@ class based on the first match in the order of \code{"DAG"}, \code{"UG"}, \code{
 \code{"ADMG"}, and \code{"AG"}.
 It will default to \code{"UNKNOWN"} if no match is found.}
 
-\item{.session}{For internal use. Build a graph by supplying a pre-constructed
-session pointer from Rust.}
+\item{.session}{For internal use. Build a graph by supplying a
+pre-constructed session pointer from Rust.}
 }
 \value{
 A \code{caugi} S7 object containing the nodes, edges, and a
