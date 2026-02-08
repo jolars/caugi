@@ -383,16 +383,6 @@ impl GraphSession {
         Ok(Arc::clone(self.view.as_ref().unwrap()))
     }
 
-    /// Get layout.
-    pub fn layout(&mut self, method: &str) -> Result<Vec<(f64, f64)>, String> {
-        let core = self.core()?;
-        let packing_ratio = 1.0;
-
-        use super::layout::{compute_layout, LayoutMethod};
-        let layout_method: LayoutMethod = method.parse().map_err(|e: String| self.map_error(e))?;
-        compute_layout(&core, layout_method, packing_ratio).map_err(|e| self.map_error(e))
-    }
-
     // ═══════════════════════════════════════════════════════════════════════════
     // QUERY API
     // ═══════════════════════════════════════════════════════════════════════════
@@ -596,33 +586,6 @@ impl GraphSession {
     pub fn latent_project(&mut self, latents: &[u32]) -> Result<GraphView, String> {
         let view = self.view()?;
         view.latent_project(latents).map_err(|e| self.map_error(e))
-    }
-
-    /// Proper backdoor graph (DAG only).
-    pub fn proper_backdoor_graph(&mut self, xs: &[u32], ys: &[u32]) -> Result<GraphView, String> {
-        let view = self.view()?;
-        view.proper_backdoor_graph(xs, ys)
-            .map_err(|e| self.map_error(e))
-    }
-
-    /// Moral graph of ancestors (DAG only).
-    pub fn moral_of_ancestors(&mut self, seeds: &[u32]) -> Result<GraphView, String> {
-        let view = self.view()?;
-        view.moral_of_ancestors(seeds)
-            .map_err(|e| self.map_error(e))
-    }
-
-    /// Ancestral reduction (DAG/PDAG/ADMG).
-    pub fn ancestral_reduction(&mut self, seeds: &[u32]) -> Result<GraphView, String> {
-        let view = self.view()?;
-        view.ancestral_reduction(seeds)
-            .map_err(|e| self.map_error(e))
-    }
-
-    /// Induced subgraph on a node set.
-    pub fn induced_subgraph(&mut self, keep: &[u32]) -> Result<GraphView, String> {
-        let view = self.view()?;
-        view.induced_subgraph(keep).map_err(|e| self.map_error(e))
     }
 
     /// D-separation query (DAG only).
@@ -910,65 +873,6 @@ impl GraphSession {
         self.view_valid
     }
 
-    /// Get detailed validity state for introspection.
-    pub fn validity_state(&self) -> ValidityState {
-        ValidityState {
-            core_valid: self.core_valid,
-            view_valid: self.view_valid,
-        }
-    }
-
-    /// Get JSON representation of the dependency graph and validity state.
-    pub fn dependency_json(&self) -> String {
-        let state = self.validity_state();
-        format!(
-            r#"{{
-  "variables": {{
-    "n": {},
-    "simple": {},
-    "class": "{}",
-    "registry_version": {},
-    "edges_count": {},
-    "names_count": {}
-  }},
-  "declarations": {{
-    "core": {{ "valid": {} }},
-    "view": {{ "valid": {} }}
-  }},
-  "dependencies": [
-    ["n", "core"],
-    ["simple", "core"],
-    ["registry", "core"],
-    ["edges", "core"],
-    ["core", "view"],
-    ["class", "view"],
-    ["view", "topo"],
-    ["view", "ancestors"],
-    ["view", "descendants"],
-    ["view", "anteriors"],
-    ["view", "markov_blanket"],
-    ["view", "districts"],
-    ["view", "exogenous"],
-    ["core", "layout"]
-  ]
-}}"#,
-            self.n,
-            self.simple,
-            self.graph_class.as_str(),
-            self.registry.version,
-            self.edges.len(),
-            self.names.len(),
-            state.core_valid,
-            state.view_valid,
-        )
-    }
-}
-
-/// Detailed validity state for introspection.
-#[derive(Debug, Clone)]
-pub struct ValidityState {
-    pub core_valid: bool,
-    pub view_valid: bool,
 }
 
 #[cfg(test)]

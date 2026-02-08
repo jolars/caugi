@@ -26,7 +26,7 @@ pub mod graphml;
 pub mod layout;
 pub mod metrics;
 pub mod serialization;
-pub use session::{EdgeBuffer, GraphClass, GraphSession, ValidityState};
+pub use session::{EdgeBuffer, GraphClass, GraphSession};
 
 #[derive(Debug, Clone)]
 pub struct RegistrySnapshot {
