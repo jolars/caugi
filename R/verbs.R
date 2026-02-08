@@ -18,6 +18,8 @@
 #' @param edge Character vector of edge types. Default is `NULL`.
 #' @param to Character vector of target node names. Default is `NULL`.
 #' @param name Character vector of node names. Default is `NULL`.
+#' @param inplace Logical, whether to modify the graph inplace or not.
+#' If `FALSE` (default), a copy of the `caugi` is made and modified.
 #'
 #' @returns The updated `caugi`.
 #'
@@ -70,7 +72,8 @@ add_edges <- function(
   ...,
   from = NULL,
   edge = NULL,
-  to = NULL
+  to = NULL,
+  inplace = FALSE
 ) {
   calls <- as.list(substitute(list(...)))[-1L]
   has_expr <- length(calls) > 0L
@@ -90,7 +93,7 @@ add_edges <- function(
   edges <- .get_edges(from, edge, to, calls)
 
   # update via helper and return
-  .update_caugi(cg, edges = edges, action = "add")
+  .update_caugi(cg, edges = edges, action = "add", inplace = inplace)
 }
 
 #' @describeIn caugi_verbs Remove edges.
@@ -100,7 +103,8 @@ remove_edges <- function(
   ...,
   from = NULL,
   edge = NULL,
-  to = NULL
+  to = NULL,
+  inplace = FALSE
 ) {
   calls <- as.list(substitute(list(...)))[-1L]
   has_expr <- length(calls) > 0L
@@ -149,12 +153,13 @@ remove_edges <- function(
     return(.update_caugi(
       cg,
       edges = pairs,
-      action = "remove"
+      action = "remove",
+      inplace = inplace
     ))
   }
 
   edges <- .get_edges(from, edge, to, calls, simple = cg@simple)
-  .update_caugi(cg, edges = edges, action = "remove")
+  .update_caugi(cg, edges = edges, action = "remove", inplace = inplace)
 }
 
 
@@ -165,7 +170,8 @@ set_edges <- function(
   ...,
   from = NULL,
   edge = NULL,
-  to = NULL
+  to = NULL,
+  inplace = FALSE
 ) {
   calls <- as.list(substitute(list(...)))[-1L]
   has_expr <- length(calls) > 0L
@@ -194,9 +200,10 @@ set_edges <- function(
   cg_mod <- .update_caugi(
     cg,
     edges = pairs_all,
-    action = "remove"
+    action = "remove",
+    inplace = inplace
   )
-  cg_mod <- .update_caugi(cg_mod, edges = edges, action = "add")
+  cg_mod <- .update_caugi(cg_mod, edges = edges, action = "add", inplace = TRUE)
   cg_mod
 }
 
@@ -206,24 +213,24 @@ set_edges <- function(
 
 #' @describeIn caugi_verbs Add nodes.
 #' @export
-add_nodes <- function(cg, ..., name = NULL) {
+add_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
   calls <- as.list(substitute(list(...)))[-1L]
   nodes <- .get_nodes(name, calls)
   if (!nrow(nodes)) {
     return(cg)
   }
-  .update_caugi(cg, nodes = nodes, action = "add")
+  .update_caugi(cg, nodes = nodes, action = "add", inplace = inplace)
 }
 
 #' @describeIn caugi_verbs Remove nodes.
 #' @export
-remove_nodes <- function(cg, ..., name = NULL) {
+remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
   calls <- as.list(substitute(list(...)))[-1L]
   nodes <- .get_nodes(name, calls)
   if (!nrow(nodes)) {
     return(cg)
   }
-  .update_caugi(cg, nodes = nodes, action = "remove")
+  .update_caugi(cg, nodes = nodes, action = "remove", inplace = inplace)
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -349,6 +356,57 @@ remove_nodes <- function(cg, ..., name = NULL) {
   list(session = session, class = resolved_class)
 }
 
+#' @title Update an existing session in place
+#'
+#' @description Internal helper to mutate an existing GraphSession pointer
+#' with updated nodes and edges.
+#'
+#' @param session A GraphSession external pointer.
+#' @param node_names Character vector of node names.
+#' @param edges_dt A data.table with columns `from`, `edge`, `to`.
+#' @param simple Logical; whether the graph is simple.
+#' @param class Character; target graph class or `"AUTO"`.
+#'
+#' @returns A list with `session` and resolved `class`.
+#'
+#' @keywords internal
+.sync_session_inplace <- function(
+  session,
+  node_names,
+  edges_dt,
+  simple,
+  class
+) {
+  n <- length(node_names)
+  reg <- caugi_registry()
+
+  rs_set_n(session, as.integer(n))
+  rs_set_simple(session, isTRUE(simple))
+  rs_set_names(session, node_names)
+
+  resolved_class <- class
+  if (n > 0L && nrow(edges_dt) > 0L) {
+    id <- seq_len(n) - 1L
+    names(id) <- node_names
+    codes <- edge_registry_code_of(reg, edges_dt$edge)
+    rs_set_edges(
+      session,
+      as.integer(unname(id[edges_dt$from])),
+      as.integer(unname(id[edges_dt$to])),
+      as.integer(codes)
+    )
+    resolved_class <- rs_resolve_class(session, class)
+  } else {
+    rs_set_edges(session, integer(), integer(), integer())
+    if (class == "AUTO") {
+      resolved_class <- "DAG"
+    }
+  }
+
+  rs_set_class(session, resolved_class)
+  list(session = session, class = resolved_class)
+}
+
 #' @title Update nodes and edges of a `caugi`
 #'
 #' @description Internal helper to add or remove nodes/edges. Rust is the
@@ -360,6 +418,7 @@ remove_nodes <- function(cg, ..., name = NULL) {
 #' @param edges A `data.frame` with columns `from`, `edge`, `to` for edges to
 #' add/remove.
 #' @param action One of `"add"` or `"remove"`.
+#' @param inplace Logical, whether to modify the graph inplace or not.
 #'
 #' @importFrom data.table `%chin%`
 #'
@@ -370,7 +429,8 @@ remove_nodes <- function(cg, ..., name = NULL) {
   cg,
   nodes = NULL,
   edges = NULL,
-  action = c("add", "remove")
+  action = c("add", "remove"),
+  inplace = FALSE
 ) {
   action <- match.arg(action)
   session <- cg@session
@@ -416,13 +476,24 @@ remove_nodes <- function(cg, ..., name = NULL) {
     current_edges <- unique(current_edges)
   }
 
-  # Build new session with updated state
+  # Build updated state with class auto-resolution on edge addition.
   # When adding edges, always re-resolve the class to allow automatic upgrade
   use_class <- if (identical(action, "add") && !is.null(edges)) {
     "AUTO"
   } else {
     current_class
   }
+  if (isTRUE(inplace)) {
+    .sync_session_inplace(
+      session = session,
+      node_names = current_nodes,
+      edges_dt = current_edges,
+      simple = current_simple,
+      class = use_class
+    )
+    return(cg)
+  }
+
   result <- .build_session(
     node_names = current_nodes,
     edges_dt = current_edges,
@@ -430,6 +501,5 @@ remove_nodes <- function(cg, ..., name = NULL) {
     class = use_class,
     old_session = session
   )
-
   caugi(.session = result$session)
 }

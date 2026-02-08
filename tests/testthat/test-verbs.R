@@ -246,6 +246,13 @@ test_that("verbs do not modify object for remove_nodes", {
   expect_equal(nrow(edges_new_object), 2L)
 })
 
+test_that("inplace = TRUE modifies object for remove_nodes", {
+  cg <- caugi(Z %-->% X %-->% Y, U %-->% X + Y)
+  remove_nodes(cg, "U", inplace = TRUE)
+  expect_equal(cg@nodes, data.table::data.table(name = c("Z", "X", "Y")))
+  expect_equal(nrow(cg@edges), 2L)
+})
+
 test_that("verbs do not modify object for add_nodes", {
   cg <- caugi(Z %-->% X %-->% Y, U %-->% X + Y)
   nodes_before <- cg@nodes
@@ -265,6 +272,12 @@ test_that("verbs do not modify object for add_nodes", {
   expect_equal(edges_new_object, edges_before)
 })
 
+test_that("inplace = TRUE modifies object for add_nodes", {
+  cg <- caugi(Z %-->% X %-->% Y, U %-->% X + Y)
+  add_nodes(cg, "W", inplace = TRUE)
+  expect_true("W" %in% cg@nodes$name)
+})
+
 test_that("verbs do not modify object for remove_edges", {
   cg <- caugi(Z %-->% X %-->% Y, U %-->% X + Y)
   nodes_before <- cg@nodes
@@ -277,6 +290,12 @@ test_that("verbs do not modify object for remove_edges", {
 
   edges_new_object <- new_cg@edges
   expect_equal(nrow(edges_new_object), 3L)
+})
+
+test_that("inplace = TRUE modifies object for remove_edges", {
+  cg <- caugi(Z %-->% X %-->% Y, U %-->% X + Y)
+  remove_edges(cg, from = "U", to = "X", inplace = TRUE)
+  expect_equal(nrow(cg@edges), 3L)
 })
 
 test_that("verbs do not modify object for add_edges", {
@@ -293,6 +312,12 @@ test_that("verbs do not modify object for add_edges", {
   expect_equal(nrow(edges_new_object), 5L)
 })
 
+test_that("inplace = TRUE modifies object for add_edges", {
+  cg <- caugi(Z %-->% X %-->% Y, U %-->% X + Y)
+  add_edges(cg, Z %-->% U, inplace = TRUE)
+  expect_equal(nrow(cg@edges), 5L)
+})
+
 test_that("verbs do not modify object for set_edges", {
   # Use PDAG since we want to set some edges to undirected
   cg <- caugi(Z %-->% X %-->% Y, U %-->% X + Y, class = "PDAG")
@@ -306,6 +331,19 @@ test_that("verbs do not modify object for set_edges", {
 
   edges_new_object <- new_cg@edges
   expect_true("---" %in% edges_new_object$edge)
+})
+
+test_that("inplace = TRUE modifies object for set_edges", {
+  cg <- caugi(Z %-->% X %-->% Y, U %-->% X + Y, class = "PDAG")
+  set_edges(cg, U %---% X, inplace = TRUE)
+  expect_true("---" %in% cg@edges$edge)
+})
+
+test_that("inplace = TRUE mutates shared references", {
+  cg <- caugi(A %-->% B, class = "DAG")
+  alias <- cg
+  add_nodes(cg, C, inplace = TRUE)
+  expect_true("C" %in% alias@nodes$name)
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
