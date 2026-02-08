@@ -43,8 +43,8 @@
 #' class based on the first match in the order of `"DAG"`, `"UG"`, `"PDAG"`,
 #' `"ADMG"`, and `"AG"`.
 #' It will default to `"UNKNOWN"` if no match is found.
-#' @param .session For internal use. Build a graph by supplying a pre-constructed
-#' session pointer from Rust.
+#' @param .session For internal use. Build a graph by supplying a
+#' pre-constructed session pointer from Rust.
 #'
 #' @returns A `caugi` S7 object containing the nodes, edges, and a
 #' pointer to the underlying Rust graph structure.
@@ -133,10 +133,44 @@ caugi <- S7::new_class(
         )
       }
     ),
+    ptr = S7::new_property(
+      S7::class_any,
+      getter = function(self) {
+        warning("`@ptr` is deprecated. Use `@session` instead.", call. = FALSE)
+        NULL
+      },
+      setter = function(self, value) {
+        warning("`@ptr` is deprecated. Use `@session` instead.", call. = FALSE)
+        stop(
+          "`ptr` property is read-only via @ <-.",
+          call. = FALSE
+        )
+      }
+    ),
     simple = S7::new_property(
       S7::class_logical,
       getter = function(self) {
         rs_simple(self@session)
+      }
+    ),
+    built = S7::new_property(
+      S7::class_any,
+      getter = function(self) {
+        warning(
+          "`@built` is deprecated. The graph is always built lazily.",
+          call. = FALSE
+        )
+        NULL
+      },
+      setter = function(self, value) {
+        warning(
+          "`@built` is deprecated. The graph is always built lazily.",
+          call. = FALSE
+        )
+        stop(
+          "`built` property is read-only via @ <-.",
+          call. = FALSE
+        )
       }
     ),
     graph_class = S7::new_property(
@@ -148,6 +182,34 @@ caugi <- S7::new_class(
         stop(
           "`graph_class` property is read-only via @ <-. ",
           "It should only be set at construction.",
+          call. = FALSE
+        )
+      }
+    ),
+    name_index_map = S7::new_property(
+      S7::class_any,
+      getter = function(self) {
+        warning("`@name_index_map` is deprecated.", call. = FALSE)
+        NULL
+      },
+      setter = function(self, value) {
+        warning("`@name_index_map` is deprecated.", call. = FALSE)
+        stop(
+          "`name_index_map` property is read-only via @ <-.",
+          call. = FALSE
+        )
+      }
+    ),
+    `.state` = S7::new_property(
+      S7::class_any,
+      getter = function(self) {
+        warning("`@.state` is deprecated.", call. = FALSE)
+        NULL
+      },
+      setter = function(self, value) {
+        warning("`@.state` is deprecated.", call. = FALSE)
+        stop(
+          "`.state` property is read-only via @ <-.",
           call. = FALSE
         )
       }
@@ -176,9 +238,25 @@ caugi <- S7::new_class(
     nodes = NULL,
     edges_df = NULL,
     simple = TRUE,
+    build = NULL, # deprecated
     class = c("AUTO", "DAG", "UG", "PDAG", "ADMG", "AG", "UNKNOWN"),
+    state = NULL, # deprecated
     .session = NULL
   ) {
+    if (!missing(build)) {
+      warning(
+        "`build` is deprecated. Graph sessions are always created lazily.",
+        call. = FALSE
+      )
+    }
+
+    if (!is.null(state)) {
+      warning(
+        "`state` is deprecated and ignored.",
+        call. = FALSE
+      )
+    }
+
     if (!is.null(.session)) {
       .caugi_env$constructing_session <- TRUE
       on.exit(

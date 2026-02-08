@@ -469,11 +469,34 @@ test_that("caugi errors with trailing commas", {
 })
 
 test_that("caugi accepts build parameter for backward compatibility", {
-  # build parameter is deprecated but should not cause error
-  cg <- caugi(A %-->% B)
+  cg <- expect_warning(
+    caugi(A %-->% B, build = FALSE),
+    "`build` is deprecated"
+  )
   expect_true(!is.null(cg@session))
-  cg2 <- caugi(A %-->% B)
+  cg2 <- expect_warning(
+    caugi(A %-->% B, build = TRUE),
+    "`build` is deprecated"
+  )
   expect_true(!is.null(cg2@session))
+})
+
+test_that("caugi accepts state parameter for backward compatibility", {
+  state <- new.env(parent = emptyenv())
+  state$nodes <- data.table::data.table(name = c("X", "Y"))
+  state$edges <- data.table::data.table(from = "X", edge = "-->", to = "Y")
+  state$simple <- TRUE
+  state$class <- "DAG"
+
+  cg <- expect_warning(
+    caugi(A %-->% B, state = state),
+    "`state` is deprecated"
+  )
+  expect_equal(cg@nodes$name, c("A", "B"))
+  expect_equal(
+    cg@edges,
+    data.table::data.table(from = "A", edge = "-->", to = "B")
+  )
 })
 
 test_that("caugi with wrong node input errors", {
@@ -828,6 +851,47 @@ test_that("graph_class property setter is read-only", {
   expect_error(
     cg@graph_class <- "PDAG",
     "graph_class.*is read-only"
+  )
+})
+
+test_that("deprecated property getters warn and return NULL", {
+  cg <- caugi(A %-->% B, class = "DAG")
+
+  expect_warning(cg@ptr, "`@ptr` is deprecated")
+  ptr <- suppressWarnings(cg@ptr)
+  expect_null(ptr)
+
+  expect_warning(cg@built, "`@built` is deprecated")
+  built <- suppressWarnings(cg@built)
+  expect_null(built)
+
+  expect_warning(cg@name_index_map, "`@name_index_map` is deprecated")
+  idx_map <- suppressWarnings(cg@name_index_map)
+  expect_null(idx_map)
+
+  expect_warning(cg@.state, "`@.state` is deprecated")
+  st <- suppressWarnings(cg@.state)
+  expect_null(st)
+})
+
+test_that("deprecated property setters warn then error", {
+  cg <- caugi(A %-->% B, class = "DAG")
+
+  expect_warning(
+    expect_error(cg@ptr <- NULL, "read-only"),
+    "`@ptr` is deprecated"
+  )
+  expect_warning(
+    expect_error(cg@built <- TRUE, "read-only"),
+    "`@built` is deprecated"
+  )
+  expect_warning(
+    expect_error(cg@name_index_map <- integer(), "read-only"),
+    "`@name_index_map` is deprecated"
+  )
+  expect_warning(
+    expect_error(cg@.state <- new.env(parent = emptyenv()), "read-only"),
+    "`@.state` is deprecated"
   )
 })
 
