@@ -169,6 +169,47 @@ is_acyclic <- function(cg, force_check = FALSE) {
   is_it
 }
 
+#' @title Is the `caugi` graph simple?
+#'
+#' @description Checks if the given `caugi` graph is simple (no self-loops and
+#' no parallel edges).
+#'
+#' @param cg A `caugi` object.
+#' @param force_check Logical; if `TRUE`, force a check against the compiled
+#' graph representation. If `FALSE` (default), return the declared `simple`
+#' property.
+#'
+#' @returns A logical value indicating whether the graph is simple.
+#'
+#' @examples
+#' cg_simple <- caugi(
+#'   A %-->% B,
+#'   class = "DAG"
+#' )
+#' is_simple(cg_simple) # TRUE
+#'
+#' cg_nonsimple <- caugi(
+#'   A %-->% B,
+#'   A %<->% B,
+#'   class = "UNKNOWN",
+#'   simple = FALSE
+#' )
+#' is_simple(cg_nonsimple) # FALSE
+#'
+#' @family queries
+#' @concept queries
+#'
+#' @export
+is_simple <- function(cg, force_check = FALSE) {
+  is_caugi(cg, throw_error = TRUE)
+
+  if (force_check) {
+    return(rs_is_simple(cg@session))
+  }
+
+  cg@simple
+}
+
 #' @title Is the `caugi` graph a DAG?
 #'
 #' @description Checks if the given `caugi` graph is a
@@ -1241,15 +1282,23 @@ spouses <- function(cg, nodes = NULL, index = NULL) {
   )
 }
 
-#' @title Get districts (c-components) of an ADMG
+#' @title Get districts (c-components) of an ADMG or AG
 #'
-#' @description Get the districts (c-components) of an ADMG.
-#' A district is a maximal set of nodes connected via bidirected edges.
+#' @description Get districts (c-components) for all nodes, or for selected
+#' nodes in an ADMG/AG. A district is a maximal set of nodes connected via
+#' bidirected edges.
 #'
-#' @param cg A `caugi` object of class ADMG.
+#' @param cg A `caugi` object of class ADMG or AG.
+#' @param nodes Optional character vector of node names. If supplied, returns
+#' district(s) containing these nodes.
+#' @param index Optional numeric vector of 1-based node indices. If supplied,
+#' returns district(s) containing these indices.
+#' @param all Optional logical. If `TRUE`, return all districts explicitly.
+#' Cannot be combined with `nodes` or `index`.
 #'
-#' @returns A list of character vectors,
-#' each containing the nodes in a district.
+#' @returns If all districts are requested: a list of character vectors, one per
+#' district. If `nodes`/`index` are supplied: either a character vector (single
+#' target) or a named list of character vectors (multiple targets).
 #'
 #' @examples
 #' cg <- caugi(
@@ -1260,16 +1309,77 @@ spouses <- function(cg, nodes = NULL, index = NULL) {
 #' )
 #' districts(cg)
 #' # Returns list with districts: {A, C}, {B}, {D, E}
+#' districts(cg, nodes = "A") # Returns c("A", "C")
+#' districts(cg, index = c(1, 4))
 #'
 #' @family queries
 #' @concept queries
 #'
 #' @export
-districts <- function(cg) {
+districts <- function(cg, nodes = NULL, index = NULL, all = NULL) {
   is_caugi(cg, throw_error = TRUE)
 
-  idx0_list <- rs_districts(cg@session)
-  lapply(idx0_list, function(idx0) cg@nodes$name[idx0 + 1L])
+  if (!is.null(all) && (!is.logical(all) || length(all) != 1L || is.na(all))) {
+    stop("`all` must be TRUE, FALSE, or NULL.", call. = FALSE)
+  }
+
+  nodes_supplied <- !missing(nodes) && !is.null(nodes)
+  index_supplied <- !missing(index) && !is.null(index)
+
+  if (nodes_supplied && index_supplied) {
+    stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
+  }
+
+  if (isTRUE(all) && (nodes_supplied || index_supplied)) {
+    stop("`all = TRUE` cannot be combined with `nodes` or `index`.", call. = FALSE)
+  }
+
+  if (identical(all, FALSE) && !nodes_supplied && !index_supplied) {
+    stop(
+      "`all = FALSE` requires `nodes` or `index` to be supplied.",
+      call. = FALSE
+    )
+  }
+
+  all_requested <- if (is.null(all)) {
+    !nodes_supplied && !index_supplied
+  } else {
+    isTRUE(all)
+  }
+
+  if (all_requested) {
+    idx0_list <- rs_districts(cg@session)
+    return(lapply(idx0_list, function(idx0) cg@nodes$name[idx0 + 1L]))
+  }
+
+  if (index_supplied) {
+    if (!is.numeric(index) || anyNA(index)) {
+      stop("`index` must be numeric without NA.", call. = FALSE)
+    }
+    idx1 <- as.integer(index)
+    n <- nrow(cg@nodes)
+    if (any(idx1 < 1L) || any(idx1 > n)) {
+      stop("`index` out of range (1..n).", call. = FALSE)
+    }
+
+    idx0_list <- lapply(
+      as.integer(idx1 - 1L),
+      function(ix) rs_district_of(cg@session, ix)
+    )
+    return(.getter_output(cg, idx0_list, cg@nodes$name[idx1]))
+  }
+
+  if (!nodes_supplied) {
+    stop("Supply one of `nodes` or `index`, or set `all = TRUE`.", call. = FALSE)
+  }
+
+  if (!is.character(nodes) || anyNA(nodes)) {
+    stop("`nodes` must be a character vector without NA.", call. = FALSE)
+  }
+
+  idx0 <- rs_indices_of(cg@session, nodes)
+  idx0_list <- lapply(as.integer(idx0), function(ix) rs_district_of(cg@session, ix))
+  .getter_output(cg, idx0_list, nodes)
 }
 
 #' @title M-separation test for AGs and ADMGs
@@ -1351,6 +1461,7 @@ m_separated <- function(
 #' @export
 subgraph <- function(cg, nodes = NULL, index = NULL) {
   is_caugi(cg, throw_error = TRUE)
+  session_names <- rs_names(cg@session)
 
   nodes_supplied <- !missing(nodes) && !is.null(nodes)
   index_supplied <- !missing(index) && !is.null(index)
@@ -1367,12 +1478,12 @@ subgraph <- function(cg, nodes = NULL, index = NULL) {
       stop("`index` must be numeric without NA.", call. = FALSE)
     }
     idx1 <- as.integer(index)
-    n <- nrow(cg@nodes)
+    n <- length(session_names)
     if (any(idx1 < 1L) || any(idx1 > n)) {
       stop("`index` out of range (1..n).", call. = FALSE)
     }
     keep_idx0 <- idx1 - 1L
-    keep_names <- cg@nodes$name[idx1]
+    keep_names <- session_names[idx1]
   } else {
     if (!is.character(nodes)) {
       stop("`nodes` must be a character vector.", call. = FALSE)
@@ -1380,7 +1491,7 @@ subgraph <- function(cg, nodes = NULL, index = NULL) {
     if (anyNA(nodes)) {
       stop("`nodes` contains NA.", call. = FALSE)
     }
-    pos <- match(nodes, cg@nodes$name)
+    pos <- match(nodes, session_names)
     if (anyNA(pos)) {
       miss <- nodes[is.na(pos)]
       stop(
@@ -1402,19 +1513,11 @@ subgraph <- function(cg, nodes = NULL, index = NULL) {
     )
   }
 
-  # Filter edges from parent graph to preserve original edge directions
-  keep_set <- keep_names
-  edges_keep <- cg@edges[
-    cg@edges$from %in% keep_set & cg@edges$to %in% keep_set,
-  ]
-
-  # Create new caugi with filtered edges and nodes
-  caugi(
-    edges_df = edges_keep,
-    nodes = keep_names,
-    simple = cg@simple,
-    class = rs_graph_class(cg@session)
+  sub_session <- rs_induced_subgraph(
+    cg@session,
+    as.integer(keep_idx0)
   )
+  .session_to_caugi(sub_session, node_names = keep_names)
 }
 
 # ──────────────────────────────────────────────────────────────────────────────

@@ -40,8 +40,6 @@ rs_resolve_class <- function(session, class) .Call(wrap__rs_resolve_class, sessi
 
 rs_set_names <- function(session, names) invisible(.Call(wrap__rs_set_names, session, names))
 
-rs_layout <- function(session, method) .Call(wrap__rs_layout, session, method)
-
 rs_compute_layout <- function(session, method, packing_ratio) .Call(wrap__rs_compute_layout, session, method, packing_ratio)
 
 rs_compute_bipartite_layout <- function(session, partition, orientation) .Call(wrap__rs_compute_bipartite_layout, session, partition, orientation)
@@ -94,8 +92,6 @@ rs_districts <- function(session) .Call(wrap__rs_districts, session)
 
 rs_district_of <- function(session, idx) .Call(wrap__rs_district_of, session, idx)
 
-rs_dependency_json <- function(session) .Call(wrap__rs_dependency_json, session)
-
 rs_is_acyclic <- function(session) .Call(wrap__rs_is_acyclic, session)
 
 rs_is_dag_type <- function(session) .Call(wrap__rs_is_dag_type, session)
@@ -119,12 +115,6 @@ rs_skeleton <- function(session) .Call(wrap__rs_skeleton, session)
 rs_moralize <- function(session) .Call(wrap__rs_moralize, session)
 
 rs_latent_project <- function(session, latents) .Call(wrap__rs_latent_project, session, latents)
-
-rs_proper_backdoor_graph <- function(session, xs, ys) .Call(wrap__rs_proper_backdoor_graph, session, xs, ys)
-
-rs_moral_of_ancestors <- function(session, seeds) .Call(wrap__rs_moral_of_ancestors, session, seeds)
-
-rs_ancestral_reduction <- function(session, seeds) .Call(wrap__rs_ancestral_reduction, session, seeds)
 
 rs_induced_subgraph <- function(session, keep) .Call(wrap__rs_induced_subgraph, session, keep)
 

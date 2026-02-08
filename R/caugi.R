@@ -136,11 +136,15 @@ caugi <- S7::new_class(
     ptr = S7::new_property(
       S7::class_any,
       getter = function(self) {
-        warning("`@ptr` is deprecated. Use `@session` instead.", call. = FALSE)
+        .deprecated_field_warning(
+          "`@ptr` is deprecated. Use `@session` instead."
+        )
         NULL
       },
       setter = function(self, value) {
-        warning("`@ptr` is deprecated. Use `@session` instead.", call. = FALSE)
+        .deprecated_field_warning(
+          "`@ptr` is deprecated. Use `@session` instead."
+        )
         stop(
           "`ptr` property is read-only via @ <-.",
           call. = FALSE
@@ -156,16 +160,14 @@ caugi <- S7::new_class(
     built = S7::new_property(
       S7::class_any,
       getter = function(self) {
-        warning(
-          "`@built` is deprecated. The graph is always built lazily.",
-          call. = FALSE
+        .deprecated_field_warning(
+          "`@built` is deprecated. The graph is always built lazily."
         )
         NULL
       },
       setter = function(self, value) {
-        warning(
-          "`@built` is deprecated. The graph is always built lazily.",
-          call. = FALSE
+        .deprecated_field_warning(
+          "`@built` is deprecated. The graph is always built lazily."
         )
         stop(
           "`built` property is read-only via @ <-.",
@@ -189,11 +191,11 @@ caugi <- S7::new_class(
     name_index_map = S7::new_property(
       S7::class_any,
       getter = function(self) {
-        warning("`@name_index_map` is deprecated.", call. = FALSE)
+        .deprecated_field_warning("`@name_index_map` is deprecated.")
         NULL
       },
       setter = function(self, value) {
-        warning("`@name_index_map` is deprecated.", call. = FALSE)
+        .deprecated_field_warning("`@name_index_map` is deprecated.")
         stop(
           "`name_index_map` property is read-only via @ <-.",
           call. = FALSE
@@ -203,11 +205,11 @@ caugi <- S7::new_class(
     `.state` = S7::new_property(
       S7::class_any,
       getter = function(self) {
-        warning("`@.state` is deprecated.", call. = FALSE)
+        .deprecated_field_warning("`@.state` is deprecated.")
         NULL
       },
       setter = function(self, value) {
-        warning("`@.state` is deprecated.", call. = FALSE)
+        .deprecated_field_warning("`@.state` is deprecated.")
         stop(
           "`.state` property is read-only via @ <-.",
           call. = FALSE
@@ -513,4 +515,35 @@ caugi <- S7::new_class(
     to_idx = edges_idx$to0 + 1L,
     node_names = node_names
   )
+}
+
+#' @title Suppress field warning
+#'
+#' @description Internal helper to suppress field warning.
+#'
+#' @returns A logical value indicating whether the field
+#' warning should be suppressed.
+#'
+#' @keywords internal
+#' @noRd
+.supress_field_warning <- function() {
+  calls <- sys.calls()
+  if (length(calls) == 0L) {
+    return(FALSE)
+  }
+
+  call_text <- vapply(
+    calls,
+    function(cl) paste(deparse(cl, nlines = 1L), collapse = ""),
+    character(1)
+  )
+
+  # Top-level task callbacks execute through an internal `cb(...)` frame.
+  any(grepl("^cb\\(expr, value, (ok|succeeded), visible\\)$", call_text))
+}
+
+.deprecated_field_warning <- function(message) {
+  if (!.supress_field_warning()) {
+    warning(message, call. = FALSE)
+  }
 }

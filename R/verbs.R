@@ -301,61 +301,6 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
   edges
 }
 
-#' @title Build and update session from nodes and edges
-#'
-#' @description Internal helper to create or update a GraphSession with
-#' the given nodes and edges. Rust is the source of truth.
-#'
-#' @param node_names Character vector of node names.
-#' @param edges_dt A data.table with columns `from`, `edge`, `to`.
-#' @param simple Logical; whether the graph is simple.
-#' @param class Character; the graph class.
-#' @param old_session Optional existing session for copy-on-write.
-#'
-#' @returns A list with `session` (GraphSession pointer) and `class` (resolved class string).
-#'
-#' @keywords internal
-.build_session <- function(
-  node_names,
-  edges_dt,
-  simple,
-  class,
-  old_session = NULL
-) {
-  n <- length(node_names)
-  reg <- caugi_registry()
-
-  # Always create a session (even for empty graphs)
-  resolved_class <- class
-  session <- rs_new(reg, n, simple, class)
-
-  if (n > 0L) {
-    id <- seq_len(n) - 1L
-    names(id) <- node_names
-    rs_set_names(session, node_names)
-
-    if (nrow(edges_dt) > 0L) {
-      codes <- edge_registry_code_of(reg, edges_dt$edge)
-      rs_set_edges(
-        session,
-        as.integer(unname(id[edges_dt$from])),
-        as.integer(unname(id[edges_dt$to])),
-        as.integer(codes)
-      )
-      resolved_class <- rs_resolve_class(session, class)
-    }
-  } else if (class == "AUTO") {
-    # For empty graphs with AUTO, default to DAG
-    resolved_class <- "DAG"
-  }
-
-  if (!identical(resolved_class, class)) {
-    rs_set_class(session, resolved_class)
-  }
-
-  list(session = session, class = resolved_class)
-}
-
 #' @title Update an existing session in place
 #'
 #' @description Internal helper to mutate an existing GraphSession pointer
@@ -494,12 +439,14 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
     return(cg)
   }
 
-  result <- .build_session(
+  # Copy-on-write path: clone then sync clone.
+  cloned_session <- rs_clone(session)
+  .sync_session_inplace(
+    session = cloned_session,
     node_names = current_nodes,
     edges_dt = current_edges,
     simple = current_simple,
-    class = use_class,
-    old_session = session
+    class = use_class
   )
-  caugi(.session = result$session)
+  caugi(.session = cloned_session)
 }

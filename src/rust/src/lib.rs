@@ -14,7 +14,6 @@ use graph::metrics::{hd, shd_with_perm};
 
 use graph::view::GraphView;
 use graph::{admg::Admg, ag::Ag, dag::Dag, pdag::Pdag, ug::Ug, CaugiGraph};
-use std::collections::HashMap;
 use std::sync::Arc;
 
 // ---------- helpers ----------
@@ -46,24 +45,6 @@ fn rbool_to_bool(x: Rbool, field: &str) -> bool {
         throw_r_error(format!("NA in `{}`", field));
     }
     x.is_true()
-}
-
-/// Validate that an index is within bounds.
-#[inline]
-fn validate_index(i: u32, n: u32) {
-    if i >= n {
-        throw_r_error(format!("Index {} is out of bounds", i));
-    }
-}
-
-/// Convert R Integers to Vec<u32>.
-fn integers_to_u32_vec(ints: &Integers, name: &str) -> Vec<u32> {
-    ints.iter().map(|ri| rint_to_u32(ri, name)).collect()
-}
-
-/// Convert Vec<u32> to Robj (as i32 vector).
-fn u32_vec_to_robj(v: &[u32]) -> Robj {
-    v.iter().map(|&x| x as i32).collect_robj()
 }
 
 /// Convert coordinate pairs to R list with x and y vectors.
@@ -305,18 +286,6 @@ fn graphview_new(core: ExternalPtr<CaugiGraph>, class: &str) -> ExternalPtr<Grap
 }
 
 #[extendr]
-fn graph_builder_build_view(
-    mut b: ExternalPtr<GraphBuilder>,
-    class: &str,
-) -> ExternalPtr<GraphView> {
-    let core = b
-        .as_mut()
-        .finalize_in_place()
-        .unwrap_or_else(|e| throw_r_error(e));
-    graphview_new(ExternalPtr::new(core), class)
-}
-
-#[extendr]
 fn graph_builder_resolve_class(mut b: ExternalPtr<GraphBuilder>, class: &str) -> String {
     let core = b
         .as_mut()
@@ -326,365 +295,7 @@ fn graph_builder_resolve_class(mut b: ExternalPtr<GraphBuilder>, class: &str) ->
     graph_class_label_from_view(view.as_ref()).to_string()
 }
 
-// ── Unified queries ────────────────────────────────────────────────────────────────
-#[extendr]
-fn parents_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
-    let n = g.as_ref().n();
-    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
-    for ri in idxs.iter() {
-        let i = rint_to_u32(ri, "idxs");
-        validate_index(i, n);
-        let v = g
-            .as_ref()
-            .parents_of(i)
-            .unwrap_or_else(|e| throw_r_error(e));
-        out.push(u32_vec_to_robj(&v));
-    }
-    extendr_api::prelude::List::from_values(out).into_robj()
-}
-
-#[extendr]
-fn children_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
-    let n = g.as_ref().n();
-    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
-    for ri in idxs.iter() {
-        let i = rint_to_u32(ri, "idxs");
-        validate_index(i, n);
-        let v = g
-            .as_ref()
-            .children_of(i)
-            .unwrap_or_else(|e| throw_r_error(e));
-        out.push(u32_vec_to_robj(&v));
-    }
-    extendr_api::prelude::List::from_values(out).into_robj()
-}
-
-#[extendr]
-fn undirected_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
-    let n = g.as_ref().n();
-    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
-    for ri in idxs.iter() {
-        let i = rint_to_u32(ri, "idxs");
-        validate_index(i, n);
-        let v = g
-            .as_ref()
-            .undirected_of(i)
-            .unwrap_or_else(|e| throw_r_error(e));
-        out.push(u32_vec_to_robj(&v));
-    }
-    extendr_api::prelude::List::from_values(out).into_robj()
-}
-
-#[extendr]
-fn neighbors_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers, mode: Strings) -> Robj {
-    use graph::NeighborMode;
-
-    // Default to "all" if mode is empty or NA
-    let neighbor_mode = if mode.len() == 0 {
-        NeighborMode::All
-    } else {
-        let mode_rstr = mode.elt(0);
-        if mode_rstr.is_na() {
-            NeighborMode::All
-        } else {
-            NeighborMode::from_str(mode_rstr.as_str()).unwrap_or_else(|e| throw_r_error(e))
-        }
-    };
-
-    let n = g.as_ref().n();
-    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
-    for ri in idxs.iter() {
-        let i = rint_to_u32(ri, "idxs");
-        validate_index(i, n);
-        let v = g
-            .as_ref()
-            .neighbors_of(i, neighbor_mode)
-            .unwrap_or_else(|e| throw_r_error(e));
-        out.push(u32_vec_to_robj(&v));
-    }
-    extendr_api::prelude::List::from_values(out).into_robj()
-}
-
-#[extendr]
-fn ancestors_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
-    let n = g.as_ref().n();
-    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
-    for ri in idxs.iter() {
-        let i = rint_to_u32(ri, "idxs");
-        validate_index(i, n);
-        let v = g
-            .as_ref()
-            .ancestors_of(i)
-            .unwrap_or_else(|e| throw_r_error(e));
-        out.push(u32_vec_to_robj(&v));
-    }
-    extendr_api::prelude::List::from_values(out).into_robj()
-}
-
-#[extendr]
-fn descendants_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
-    let n = g.as_ref().n();
-    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
-    for ri in idxs.iter() {
-        let i = rint_to_u32(ri, "idxs");
-        validate_index(i, n);
-        let v = g
-            .as_ref()
-            .descendants_of(i)
-            .unwrap_or_else(|e| throw_r_error(e));
-        out.push(u32_vec_to_robj(&v));
-    }
-    extendr_api::prelude::List::from_values(out).into_robj()
-}
-
-#[extendr]
-fn anteriors_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
-    let n = g.as_ref().n();
-    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
-    for ri in idxs.iter() {
-        let i = rint_to_u32(ri, "idxs");
-        validate_index(i, n);
-        let v = g
-            .as_ref()
-            .anteriors_of(i)
-            .unwrap_or_else(|e| throw_r_error(e));
-        out.push(u32_vec_to_robj(&v));
-    }
-    extendr_api::prelude::List::from_values(out).into_robj()
-}
-
-#[extendr]
-fn markov_blanket_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
-    let n = g.as_ref().n();
-    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
-    for ri in idxs.iter() {
-        let i = rint_to_u32(ri, "idxs");
-        validate_index(i, n);
-        let v = g
-            .as_ref()
-            .markov_blanket_of(i)
-            .unwrap_or_else(|e| throw_r_error(e));
-        out.push(u32_vec_to_robj(&v));
-    }
-    extendr_api::prelude::List::from_values(out).into_robj()
-}
-
-#[extendr]
-fn exogenous_nodes_of_ptr(g: ExternalPtr<GraphView>, undirected_as_parents: Rbool) -> Robj {
-    let undirected_as_parents = undirected_as_parents.is_true();
-    g.as_ref()
-        .exogenous_nodes(undirected_as_parents)
-        .map(|s| u32_vec_to_robj(&s))
-        .unwrap_or_else(|e| throw_r_error(e))
-}
-
-#[extendr]
-fn topological_sort_ptr(g: ExternalPtr<GraphView>) -> Robj {
-    g.as_ref()
-        .topological_sort()
-        .map(|v| v.iter().map(|&x| x as i32).collect_robj())
-        .unwrap_or_else(|e| throw_r_error(e))
-}
-
-// ── Validation / class checks ────────────────────────────────────────────────────────────────
-#[extendr]
-fn is_dag_type_ptr(g: ExternalPtr<GraphView>) -> bool {
-    let core = g.as_ref().core();
-    Dag::new(Arc::new(core.clone())).is_ok()
-}
-
-#[extendr]
-fn is_pdag_type_ptr(g: ExternalPtr<GraphView>) -> bool {
-    let core = g.as_ref().core();
-    Pdag::new(Arc::new(core.clone())).is_ok()
-}
-
-#[extendr]
-fn is_ug_type_ptr(g: ExternalPtr<GraphView>) -> bool {
-    let core = g.as_ref().core();
-    Ug::new(Arc::new(core.clone())).is_ok()
-}
-
-#[extendr]
-fn is_admg_type_ptr(g: ExternalPtr<GraphView>) -> bool {
-    let core = g.as_ref().core();
-    Admg::new(Arc::new(core.clone())).is_ok()
-}
-
-#[extendr]
-fn is_ag_type_ptr(g: ExternalPtr<GraphView>) -> bool {
-    let core = g.as_ref().core();
-    Ag::new(Arc::new(core.clone())).is_ok()
-}
-
-#[extendr]
-fn is_mag_ptr(g: ExternalPtr<GraphView>) -> bool {
-    let core = g.as_ref().core();
-    match Ag::new(Arc::new(core.clone())) {
-        Ok(ag) => ag.is_mag(),
-        Err(_) => false,
-    }
-}
-
-#[extendr]
-fn graph_class_ptr(g: ExternalPtr<GraphView>) -> String {
-    match g.as_ref() {
-        GraphView::Dag(_) => "DAG",
-        GraphView::Pdag(_) => "PDAG",
-        GraphView::Ug(_) => "UG",
-        GraphView::Admg(_) => "ADMG",
-        GraphView::Ag(_) => "AG",
-        GraphView::Raw(_) => "UNKNOWN",
-    }
-    .to_string()
-}
-
-#[extendr]
-fn is_acyclic_ptr(g: ExternalPtr<GraphView>) -> bool {
-    let core = g.as_ref().core();
-    crate::graph::alg::directed_part_is_acyclic(core)
-}
-
-#[extendr]
-fn is_simple_ptr(g: ExternalPtr<GraphView>) -> bool {
-    g.as_ref().core().simple
-}
-
-// ── ADMG-specific queries ────────────────────────────────────────────────────
-#[extendr]
-fn spouses_of_ptr(g: ExternalPtr<GraphView>, idxs: Integers) -> Robj {
-    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
-    for ri in idxs.iter() {
-        let i = rint_to_u32(ri, "idxs");
-        if i >= g.as_ref().n() {
-            throw_r_error(format!("Index {} is out of bounds", i));
-        }
-        let v = g
-            .as_ref()
-            .spouses_of(i)
-            .unwrap_or_else(|e| throw_r_error(e));
-        out.push(v.iter().map(|&x| x as i32).collect_robj());
-    }
-    extendr_api::prelude::List::from_values(out).into_robj()
-}
-
-#[extendr]
-fn districts_ptr(g: ExternalPtr<GraphView>) -> Robj {
-    let districts = g.as_ref().districts().unwrap_or_else(|e| throw_r_error(e));
-    let robjs: Vec<Robj> = districts
-        .into_iter()
-        .map(|v| v.into_iter().map(|u| u as i32).collect_robj())
-        .collect();
-    extendr_api::prelude::List::from_values(robjs).into_robj()
-}
-
-#[extendr]
-fn district_of_ptr(g: ExternalPtr<GraphView>, idx: i32) -> Robj {
-    if idx < 0 {
-        throw_r_error("idx must be >= 0");
-    }
-    let i = idx as u32;
-    if i >= g.as_ref().n() {
-        throw_r_error(format!("Index {} is out of bounds", i));
-    }
-    let v = g
-        .as_ref()
-        .district_of(i)
-        .unwrap_or_else(|e| throw_r_error(e));
-    v.into_iter().map(|x| x as i32).collect_robj()
-}
-
-#[extendr]
-fn m_separated_ptr(g: ExternalPtr<GraphView>, xs: Integers, ys: Integers, z: Integers) -> bool {
-    let xs_u = integers_to_u32_vec(&xs, "xs");
-    let ys_u = integers_to_u32_vec(&ys, "ys");
-    let z_u = integers_to_u32_vec(&z, "z");
-    let n = g.as_ref().n();
-    for &i in xs_u.iter().chain(ys_u.iter()).chain(z_u.iter()) {
-        validate_index(i, n);
-    }
-    g.as_ref()
-        .m_separated(&xs_u, &ys_u, &z_u)
-        .unwrap_or_else(|e| throw_r_error(e))
-}
-
-#[extendr]
-fn is_valid_adjustment_set_admg_ptr(
-    g: ExternalPtr<GraphView>,
-    xs: Integers,
-    ys: Integers,
-    z: Integers,
-) -> bool {
-    let xs_u = integers_to_u32_vec(&xs, "xs");
-    let ys_u = integers_to_u32_vec(&ys, "ys");
-    let z_u = integers_to_u32_vec(&z, "z");
-    g.as_ref()
-        .is_valid_adjustment_set_admg(&xs_u, &ys_u, &z_u)
-        .unwrap_or_else(|e| throw_r_error(e))
-}
-
-#[extendr]
-fn all_adjustment_sets_admg_ptr(
-    g: ExternalPtr<GraphView>,
-    xs: Integers,
-    ys: Integers,
-    minimal: Rbool,
-    max_size: i32,
-) -> Robj {
-    let xs_u = integers_to_u32_vec(&xs, "xs");
-    let ys_u = integers_to_u32_vec(&ys, "ys");
-    let max_size = rint_to_u32(Rint::from(max_size), "max_size");
-    let sets = g
-        .as_ref()
-        .all_adjustment_sets_admg(&xs_u, &ys_u, rbool_to_bool(minimal, "minimal"), max_size)
-        .unwrap_or_else(|e| throw_r_error(e));
-    let robjs: Vec<Robj> = sets
-        .into_iter()
-        .map(|v| v.into_iter().map(|u| u as i32).collect_robj())
-        .collect();
-    extendr_api::prelude::List::from_values(robjs).into_robj()
-}
-
 // ── Metrics ────────────────────────────────────────────────────────────────
-#[extendr]
-fn shd_of_ptrs(
-    g1: ExternalPtr<GraphView>,
-    names1: Strings,
-    g2: ExternalPtr<GraphView>,
-    names2: Strings,
-) -> Robj {
-    let core1 = g1.as_ref().core();
-    let core2 = g2.as_ref().core();
-    if core1.n() != core2.n() {
-        throw_r_error("graph size mismatch");
-    }
-    if names1.len() as u32 != core1.n() || names2.len() as u32 != core2.n() {
-        throw_r_error("names length must match number of nodes");
-    }
-    let mut idx2: HashMap<String, u32> = HashMap::with_capacity(names2.len());
-    for (i, s) in names2.iter().enumerate() {
-        let k = s.as_str().to_string();
-        if idx2.insert(k, i as u32).is_some() {
-            throw_r_error("duplicate node name in names2");
-        }
-    }
-    let mut perm = Vec::with_capacity(names1.len());
-    for s in names1.iter() {
-        let key = s.as_str();
-        let j = *idx2.get(key).unwrap_or_else(|| {
-            throw_r_error(format!("name '{key}' present in names1 but not in names2"))
-        });
-        perm.push(j);
-    }
-    let (norm, count) = shd_with_perm(core1, core2, &perm);
-    list!(normalized = norm, count = count as i32).into_robj()
-}
-
-#[extendr]
-fn hd_of_ptrs(g1: ExternalPtr<GraphView>, g2: ExternalPtr<GraphView>) -> Robj {
-    let (norm, count) = hd(g1.as_ref().core(), g2.as_ref().core());
-    list!(normalized = norm, count = count as i32).into_robj()
-}
 
 #[extendr]
 fn rs_shd(mut s1: ExternalPtr<GraphSession>, mut s2: ExternalPtr<GraphSession>) -> Robj {
@@ -816,87 +427,6 @@ fn build_inv_from_string_slices(
     Ok(inv)
 }
 
-/// Version of build_inv_from_string_slices that works with extendr Strings.
-/// Used by the *_aid_of_ptrs functions that receive names from R.
-#[cfg(feature = "gadjid")]
-fn build_inv_from_names(
-    names_true: &extendr_api::prelude::Strings,
-    names_guess: &extendr_api::prelude::Strings,
-) -> std::result::Result<Vec<usize>, String> {
-    let true_vec: Vec<String> = names_true.iter().map(|s| s.to_string()).collect();
-    let guess_vec: Vec<String> = names_guess.iter().map(|s| s.to_string()).collect();
-    build_inv_from_string_slices(&true_vec, &guess_vec)
-}
-
-#[cfg(feature = "gadjid")]
-#[extendr]
-fn ancestor_aid_of_ptrs(
-    g_true: ExternalPtr<GraphView>,
-    names_true: Strings,
-    g_guess: ExternalPtr<GraphView>,
-    names_guess: Strings,
-) -> Robj {
-    let core_t = g_true.as_ref().core();
-    let core_g = g_guess.as_ref().core();
-    if core_t.n() != core_g.n() {
-        throw_r_error("graph size mismatch");
-    }
-    let inv = build_inv_from_names(&names_true, &names_guess)
-        .unwrap_or_else(|e| throw_r_error(e.to_string()));
-
-    let t = to_aid_input(g_true.as_ref()).unwrap_or_else(|e| throw_r_error(e.to_string()));
-    let g = to_aid_input(g_guess.as_ref()).unwrap_or_else(|e| throw_r_error(e.to_string()));
-    let (score, count) =
-        aid::ancestor_aid_align(t, g, &inv).unwrap_or_else(|e| throw_r_error(e.to_string()));
-    list!(score = score, count = count as i32).into_robj()
-}
-
-#[cfg(feature = "gadjid")]
-#[extendr]
-fn oset_aid_of_ptrs(
-    g_true: ExternalPtr<GraphView>,
-    names_true: Strings,
-    g_guess: ExternalPtr<GraphView>,
-    names_guess: Strings,
-) -> Robj {
-    let core_t = g_true.as_ref().core();
-    let core_g = g_guess.as_ref().core();
-    if core_t.n() != core_g.n() {
-        throw_r_error("graph size mismatch");
-    }
-    let inv = build_inv_from_names(&names_true, &names_guess)
-        .unwrap_or_else(|e| throw_r_error(e.to_string()));
-
-    let t = to_aid_input(g_true.as_ref()).unwrap_or_else(|e| throw_r_error(e.to_string()));
-    let g = to_aid_input(g_guess.as_ref()).unwrap_or_else(|e| throw_r_error(e.to_string()));
-    let (score, count) =
-        aid::oset_aid_align(t, g, &inv).unwrap_or_else(|e| throw_r_error(e.to_string()));
-    list!(score = score, count = count as i32).into_robj()
-}
-
-#[cfg(feature = "gadjid")]
-#[extendr]
-fn parent_aid_of_ptrs(
-    g_true: ExternalPtr<GraphView>,
-    names_true: Strings,
-    g_guess: ExternalPtr<GraphView>,
-    names_guess: Strings,
-) -> Robj {
-    let core_t = g_true.as_ref().core();
-    let core_g = g_guess.as_ref().core();
-    if core_t.n() != core_g.n() {
-        throw_r_error("graph size mismatch");
-    }
-    let inv = build_inv_from_names(&names_true, &names_guess)
-        .unwrap_or_else(|e| throw_r_error(e.to_string()));
-
-    let t = to_aid_input(g_true.as_ref()).unwrap_or_else(|e| throw_r_error(e.to_string()));
-    let g = to_aid_input(g_guess.as_ref()).unwrap_or_else(|e| throw_r_error(e.to_string()));
-    let (score, count) =
-        aid::parent_aid_align(t, g, &inv).unwrap_or_else(|e| throw_r_error(e.to_string()));
-    list!(score = score, count = count as i32).into_robj()
-}
-
 #[cfg(feature = "gadjid")]
 #[extendr]
 fn rs_ancestor_aid(
@@ -922,149 +452,6 @@ fn rs_parent_aid(
     mut s_guess: ExternalPtr<GraphSession>,
 ) -> Robj {
     session_aid_impl(&mut s_true, &mut s_guess, AidType::Parent)
-}
-
-// ── Causal queries ────────────────────────────────────────────────────────────────
-
-#[extendr]
-fn d_separated_ptr(g: ExternalPtr<GraphView>, xs: Integers, ys: Integers, z: Integers) -> bool {
-    let xs_u: Vec<u32> = xs.iter().map(|ri| rint_to_u32(ri, "xs")).collect();
-    let ys_u: Vec<u32> = ys.iter().map(|ri| rint_to_u32(ri, "ys")).collect();
-    let z_u: Vec<u32> = z.iter().map(|ri| rint_to_u32(ri, "z")).collect();
-    // Check that all indices are within bounds
-    for &i in xs_u.iter().chain(ys_u.iter()).chain(z_u.iter()) {
-        if i >= g.as_ref().n() {
-            throw_r_error(format!("Index {} is out of bounds", i + 1));
-        }
-    }
-    g.as_ref()
-        .d_separated(&xs_u, &ys_u, &z_u)
-        .unwrap_or_else(|e| throw_r_error(e))
-}
-
-#[extendr]
-fn adjustment_set_parents_ptr(g: ExternalPtr<GraphView>, xs: Integers, ys: Integers) -> Robj {
-    let xs_u: Vec<u32> = xs.iter().map(|ri| rint_to_u32(ri, "xs")).collect();
-    let ys_u: Vec<u32> = ys.iter().map(|ri| rint_to_u32(ri, "ys")).collect();
-    g.as_ref()
-        .adjustment_set_parents(&xs_u, &ys_u)
-        .map(|v| v.into_iter().map(|x| x as i32).collect_robj())
-        .unwrap_or_else(|e| throw_r_error(e))
-}
-
-#[extendr]
-fn adjustment_set_backdoor_ptr(g: ExternalPtr<GraphView>, xs: Integers, ys: Integers) -> Robj {
-    let xs_u: Vec<u32> = xs.iter().map(|ri| rint_to_u32(ri, "xs")).collect();
-    let ys_u: Vec<u32> = ys.iter().map(|ri| rint_to_u32(ri, "ys")).collect();
-    g.as_ref()
-        .adjustment_set_backdoor(&xs_u, &ys_u)
-        .map(|v| v.into_iter().map(|x| x as i32).collect_robj())
-        .unwrap_or_else(|e| throw_r_error(e))
-}
-
-#[extendr]
-fn adjustment_set_optimal_ptr(g: ExternalPtr<GraphView>, x: i32, y: i32) -> Robj {
-    if x < 0 || y < 0 {
-        throw_r_error("x and y must be >= 0");
-    }
-    g.as_ref()
-        .adjustment_set_optimal(x as u32, y as u32)
-        .map(|v| v.into_iter().map(|x| x as i32).collect_robj())
-        .unwrap_or_else(|e| throw_r_error(e))
-}
-
-#[extendr]
-fn is_valid_backdoor_set_ptr(g: ExternalPtr<GraphView>, x: i32, y: i32, z: Integers) -> bool {
-    if x < 0 || y < 0 {
-        throw_r_error("x and y must be >= 0");
-    }
-    let z_u: Vec<u32> = z.iter().map(|ri| rint_to_u32(ri, "z")).collect();
-    g.as_ref()
-        .is_valid_backdoor_set(x as u32, y as u32, &z_u)
-        .unwrap_or_else(|e| throw_r_error(e))
-}
-
-#[extendr]
-fn all_backdoor_sets_ptr(
-    g: ExternalPtr<GraphView>,
-    x: i32,
-    y: i32,
-    minimal: Rbool,
-    max_size: i32,
-) -> Robj {
-    if x < 0 || y < 0 {
-        throw_r_error("x and y must be >= 0");
-    }
-    let max_size = rint_to_u32(Rint::from(max_size), "max_size");
-    let sets = g
-        .as_ref()
-        .all_backdoor_sets(
-            x as u32,
-            y as u32,
-            rbool_to_bool(minimal, "minimal"),
-            max_size,
-        )
-        .unwrap_or_else(|e| throw_r_error(e));
-    let robjs: Vec<Robj> = sets
-        .into_iter()
-        .map(|v| v.into_iter().map(|u| u as i32).collect_robj())
-        .collect();
-    extendr_api::prelude::List::from_values(robjs).into_robj()
-}
-
-// ── Graph transformations ──────────────────────────────────────────────────────
-
-#[extendr]
-fn proper_backdoor_graph_ptr(
-    g: ExternalPtr<GraphView>,
-    xs: Integers,
-    ys: Integers,
-) -> ExternalPtr<GraphView> {
-    let xs_u: Vec<u32> = xs.iter().map(|ri| rint_to_u32(ri, "xs")).collect();
-    let ys_u: Vec<u32> = ys.iter().map(|ri| rint_to_u32(ri, "ys")).collect();
-    // Check bounds
-    for &i in xs_u.iter().chain(ys_u.iter()) {
-        if i >= g.as_ref().n() {
-            throw_r_error(format!("Index {} is out of bounds", i + 1));
-        }
-    }
-    let out = g
-        .as_ref()
-        .proper_backdoor_graph(&xs_u, &ys_u)
-        .unwrap_or_else(|e| throw_r_error(e));
-    ExternalPtr::new(out)
-}
-
-#[extendr]
-fn moral_of_ancestors_ptr(g: ExternalPtr<GraphView>, seeds: Integers) -> ExternalPtr<GraphView> {
-    let seeds_u: Vec<u32> = seeds.iter().map(|ri| rint_to_u32(ri, "seeds")).collect();
-    // Check bounds
-    for &i in &seeds_u {
-        if i >= g.as_ref().n() {
-            throw_r_error(format!("Index {} is out of bounds", i + 1));
-        }
-    }
-    let out = g
-        .as_ref()
-        .moral_of_ancestors(&seeds_u)
-        .unwrap_or_else(|e| throw_r_error(e));
-    ExternalPtr::new(out)
-}
-
-#[extendr]
-fn ancestral_reduction_ptr(g: ExternalPtr<GraphView>, seeds: Integers) -> ExternalPtr<GraphView> {
-    let seeds_u: Vec<u32> = seeds.iter().map(|ri| rint_to_u32(ri, "seeds")).collect();
-    // Check bounds
-    for &i in &seeds_u {
-        if i >= g.as_ref().n() {
-            throw_r_error(format!("Index {} is out of bounds", i + 1));
-        }
-    }
-    let out = g
-        .as_ref()
-        .ancestral_reduction(&seeds_u)
-        .unwrap_or_else(|e| throw_r_error(e));
-    ExternalPtr::new(out)
 }
 
 // ── Serialization ──────────────────────────────────────────────────────────────
@@ -1140,35 +527,7 @@ fn rs_serialize_graphml(
 }
 
 #[extendr]
-fn write_caugi_file_ptr(
-    g: ExternalPtr<GraphView>,
-    reg: ExternalPtr<EdgeRegistry>,
-    graph_class: &str,
-    node_names: Strings,
-    path: &str,
-    comment: Nullable<&str>,
-    tags: Nullable<Strings>,
-) {
-    let node_names_vec: Vec<String> = node_names.iter().map(|s| s.to_string()).collect();
-    let comment_opt = comment.into_option().map(|s| s.to_string());
-    let tags_opt = tags
-        .into_option()
-        .map(|strs| strs.iter().map(|s| s.to_string()).collect::<Vec<_>>());
-
-    graph::serialization::write_caugi_file(
-        g.as_ref(),
-        reg.as_ref(),
-        graph_class,
-        node_names_vec,
-        path,
-        comment_opt,
-        tags_opt,
-    )
-    .unwrap_or_else(|e| throw_r_error(e));
-}
-
-#[extendr]
-fn read_caugi_file_ptr(path: &str, reg: ExternalPtr<EdgeRegistry>) -> Robj {
+fn read_caugi_file(path: &str, reg: ExternalPtr<EdgeRegistry>) -> Robj {
     let data = graph::serialization::read_caugi_file(path, reg.as_ref())
         .unwrap_or_else(|e| throw_r_error(e));
 
@@ -1183,38 +542,7 @@ fn read_caugi_file_ptr(path: &str, reg: ExternalPtr<EdgeRegistry>) -> Robj {
 }
 
 #[extendr]
-fn read_caugi_file(path: &str, reg: ExternalPtr<EdgeRegistry>) -> Robj {
-    read_caugi_file_ptr(path, reg)
-}
-
-#[extendr]
-fn serialize_caugi_ptr(
-    g: ExternalPtr<GraphView>,
-    reg: ExternalPtr<EdgeRegistry>,
-    graph_class: &str,
-    node_names: Strings,
-    comment: Nullable<&str>,
-    tags: Nullable<Strings>,
-) -> String {
-    let node_names_vec: Vec<String> = node_names.iter().map(|s| s.to_string()).collect();
-    let comment_opt = comment.into_option().map(|s| s.to_string());
-    let tags_opt = tags
-        .into_option()
-        .map(|strs| strs.iter().map(|s| s.to_string()).collect::<Vec<_>>());
-
-    graph::serialization::serialize_caugi(
-        g.as_ref(),
-        reg.as_ref(),
-        graph_class,
-        node_names_vec,
-        comment_opt,
-        tags_opt,
-    )
-    .unwrap_or_else(|e| throw_r_error(e))
-}
-
-#[extendr]
-fn deserialize_caugi_ptr(json: &str, reg: ExternalPtr<EdgeRegistry>) -> Robj {
+fn deserialize_caugi(json: &str, reg: ExternalPtr<EdgeRegistry>) -> Robj {
     let data = graph::serialization::deserialize_caugi(json, reg.as_ref())
         .unwrap_or_else(|e| throw_r_error(e));
 
@@ -1229,25 +557,7 @@ fn deserialize_caugi_ptr(json: &str, reg: ExternalPtr<EdgeRegistry>) -> Robj {
 }
 
 #[extendr]
-fn deserialize_caugi(json: &str, reg: ExternalPtr<EdgeRegistry>) -> Robj {
-    deserialize_caugi_ptr(json, reg)
-}
-
-#[extendr]
-fn serialize_graphml_ptr(
-    g: ExternalPtr<GraphView>,
-    reg: ExternalPtr<EdgeRegistry>,
-    graph_class: &str,
-    node_names: Strings,
-) -> String {
-    let node_names_vec: Vec<String> = node_names.iter().map(|s| s.to_string()).collect();
-
-    graph::graphml::serialize_graphml(g.as_ref(), reg.as_ref(), graph_class, node_names_vec)
-        .unwrap_or_else(|e| throw_r_error(e))
-}
-
-#[extendr]
-fn deserialize_graphml_ptr(xml: &str, reg: ExternalPtr<EdgeRegistry>) -> Robj {
+fn deserialize_graphml(xml: &str, reg: ExternalPtr<EdgeRegistry>) -> Robj {
     let data =
         graph::graphml::deserialize_graphml(xml, reg.as_ref()).unwrap_or_else(|e| throw_r_error(e));
 
@@ -1259,161 +569,6 @@ fn deserialize_graphml_ptr(xml: &str, reg: ExternalPtr<EdgeRegistry>) -> Robj {
         graph_class = data.graph_class
     )
     .into_robj()
-}
-
-#[extendr]
-fn deserialize_graphml(xml: &str, reg: ExternalPtr<EdgeRegistry>) -> Robj {
-    deserialize_graphml_ptr(xml, reg)
-}
-
-// ── Subgraph ────────────────────────────────────────────────────────────────
-
-#[extendr]
-fn induced_subgraph_ptr(g: ExternalPtr<GraphView>, keep: Integers) -> Robj {
-    let mut ks: Vec<u32> = Vec::with_capacity(keep.len());
-    for ri in keep.iter() {
-        let u = rint_to_u32(ri, "keep");
-        if u >= g.as_ref().n() {
-            throw_r_error(format!("node id {} out of bounds", u));
-        }
-        ks.push(u);
-    }
-
-    let sub = g
-        .as_ref()
-        .induced_subgraph(&ks)
-        .unwrap_or_else(|e| throw_r_error(e));
-
-    let sub_ptr = ExternalPtr::new(sub);
-    sub_ptr.into_robj()
-}
-
-// ── View dataframe ──────────────────────────────────────────────────────────
-#[extendr]
-fn n_ptr(g: ExternalPtr<GraphView>) -> i32 {
-    g.as_ref().n() as i32
-}
-
-#[extendr]
-fn edges_ptr_df(g: ExternalPtr<GraphView>) -> Robj {
-    let core = g.as_ref().core();
-    let n = core.n();
-    let mut from0: Vec<i32> = Vec::new();
-    let mut to0: Vec<i32> = Vec::new();
-    let mut code: Vec<i32> = Vec::new();
-    let mut glyph: Vec<String> = Vec::new();
-
-    for u in 0..n {
-        for k in core.row_range(u) {
-            let v = core.col_index[k];
-            let ecode = core.etype[k];
-            let spec = &core.registry.specs[ecode as usize];
-            if spec.symmetric {
-                if u < v {
-                    from0.push(u as i32);
-                    to0.push(v as i32);
-                    code.push(ecode as i32);
-                    glyph.push(spec.glyph.clone());
-                }
-            } else if core.side[k] == 0 {
-                // emit once per asymmetric edge, from the tail side
-                from0.push(u as i32);
-                to0.push(v as i32);
-                code.push(ecode as i32);
-                glyph.push(spec.glyph.clone());
-            }
-        }
-    }
-    list!(from0 = from0, to0 = to0, code = code, glyph = glyph).into_robj() // data.frame()
-}
-
-#[extendr]
-fn to_cpdag_ptr(g: ExternalPtr<GraphView>) -> ExternalPtr<GraphView> {
-    let out = g.as_ref().to_cpdag().unwrap_or_else(|e| throw_r_error(e));
-    ExternalPtr::new(out)
-}
-
-#[extendr]
-fn is_cpdag_ptr(g: ExternalPtr<GraphView>) -> bool {
-    let core = g.as_ref().core();
-    match Pdag::new(Arc::new(core.clone())) {
-        Ok(p) => p.is_cpdag(),
-        Err(_) => false,
-    }
-}
-
-// ── Skeleton and moralize ──────────────────────────────────────────────────────────
-
-#[extendr]
-fn skeleton_ptr(g: ExternalPtr<GraphView>) -> ExternalPtr<GraphView> {
-    let out = g.as_ref().skeleton().unwrap_or_else(|e| throw_r_error(e));
-    ExternalPtr::new(out)
-}
-
-#[extendr]
-fn moralize_ptr(g: ExternalPtr<GraphView>) -> ExternalPtr<GraphView> {
-    let out = g.as_ref().moralize().unwrap_or_else(|e| throw_r_error(e));
-    ExternalPtr::new(out)
-}
-
-#[extendr]
-fn latent_project_ptr(g: ExternalPtr<GraphView>, latents: Integers) -> ExternalPtr<GraphView> {
-    let latents_u: Vec<u32> = latents
-        .iter()
-        .map(|ri| rint_to_u32(ri, "latents"))
-        .collect();
-    let out = g
-        .as_ref()
-        .latent_project(&latents_u)
-        .unwrap_or_else(|e| throw_r_error(e));
-    ExternalPtr::new(out)
-}
-
-// ── Layout ────────────────────────────────────────────────────────────────────
-
-#[extendr]
-fn compute_layout_ptr(g: ExternalPtr<GraphView>, method: &str, packing_ratio: f64) -> Robj {
-    use graph::layout::{compute_layout, LayoutMethod};
-    use std::str::FromStr;
-
-    let layout_method = LayoutMethod::from_str(method).unwrap_or_else(|e| throw_r_error(e));
-    let coords = compute_layout(g.as_ref().core(), layout_method, packing_ratio)
-        .unwrap_or_else(|e| throw_r_error(e));
-    coords_to_list(coords)
-}
-
-#[extendr]
-fn compute_bipartite_layout_ptr(
-    g: ExternalPtr<GraphView>,
-    partition: Robj,
-    orientation: &str,
-) -> Robj {
-    use graph::layout::{compute_bipartite_layout, BipartiteOrientation};
-    use std::str::FromStr;
-
-    let orient = BipartiteOrientation::from_str(orientation).unwrap_or_else(|e| throw_r_error(e));
-
-    // Convert logical vector to Vec<bool>
-    let partition_vec: Vec<bool> = partition
-        .as_logical_slice()
-        .unwrap_or_else(|| throw_r_error("partition must be a logical vector"))
-        .iter()
-        .map(|&x| x.is_true())
-        .collect();
-
-    let coords = compute_bipartite_layout(g.as_ref().core(), &partition_vec, orient)
-        .unwrap_or_else(|e| throw_r_error(e));
-
-    let n = coords.len();
-    let mut x = Vec::with_capacity(n);
-    let mut y = Vec::with_capacity(n);
-
-    for (xi, yi) in coords {
-        x.push(xi);
-        y.push(yi);
-    }
-
-    list!(x = x, y = y).into_robj()
 }
 
 // ── GraphSession API ────────────────────────────────────────────────────────────────
@@ -1501,22 +656,6 @@ fn rs_set_names(mut session: ExternalPtr<GraphSession>, names: Strings) {
         names.iter().map(|s| s.to_string()).collect()
     };
     session.as_mut().set_names(name_vec);
-}
-
-#[extendr]
-fn rs_layout(mut session: ExternalPtr<GraphSession>, method: &str) -> Robj {
-    let coords = session
-        .as_mut()
-        .layout(method)
-        .unwrap_or_else(|e| throw_r_error(e));
-
-    let mut x: Vec<f64> = Vec::with_capacity(coords.len());
-    let mut y: Vec<f64> = Vec::with_capacity(coords.len());
-    for (xi, yi) in coords {
-        x.push(xi);
-        y.push(yi);
-    }
-    list!(x = x, y = y).into_robj()
 }
 
 #[extendr]
@@ -2038,91 +1177,6 @@ fn rs_latent_project(
 }
 
 #[extendr]
-fn rs_proper_backdoor_graph(
-    mut session: ExternalPtr<GraphSession>,
-    xs: Integers,
-    ys: Integers,
-) -> ExternalPtr<GraphSession> {
-    let xs_u: Vec<u32> = xs.iter().map(|ri| rint_to_u32(ri, "xs")).collect();
-    let ys_u: Vec<u32> = ys.iter().map(|ri| rint_to_u32(ri, "ys")).collect();
-    let view = session
-        .as_mut()
-        .proper_backdoor_graph(&xs_u, &ys_u)
-        .unwrap_or_else(|e| throw_r_error(e));
-    let names: Vec<String> = session.as_ref().names().to_vec();
-    ExternalPtr::new(session_from_view(view, names))
-}
-
-#[extendr]
-fn rs_moral_of_ancestors(
-    mut session: ExternalPtr<GraphSession>,
-    seeds: Integers,
-) -> ExternalPtr<GraphSession> {
-    let seeds_u: Vec<u32> = seeds.iter().map(|ri| rint_to_u32(ri, "seeds")).collect();
-    let view = session
-        .as_mut()
-        .moral_of_ancestors(&seeds_u)
-        .unwrap_or_else(|e| throw_r_error(e));
-    let names: Vec<String> = session.as_ref().names().to_vec();
-    ExternalPtr::new(session_from_view(view, names))
-}
-
-#[extendr]
-fn rs_ancestral_reduction(
-    mut session: ExternalPtr<GraphSession>,
-    seeds: Integers,
-) -> ExternalPtr<GraphSession> {
-    use graph::alg::bitset;
-
-    let seeds_u: Vec<u32> = seeds.iter().map(|ri| rint_to_u32(ri, "seeds")).collect();
-    let view = session
-        .as_mut()
-        .ancestral_reduction(&seeds_u)
-        .unwrap_or_else(|e| throw_r_error(e));
-
-    let keep: Vec<u32> = match session
-        .as_mut()
-        .view()
-        .unwrap_or_else(|e| throw_r_error(e))
-        .as_ref()
-    {
-        GraphView::Dag(d) => {
-            let mask = bitset::ancestors_mask(&seeds_u, |u| d.parents_of(u), d.n());
-            bitset::collect_from_mask(&mask)
-        }
-        GraphView::Pdag(p) => {
-            let mask = bitset::ancestors_mask(&seeds_u, |u| p.parents_of(u), p.n());
-            bitset::collect_from_mask(&mask)
-        }
-        GraphView::Admg(a) => {
-            let mask = bitset::ancestors_mask(&seeds_u, |u| a.parents_of(u), a.n());
-            bitset::collect_from_mask(&mask)
-        }
-        GraphView::Ag(g) => {
-            let mask = bitset::ancestors_mask(&seeds_u, |u| g.parents_of(u), g.n());
-            bitset::collect_from_mask(&mask)
-        }
-        _ => Vec::new(),
-    };
-
-    let names: Vec<String> = session
-        .as_ref()
-        .names()
-        .iter()
-        .enumerate()
-        .filter_map(|(i, name)| {
-            if keep.contains(&(i as u32)) {
-                Some(name.clone())
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    ExternalPtr::new(session_from_view(view, names))
-}
-
-#[extendr]
 fn rs_induced_subgraph(
     mut session: ExternalPtr<GraphSession>,
     keep: Integers,
@@ -2133,15 +1187,49 @@ fn rs_induced_subgraph(
             throw_r_error(format!("Index {} is out of bounds", i));
         }
     }
+
     let view = session
         .as_mut()
+        .view()
+        .unwrap_or_else(|e| throw_r_error(e));
+    let sub_view = view
+        .as_ref()
         .induced_subgraph(&keep_u)
         .unwrap_or_else(|e| throw_r_error(e));
+
+    let all_names: Vec<String> = session.as_ref().names().to_vec();
     let names: Vec<String> = keep_u
         .iter()
-        .map(|&i| session.as_ref().names()[i as usize].clone())
+        .map(|&i| all_names[i as usize].clone())
         .collect();
-    ExternalPtr::new(session_from_view(view, names))
+
+    // Preserve original input edge orientation/order by filtering the source
+    // session EdgeBuffer, then remap old node ids to induced-subgraph ids.
+    let n_old = session.as_ref().n() as usize;
+    let mut old_to_new = vec![u32::MAX; n_old];
+    for (new_i, &old_i) in keep_u.iter().enumerate() {
+        old_to_new[old_i as usize] = new_i as u32;
+    }
+
+    let src_edges = session.as_ref().edge_buffer();
+    let mut kept_edges = EdgeBuffer::with_capacity(src_edges.len());
+    for i in 0..src_edges.len() {
+        let old_from = src_edges.from[i] as usize;
+        let old_to = src_edges.to[i] as usize;
+        if old_from >= n_old || old_to >= n_old {
+            continue;
+        }
+
+        let new_from = old_to_new[old_from];
+        let new_to = old_to_new[old_to];
+        if new_from != u32::MAX && new_to != u32::MAX {
+            kept_edges.push(new_from, new_to, src_edges.etype[i]);
+        }
+    }
+
+    let mut out = session_from_view(sub_view, names);
+    out.set_edges(kept_edges);
+    ExternalPtr::new(out)
 }
 
 // ── Session causal queries ───────────────────────────────────────────────────
@@ -2298,11 +1386,6 @@ fn rs_all_adjustment_sets_admg(
     extendr_api::prelude::List::from_values(robjs).into_robj()
 }
 
-#[extendr]
-fn rs_dependency_json(session: ExternalPtr<GraphSession>) -> String {
-    session.as_ref().dependency_json()
-}
-
 extendr_module! {
     mod caugi;
     // registry
@@ -2323,7 +1406,6 @@ extendr_module! {
     fn rs_set_class;
     fn rs_resolve_class;
     fn rs_set_names;
-    fn rs_layout;
     fn rs_compute_layout;
     fn rs_compute_bipartite_layout;
     fn rs_n;
@@ -2350,7 +1432,6 @@ extendr_module! {
     fn rs_exogenous_nodes;
     fn rs_districts;
     fn rs_district_of;
-    fn rs_dependency_json;
     fn rs_is_acyclic;
     fn rs_is_dag_type;
     fn rs_is_pdag_type;
@@ -2363,9 +1444,6 @@ extendr_module! {
     fn rs_skeleton;
     fn rs_moralize;
     fn rs_latent_project;
-    fn rs_proper_backdoor_graph;
-    fn rs_moral_of_ancestors;
-    fn rs_ancestral_reduction;
     fn rs_induced_subgraph;
     fn rs_d_separated;
     fn rs_m_separated;
