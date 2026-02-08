@@ -35,6 +35,21 @@ test_that("is_acyclic forces check when requested", {
   expect_true(is_acyclic(cg, force_check = TRUE))
 })
 
+test_that("is_simple reflects declared state and force_check path", {
+  cg_simple <- caugi(A %-->% B, class = "DAG")
+  expect_true(is_simple(cg_simple))
+  expect_true(is_simple(cg_simple, force_check = TRUE))
+
+  cg_nonsimple <- caugi(
+    A %-->% B,
+    A %<->% B,
+    class = "UNKNOWN",
+    simple = FALSE
+  )
+  expect_false(is_simple(cg_nonsimple))
+  expect_false(is_simple(cg_nonsimple, force_check = TRUE))
+})
+
 test_that("query builds", {
   cg <- caugi(A %-->% B, B %-->% C, C %---% D, class = "PDAG")
   expect_true(!is.null(cg@session))
@@ -567,6 +582,62 @@ test_that("subgraph with index matches nodes variant", {
   expect_identical(s1@nodes$name, s2@nodes$name)
   expect_identical(s1@edges, s2@edges)
   expect_true(!is.null(s1@session) && !is.null(s2@session))
+})
+
+test_that("districts supports all, nodes, and index modes", {
+  cg <- caugi(
+    A %<->% B,
+    B %<->% C,
+    C %-->% D,
+    class = "ADMG"
+  )
+
+  all_d <- districts(cg)
+  expect_equal(length(all_d), 2L)
+  expect_true(any(vapply(
+    all_d,
+    function(x) setequal(x, c("A", "B", "C")),
+    logical(1)
+  )))
+  expect_true(any(vapply(all_d, function(x) identical(x, "D"), logical(1))))
+
+  expect_setequal(districts(cg, nodes = "A"), c("A", "B", "C"))
+
+  by_nodes <- districts(cg, nodes = c("A", "D"))
+  expect_named(by_nodes, c("A", "D"))
+  expect_setequal(by_nodes$A, c("A", "B", "C"))
+  expect_identical(by_nodes$D, "D")
+
+  by_index <- districts(cg, index = c(1L, 4L))
+  expect_named(by_index, c("A", "D"))
+  expect_setequal(by_index$A, c("A", "B", "C"))
+  expect_identical(by_index$D, "D")
+
+  all_explicit <- districts(cg, all = TRUE)
+  expect_equal(length(all_explicit), length(all_d))
+  expect_true(any(vapply(
+    all_explicit,
+    function(x) setequal(x, c("A", "B", "C")),
+    logical(1)
+  )))
+  expect_true(any(vapply(
+    all_explicit,
+    function(x) identical(x, "D"),
+    logical(1)
+  )))
+})
+
+test_that("districts validates argument combinations", {
+  cg <- caugi(A %<->% B, class = "ADMG")
+
+  expect_error(
+    districts(cg, nodes = "A", index = 1L),
+    "either `nodes` or `index`"
+  )
+  expect_error(districts(cg, all = TRUE, nodes = "A"), "cannot be combined")
+  expect_error(districts(cg, all = FALSE), "requires `nodes` or `index`")
+  expect_error(districts(cg, index = 0), "out of range")
+  expect_error(districts(cg, nodes = c("A", NA_character_)), "without NA")
 })
 
 # ──────────────────────────────────────────────────────────────────────────────

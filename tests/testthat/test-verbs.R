@@ -346,6 +346,17 @@ test_that("inplace = TRUE mutates shared references", {
   expect_true("C" %in% alias@nodes$name)
 })
 
+test_that("non-inplace updates clone session and isolate aliases", {
+  cg <- caugi(A %-->% B, class = "DAG")
+  alias <- cg
+
+  out <- add_nodes(cg, C, inplace = FALSE)
+
+  expect_false(identical(cg@session, out@session))
+  expect_false("C" %in% alias@nodes$name)
+  expect_true("C" %in% out@nodes$name)
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ───────────────────────────── Internal getters ───────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
