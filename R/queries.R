@@ -1331,7 +1331,10 @@ districts <- function(cg, nodes = NULL, index = NULL, all = NULL) {
   }
 
   if (isTRUE(all) && (nodes_supplied || index_supplied)) {
-    stop("`all = TRUE` cannot be combined with `nodes` or `index`.", call. = FALSE)
+    stop(
+      "`all = TRUE` cannot be combined with `nodes` or `index`.",
+      call. = FALSE
+    )
   }
 
   if (identical(all, FALSE) && !nodes_supplied && !index_supplied) {
@@ -1370,7 +1373,10 @@ districts <- function(cg, nodes = NULL, index = NULL, all = NULL) {
   }
 
   if (!nodes_supplied) {
-    stop("Supply one of `nodes` or `index`, or set `all = TRUE`.", call. = FALSE)
+    stop(
+      "Supply one of `nodes` or `index`, or set `all = TRUE`.",
+      call. = FALSE
+    )
   }
 
   if (!is.character(nodes) || anyNA(nodes)) {
@@ -1378,7 +1384,9 @@ districts <- function(cg, nodes = NULL, index = NULL, all = NULL) {
   }
 
   idx0 <- rs_indices_of(cg@session, nodes)
-  idx0_list <- lapply(as.integer(idx0), function(ix) rs_district_of(cg@session, ix))
+  idx0_list <- lapply(as.integer(idx0), function(ix) {
+    rs_district_of(cg@session, ix)
+  })
   .getter_output(cg, idx0_list, nodes)
 }
 
