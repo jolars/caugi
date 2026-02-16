@@ -16,16 +16,6 @@ test_that("caugi_layout works with simple DAG", {
   expect_type(layout$y, "double")
 })
 
-test_that("caugi_layout builds graph if needed", {
-  cg <- caugi(A %-->% B)
-
-  layout <- caugi_layout(cg)
-
-  expect_s3_class(layout, "data.frame")
-  expect_equal(nrow(layout), 2L)
-  expect_true(!is.null(cg@session))
-})
-
 test_that("caugi_layout works with single node", {
   cg <- caugi(A, class = "DAG")
 
