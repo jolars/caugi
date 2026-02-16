@@ -373,7 +373,11 @@ impl GraphSession {
             self.core = Some(Arc::new(built));
             self.core_valid = true;
         }
-        Ok(Arc::clone(self.core.as_ref().unwrap()))
+        Ok(Arc::clone(
+            self.core
+                .as_ref()
+                .expect("core must be Some when core_valid is true"),
+        ))
     }
 
     /// Get the typed view, building if necessary.
@@ -384,7 +388,11 @@ impl GraphSession {
             self.view = Some(Arc::new(built));
             self.view_valid = true;
         }
-        Ok(Arc::clone(self.view.as_ref().unwrap()))
+        Ok(Arc::clone(
+            self.view
+                .as_ref()
+                .expect("view must be Some when view_valid is true"),
+        ))
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
