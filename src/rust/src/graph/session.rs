@@ -39,8 +39,10 @@ pub enum GraphClass {
     Auto,
 }
 
-impl GraphClass {
-    pub fn from_str(s: &str) -> Result<Self, String> {
+impl std::str::FromStr for GraphClass {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "dag" => Ok(GraphClass::Dag),
             "pdag" | "cpdag" => Ok(GraphClass::Pdag),
@@ -52,6 +54,9 @@ impl GraphClass {
             _ => Err(format!("Unknown graph class: '{}'", s)),
         }
     }
+}
+
+impl GraphClass {
 
     pub fn as_str(&self) -> &'static str {
         match self {

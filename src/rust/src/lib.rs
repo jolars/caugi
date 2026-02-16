@@ -2,6 +2,7 @@
 //! R bindings for caugi graph library.
 
 use extendr_api::prelude::*;
+use std::str::FromStr;
 pub mod edges;
 pub mod graph;
 
