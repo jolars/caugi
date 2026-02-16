@@ -88,6 +88,7 @@ write_caugi <- function(x, path, comment = NULL, tags = NULL) {
 #' Reads a caugi graph from a file in the native caugi JSON format.
 #'
 #' @param path Character string specifying the file path.
+#' @param lazy Deprecated, no longer necessary. Logical indicating whether to lazily read the graph.
 #'
 #' @returns A `caugi` object.
 #'
@@ -113,12 +114,19 @@ write_caugi <- function(x, path, comment = NULL, tags = NULL) {
 #' @concept export
 #'
 #' @export
-read_caugi <- function(path) {
+read_caugi <- function(path, lazy) {
   if (!is.character(path) || length(path) != 1L) {
     stop("`path` must be a single character string", call. = FALSE)
   }
   if (!file.exists(path)) {
     stop("File not found: ", path, call. = FALSE)
+  }
+
+  if (!missing(lazy)) {
+    warning(
+      "The `lazy` argument is deprecated and no longer has any effect.",
+      call. = FALSE
+    )
   }
 
   # Get the global registry
@@ -194,6 +202,7 @@ caugi_serialize <- function(x, comment = NULL, tags = NULL) {
 #' reading from files.
 #'
 #' @param json Character string containing the JSON representation.
+#' @param lazy Deprecated, no longer necessary. Logical indicating whether to lazily deserialize the graph.
 #'
 #' @returns A `caugi` object.
 #'
@@ -206,9 +215,16 @@ caugi_serialize <- function(x, comment = NULL, tags = NULL) {
 #' @concept export
 #'
 #' @export
-caugi_deserialize <- function(json) {
+caugi_deserialize <- function(json, lazy) {
   if (!is.character(json) || length(json) != 1L) {
     stop("`json` must be a single character string", call. = FALSE)
+  }
+
+  if (!missing(lazy)) {
+    warning(
+      "The `lazy` argument is deprecated and no longer has any effect.",
+      call. = FALSE
+    )
   }
 
   # Get the global registry
