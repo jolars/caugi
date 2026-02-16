@@ -152,7 +152,7 @@ test_that("deserialization validates edge types", {
   # Manually corrupt the edge type
   json_content <- readLines(tmp, warn = FALSE)
   json_str <- paste(json_content, collapse = "\n")
-  json_str <- gsub('"-->"', '"invalid_edge"', json_str)
+  json_str <- gsub('"-->"', '"invalid_edge"', json_str, fixed = TRUE)
   writeLines(json_str, tmp)
 
   expect_error(read_caugi(tmp), "Unknown edge type")
