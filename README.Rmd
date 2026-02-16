@@ -105,7 +105,7 @@ We expect this feature to be needing further polishing in future releases, and w
 
 * Relational queries, such as `parents()`, `ancestors()`, `neighbors()`, and more.
 * Structural queries, such as `is_acyclic()`, `is_cpdag()`, and more.
-* Graph manipulations, such as `add_edge()`, `remove_node()`, and more.
+* Graph manipulations, such as `add_edges()`, `remove_nodes()`, and more.
 * Graph metrics, such as `shd()` and `aid()`. 
 
 ## How it works 
