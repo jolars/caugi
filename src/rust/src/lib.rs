@@ -842,10 +842,7 @@ fn rs_is_valid(session: ExternalPtr<GraphSession>) -> Robj {
 
 #[extendr]
 fn rs_build(mut session: ExternalPtr<GraphSession>) {
-    session
-        .as_mut()
-        .view()
-        .unwrap_or_else(|e| throw_r_error(e));
+    session.as_mut().view().unwrap_or_else(|e| throw_r_error(e));
 }
 
 // Query accessors
@@ -1189,10 +1186,7 @@ fn rs_induced_subgraph(
         }
     }
 
-    let view = session
-        .as_mut()
-        .view()
-        .unwrap_or_else(|e| throw_r_error(e));
+    let view = session.as_mut().view().unwrap_or_else(|e| throw_r_error(e));
     let sub_view = view
         .as_ref()
         .induced_subgraph(&keep_u)

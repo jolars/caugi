@@ -57,7 +57,6 @@ impl std::str::FromStr for GraphClass {
 }
 
 impl GraphClass {
-
     pub fn as_str(&self) -> &'static str {
         match self {
             GraphClass::Dag => "DAG",
@@ -877,7 +876,6 @@ impl GraphSession {
     pub fn is_view_valid(&self) -> bool {
         self.view_valid
     }
-
 }
 
 #[cfg(test)]
