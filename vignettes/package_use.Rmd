@@ -105,7 +105,7 @@ cg <- correlation_implies_causation(df)
 cg
 ```
 
-The graph is ready to use. `caugi` uses lazy evaluation internally - the Rust graph session handles compilation and caching automatically when needed, so you don't need to manually build the graph.
+The graph is ready to use!
 
 ## Class of the output
 
