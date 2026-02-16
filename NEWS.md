@@ -4,7 +4,6 @@
 
 - Rust remains the single source of truth for graph state. Graph properties
   (`simple`, `graph_class`, `nodes`, `edges`) are sourced from the `session`.
-
   - Session is always created, including empty graphs (n = 0), which simplifies
     property access.
   - Deprecated compatibility properties `@.state`, `@name_index_map`, `@built`,
