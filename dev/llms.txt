@@ -88,7 +88,7 @@ register_caugi_edge(
 )
 
 caugi(A %-->% B, B %<--% C, class = "DAG")
-#> <caugi object; 3 nodes, 2 edges; simple: TRUE; built: TRUE; ptr=0x562aff8da3a0>
+#> <caugi object; 3 nodes, 2 edges; simple: TRUE; session=0x5679606fdb60>
 #>   graph_class: DAG
 #>   nodes: A, B, C
 #>   edges: A-->B, B<--C
@@ -113,7 +113,10 @@ objects. Some of the available functions are:
 - Structural queries, such as
   [`is_acyclic()`](https://caugi.org/dev/reference/is_acyclic.md),
   [`is_cpdag()`](https://caugi.org/dev/reference/is_cpdag.md), and more.
-- Graph manipulations, such as `add_edge()`, `remove_node()`, and more.
+- Graph manipulations, such as
+  [`add_edges()`](https://caugi.org/dev/reference/caugi_verbs.md),
+  [`remove_nodes()`](https://caugi.org/dev/reference/caugi_verbs.md),
+  and more.
 - Graph metrics, such as
   [`shd()`](https://caugi.org/dev/reference/shd.md) and
   [`aid()`](https://caugi.org/dev/reference/aid.md).
@@ -181,7 +184,7 @@ Did you find run into problems? That’s *paw-ful*! Please report an
   Get descendants of nodes in a `caugi`
 
 - [`districts()`](https://caugi.org/dev/reference/districts.md) : Get
-  districts (c-components) of an ADMG
+  districts (c-components) of an ADMG or AG
 
 - [`edge_types()`](https://caugi.org/dev/reference/edge_types.md) :
 
@@ -233,6 +236,10 @@ Did you find run into problems? That’s *paw-ful*! Please report an
 
   Is the `caugi` graph a PDAG?
 
+- [`is_simple()`](https://caugi.org/dev/reference/is_simple.md) :
+
+  Is the `caugi` graph simple?
+
 - [`is_ug()`](https://caugi.org/dev/reference/is_ug.md) :
 
   Is the `caugi` graph an UG?
@@ -274,8 +281,9 @@ Did you find run into problems? That’s *paw-ful*! Please report an
 
 ## Verbs
 
-- [`build()`](https://caugi.org/dev/reference/build.md) : Build the
-  graph now
+- [`build()`](https://caugi.org/dev/reference/build.md) :
+
+  Build the `caugi` graph
 
 - [`add_edges()`](https://caugi.org/dev/reference/caugi_verbs.md)
   [`remove_edges()`](https://caugi.org/dev/reference/caugi_verbs.md)
