@@ -363,7 +363,6 @@ caugi <- S7::new_class(
       }
     }
 
-    # Allow simple = FALSE for UNKNOWN, ADMG, and AG (mixed edges can share pairs)
     if (!simple && class != "UNKNOWN" && class != "ADMG" && class != "AG") {
       stop(
         "If simple = FALSE, class must be 'UNKNOWN', 'ADMG', or 'AG'",
@@ -411,12 +410,8 @@ caugi <- S7::new_class(
     id <- seq_len(n) - 1L
     names(id) <- nodes$name
 
-    # Initialize caugi registry (if not already registered)
     reg <- caugi_registry()
 
-    # Create GraphSession - the canonical Rust state
-    # Session handles lazy compilation and caching internally
-    # Always create a session, even for empty graphs (n = 0)
     resolved_class <- class
     session <- rs_new(reg, n, simple, class)
 
@@ -432,10 +427,8 @@ caugi <- S7::new_class(
         as.integer(unname(id[edges$to])),
         as.integer(codes)
       )
-      # Validate and resolve class using the session (name-aware errors)
       resolved_class <- rs_resolve_class(session, class)
     } else if (class == "AUTO") {
-      # For empty graphs with AUTO, class is unknown until edges are added
       resolved_class <- "UNKNOWN"
     }
 
