@@ -417,15 +417,13 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
     current_nodes <- unique(current_nodes)
     current_edges <- unique(current_edges)
   }
-
-  use_class <- current_class
   if (isTRUE(inplace)) {
     .sync_session_inplace(
       session = session,
       node_names = current_nodes,
       edges_dt = current_edges,
       simple = current_simple,
-      class = use_class
+      class = current_class
     )
     return(cg)
   }
@@ -437,7 +435,7 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
     node_names = current_nodes,
     edges_dt = current_edges,
     simple = current_simple,
-    class = use_class
+    class = current_class
   )
   caugi(.session = cloned_session)
 }
