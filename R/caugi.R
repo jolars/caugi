@@ -435,8 +435,8 @@ caugi <- S7::new_class(
       # Validate and resolve class using the session (name-aware errors)
       resolved_class <- rs_resolve_class(session, class)
     } else if (class == "AUTO") {
-      # For empty graphs with AUTO, default to DAG
-      resolved_class <- "DAG"
+      # For empty graphs with AUTO, class is unknown until edges are added
+      resolved_class <- "UNKNOWN"
     }
 
     if (!identical(resolved_class, class)) {
