@@ -530,3 +530,13 @@ test_that("remove_edges errors when from/to have different lengths", {
     "`from` and `to` must be equal length"
   )
 })
+
+test_that("AUTO class doesn't trigger after init", {
+  cg <- caugi()
+  expect_equal(cg@graph_class, "UNKNOWN")
+  cg <- add_edges(cg, A %-->% B)
+  expect_equal(cg@graph_class, "UNKNOWN")
+
+  cg <- caugi(A %-->% B, class = "AUTO")
+  expect_equal(cg@graph_class, "DAG")
+})

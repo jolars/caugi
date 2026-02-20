@@ -310,7 +310,7 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
 #' @param node_names Character vector of node names.
 #' @param edges_dt A data.table with columns `from`, `edge`, `to`.
 #' @param simple Logical; whether the graph is simple.
-#' @param class Character; target graph class or `"AUTO"`.
+#' @param class Character; target graph class.
 #'
 #' @returns A list with `session` and resolved `class`.
 #'
@@ -343,9 +343,6 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
     resolved_class <- rs_resolve_class(session, class)
   } else {
     rs_set_edges(session, integer(), integer(), integer())
-    if (class == "AUTO") {
-      resolved_class <- "DAG"
-    }
   }
 
   rs_set_class(session, resolved_class)
@@ -420,21 +417,13 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
     current_nodes <- unique(current_nodes)
     current_edges <- unique(current_edges)
   }
-
-  # Build updated state with class auto-resolution on edge addition.
-  # When adding edges, always re-resolve the class to allow automatic upgrade
-  use_class <- if (identical(action, "add") && !is.null(edges)) {
-    "AUTO"
-  } else {
-    current_class
-  }
   if (isTRUE(inplace)) {
     .sync_session_inplace(
       session = session,
       node_names = current_nodes,
       edges_dt = current_edges,
       simple = current_simple,
-      class = use_class
+      class = current_class
     )
     return(cg)
   }
@@ -446,7 +435,7 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
     node_names = current_nodes,
     edges_dt = current_edges,
     simple = current_simple,
-    class = use_class
+    class = current_class
   )
   caugi(.session = cloned_session)
 }
