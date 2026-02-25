@@ -1286,15 +1286,15 @@ spouses <- function(cg, nodes = NULL, index = NULL) {
 #'
 #' @description Get districts (c-components) for all nodes, or for selected
 #' nodes in an ADMG/AG. A district is a maximal set of nodes connected via
-#' bidirected edges.
+#' bidirected edges. If both `nodes` and `index` are `NULL`, returns all districts in the graph.
 #'
 #' @param cg A `caugi` object of class ADMG or AG.
 #' @param nodes Optional character vector of node names. If supplied, returns
 #' district(s) containing these nodes.
 #' @param index Optional numeric vector of 1-based node indices. If supplied,
 #' returns district(s) containing these indices.
-#' @param all Optional logical. If `TRUE`, return all districts explicitly.
-#' Cannot be combined with `nodes` or `index`.
+#' @param all DEPRECATED (If `TRUE`, return all districts explicitly.
+#' Cannot be combined with `nodes` or `index`.)
 #'
 #' @returns If all districts are requested: a list of character vectors, one per
 #' district. If `nodes`/`index` are supplied: either a character vector (single
@@ -1316,15 +1316,28 @@ spouses <- function(cg, nodes = NULL, index = NULL) {
 #' @concept queries
 #'
 #' @export
-districts <- function(cg, nodes = NULL, index = NULL, all = NULL) {
+districts <- function(cg, nodes = NULL, index = NULL, all) {
   is_caugi(cg, throw_error = TRUE)
 
-  if (!is.null(all) && (!is.logical(all) || length(all) != 1L || is.na(all))) {
-    stop("`all` must be TRUE, FALSE, or NULL.", call. = FALSE)
+  if (!missing(all)) {
+    # TODO: Remove in a future major release
+    warning(
+      "`all` argument is deprecated and will be removed in a future version. ",
+      "To get all districts, simply call `districts(cg)` without `nodes` or `index`.",
+      call. = FALSE
+    )
+
+    if (
+      !is.null(all) && (!is.logical(all) || length(all) != 1L || is.na(all))
+    ) {
+      stop("`all` must be TRUE, FALSE, or NULL.", call. = FALSE)
+    }
+  } else {
+    all <- is.null(nodes) && is.null(index)
   }
 
-  nodes_supplied <- !missing(nodes) && !is.null(nodes)
-  index_supplied <- !missing(index) && !is.null(index)
+  nodes_supplied <- !is.null(nodes)
+  index_supplied <- !is.null(index)
 
   if (nodes_supplied && index_supplied) {
     stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
