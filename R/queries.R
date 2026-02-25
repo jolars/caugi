@@ -677,7 +677,7 @@ edge_types <- function(cg) {
 #'
 #' @export
 parents <- function(cg, nodes = NULL, index = NULL) {
-  check <- .validate_nodes_or_index(missing(nodes), index, missing(index))
+  check <- .validate_nodes_and_index(nodes, index)
 
   if (check$index_supplied) {
     return(.getter_output(
@@ -685,12 +685,6 @@ parents <- function(cg, nodes = NULL, index = NULL) {
       rs_parents_of(cg@session, as.integer(index - 1L)),
       cg@nodes$name[index]
     ))
-  }
-  if (!check$nodes_supplied) {
-    stop("Supply one of `nodes` or `index`.", call. = FALSE)
-  }
-  if (!is.character(nodes)) {
-    stop("`nodes` must be a character vector of node names.", call. = FALSE)
   }
 
   index <- .nodes_to_indices(cg, nodes)
@@ -734,7 +728,7 @@ parents <- function(cg, nodes = NULL, index = NULL) {
 #'
 #' @export
 children <- function(cg, nodes = NULL, index = NULL) {
-  check <- .validate_nodes_or_index(missing(nodes), index, missing(index))
+  check <- .validate_nodes_and_index(nodes, index)
 
   if (check$index_supplied) {
     return(.getter_output(
@@ -743,14 +737,9 @@ children <- function(cg, nodes = NULL, index = NULL) {
       cg@nodes$name[index]
     ))
   }
-  if (!check$nodes_supplied) {
-    stop("Supply one of `nodes` or `index`.", call. = FALSE)
-  }
-  if (!is.character(nodes)) {
-    stop("`nodes` must be a character vector of node names.", call. = FALSE)
-  }
 
   index <- .nodes_to_indices(cg, nodes)
+
   .getter_output(
     cg,
     rs_children_of(cg@session, as.integer(index)),
@@ -839,27 +828,17 @@ neighbors <- function(
     "partial"
   )
 ) {
-  nodes_supplied <- !missing(nodes)
-  index_supplied <- !missing(index) && !is.null(index)
-  if (nodes_supplied && index_supplied) {
-    stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
-  }
+  check <- .validate_nodes_and_index(nodes, index)
 
   mode <- match.arg(mode)
 
-  if (index_supplied) {
+  if (check$index_supplied) {
     idx <- as.integer(index - 1L)
     return(.getter_output(
       cg,
       rs_neighbors_of(cg@session, idx, mode),
       cg@nodes$name[index]
     ))
-  }
-  if (!nodes_supplied) {
-    stop("Supply one of `nodes` or `index`.", call. = FALSE)
-  }
-  if (!is.character(nodes)) {
-    stop("`nodes` must be a character vector of node names.", call. = FALSE)
   }
 
   index <- rs_indices_of(cg@session, nodes)
@@ -916,13 +895,9 @@ ancestors <- function(
     stop("`open` must be a single TRUE or FALSE.", call. = FALSE)
   }
 
-  nodes_supplied <- !missing(nodes)
-  index_supplied <- !missing(index) && !is.null(index)
-  if (nodes_supplied && index_supplied) {
-    stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
-  }
+  check <- .validate_nodes_and_index(nodes, index)
 
-  if (index_supplied) {
+  if (check$index_supplied) {
     idx0_list <- lapply(
       as.integer(index - 1L),
       function(ix) {
@@ -938,12 +913,6 @@ ancestors <- function(
       idx0_list,
       cg@nodes$name[index]
     ))
-  }
-  if (!nodes_supplied) {
-    stop("Supply one of `nodes` or `index`.", call. = FALSE)
-  }
-  if (!is.character(nodes)) {
-    stop("`nodes` must be a character vector of node names.", call. = FALSE)
   }
 
   index <- rs_indices_of(cg@session, nodes)
@@ -1002,13 +971,9 @@ descendants <- function(
     stop("`open` must be a single TRUE or FALSE.", call. = FALSE)
   }
 
-  nodes_supplied <- !missing(nodes)
-  index_supplied <- !missing(index) && !is.null(index)
-  if (nodes_supplied && index_supplied) {
-    stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
-  }
+  check <- .validate_nodes_and_index(nodes, index)
 
-  if (index_supplied) {
+  if (check$index_supplied) {
     idx0_list <- lapply(
       as.integer(index - 1L),
       function(ix) {
@@ -1024,12 +989,6 @@ descendants <- function(
       idx0_list,
       cg@nodes$name[index]
     ))
-  }
-  if (!nodes_supplied) {
-    stop("Supply one of `nodes` or `index`.", call. = FALSE)
-  }
-  if (!is.character(nodes)) {
-    stop("`nodes` must be a character vector of node names.", call. = FALSE)
   }
 
   index <- rs_indices_of(cg@session, nodes)
@@ -1103,14 +1062,9 @@ anteriors <- function(
   if (!is.logical(open) || length(open) != 1L) {
     stop("`open` must be a single TRUE or FALSE.", call. = FALSE)
   }
+  check <- .validate_nodes_and_index(nodes, index)
 
-  nodes_supplied <- !missing(nodes)
-  index_supplied <- !missing(index) && !is.null(index)
-  if (nodes_supplied && index_supplied) {
-    stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
-  }
-
-  if (index_supplied) {
+  if (check$index_supplied) {
     idx0_list <- lapply(
       as.integer(index - 1L),
       function(ix) {
@@ -1126,12 +1080,6 @@ anteriors <- function(
       idx0_list,
       cg@nodes$name[index]
     ))
-  }
-  if (!nodes_supplied) {
-    stop("Supply one of `nodes` or `index`.", call. = FALSE)
-  }
-  if (!is.character(nodes)) {
-    stop("`nodes` must be a character vector of node names.", call. = FALSE)
   }
 
   index <- rs_indices_of(cg@session, nodes)
@@ -1280,13 +1228,9 @@ posteriors <- function(
 #'
 #' @export
 markov_blanket <- function(cg, nodes = NULL, index = NULL) {
-  nodes_supplied <- !missing(nodes)
-  index_supplied <- !missing(index) && !is.null(index)
-  if (nodes_supplied && index_supplied) {
-    stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
-  }
+  check <- .validate_nodes_and_index(nodes, index)
 
-  if (index_supplied) {
+  if (check$index_supplied) {
     idx0_list <- lapply(
       as.integer(index - 1L),
       function(ix) rs_markov_blanket_of(cg@session, ix)
@@ -1296,12 +1240,6 @@ markov_blanket <- function(cg, nodes = NULL, index = NULL) {
       idx0_list,
       cg@nodes$name[index]
     ))
-  }
-  if (!nodes_supplied) {
-    stop("Supply one of `nodes` or `index`.", call. = FALSE)
-  }
-  if (!is.character(nodes)) {
-    stop("`nodes` must be a character vector of node names.", call. = FALSE)
   }
 
   index <- rs_indices_of(cg@session, nodes)
@@ -1412,24 +1350,14 @@ topological_sort <- function(cg) {
 #'
 #' @export
 spouses <- function(cg, nodes = NULL, index = NULL) {
-  nodes_supplied <- !missing(nodes)
-  index_supplied <- !missing(index) && !is.null(index)
-  if (nodes_supplied && index_supplied) {
-    stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
-  }
+  check <- .validate_nodes_and_index(nodes, index)
 
-  if (index_supplied) {
+  if (check$index_supplied) {
     return(.getter_output(
       cg,
       rs_spouses_of(cg@session, as.integer(index - 1L)),
       cg@nodes$name[index]
     ))
-  }
-  if (!nodes_supplied) {
-    stop("Supply one of `nodes` or `index`.", call. = FALSE)
-  }
-  if (!is.character(nodes)) {
-    stop("`nodes` must be a character vector of node names.", call. = FALSE)
   }
 
   index <- rs_indices_of(cg@session, nodes)
@@ -1640,20 +1568,9 @@ subgraph <- function(cg, nodes = NULL, index = NULL) {
   is_caugi(cg, throw_error = TRUE)
   session_names <- rs_names(cg@session)
 
-  nodes_supplied <- !missing(nodes) && !is.null(nodes)
-  index_supplied <- !missing(index) && !is.null(index)
+  check <- .validate_nodes_and_index(nodes, index)
 
-  if (nodes_supplied && index_supplied) {
-    stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
-  }
-  if (!nodes_supplied && !index_supplied) {
-    stop("Supply one of `nodes` or `index`.", call. = FALSE)
-  }
-
-  if (index_supplied) {
-    if (!is.numeric(index) || anyNA(index)) {
-      stop("`index` must be numeric without NA.", call. = FALSE)
-    }
+  if (check$index_supplied) {
     idx1 <- as.integer(index)
     n <- length(session_names)
     if (any(idx1 < 1L) || any(idx1 > n)) {
@@ -1662,12 +1579,6 @@ subgraph <- function(cg, nodes = NULL, index = NULL) {
     keep_idx0 <- idx1 - 1L
     keep_names <- session_names[idx1]
   } else {
-    if (!is.character(nodes)) {
-      stop("`nodes` must be a character vector.", call. = FALSE)
-    }
-    if (anyNA(nodes)) {
-      stop("`nodes` contains NA.", call. = FALSE)
-    }
     pos <- match(nodes, session_names)
     if (anyNA(pos)) {
       miss <- nodes[is.na(pos)]

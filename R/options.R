@@ -172,7 +172,7 @@ caugi_options <- function(...) {
           sprintf(
             "Cannot access '%s': '%s' is not a list",
             paste(path, collapse = "$"),
-            paste(head(path, -1L), collapse = "$")
+            paste(utils::head(path, -1L), collapse = "$")
           ),
           call. = FALSE
         )
