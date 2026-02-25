@@ -52,6 +52,7 @@ Other queries:
 \code{\link{neighbors}()},
 \code{\link{nodes}()},
 \code{\link{parents}()},
+\code{\link{posteriors}()},
 \code{\link{same_nodes}()},
 \code{\link{spouses}()},
 \code{\link{subgraph}()},

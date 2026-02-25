@@ -964,3 +964,198 @@ test_that("anteriors returns list for multiple nodes", {
   expect_null(result$A)
   expect_equal(sort(result$D), c("A", "B", "C"))
 })
+
+# ────────────────────────────── Posteriors tests ──────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_that("posteriors works for DAG (equals descendants)", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    class = "DAG"
+  )
+  expect_equal(sort(posteriors(cg, "A")), c("B", "C"))
+  expect_equal(posteriors(cg, "B"), "C")
+  expect_null(posteriors(cg, "C"))
+})
+
+test_that("posteriors works for PDAG with mixed edges", {
+  # PDAG: A -> B --- C, B -> D
+  cg <- caugi(
+    A %-->% B %---% C,
+    B %-->% D,
+    class = "PDAG"
+  )
+  # A's posteriors: B (child) -> C (undirected of B), D (child of B)
+  expect_equal(sort(posteriors(cg, "A")), c("B", "C", "D"))
+  # B's posteriors: D (child) and C (undirected)
+  expect_equal(sort(posteriors(cg, "B")), c("C", "D"))
+  # C's posteriors: B (undirected) -> D (child of B)
+  expect_equal(sort(posteriors(cg, "C")), c("B", "D"))
+  # D has no posteriors
+  expect_null(posteriors(cg, "D"))
+})
+
+test_that("posteriors works for PDAG with undirected cycle", {
+  # PDAG: A --- B --- C --- A (triangle)
+  cg <- caugi(
+    A %---% B,
+    B %---% C,
+    C %---% A,
+    class = "PDAG"
+  )
+  # All nodes can reach all others via undirected edges
+  # For undirected-only graphs, posteriors == anteriors
+  expect_equal(sort(posteriors(cg, "A")), c("B", "C"))
+  expect_equal(sort(posteriors(cg, "B")), c("A", "C"))
+  expect_equal(sort(posteriors(cg, "C")), c("A", "B"))
+})
+
+test_that("posteriors not defined for UG", {
+  cg <- caugi(
+    A %---% B,
+    B %---% C,
+    class = "UG"
+  )
+  expect_error(posteriors(cg, "B"), "not defined for UG")
+})
+
+test_that("posteriors not defined for ADMG", {
+  cg <- caugi(
+    A %-->% B,
+    A %<->% C,
+    class = "ADMG"
+  )
+  expect_error(posteriors(cg, "B"), "not defined for ADMG")
+})
+
+test_that("posteriors returns list for multiple nodes", {
+  cg <- caugi(
+    A %-->% B %---% C,
+    B %-->% D,
+    class = "PDAG"
+  )
+  result <- posteriors(cg, c("A", "D"))
+  expect_type(result, "list")
+  expect_named(result, c("A", "D"))
+  expect_equal(sort(result$A), c("B", "C", "D"))
+  expect_null(result$D)
+})
+
+test_that("posteriors works with index parameter", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    class = "DAG"
+  )
+  # Index 1 is A (0-indexed becomes 1-indexed in R)
+  expect_equal(sort(posteriors(cg, index = 1)), c("B", "C"))
+  expect_equal(posteriors(cg, index = 2), "C")
+})
+
+test_that("posteriors excludes the node itself", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    class = "DAG"
+  )
+  res <- posteriors(cg, "A")
+  expect_false("A" %in% res)
+})
+
+test_that("posteriors handles multi-step mixed reachability (PDAG)", {
+  # A -> B --- C --- D -> E
+  cg <- caugi(
+    A %-->% B,
+    B %---% C,
+    C %---% D,
+    D %-->% E,
+    class = "PDAG"
+  )
+
+  # From A: B, C, D, E should all be reachable
+  expect_equal(sort(posteriors(cg, "A")), c("B", "C", "D", "E"))
+})
+
+test_that("posteriors does not return duplicates in undirected cycles", {
+  # A --- B --- C --- A
+  cg <- caugi(
+    A %---% B,
+    B %---% C,
+    C %---% A,
+    class = "PDAG"
+  )
+
+  res <- posteriors(cg, "A")
+  expect_equal(length(res), length(unique(res)))
+})
+
+test_that("posteriors handles branching mixed structure correctly", {
+  #      B --- C
+  #     /
+  # A ->
+  #     \
+  #      D -> E
+  cg <- caugi(
+    A %-->% B,
+    B %---% C,
+    A %-->% D,
+    D %-->% E,
+    class = "PDAG"
+  )
+
+  expect_equal(sort(posteriors(cg, "A")), c("B", "C", "D", "E"))
+})
+
+test_that("posteriors works for multiple starting nodes (set semantics)", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    D %-->% E,
+    class = "DAG"
+  )
+
+  res <- posteriors(cg, c("A", "D"))
+
+  expect_type(res, "list")
+  expect_named(res, c("A", "D"))
+
+  expect_equal(sort(res$A), c("B", "C"))
+  expect_equal(res$D, "E")
+})
+
+test_that("posteriors returns empty (NULL) when no reachable nodes exist", {
+  cg <- caugi(
+    A %-->% B,
+    class = "DAG"
+  )
+
+  expect_null(posteriors(cg, "B"))
+})
+
+test_that("posteriors respects disconnected components", {
+  cg <- caugi(
+    A %-->% B,
+    C %-->% D,
+    class = "DAG"
+  )
+
+  expect_equal(posteriors(cg, "A"), "B")
+  expect_equal(posteriors(cg, "C")[posteriors(cg, "C") == "A"], character(0))
+})
+
+test_that("posteriors index parameter matches name-based query", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    class = "DAG"
+  )
+
+  nodes_vec <- nodes(cg)
+  idx_A <- which(nodes_vec == "A")
+
+  expect_equal(
+    sort(posteriors(cg, index = idx_A)),
+    sort(posteriors(cg, "A"))
+  )
+})

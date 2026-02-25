@@ -974,6 +974,16 @@ fn rs_anteriors_of(mut session: ExternalPtr<GraphSession>, node: i32) -> Robj {
 }
 
 #[extendr]
+fn rs_posteriors_of(mut session: ExternalPtr<GraphSession>, node: i32) -> Robj {
+    let idx = rint_to_u32(Rint::from(node), "node");
+    let result = session
+        .as_mut()
+        .posteriors_of(idx)
+        .unwrap_or_else(|e| throw_r_error(e));
+    result.iter().map(|&x| x as i32).collect_robj()
+}
+
+#[extendr]
 fn rs_markov_blanket_of(mut session: ExternalPtr<GraphSession>, node: i32) -> Robj {
     let idx = rint_to_u32(Rint::from(node), "node");
     let result = session
@@ -1467,6 +1477,7 @@ extendr_module! {
     fn rs_ancestors_of;
     fn rs_descendants_of;
     fn rs_anteriors_of;
+    fn rs_posteriors_of;
     fn rs_markov_blanket_of;
     fn rs_spouses_of;
     fn rs_exogenous_nodes;

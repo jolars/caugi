@@ -94,6 +94,51 @@ where
         stack.extend_from_slice(parents_of(u));
         stack.extend_from_slice(undirected_of(u));
     }
+
+    // Reset i's flag before collecting so it's not included
+    seen[i as usize] = false;
+    bitset::collect_from_mask(&seen)
+}
+
+/// Compute posteriors of a single node using iterative DFS.
+///
+/// The posterior set (dual of anterior set from Richardson and Spirtes, 2002) includes
+/// all nodes reachable by following paths where every edge is either undirected or
+/// directed away from the source node.
+///
+/// # Arguments
+/// * `n` - Total number of nodes in the graph
+/// * `i` - The node to find posteriors of
+/// * `children_of` - Function returning children of a given node (directed edges pointing out)
+/// * `undirected_of` - Function returning undirected neighbors of a given node
+///
+/// Returns a sorted vector of posterior node indices (not including `i` itself).
+pub fn posteriors_of<'a, F, G>(n: u32, i: u32, children_of: F, undirected_of: G) -> Vec<u32>
+where
+    F: Fn(u32) -> &'a [u32],
+    G: Fn(u32) -> &'a [u32],
+{
+    let n = n as usize;
+    let mut seen = vec![false; n];
+    let mut stack: Vec<u32> = Vec::new();
+
+    // Mark i as seen so it won't be included in the result
+    seen[i as usize] = true;
+
+    // Initialize with children and undirected neighbors of i
+    stack.extend_from_slice(children_of(i));
+    stack.extend_from_slice(undirected_of(i));
+
+    while let Some(u) = stack.pop() {
+        let ui = u as usize;
+        if std::mem::replace(&mut seen[ui], true) {
+            continue;
+        }
+        // Continue traversing via children and undirected neighbors
+        stack.extend_from_slice(children_of(u));
+        stack.extend_from_slice(undirected_of(u));
+    }
+
     // Reset i's flag before collecting so it's not included
     seen[i as usize] = false;
     bitset::collect_from_mask(&seen)
@@ -256,5 +301,63 @@ mod tests {
         assert_eq!(anteriors_of(3, 0, parents_of, undirected_of), vec![1, 2]);
         assert_eq!(anteriors_of(3, 1, parents_of, undirected_of), vec![0, 2]);
         assert_eq!(anteriors_of(3, 2, parents_of, undirected_of), vec![0, 1]);
+    }
+
+    #[test]
+    fn posteriors_of_pdag_mixed() {
+        // PDAG: 0 -> 1 --- 2, 1 -> 3
+        // Children: 0 has child 1, 1 has child 3
+        // Undirected: 1 --- 2
+        let children_of = |n: u32| -> &[u32] {
+            match n {
+                0 => &[1],
+                1 => &[3],
+                _ => &[],
+            }
+        };
+        let u1 = [2];
+        let u2 = [1];
+        let undirected_of = |n: u32| -> &[u32] {
+            match n {
+                1 => &u1,
+                2 => &u2,
+                _ => &[],
+            }
+        };
+
+        // Posteriors of 0: 1 (child) -> 2 (undirected of 1), 3 (child of 1)
+        assert_eq!(posteriors_of(4, 0, children_of, undirected_of), vec![1, 2, 3]);
+        // Posteriors of 1: 3 (child) and 2 (undirected)
+        assert_eq!(posteriors_of(4, 1, children_of, undirected_of), vec![2, 3]);
+        // Posteriors of 2: 1 (undirected) -> 3 (child of 1)
+        assert_eq!(posteriors_of(4, 2, children_of, undirected_of), vec![1, 3]);
+        // Posteriors of 3: none (no children, no undirected neighbors)
+        assert_eq!(
+            posteriors_of(4, 3, children_of, undirected_of),
+            Vec::<u32>::new()
+        );
+    }
+
+    #[test]
+    fn posteriors_of_undirected_cycle() {
+        // PDAG with undirected triangle: 0 --- 1 --- 2 --- 0
+        let u0 = [1, 2];
+        let u1 = [0, 2];
+        let u2 = [0, 1];
+        let children_of = |_: u32| -> &[u32] { &[] };
+        let undirected_of = |n: u32| -> &[u32] {
+            match n {
+                0 => &u0,
+                1 => &u1,
+                2 => &u2,
+                _ => &[],
+            }
+        };
+
+        // All nodes can reach all others via undirected edges
+        // For undirected-only graphs, posteriors == anteriors
+        assert_eq!(posteriors_of(3, 0, children_of, undirected_of), vec![1, 2]);
+        assert_eq!(posteriors_of(3, 1, children_of, undirected_of), vec![0, 2]);
+        assert_eq!(posteriors_of(3, 2, children_of, undirected_of), vec![0, 1]);
     }
 }

@@ -447,6 +447,12 @@ impl GraphSession {
         view.anteriors_of(node).map_err(|e| self.map_error(e))
     }
 
+    /// Get posteriors of a node.
+    pub fn posteriors_of(&mut self, node: u32) -> Result<Vec<u32>, String> {
+        let view = self.view()?;
+        view.posteriors_of(node).map_err(|e| self.map_error(e))
+    }
+
     /// Get Markov blanket of a node.
     pub fn markov_blanket_of(&mut self, node: u32) -> Result<Vec<u32>, String> {
         let view = self.view()?;

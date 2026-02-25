@@ -66,6 +66,7 @@ Other queries:
 \code{\link{markov_blanket}()},
 \code{\link{neighbors}()},
 \code{\link{nodes}()},
+\code{\link{posteriors}()},
 \code{\link{same_nodes}()},
 \code{\link{spouses}()},
 \code{\link{subgraph}()},

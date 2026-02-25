@@ -82,6 +82,8 @@ rs_descendants_of <- function(session, node) .Call(wrap__rs_descendants_of, sess
 
 rs_anteriors_of <- function(session, node) .Call(wrap__rs_anteriors_of, session, node)
 
+rs_posteriors_of <- function(session, node) .Call(wrap__rs_posteriors_of, session, node)
+
 rs_markov_blanket_of <- function(session, node) .Call(wrap__rs_markov_blanket_of, session, node)
 
 rs_spouses_of <- function(session, idxs) .Call(wrap__rs_spouses_of, session, idxs)

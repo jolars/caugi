@@ -244,6 +244,17 @@ impl Ag {
         )
     }
 
+    /// All posteriors of `i` (reachable via undirected or directed-out edges).
+    #[inline]
+    pub fn posteriors_of(&self, i: u32) -> Vec<u32> {
+        traversal::posteriors_of(
+            self.n(),
+            i,
+            |u| self.children_of(u),
+            |u| self.undirected_of(u),
+        )
+    }
+
     /// Markov blanket of `i` in an AG.
     /// For nodes with only directed/bidirected edges (like ADMG): Pa(Dis(i)) ∪ (Dis(i) \ {i})
     /// For nodes with undirected edges: includes undirected neighbors as well.
