@@ -612,19 +612,6 @@ test_that("districts supports all, nodes, and index modes", {
   expect_named(by_index, c("A", "D"))
   expect_setequal(by_index$A, c("A", "B", "C"))
   expect_identical(by_index$D, "D")
-
-  all_explicit <- districts(cg, all = TRUE)
-  expect_equal(length(all_explicit), length(all_d))
-  expect_true(any(vapply(
-    all_explicit,
-    function(x) setequal(x, c("A", "B", "C")),
-    logical(1)
-  )))
-  expect_true(any(vapply(
-    all_explicit,
-    function(x) identical(x, "D"),
-    logical(1)
-  )))
 })
 
 test_that("districts validates argument combinations", {
@@ -634,8 +621,6 @@ test_that("districts validates argument combinations", {
     districts(cg, nodes = "A", index = 1L),
     "either `nodes` or `index`"
   )
-  expect_error(districts(cg, all = TRUE, nodes = "A"), "cannot be combined")
-  expect_error(districts(cg, all = FALSE), "requires `nodes` or `index`")
   expect_error(districts(cg, index = 0), "out of range")
   expect_error(districts(cg, nodes = c("A", NA_character_)), "without NA")
 })

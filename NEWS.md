@@ -28,6 +28,11 @@
 - Fixed a bug causing `plot()` to use incorrect layout if node names were not
   in the same order as in the graph object (#198).
 
+## Deprecations
+
+- The parameter `all` in `districts()` has been deprecated. Just use
+  `districts()` without arguments to get all districts.
+
 # caugi 1.0.0
 
 ## New Features

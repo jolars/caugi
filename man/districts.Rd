@@ -4,7 +4,7 @@
 \alias{districts}
 \title{Get districts (c-components) of an ADMG or AG}
 \usage{
-districts(cg, nodes = NULL, index = NULL, all = NULL)
+districts(cg, nodes = NULL, index = NULL, all)
 }
 \arguments{
 \item{cg}{A \code{caugi} object of class ADMG or AG.}
@@ -15,8 +15,8 @@ district(s) containing these nodes.}
 \item{index}{Optional numeric vector of 1-based node indices. If supplied,
 returns district(s) containing these indices.}
 
-\item{all}{Optional logical. If \code{TRUE}, return all districts explicitly.
-Cannot be combined with \code{nodes} or \code{index}.}
+\item{all}{DEPRECATED (If \code{TRUE}, return all districts explicitly.
+Cannot be combined with \code{nodes} or \code{index}.)}
 }
 \value{
 If all districts are requested: a list of character vectors, one per
@@ -26,7 +26,7 @@ target) or a named list of character vectors (multiple targets).
 \description{
 Get districts (c-components) for all nodes, or for selected
 nodes in an ADMG/AG. A district is a maximal set of nodes connected via
-bidirected edges.
+bidirected edges. If both \code{nodes} and \code{index} are \code{NULL}, returns all districts in the graph.
 }
 \examples{
 cg <- caugi(
