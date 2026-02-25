@@ -133,6 +133,14 @@ impl Dag {
         self.ancestors_of(i)
     }
 
+    /// Posterior set of `i` for DAGs.
+    ///
+    /// For DAGs, the posterior set equals the descendant set (no undirected edges).
+    #[inline]
+    pub fn posteriors_of(&self, i: u32) -> Vec<u32> {
+        self.descendants_of(i)
+    }
+
     /// Markov blanket of `i`: `Pa(i) ∪ Ch(i) ∪ (⋃ Pa(c) \ {i : c∈Ch(i)})`.
     #[inline]
     pub fn markov_blanket_of(&self, i: u32) -> Vec<u32> {

@@ -1089,6 +1089,86 @@ anteriors <- function(cg, nodes = NULL, index = NULL) {
   .getter_output(cg, idx0_list, nodes)
 }
 
+#' @title Get posteriors of nodes in a `caugi`
+#'
+#' @description
+#' Get the posterior set of nodes in a graph. The posterior set (dual of the
+#' anterior set from Richardson and Spirtes, 2002) includes all nodes reachable
+#' by following paths where every edge is either undirected or directed away from
+#' the source node.
+#'
+#' For DAGs, the posterior set equals the descendant set (since there are no
+#' undirected edges). For PDAGs, it includes both descendants and nodes reachable
+#' via undirected edges.
+#'
+#' @param cg A `caugi` object of class DAG, PDAG, or AG.
+#' @param nodes A vector of node names.
+#' @param index A vector of node indexes.
+#'
+#' @returns Either a character vector of node names (if a single node is
+#'   requested) or a list of character vectors (if multiple nodes are requested).
+#'
+#' @examples
+#' # PDAG example with directed and undirected edges
+#' cg <- caugi(
+#'   A %-->% B %---% C,
+#'   B %-->% D,
+#'   class = "PDAG"
+#' )
+#'
+#' posteriors(cg, "A") # B, C, D
+#' posteriors(cg, "B") # C, D
+#' posteriors(cg, "D") # NULL (no posteriors)
+#'
+#' # For DAGs, posteriors equals descendants
+#' cg_dag <- caugi(
+#'   A %-->% B %-->% C,
+#'   class = "DAG"
+#' )
+#' posteriors(cg_dag, "A") # B, C
+#'
+#' @family queries
+#' @concept queries
+#'
+#' @export
+posteriors <- function(cg, nodes = NULL, index = NULL) {
+  nodes_supplied <- !is.null(nodes)
+  index_supplied <- !is.null(index)
+
+  if (nodes_supplied && index_supplied) {
+    stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
+  }
+
+  if (index_supplied) {
+    idx0_list <- lapply(
+      as.integer(index - 1L),
+      function(ix) rs_posteriors_of(cg@session, ix)
+    )
+    return(.getter_output(
+      cg,
+      idx0_list,
+      cg@nodes$name[index]
+    ))
+  }
+
+  if (!nodes_supplied) {
+    stop("Supply one of `nodes` or `index`.", call. = FALSE)
+  }
+
+  if (!is.character(nodes)) {
+    stop("`nodes` must be a character vector of node names.", call. = FALSE)
+  }
+
+  index <- rs_indices_of(cg@session, nodes)
+
+  idx0_list <- lapply(
+    as.integer(index),
+    function(ix) rs_posteriors_of(cg@session, ix)
+  )
+
+  .getter_output(cg, idx0_list, nodes)
+}
+
 #' @title Get Markov blanket of nodes in a `caugi`
 #'
 #' @param cg A `caugi` object.

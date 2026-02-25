@@ -4,6 +4,11 @@
 
 - Add `minimal_d_separator()`, which computes a minimal d-separator between
   sets of nodes in a DAG, with support for mandatory inclusions and restrictions.
+- Add `posteriors()` query function, which is the dual of `anteriors()`. It
+  returns all nodes reachable by following paths where every edge is either
+  undirected or directed away from the source node. For DAGs, `posteriors()`
+  equals `descendants()`. For PDAGs and AGs, it includes both descendants and
+  nodes reachable via undirected edges.
 
 ## Improvements
 

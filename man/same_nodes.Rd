@@ -58,6 +58,7 @@ Other queries:
 \code{\link{neighbors}()},
 \code{\link{nodes}()},
 \code{\link{parents}()},
+\code{\link{posteriors}()},
 \code{\link{spouses}()},
 \code{\link{subgraph}()},
 \code{\link{topological_sort}()}

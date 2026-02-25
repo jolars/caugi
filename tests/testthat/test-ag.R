@@ -151,6 +151,26 @@ test_that("anteriors work for AG", {
   expect_true("C" %in% ant_e) # via D --- C
 })
 
+test_that("posteriors work for AG", {
+  # Posteriors include children and undirected neighbors transitively
+  # Note: In an AG, a node with undirected edge can't have arrowhead edges
+  # So we create a valid graph: A --> B, C --- D --- E
+  ag <- caugi(
+    A %-->% B,
+    C %---% D %---% E,
+    class = "AG"
+  )
+
+  # Posteriors of A: B (child)
+  post_a <- posteriors(ag, "A")
+  expect_true("B" %in% post_a)
+
+  # Posteriors of C: D (undirected), E (via D)
+  post_c <- posteriors(ag, "C")
+  expect_true("D" %in% post_c)
+  expect_true("E" %in% post_c) # via D --- E
+})
+
 test_that("exogenous returns nodes without parents", {
   ag <- caugi(
     A %-->% B,
