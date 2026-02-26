@@ -9,7 +9,7 @@ spouses(cg, nodes = NULL, index = NULL)
 \arguments{
 \item{cg}{A \code{caugi} object of class ADMG.}
 
-\item{nodes}{A vector of node names.}
+\item{nodes}{A character vector of node names.}
 
 \item{index}{A vector of node indexes.}
 }

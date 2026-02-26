@@ -26,8 +26,8 @@ minimal_d_separator(
 \arguments{
 \item{cg}{A \code{caugi} object (must be a DAG).}
 
-\item{X, Y}{Node selectors: character vector of names or unquoted expression.
-Use \verb{*_index} to pass 1-based indices.}
+\item{X, Y}{Character vectors of node names. Use \verb{*_index} to pass 1-based
+indices.}
 
 \item{I}{Nodes that must be included in the separator.}
 
