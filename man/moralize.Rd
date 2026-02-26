@@ -32,6 +32,7 @@ Other operations:
 \code{\link{exogenize}()},
 \code{\link{latent_project}()},
 \code{\link{mutate_caugi}()},
+\code{\link{normalize_latent_structure}()},
 \code{\link{skeleton}()}
 }
 \concept{operations}

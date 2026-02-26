@@ -2,6 +2,8 @@
 
 ## New Features
 
+- Add `normalize_latent_structure()`, which normalizes the latent structure of a
+  DAG while preserving the marginal model over observed variables.
 - Add `minimal_d_separator()`, which computes a minimal d-separator between
   sets of nodes in a DAG, with support for mandatory inclusions and restrictions.
 - Add `posteriors()` query function, which is the dual of `anteriors()`. It

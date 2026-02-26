@@ -45,6 +45,7 @@ Other operations:
 \code{\link{latent_project}()},
 \code{\link{moralize}()},
 \code{\link{mutate_caugi}()},
+\code{\link{normalize_latent_structure}()},
 \code{\link{skeleton}()}
 }
 \concept{operations}

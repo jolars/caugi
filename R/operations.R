@@ -301,6 +301,173 @@ exogenize <- function(cg, nodes) {
   cg
 }
 
+# ──────────────────────────────────────────────────────────────────────────────
+# ─────────────────────── Normalize latent structure (DAG) ─────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+
+#' @title Normalize latent structure in a DAG
+#'
+#' @description
+#' Normalizes a DAG with latent variables while preserving the induced marginal
+#' model over the observed variables. This is done by:
+#'
+#' (1) exogenizing all latent nodes (making them parentless),
+#' (2) removing exogenous latent nodes with at most one child, and
+#' (3) removing exogenous latent nodes whose child sets are strict subsets of
+#'     another latent node's child set.
+#'
+#' This corresponds to Lemmas 1--3 in Evans (2016).
+#'
+#' @param cg A `caugi` object of class "DAG".
+#' @param latents Character vector of latent node names.
+#'
+#' @returns A `caugi` object of class "DAG".
+#'
+#' @references
+#' Evans, R. J. (2016). Graphs for margins of Bayesian networks. Scandinavian
+#' Journal of Statistics, 43(3), 625–648. \doi{10.1111/sjos.12194}
+#'
+#' @examples
+#' dag <- caugi(
+#'   A %-->% U,
+#'   U %-->% X + Y,
+#'   class = "DAG"
+#' )
+#'
+#' normalize_latent_structure(dag, latents = "U")
+#'
+#' # More complex example with two latents and nested child sets
+#' dag2 <- caugi(
+#'   A %-->% U,
+#'   U %-->% X + Y + Z,
+#'   U2 %-->% Y + Z,
+#'   class = "DAG"
+#' )
+#' normalize_latent_structure(dag2, c("U", "U2"))
+#'
+#' @family operations
+#' @concept operations
+#'
+#' @export
+normalize_latent_structure <- function(cg, latents) {
+  is_caugi(cg, throw_error = TRUE)
+
+  if (!is_dag(cg)) {
+    stop(
+      "normalize_latent_structure() can only be applied to DAGs.",
+      call. = FALSE
+    )
+  }
+
+  if (!is.character(latents)) {
+    stop("`latents` must be a character vector of node names.", call. = FALSE)
+  }
+
+  latents <- unique(latents)
+
+  if (length(latents) == 0L) {
+    return(cg)
+  }
+
+  node_names <- nodes(cg)$name
+  missing_latents <- setdiff(latents, node_names)
+
+  if (length(missing_latents) > 0L) {
+    stop(
+      paste0(
+        "Unknown latent node(s): ",
+        paste(missing_latents, collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
+
+  cg <- exogenize(cg, nodes = latents)
+
+  changed <- TRUE
+
+  while (changed) {
+    changed <- FALSE
+    current_latents <- intersect(latents, nodes(cg)$name)
+
+    if (length(current_latents) == 0L) {
+      break
+    }
+
+    # Lemma 3: remove exogenous latents with <= 1 child
+    child_counts <- vapply(
+      current_latents,
+      function(l) {
+        ch <- children(cg, l)
+
+        if (is.null(ch)) {
+          0L
+        } else {
+          length(ch)
+        }
+      },
+      integer(1)
+    )
+
+    to_drop <- current_latents[child_counts <= 1L]
+
+    if (length(to_drop) > 0L) {
+      cg <- remove_nodes(cg, name = to_drop)
+      changed <- TRUE
+      next
+    }
+
+    # Lemma 2: remove nested child sets among exogenous latents
+    current_latents <- intersect(latents, nodes(cg)$name)
+
+    if (length(current_latents) < 2L) {
+      break
+    }
+
+    child_sets <- lapply(
+      current_latents,
+      function(l) {
+        ch <- children(cg, l)
+        if (is.null(ch)) {
+          character(0)
+        } else {
+          sort(unique(ch))
+        }
+      }
+    )
+
+    drop_one <- NULL
+
+    for (i in seq_len(length(current_latents) - 1L)) {
+      for (j in (i + 1L):length(current_latents)) {
+        ch_i <- child_sets[[i]]
+        ch_j <- child_sets[[j]]
+
+        if (length(ch_i) < length(ch_j) && all(ch_i %in% ch_j)) {
+          drop_one <- current_latents[i]
+          break
+        }
+
+        if (length(ch_j) < length(ch_i) && all(ch_j %in% ch_i)) {
+          drop_one <- current_latents[j]
+          break
+        }
+      }
+
+      if (!is.null(drop_one)) {
+        break
+      }
+    }
+
+    if (!is.null(drop_one)) {
+      cg <- remove_nodes(cg, name = drop_one)
+      changed <- TRUE
+    }
+  }
+
+  cg
+}
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # ────────────────────────── Marginalize and condition ─────────────────────────
