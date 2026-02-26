@@ -8,9 +8,9 @@
 #' in `Y` given `Z` in a DAG.
 #'
 #' @param cg A `caugi` object.
-#' @param X,Y,Z Node selectors: character vector of names, unquoted expression
-#'   (supports `+` and `c()`), or `NULL`. Use `*_index` to pass 1-based indices.
-#'   If `Z` is `NULL` or missing, no nodes are conditioned on.
+#' @param X,Y,Z Character vectors of node names, or `NULL`. Use `*_index` to
+#'   pass 1-based indices. If `Z` is `NULL` or missing, no nodes are conditioned
+#'   on.
 #' @param X_index,Y_index,Z_index Optional numeric 1-based indices (exclusive
 #'   with `X`,`Y`,`Z` respectively).
 #'
@@ -302,8 +302,8 @@ all_backdoor_sets <- function(
 #' 4. Returns minimal separator or NULL if none exists within R
 #'
 #' @param cg A `caugi` object (must be a DAG).
-#' @param X,Y Node selectors: character vector of names or unquoted expression.
-#'   Use `*_index` to pass 1-based indices.
+#' @param X,Y Character vectors of node names. Use `*_index` to pass 1-based
+#'   indices.
 #' @param I Nodes that must be included in the separator.
 #' @param R Nodes allowed in the separator. If `NULL`, uses all nodes excluding
 #'   X and Y.

@@ -9,8 +9,7 @@ parents(cg, nodes = NULL, index = NULL)
 \arguments{
 \item{cg}{A \code{caugi} object.}
 
-\item{nodes}{A vector of node names, a vector of unquoted
-node names, or an expression combining these with \code{+} and \code{c()}.}
+\item{nodes}{A character vector of node names.}
 
 \item{index}{A vector of node indexes.}
 }

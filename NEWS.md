@@ -12,6 +12,15 @@
 
 ## Improvements
 
+- Fixed incorrect documentation for the `nodes` parameter in `parents()`,
+  `children()`, `ancestors()`, `descendants()`, `anteriors()`,
+  `neighbors()`, `markov_blanket()`, and `subgraph()`: the parameter now
+  correctly documents that a character vector of node names is required
+  (unquoted names are not supported).
+- Fixed incorrect documentation for the `X`, `Y`, and `Z` parameters in
+  `d_separated()`, `m_separated()`, and `minimal_d_separator()`.
+- Reduced documentation repetition by using `@inheritParams parents` in
+  `children()`, `ancestors()`, `descendants()`, and `markov_blanket()`.
 - Rust remains the single source of truth for graph state. Graph properties
   (`simple`, `graph_class`, `nodes`, `edges`) are sourced from the `session`.
   - Session is always created, including empty graphs (n = 0), which simplifies

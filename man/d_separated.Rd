@@ -17,8 +17,8 @@ d_separated(
 \arguments{
 \item{cg}{A \code{caugi} object.}
 
-\item{X, Y, Z}{Node selectors: character vector of names, unquoted expression
-(supports \code{+} and \code{c()}), or \code{NULL}. Use \verb{*_index} to pass 1-based indices.
+\item{X, Y, Z}{Character vectors of node names, or \code{NULL}. Use \verb{*_index} to
+pass 1-based indices.
 If \code{Z} is \code{NULL} or missing, no nodes are conditioned on.}
 
 \item{X_index, Y_index, Z_index}{Optional numeric 1-based indices (exclusive
