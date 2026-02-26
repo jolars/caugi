@@ -764,9 +764,7 @@ children <- function(cg, nodes = NULL, index = NULL) {
 #' Get neighbors of a node in the graph, optionally filtered by edge direction
 #' or type. This function works for all graph classes including `UNKNOWN`.
 #'
-#' @param cg A `caugi` object.
-#' @param nodes A character vector of node names.
-#' @param index A vector of node indexes.
+#' @inheritParams parents
 #' @param mode Character; specifies which types of neighbors to return:
 #' \describe{
 #'   \item{`"all"`}{All neighbors (default)}
@@ -1010,9 +1008,8 @@ descendants <- function(cg, nodes = NULL, index = NULL) {
 #' undirected edges). For PDAGs, it includes both ancestors and nodes reachable
 #' via undirected edges.
 #'
+#' @inheritParams parents
 #' @param cg A `caugi` object of class DAG or PDAG.
-#' @param nodes A character vector of node names.
-#' @param index A vector of node indexes.
 #'
 #' @returns Either a character vector of node names (if a single node is
 #' requested) or a list of character vectors (if multiple nodes are requested).
@@ -1089,9 +1086,8 @@ anteriors <- function(cg, nodes = NULL, index = NULL) {
 #' undirected edges). For PDAGs, it includes both descendants and nodes reachable
 #' via undirected edges.
 #'
+#' @inheritParams parents
 #' @param cg A `caugi` object of class DAG, PDAG, or AG.
-#' @param nodes A character vector of node names.
-#' @param index A vector of node indexes.
 #'
 #' @returns Either a character vector of node names (if a single node is
 #'   requested) or a list of character vectors (if multiple nodes are requested).
@@ -1296,9 +1292,8 @@ topological_sort <- function(cg) {
 #'
 #' @description Get nodes connected via bidirected edges in an ADMG.
 #'
+#' @inheritParams parents
 #' @param cg A `caugi` object of class ADMG.
-#' @param nodes A character vector of node names.
-#' @param index A vector of node indexes.
 #'
 #' @returns Either a character vector of node names (if a single node is
 #' requested) or a list of character vectors (if multiple nodes are requested).
@@ -1523,9 +1518,7 @@ m_separated <- function(
 
 #' @title Get the induced subgraph
 #'
-#' @param cg A `caugi` object.
-#' @param nodes A character vector of node names.
-#' @param index A vector of node indexes.
+#' @inheritParams parents
 #'
 #' @returns A new `caugi` that is a subgraph of the selected nodes.
 #'
