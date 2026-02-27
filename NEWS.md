@@ -38,6 +38,8 @@
 
 - Fixed a bug causing `plot()` to use incorrect layout if node names were not
   in the same order as in the graph object (#198).
+- Fixed `set_edges()` so that for non-simple graphs it only replaces edges for
+  the specified ordered pairs, preserving edges in the opposite direction.
 
 ## Deprecations
 

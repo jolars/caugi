@@ -620,6 +620,26 @@ fn rs_set_edges(
 }
 
 #[extendr]
+fn rs_replace_edges(
+    mut session: ExternalPtr<GraphSession>,
+    from: Integers,
+    to: Integers,
+    etype: Integers,
+) {
+    if from.len() != to.len() || from.len() != etype.len() {
+        throw_r_error("vectors must have equal length");
+    }
+    let mut edges = EdgeBuffer::with_capacity(from.len());
+    for i in 0..from.len() {
+        let u = rint_to_u32(from[i], "from");
+        let v = rint_to_u32(to[i], "to");
+        let t = rint_to_u8(etype[i], "etype");
+        edges.push(u, v, t);
+    }
+    session.as_mut().replace_edges_for_pairs(edges);
+}
+
+#[extendr]
 fn rs_set_n(mut session: ExternalPtr<GraphSession>, n: i32) {
     if n < 0 {
         throw_r_error("n must be >= 0");
@@ -1451,6 +1471,7 @@ extendr_module! {
     fn rs_new;
     fn rs_clone;
     fn rs_set_edges;
+    fn rs_replace_edges;
     fn rs_set_n;
     fn rs_set_simple;
     fn rs_set_class;

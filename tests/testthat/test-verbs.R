@@ -178,6 +178,16 @@ test_that("set_edges replaces any existing edges for pairs", {
   )
 })
 
+test_that("set_edges removes both directions in simple graphs", {
+  cg <- caugi(A %-->% B, class = "DAG")
+  cg1 <- set_edges(cg, B %-->% A)
+
+  expect_equal(
+    cg1@edges,
+    data.table::data.table(from = "B", edge = "-->", to = "A")
+  )
+})
+
 test_that("set_edges errors whwn both vector and expr paths are given", {
   # Use simple=FALSE to allow parallel edges for this test
   cg <- caugi(simple = FALSE, class = "UNKNOWN")
@@ -555,6 +565,15 @@ test_that("set_edges should not replace other edges when symmetric edge added", 
   cg_new <- set_edges(cg, B %-->% A)
 
   cg_correct <- caugi(A %-->% B, B %-->% A, simple = FALSE, class = "UNKNOWN")
+
+  expect_equivalent(cg_new, cg_correct)
+})
+
+test_that("set_edges preserves opposite-direction edges in non-simple graphs", {
+  cg <- caugi(A %-->% B, B %<->% A, simple = FALSE, class = "UNKNOWN")
+  cg_new <- set_edges(cg, A %o->% B)
+
+  cg_correct <- caugi(A %o->% B, B %<->% A, simple = FALSE, class = "UNKNOWN")
 
   expect_equivalent(cg_new, cg_correct)
 })
