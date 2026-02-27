@@ -35,6 +35,7 @@ Other operations:
 \code{\link{exogenize}()},
 \code{\link{latent_project}()},
 \code{\link{moralize}()},
+\code{\link{normalize_latent_structure}()},
 \code{\link{skeleton}()}
 }
 \concept{operations}
