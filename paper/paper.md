@@ -9,11 +9,9 @@ tags:
   - statistics
 authors:
   - name: Frederik Fabricius Bjerre
-    orcid: 0000-0000-0000-0000
     corresponding: true
     affiliation: "1, 2"
   - name: Bjarke Hautop Kristensen
-    orcid: 0000-0000-0000-0000
     equal-contrib: true
     affiliation: 1
   - name: Johan Larsson
