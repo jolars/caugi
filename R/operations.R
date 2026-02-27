@@ -627,21 +627,9 @@ dag_from_pdag <- function(PDAG) {
 
       # x is a valid sink
       found_sink <- TRUE
+
       # Orient all undirected edges toward x in output_graph
       if (length(undirected_neighbors) > 0) {
-        # Ensure to also remove A---B if adding B-->A
-        output_graph <- remove_edges(
-          output_graph,
-          from = rep(x, length(undirected_neighbors)),
-          to = undirected_neighbors,
-          edge = "---"
-        )
-        output_graph <- remove_edges(
-          output_graph,
-          from = undirected_neighbors,
-          to = rep(x, length(undirected_neighbors)),
-          edge = "---"
-        )
         output_graph <- set_edges(
           output_graph,
           from = undirected_neighbors,
