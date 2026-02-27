@@ -30,6 +30,8 @@ rs_clone <- function(session) .Call(wrap__rs_clone, session)
 
 rs_set_edges <- function(session, from, to, etype) invisible(.Call(wrap__rs_set_edges, session, from, to, etype))
 
+rs_replace_edges <- function(session, from, to, etype) invisible(.Call(wrap__rs_replace_edges, session, from, to, etype))
+
 rs_set_n <- function(session, n) invisible(.Call(wrap__rs_set_n, session, n))
 
 rs_set_simple <- function(session, simple) invisible(.Call(wrap__rs_set_simple, session, simple))

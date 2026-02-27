@@ -17,7 +17,7 @@ use super::CaugiGraph;
 use super::RegistrySnapshot;
 use crate::edges::{EdgeRegistry, EdgeSpec};
 use crate::graph::NeighborMode;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 /// The target graph class for typed view construction.
@@ -273,6 +273,53 @@ impl GraphSession {
 
     pub fn set_edges(&mut self, edges: EdgeBuffer) {
         self.edges = edges;
+        self.invalidate_core();
+    }
+
+    pub fn replace_edges_for_pairs(&mut self, new_edges: EdgeBuffer) {
+        let mut remove_pairs: HashSet<(u32, u32)> = HashSet::with_capacity(new_edges.len());
+        if self.simple {
+            for i in 0..new_edges.len() {
+                let u = new_edges.from[i];
+                let v = new_edges.to[i];
+                let pair = if u <= v { (u, v) } else { (v, u) };
+                remove_pairs.insert(pair);
+            }
+        } else {
+            for i in 0..new_edges.len() {
+                remove_pairs.insert((new_edges.from[i], new_edges.to[i]));
+            }
+        }
+
+        let mut kept = EdgeBuffer::with_capacity(self.edges.len() + new_edges.len());
+        let mut seen: HashSet<(u32, u32, u8)> =
+            HashSet::with_capacity(self.edges.len() + new_edges.len());
+
+        for i in 0..self.edges.len() {
+            let u = self.edges.from[i];
+            let v = self.edges.to[i];
+            let t = self.edges.etype[i];
+            let remove = if self.simple {
+                let pair = if u <= v { (u, v) } else { (v, u) };
+                remove_pairs.contains(&pair)
+            } else {
+                remove_pairs.contains(&(u, v))
+            };
+            if !remove && seen.insert((u, v, t)) {
+                kept.push(u, v, t);
+            }
+        }
+
+        for i in 0..new_edges.len() {
+            let u = new_edges.from[i];
+            let v = new_edges.to[i];
+            let t = new_edges.etype[i];
+            if seen.insert((u, v, t)) {
+                kept.push(u, v, t);
+            }
+        }
+
+        self.edges = kept;
         self.invalidate_core();
     }
 

@@ -189,22 +189,7 @@ set_edges <- function(
 
   edges <- .get_edges(from, edge, to, calls)
 
-  pairs <- unique(edges[, .(from, to)])
-  # Treat pairs as unordered: remove both directions to avoid leaving
-  # symmetric edges behind (e.g., A---B vs B---A).
-  pairs_rev <- data.table::data.table(from = pairs$to, to = pairs$from)
-  pairs_all <- unique(data.table::rbindlist(
-    list(pairs, pairs_rev),
-    use.names = TRUE
-  ))
-  cg_mod <- .update_caugi(
-    cg,
-    edges = pairs_all,
-    action = "remove",
-    inplace = inplace
-  )
-  cg_mod <- .update_caugi(cg_mod, edges = edges, action = "add", inplace = TRUE)
-  cg_mod
+  .update_caugi(cg, edges = edges, action = "replace", inplace = inplace)
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -359,7 +344,7 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
 #' @param nodes A `data.frame` with column `name` for node names to add/remove.
 #' @param edges A `data.frame` with columns `from`, `edge`, `to` for edges to
 #' add/remove.
-#' @param action One of `"add"` or `"remove"`.
+#' @param action One of `"add"`, `"remove"`, or `"replace"`.
 #' @param inplace Logical, whether to modify the graph inplace or not.
 #'
 #' @importFrom data.table `%chin%`
@@ -371,7 +356,7 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
   cg,
   nodes = NULL,
   edges = NULL,
-  action = c("add", "remove"),
+  action = c("add", "remove", "replace"),
   inplace = FALSE
 ) {
   action <- match.arg(action)
@@ -382,6 +367,51 @@ remove_nodes <- function(cg, ..., name = NULL, inplace = FALSE) {
   current_edges <- cg@edges
   current_simple <- rs_simple(session)
   current_class <- rs_class(session)
+
+  if (identical(action, "replace")) {
+    if (!is.null(nodes)) {
+      stop("nodes are not supported for `action = \"replace\"`.", call. = FALSE)
+    }
+    if (is.null(edges) || !nrow(edges)) {
+      return(cg)
+    }
+
+    new_nodes <- unique(c(current_nodes, edges$from, edges$to))
+    target_session <- if (isTRUE(inplace)) {
+      session
+    } else {
+      rs_clone(session)
+    }
+
+    if (
+      length(new_nodes) != length(current_nodes) ||
+        !identical(new_nodes, current_nodes)
+    ) {
+      rs_set_n(target_session, as.integer(length(new_nodes)))
+      rs_set_names(target_session, new_nodes)
+    }
+
+    reg <- caugi_registry()
+    id <- seq_len(length(new_nodes)) - 1L
+    names(id) <- new_nodes
+    codes <- edge_registry_code_of(reg, edges$edge)
+    rs_replace_edges(
+      target_session,
+      as.integer(unname(id[edges$from])),
+      as.integer(unname(id[edges$to])),
+      as.integer(codes)
+    )
+
+    resolved_class <- rs_resolve_class(target_session, current_class)
+    if (!identical(resolved_class, current_class)) {
+      rs_set_class(target_session, resolved_class)
+    }
+
+    if (isTRUE(inplace)) {
+      return(cg)
+    }
+    return(caugi(.session = target_session))
+  }
 
   # Apply modifications
   if (identical(action, "add")) {
