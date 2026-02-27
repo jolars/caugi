@@ -18,8 +18,8 @@ m_separated(
 \item{cg}{A \code{caugi} object of class AG, ADMG, or DAG.}
 
 \item{X, Y, Z}{Character vectors of node names, or \code{NULL}. Use \verb{*_index} to
-pass 1-based indices.
-If \code{Z} is \code{NULL} or missing, no nodes are conditioned on.}
+pass 1-based indices. If \code{Z} is \code{NULL} or missing, no nodes are conditioned
+on.}
 
 \item{X_index, Y_index, Z_index}{Optional numeric 1-based indices (exclusive
 with \code{X},\code{Y},\code{Z} respectively).}

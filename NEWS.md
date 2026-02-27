@@ -9,6 +9,10 @@
   undirected or directed away from the source node. For DAGs, `posteriors()`
   equals `descendants()`. For PDAGs and AGs, it includes both descendants and
   nodes reachable via undirected edges.
+- You can now specify whether to use an open or closed graph definition for the queries
+  `ancestors()`, `anteriors()`, `descendants()`, and `posteriors()`. Can be set
+  globally with `caugi_options()` or locally with `open = TRUE/FALSE` argument. Default is `open = TRUE`, like
+  it was before implicitly.
 
 ## Improvements
 

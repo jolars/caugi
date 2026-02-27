@@ -4,7 +4,12 @@
 \alias{posteriors}
 \title{Get posteriors of nodes in a \code{caugi}}
 \usage{
-posteriors(cg, nodes = NULL, index = NULL)
+posteriors(
+  cg,
+  nodes = NULL,
+  index = NULL,
+  open = caugi_options("use_open_graph_definition")
+)
 }
 \arguments{
 \item{cg}{A \code{caugi} object of class DAG, PDAG, or AG.}
@@ -12,6 +17,10 @@ posteriors(cg, nodes = NULL, index = NULL)
 \item{nodes}{A character vector of node names.}
 
 \item{index}{A vector of node indexes.}
+
+\item{open}{Boolean. Determines how the graph is interpreted when retrieving posteriors.
+Default is taken from \code{caugi_options("use_open_graph_definition")},
+which by default is TRUE.}
 }
 \value{
 Either a character vector of node names (if a single node is
@@ -36,6 +45,7 @@ cg <- caugi(
 )
 
 posteriors(cg, "A") # B, C, D
+posteriors(cg, "A", open = FALSE) # A, B, C, D
 posteriors(cg, "B") # C, D
 posteriors(cg, "D") # NULL (no posteriors)
 

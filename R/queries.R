@@ -878,6 +878,9 @@ neighbours <- neighbors
 #' @title Get ancestors of nodes in a `caugi`
 #'
 #' @inheritParams parents
+#' @param open Boolean. Determines how the graph is interpreted when retrieving ancestors.
+#'   Default is taken from `caugi_options("use_open_graph_definition")`,
+#'   which by default is `r caugi_options("use_open_graph_definition")`.
 #'
 #' @returns Either a character vector of node names (if a single node is
 #' requested) or a list of character vectors (if multiple nodes are requested).
@@ -889,6 +892,7 @@ neighbours <- neighbors
 #'   class = "DAG"
 #' )
 #' ancestors(cg, "A") # NULL
+#' ancestors(cg, "A", open = FALSE) # A
 #' ancestors(cg, index = 2) # "A"
 #' ancestors(cg, "B") # "A"
 #' ancestors(cg, c("B", "C"))
@@ -902,7 +906,16 @@ neighbours <- neighbors
 #' @concept queries
 #'
 #' @export
-ancestors <- function(cg, nodes = NULL, index = NULL) {
+ancestors <- function(
+  cg,
+  nodes = NULL,
+  index = NULL,
+  open = caugi_options("use_open_graph_definition")
+) {
+  if (!is.logical(open) || length(open) != 1L) {
+    stop("`open` must be a single TRUE or FALSE.", call. = FALSE)
+  }
+
   nodes_supplied <- !missing(nodes)
   index_supplied <- !missing(index) && !is.null(index)
   if (nodes_supplied && index_supplied) {
@@ -912,7 +925,13 @@ ancestors <- function(cg, nodes = NULL, index = NULL) {
   if (index_supplied) {
     idx0_list <- lapply(
       as.integer(index - 1L),
-      function(ix) rs_ancestors_of(cg@session, ix)
+      function(ix) {
+        anc <- rs_ancestors_of(cg@session, ix)
+        if (!open) {
+          anc <- c(ix, anc)
+        }
+        anc
+      }
     )
     return(.getter_output(
       cg,
@@ -931,7 +950,13 @@ ancestors <- function(cg, nodes = NULL, index = NULL) {
 
   idx0_list <- lapply(
     as.integer(index),
-    function(ix) rs_ancestors_of(cg@session, ix)
+    function(ix) {
+      anc <- rs_ancestors_of(cg@session, ix)
+      if (!open) {
+        anc <- c(ix, anc)
+      }
+      anc
+    }
   )
   .getter_output(cg, idx0_list, nodes)
 }
@@ -939,6 +964,9 @@ ancestors <- function(cg, nodes = NULL, index = NULL) {
 #' @title Get descendants of nodes in a `caugi`
 #'
 #' @inheritParams parents
+#' @param open Boolean. Determines how the graph is interpreted when retrieving descendants.
+#'   Default is taken from `caugi_options("use_open_graph_definition")`,
+#'   which by default is `r caugi_options("use_open_graph_definition")`.
 #'
 #' @returns Either a character vector of node names (if a single node is
 #' requested) or a list of character vectors (if multiple nodes are requested).
@@ -950,6 +978,7 @@ ancestors <- function(cg, nodes = NULL, index = NULL) {
 #'   class = "DAG"
 #' )
 #' descendants(cg, "A") # "B" "C"
+#' descendants(cg, "A", open = FALSE) # "A" "B" "C"
 #' descendants(cg, index = 2) # "C"
 #' descendants(cg, "B") # "C"
 #' descendants(cg, c("B", "C"))
@@ -963,7 +992,16 @@ ancestors <- function(cg, nodes = NULL, index = NULL) {
 #' @concept queries
 #'
 #' @export
-descendants <- function(cg, nodes = NULL, index = NULL) {
+descendants <- function(
+  cg,
+  nodes = NULL,
+  index = NULL,
+  open = caugi_options("use_open_graph_definition")
+) {
+  if (!is.logical(open) || length(open) != 1L) {
+    stop("`open` must be a single TRUE or FALSE.", call. = FALSE)
+  }
+
   nodes_supplied <- !missing(nodes)
   index_supplied <- !missing(index) && !is.null(index)
   if (nodes_supplied && index_supplied) {
@@ -973,7 +1011,13 @@ descendants <- function(cg, nodes = NULL, index = NULL) {
   if (index_supplied) {
     idx0_list <- lapply(
       as.integer(index - 1L),
-      function(ix) rs_descendants_of(cg@session, ix)
+      function(ix) {
+        anc <- rs_descendants_of(cg@session, ix)
+        if (!open) {
+          anc <- c(ix, anc)
+        }
+        anc
+      }
     )
     return(.getter_output(
       cg,
@@ -992,7 +1036,13 @@ descendants <- function(cg, nodes = NULL, index = NULL) {
 
   idx0_list <- lapply(
     as.integer(index),
-    function(ix) rs_descendants_of(cg@session, ix)
+    function(ix) {
+      anc <- rs_descendants_of(cg@session, ix)
+      if (!open) {
+        anc <- c(ix, anc)
+      }
+      anc
+    }
   )
   .getter_output(cg, idx0_list, nodes)
 }
@@ -1010,6 +1060,9 @@ descendants <- function(cg, nodes = NULL, index = NULL) {
 #'
 #' @inheritParams parents
 #' @param cg A `caugi` object of class DAG or PDAG.
+#' @param open Boolean. Determines how the graph is interpreted when retrieving anteriors.
+#'   Default is taken from `caugi_options("use_open_graph_definition")`,
+#'   which by default is `r caugi_options("use_open_graph_definition")`.
 #'
 #' @returns Either a character vector of node names (if a single node is
 #' requested) or a list of character vectors (if multiple nodes are requested).
@@ -1022,6 +1075,7 @@ descendants <- function(cg, nodes = NULL, index = NULL) {
 #'   class = "PDAG"
 #' )
 #' anteriors(cg, "A") # NULL (no anteriors)
+#' anteriors(cg, "A", open = FALSE) # A
 #' anteriors(cg, "C") # A, B
 #' anteriors(cg, "D") # A, B, C
 #'
@@ -1040,7 +1094,16 @@ descendants <- function(cg, nodes = NULL, index = NULL) {
 #' @concept queries
 #'
 #' @export
-anteriors <- function(cg, nodes = NULL, index = NULL) {
+anteriors <- function(
+  cg,
+  nodes = NULL,
+  index = NULL,
+  open = caugi_options("use_open_graph_definition")
+) {
+  if (!is.logical(open) || length(open) != 1L) {
+    stop("`open` must be a single TRUE or FALSE.", call. = FALSE)
+  }
+
   nodes_supplied <- !missing(nodes)
   index_supplied <- !missing(index) && !is.null(index)
   if (nodes_supplied && index_supplied) {
@@ -1050,7 +1113,13 @@ anteriors <- function(cg, nodes = NULL, index = NULL) {
   if (index_supplied) {
     idx0_list <- lapply(
       as.integer(index - 1L),
-      function(ix) rs_anteriors_of(cg@session, ix)
+      function(ix) {
+        anc <- rs_anteriors_of(cg@session, ix)
+        if (!open) {
+          anc <- c(ix, anc)
+        }
+        anc
+      }
     )
     return(.getter_output(
       cg,
@@ -1069,7 +1138,13 @@ anteriors <- function(cg, nodes = NULL, index = NULL) {
 
   idx0_list <- lapply(
     as.integer(index),
-    function(ix) rs_anteriors_of(cg@session, ix)
+    function(ix) {
+      anc <- rs_anteriors_of(cg@session, ix)
+      if (!open) {
+        anc <- c(ix, anc)
+      }
+      anc
+    }
   )
   .getter_output(cg, idx0_list, nodes)
 }
@@ -1088,6 +1163,9 @@ anteriors <- function(cg, nodes = NULL, index = NULL) {
 #'
 #' @inheritParams parents
 #' @param cg A `caugi` object of class DAG, PDAG, or AG.
+#' @param open Boolean. Determines how the graph is interpreted when retrieving posteriors.
+#'   Default is taken from `caugi_options("use_open_graph_definition")`,
+#'   which by default is `r caugi_options("use_open_graph_definition")`.
 #'
 #' @returns Either a character vector of node names (if a single node is
 #'   requested) or a list of character vectors (if multiple nodes are requested).
@@ -1101,6 +1179,7 @@ anteriors <- function(cg, nodes = NULL, index = NULL) {
 #' )
 #'
 #' posteriors(cg, "A") # B, C, D
+#' posteriors(cg, "A", open = FALSE) # A, B, C, D
 #' posteriors(cg, "B") # C, D
 #' posteriors(cg, "D") # NULL (no posteriors)
 #'
@@ -1115,7 +1194,15 @@ anteriors <- function(cg, nodes = NULL, index = NULL) {
 #' @concept queries
 #'
 #' @export
-posteriors <- function(cg, nodes = NULL, index = NULL) {
+posteriors <- function(
+  cg,
+  nodes = NULL,
+  index = NULL,
+  open = caugi_options("use_open_graph_definition")
+) {
+  if (!is.logical(open) || length(open) != 1L) {
+    stop("`open` must be a single TRUE or FALSE.", call. = FALSE)
+  }
   nodes_supplied <- !is.null(nodes)
   index_supplied <- !is.null(index)
 
@@ -1126,7 +1213,13 @@ posteriors <- function(cg, nodes = NULL, index = NULL) {
   if (index_supplied) {
     idx0_list <- lapply(
       as.integer(index - 1L),
-      function(ix) rs_posteriors_of(cg@session, ix)
+      function(ix) {
+        anc <- rs_posteriors_of(cg@session, ix)
+        if (!open) {
+          anc <- c(ix, anc)
+        }
+        anc
+      }
     )
     return(.getter_output(
       cg,
@@ -1147,7 +1240,13 @@ posteriors <- function(cg, nodes = NULL, index = NULL) {
 
   idx0_list <- lapply(
     as.integer(index),
-    function(ix) rs_posteriors_of(cg@session, ix)
+    function(ix) {
+      anc <- rs_posteriors_of(cg@session, ix)
+      if (!open) {
+        anc <- c(ix, anc)
+      }
+      anc
+    }
   )
 
   .getter_output(cg, idx0_list, nodes)
