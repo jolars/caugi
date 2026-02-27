@@ -560,7 +560,7 @@ test_that("node order does not matter when setting edges", {
   expect_equal(edges(cg_new)$edge, "-->")
 })
 
-test_that("set_edges should not replace other edges when symmetric edge added", {
+test_that("set_edges should not replace other edges when non-symmetric edge added", {
   cg <- caugi(A %-->% B, simple = FALSE, class = "UNKNOWN")
   cg_new <- set_edges(cg, B %-->% A)
 
