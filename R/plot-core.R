@@ -229,7 +229,7 @@ S7::method(plot, caugi) <- function(
         " for node",
         if (length(missing_nodes) > 1) "s" else "",
         ": ",
-        paste(head(missing_nodes, 5), collapse = ", "),
+        paste(utils::head(missing_nodes, 5), collapse = ", "),
         if (length(missing_nodes) > 5) {
           paste0(" (and ", length(missing_nodes) - 5, " more)")
         } else {

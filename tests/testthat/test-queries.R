@@ -257,21 +257,33 @@ test_that("queries match with nodes and indexes", {
 
 test_that("queries fail with bad input", {
   cg <- caugi(A %-->% B, B %-->% C, B %---% D, C %---% E, class = "PDAG")
-  expect_error(children(cg, A, index = 1), "Supply either `nodes` or `index`")
-  expect_error(children(cg), "Supply one of `nodes` or `index`")
-  expect_error(parents(cg, A, index = 1), "Supply either `nodes` or `index`")
-  expect_error(parents(cg), "Supply one of `nodes` or `index`")
-  expect_error(neighbors(cg, A, index = 1), "Supply either `nodes` or `index`")
-  expect_error(neighbors(cg), "Supply one of `nodes` or `index`")
-  expect_error(ancestors(cg, "Z"), "Non-existent node name: Z")
-  expect_error(ancestors(cg, A, index = 1), "Supply either `nodes` or `index`")
-  expect_error(ancestors(cg), "Supply one of `nodes` or `index`")
-  expect_error(descendants(cg, index = 0), "must be >= 0")
+  expect_error(children(cg, "A", index = 1), "Supply either `nodes` or `index`")
+  expect_error(children(cg), "Must supply either `nodes` or `index`.")
+  expect_error(parents(cg, "A", index = 1), "Supply either `nodes` or `index`")
+  expect_error(parents(cg), "Must supply either `nodes` or `index`.")
   expect_error(
-    descendants(cg, A, index = 1),
+    neighbors(cg, "A", index = 1),
     "Supply either `nodes` or `index`"
   )
-  expect_error(descendants(cg), "Supply one of `nodes` or `index`")
+  expect_error(neighbors(cg), "Must supply either `nodes` or `index`.")
+  expect_error(ancestors(cg, "Z"), "Non-existent node name: Z")
+  expect_error(
+    ancestors(cg, "A", index = 1),
+    "Supply either `nodes` or `index`, not both."
+  )
+  expect_error(
+    ancestors(cg),
+    "Must supply either `nodes` or `index`."
+  )
+  expect_error(descendants(cg, index = 0), "must be >= 0")
+  expect_error(
+    descendants(cg, "A", index = 1),
+    "Supply either `nodes` or `index`, not both."
+  )
+  expect_error(
+    descendants(cg),
+    "Must supply either `nodes` or `index`."
+  )
 })
 
 test_that("getter queries handle missing relations and duplicates", {
@@ -384,10 +396,13 @@ test_that("markov_blanket includes undirected neighbors in PDAGs", {
 
 test_that("markov_blanket argument validation", {
   cg <- caugi(A %-->% B)
-  expect_error(markov_blanket(cg), "Supply one of `nodes` or `index`")
+  expect_error(
+    markov_blanket(cg),
+    "Must supply either `nodes` or `index`."
+  )
   expect_error(
     markov_blanket(cg, nodes = "A", index = 1),
-    "either `nodes` or `index`, not both"
+    "Supply either `nodes` or `index`, not both."
   )
 })
 
@@ -473,7 +488,7 @@ test_that("subgraph selects nodes and errors with none", {
     edge = c("-->", "-->"),
     to = c("B", "C")
   )
-  expect_error(subgraph(cg), "Supply one of `nodes` or `index`.")
+  expect_error(subgraph(cg), "Must supply either `nodes` or `index`.")
 
   sg <- subgraph(cg, nodes = c("A", "B"))
   expect_setequal(sg@nodes$name, c("A", "B"))
@@ -491,7 +506,7 @@ test_that("subgraph errors on invalid arg combos", {
     nodes = c("A", "B"),
     class = "UNKNOWN"
   )
-  expect_error(subgraph(g), "Supply one of `nodes` or `index`")
+  expect_error(subgraph(g), "Must supply either `nodes` or `index`.")
   expect_error(subgraph(g, nodes = "A", index = 1), "not both")
 })
 
@@ -504,7 +519,10 @@ test_that("subgraph validates index", {
     class = "UNKNOWN"
   )
   expect_error(subgraph(g, index = "a"), "`index` must be numeric")
-  expect_error(subgraph(g, index = c(1, NA_integer_)), "numeric without NA")
+  expect_error(
+    subgraph(g, index = c(1, NA_integer_)),
+    "`index` cannot contain NA values"
+  )
   expect_error(subgraph(g, index = 0), "out of range")
   expect_error(subgraph(g, index = 3), "out of range")
 })
@@ -519,7 +537,10 @@ test_that("subgraph validates nodes", {
     class = "UNKNOWN"
   )
   expect_error(subgraph(g, nodes = 1), "character vector")
-  expect_error(subgraph(g, nodes = c("A", NA_character_)), "contains NA")
+  expect_error(
+    subgraph(g, nodes = c("A", NA_character_)),
+    "`nodes` cannot contain NA values"
+  )
   expect_error(subgraph(g, nodes = c("A", "Z")), "Unknown node\\(s\\): Z")
 })
 
