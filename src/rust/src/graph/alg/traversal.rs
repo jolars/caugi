@@ -326,7 +326,10 @@ mod tests {
         };
 
         // Posteriors of 0: 1 (child) -> 2 (undirected of 1), 3 (child of 1)
-        assert_eq!(posteriors_of(4, 0, children_of, undirected_of), vec![1, 2, 3]);
+        assert_eq!(
+            posteriors_of(4, 0, children_of, undirected_of),
+            vec![1, 2, 3]
+        );
         // Posteriors of 1: 3 (child) and 2 (undirected)
         assert_eq!(posteriors_of(4, 1, children_of, undirected_of), vec![2, 3]);
         // Posteriors of 2: 1 (undirected) -> 3 (child of 1)
