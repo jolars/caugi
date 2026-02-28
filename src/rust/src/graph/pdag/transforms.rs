@@ -27,26 +27,26 @@ impl Pdag {
     ///
     /// Returns a new PDAG that is closed under Meek orientation rules.
     pub fn meek_closure(&self) -> Result<Pdag, String> {
-        let n = self.n() as usize;
-        let mut pa: Vec<BTreeSet<u32>> = vec![BTreeSet::new(); n];
-        let mut ch: Vec<BTreeSet<u32>> = vec![BTreeSet::new(); n];
-        let mut und: Vec<BTreeSet<u32>> = vec![BTreeSet::new(); n];
+        type NodeSet = BTreeSet<u32>;
 
-        for i in 0..n {
-            let u = i as u32;
-            pa[i].extend(self.parents_of(u).iter().copied());
-            ch[i].extend(self.children_of(u).iter().copied());
-            und[i].extend(self.undirected_of(u).iter().copied());
+        let n = self.n() as usize;
+        let mut pa: Vec<NodeSet> = (0..n)
+            .map(|i| self.parents_of(i as u32).iter().copied().collect())
+            .collect();
+        let mut ch: Vec<NodeSet> = (0..n)
+            .map(|i| self.children_of(i as u32).iter().copied().collect())
+            .collect();
+        let mut und: Vec<NodeSet> = (0..n)
+            .map(|i| self.undirected_of(i as u32).iter().copied().collect())
+            .collect();
+
+        #[inline]
+        fn snapshot(nodes: &NodeSet) -> Vec<u32> {
+            nodes.iter().copied().collect()
         }
 
         #[inline]
-        fn adjacent(
-            a: usize,
-            b: usize,
-            und: &[BTreeSet<u32>],
-            pa: &[BTreeSet<u32>],
-            ch: &[BTreeSet<u32>],
-        ) -> bool {
+        fn adjacent(a: usize, b: usize, und: &[NodeSet], pa: &[NodeSet], ch: &[NodeSet]) -> bool {
             let bu = b as u32;
             let au = a as u32;
             und[a].contains(&bu)
@@ -58,13 +58,7 @@ impl Pdag {
         }
 
         #[inline]
-        fn orient(
-            a: u32,
-            b: u32,
-            und: &mut [BTreeSet<u32>],
-            pa: &mut [BTreeSet<u32>],
-            ch: &mut [BTreeSet<u32>],
-        ) {
+        fn orient(a: u32, b: u32, und: &mut [NodeSet], pa: &mut [NodeSet], ch: &mut [NodeSet]) {
             let ai = a as usize;
             let bi = b as usize;
             und[ai].remove(&b);
@@ -73,24 +67,24 @@ impl Pdag {
             pa[bi].insert(a);
         }
 
-        fn has_dir_path(ch: &[BTreeSet<u32>], src: u32, tgt: u32) -> bool {
+        fn has_dir_path(ch: &[NodeSet], src: u32, tgt: u32) -> bool {
             if src == tgt {
                 return true;
             }
-            let n = ch.len();
-            let mut seen = vec![false; n];
-            let mut q = VecDeque::new();
-            q.push_back(src);
-            while let Some(u) = q.pop_front() {
+            let mut seen = vec![false; ch.len()];
+            let mut queue = VecDeque::from([src]);
+            while let Some(u) = queue.pop_front() {
+                let ui = u as usize;
+                if seen[ui] {
+                    continue;
+                }
                 if u == tgt {
                     return true;
                 }
-                if std::mem::replace(&mut seen[u as usize], true) {
-                    continue;
-                }
-                for &v in &ch[u as usize] {
+                seen[ui] = true;
+                for &v in &ch[ui] {
                     if !seen[v as usize] {
-                        q.push_back(v);
+                        queue.push_back(v);
                     }
                 }
             }
@@ -105,31 +99,26 @@ impl Pdag {
                 if pa[b].is_empty() || und[b].is_empty() {
                     continue;
                 }
-                let pb: Vec<u32> = pa[b].iter().copied().collect();
-                let ub: Vec<u32> = und[b].iter().copied().collect();
-                'c_loop: for c in ub {
-                    let ci = c as usize;
-                    for &a in &pb {
-                        if !adjacent(a as usize, ci, &und, &pa, &ch) {
-                            orient(b as u32, c, &mut und, &mut pa, &mut ch);
-                            changed = true;
-                            continue 'c_loop;
-                        }
+                let parents = snapshot(&pa[b]);
+                for c in snapshot(&und[b]) {
+                    let should_orient = parents
+                        .iter()
+                        .any(|&a| !adjacent(a as usize, c as usize, &und, &pa, &ch));
+                    if should_orient {
+                        orient(b as u32, c, &mut und, &mut pa, &mut ch);
+                        changed = true;
                     }
                 }
             }
 
             // R2: a--b and exists w: a->w->b  =>  a->b
             for a in 0..n {
-                let ab: Vec<u32> = und[a].iter().copied().collect();
-                for b_u in ab {
+                for b_u in snapshot(&und[a]) {
                     let b = b_u as usize;
                     if ch[a].iter().any(|w| pa[b].contains(w)) {
                         orient(a as u32, b_u, &mut und, &mut pa, &mut ch);
                         changed = true;
-                        continue;
-                    }
-                    if ch[b].iter().any(|w| pa[a].contains(w)) {
+                    } else if ch[b].iter().any(|w| pa[a].contains(w)) {
                         orient(b_u, a as u32, &mut und, &mut pa, &mut ch);
                         changed = true;
                     }
@@ -138,31 +127,26 @@ impl Pdag {
 
             // R3: a--b and exists c,d: c->b, d->b, c !~ d, a--c, a--d  =>  a->b
             for a in 0..n {
-                let ab: Vec<u32> = und[a].iter().copied().collect();
-                for b_u in ab {
+                for b_u in snapshot(&und[a]) {
                     let b = b_u as usize;
-                    let pb: Vec<u32> = pa[b].iter().copied().collect();
-                    'pairs: for i in 0..pb.len() {
-                        for j in (i + 1)..pb.len() {
-                            let c = pb[i] as usize;
-                            let d = pb[j] as usize;
-                            if !adjacent(c, d, &und, &pa, &ch)
-                                && und[a].contains(&pb[i])
-                                && und[a].contains(&pb[j])
-                            {
-                                orient(a as u32, b_u, &mut und, &mut pa, &mut ch);
-                                changed = true;
-                                break 'pairs;
-                            }
-                        }
+                    let parents = snapshot(&pa[b]);
+                    let should_orient = parents.iter().enumerate().any(|(i, &c)| {
+                        parents[(i + 1)..].iter().any(|&d| {
+                            !adjacent(c as usize, d as usize, &und, &pa, &ch)
+                                && und[a].contains(&c)
+                                && und[a].contains(&d)
+                        })
+                    });
+                    if should_orient {
+                        orient(a as u32, b_u, &mut und, &mut pa, &mut ch);
+                        changed = true;
                     }
                 }
             }
 
             // R4: a--b and (a => b or b => a)  =>  orient along reachability
             for a in 0..n {
-                let ab: Vec<u32> = und[a].iter().copied().collect();
-                for b_u in ab {
+                for b_u in snapshot(&und[a]) {
                     if has_dir_path(&ch, a as u32, b_u) {
                         orient(a as u32, b_u, &mut und, &mut pa, &mut ch);
                         changed = true;
@@ -183,18 +167,12 @@ impl Pdag {
         let mut dir_code: Option<u8> = None;
         let mut und_code: Option<u8> = None;
         for (i, s) in specs.iter().enumerate() {
-            match s.class {
-                EdgeClass::Directed => {
-                    if dir_code.is_none() || s.glyph == "-->" {
-                        dir_code = Some(i as u8);
-                    }
-                }
-                EdgeClass::Undirected => {
-                    if und_code.is_none() || s.glyph == "---" {
-                        und_code = Some(i as u8);
-                    }
-                }
-                _ => {}
+            let code = i as u8;
+            if s.class == EdgeClass::Directed && (dir_code.is_none() || s.glyph == "-->") {
+                dir_code = Some(code);
+            }
+            if s.class == EdgeClass::Undirected && (und_code.is_none() || s.glyph == "---") {
+                und_code = Some(code);
             }
         }
         let dir = dir_code.ok_or("No Directed edge spec in registry")?;
@@ -206,7 +184,7 @@ impl Pdag {
             let c = pa[i].len() + und[i].len() + ch[i].len();
             row_index.push(row_index[i] + c as u32);
         }
-        let nnz = *row_index.last().unwrap() as usize;
+        let nnz = row_index[n] as usize;
         let mut col_index = vec![0u32; nnz];
         let mut etype = vec![0u8; nnz];
         let mut side = vec![0u8; nnz];

@@ -658,11 +658,15 @@ test_that("dag_from_pdag errors if PDAG cannot be extended to a DAG", {
 test_that("meek_closure orients compelled edges and returns an MPDAG", {
   check_oriented <- function(g, from, to) {
     expect_true(to %in% children(g, from))
-    und <- neighbors(g, from, mode = "undirected")
-    if (is.null(und)) {
-      und <- character(0)
+    if (is_dag(g)) {
+      return()
+    } else {
+      und <- neighbors(g, from, mode = "undirected")
+      if (is.null(und)) {
+        und <- character(0)
+      }
+      expect_false(to %in% und)
     }
-    expect_false(to %in% und)
   }
 
   # R1: A -> B, C -> B, B -- D, and C !~ D  =>  B -> D
