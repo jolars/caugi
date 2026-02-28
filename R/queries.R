@@ -364,8 +364,9 @@ is_cpdag <- function(cg) {
 #' @title Is the `caugi` graph an MPDAG?
 #'
 #' @description Checks if the given `caugi` graph is a
-#' Meek-closed Partially Directed Acyclic Graph (MPDAG), i.e. a PDAG where no
-#' additional edge orientations are implied by Meek's rules (R1--R4).
+#' Maximally oriented Partially Directed Acyclic Graph
+#' (MPDAG), i.e. a PDAG where no additional edge orientations
+#' are implied by Meek's rules (R1--R4).
 #'
 #' @details
 #' If the graph is not PDAG-compatible, the function returns `FALSE`.
@@ -375,13 +376,6 @@ is_cpdag <- function(cg) {
 #' @returns A logical value indicating whether the graph is an MPDAG.
 #'
 #' @examples
-#' cg_mpdag <- caugi(
-#'   A %-->% B,
-#'   C %-->% B,
-#'   class = "PDAG"
-#' )
-#' is_mpdag(cg_mpdag) # TRUE
-#'
 #' cg_not_mpdag <- caugi(
 #'   A %---% B,
 #'   A %-->% C,

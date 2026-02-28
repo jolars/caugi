@@ -96,7 +96,12 @@ meek_closure <- function(cg) {
   }
 
   closed_session <- rs_meek_closure(cg@session)
-  .session_to_caugi(closed_session, node_names = cg@nodes$name)
+  closed_cg <- .session_to_caugi(closed_session, node_names = cg@nodes$name)
+  if (is_dag(closed_cg)) {
+    return(mutate_caugi(closed_cg, "DAG"))
+  } else {
+    return(closed_cg)
+  }
 }
 
 #' @title Project latent variables from a DAG to an ADMG
