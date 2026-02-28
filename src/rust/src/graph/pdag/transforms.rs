@@ -91,6 +91,27 @@ impl Pdag {
             false
         }
 
+        #[inline]
+        fn try_orient(
+            a: u32,
+            b: u32,
+            und: &mut [NodeSet],
+            pa: &mut [NodeSet],
+            ch: &mut [NodeSet],
+        ) -> bool {
+            let ai = a as usize;
+            let bi = b as usize;
+            if !und[ai].contains(&b) || !und[bi].contains(&a) {
+                return false;
+            }
+            // Preserve PDAG acyclicity while applying Meek-style orientations.
+            if has_dir_path(ch, b, a) {
+                return false;
+            }
+            orient(a, b, und, pa, ch);
+            true
+        }
+
         loop {
             let mut changed = false;
 
@@ -104,8 +125,7 @@ impl Pdag {
                     let should_orient = parents
                         .iter()
                         .any(|&a| !adjacent(a as usize, c as usize, &und, &pa, &ch));
-                    if should_orient {
-                        orient(b as u32, c, &mut und, &mut pa, &mut ch);
+                    if should_orient && try_orient(b as u32, c, &mut und, &mut pa, &mut ch) {
                         changed = true;
                     }
                 }
@@ -116,11 +136,13 @@ impl Pdag {
                 for b_u in snapshot(&und[a]) {
                     let b = b_u as usize;
                     if ch[a].iter().any(|w| pa[b].contains(w)) {
-                        orient(a as u32, b_u, &mut und, &mut pa, &mut ch);
-                        changed = true;
+                        if try_orient(a as u32, b_u, &mut und, &mut pa, &mut ch) {
+                            changed = true;
+                        }
                     } else if ch[b].iter().any(|w| pa[a].contains(w)) {
-                        orient(b_u, a as u32, &mut und, &mut pa, &mut ch);
-                        changed = true;
+                        if try_orient(b_u, a as u32, &mut und, &mut pa, &mut ch) {
+                            changed = true;
+                        }
                     }
                 }
             }
@@ -137,8 +159,7 @@ impl Pdag {
                                 && und[a].contains(&d)
                         })
                     });
-                    if should_orient {
-                        orient(a as u32, b_u, &mut und, &mut pa, &mut ch);
+                    if should_orient && try_orient(a as u32, b_u, &mut und, &mut pa, &mut ch) {
                         changed = true;
                     }
                 }
@@ -148,11 +169,13 @@ impl Pdag {
             for a in 0..n {
                 for b_u in snapshot(&und[a]) {
                     if has_dir_path(&ch, a as u32, b_u) {
-                        orient(a as u32, b_u, &mut und, &mut pa, &mut ch);
-                        changed = true;
+                        if try_orient(a as u32, b_u, &mut und, &mut pa, &mut ch) {
+                            changed = true;
+                        }
                     } else if has_dir_path(&ch, b_u, a as u32) {
-                        orient(b_u, a as u32, &mut und, &mut pa, &mut ch);
-                        changed = true;
+                        if try_orient(b_u, a as u32, &mut und, &mut pa, &mut ch) {
+                            changed = true;
+                        }
                     }
                 }
             }
