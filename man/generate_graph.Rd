@@ -4,7 +4,7 @@
 \alias{generate_graph}
 \title{Generate a \code{caugi} using Erdős-Rényi.}
 \usage{
-generate_graph(n, m = NULL, p = NULL, class = c("DAG", "CPDAG"))
+generate_graph(n, m = NULL, p = NULL, class = c("DAG", "CPDAG"), seed = NULL)
 }
 \arguments{
 \item{n}{Integer >= 0. Number of nodes in the graph.}
@@ -16,6 +16,8 @@ of \code{m} or \code{p} must be supplied.}
 \code{m} or \code{p} must be supplied.}
 
 \item{class}{"DAG" or "CPDAG".}
+
+\item{seed}{Optional integer; random seed for reproducibility.}
 }
 \value{
 The sampled \code{caugi} object.
