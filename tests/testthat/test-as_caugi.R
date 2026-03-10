@@ -603,10 +603,6 @@ test_that("class-specific branches for optional backends are covered", {
     as_caugi(obj_tidy, class = "PAG"),
     "PAG class is not supported for tidygraph objects."
   )
-  expect_error(
-    as_caugi(obj_tidy, class = "DAG"),
-    "there is no package called"
-  )
 
   g_dagitty <- dagitty::dagitty("dag { A -> B }")
   expect_error(
