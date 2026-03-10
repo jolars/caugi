@@ -140,9 +140,9 @@ lazily, but you can force a build by using the function `build()`.
 
 ## Why?
 
-It’s fast, *dawg* 🐶 See the [vignette on
-performance](https://caugi.org/articles/performance.html) for
-benchmarks.
+It’s fast, *dawg* 🐶 See the [article on
+performance](https://caugi.org/articles/performance.html) on our website
+for benchmarks.
 
 ## Contribution
 
