@@ -106,6 +106,17 @@ test_that("CPDAG generation preserves sampled skeleton from DAG branch", {
   expect_true(is_cpdag(cpdag))
 })
 
+test_that("generate_graph with seed produces reproducible CPDAGs", {
+  cpdag1 <- generate_graph(10, m = 14L, class = "CPDAG", seed = 1405)
+  cpdag2 <- generate_graph(10, m = 14L, class = "CPDAG", seed = 1405)
+
+  expect_identical(
+    edges(cpdag1),
+    edges(cpdag2)
+  )
+})
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ─────────────────────────── simulate_data tests ──────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
