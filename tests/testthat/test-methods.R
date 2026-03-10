@@ -43,6 +43,7 @@ test_that("print method respects max_nodes", {
 })
 
 test_that("print method with many edges shows truncation", {
+  withr::local_options(width = 40) # mock small console width
   # Create a graph with enough edges to trigger automatic truncation
   cg <- caugi(
     A %-->% B + C + D + E + G + H + I + J + K + L + M + N + O + P + Q,
