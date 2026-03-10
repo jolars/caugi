@@ -623,6 +623,320 @@ mod tests {
         assert_eq!(ug.neighbors_of(2), &[0, 1]);
     }
 
+    #[test]
+    fn dag_to_cpdag_meek_r1_chain() {
+        // pgmpy test case 2: A->B with B--C, C--D in the CPDAG skeleton.
+        // DAG: A->B<-X (v-structure at B), B->C, C->D
+        // After v-structure: A->B<-X, B--C, C--D
+        // R1 fires on B--C (A->B, A not adj C) => B->C
+        // R1 fires again on C--D (B->C, B not adj D) => C->D
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        // 0:A, 1:B, 2:X, 3:C, 4:D
+        let mut b = GraphBuilder::new_with_registry(5, true, &reg);
+        b.add_edge(0, 1, d).unwrap(); // A -> B
+        b.add_edge(2, 1, d).unwrap(); // X -> B (v-structure with A at B)
+        b.add_edge(1, 3, d).unwrap(); // B -> C
+        b.add_edge(3, 4, d).unwrap(); // C -> D
+        let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        let cpdag = dag.to_cpdag().unwrap();
+        // Both B->C and C->D should be oriented by cascading R1
+        assert_eq!(cpdag.parents_of(3), vec![1]); // C has parent B
+        assert_eq!(cpdag.parents_of(4), vec![3]); // D has parent C
+        assert_eq!(cpdag.children_of(1), vec![3]); // B has child C
+        assert_eq!(cpdag.children_of(3), vec![4]); // C has child D
+    }
+
+    #[test]
+    fn dag_to_cpdag_meek_r3_two_nonadj_parents() {
+        // pgmpy test case 9 (Bang 2024):
+        // DAG: B->D, C->D, D->A, C->A
+        // V-structures: B->D<-C (B and C non-adjacent)
+        // After v-structure: B->D<-C, D--A, A--C
+        // R3: A--D with parents C->D, B->D non-adjacent, A--C (but not A--B)
+        //     => does NOT fire (need A adj to both C and B undirected)
+        // Actually R1: C->D, D--A, C not adj A? C IS adj A. So R1 doesn't fire for C->D, D--A.
+        //   B->D, D--A, B not adj A => R1 fires: D->A
+        // Then R1 again: D->A, A--C, D not adj C? D IS adj C. So check B->D, ... no.
+        //   Actually for A--C: D->A, D not adj C? D IS adj C (D<-C). So R1 doesn't fire.
+        // So result: B->D<-C, D->A, A--C? But wait C->A in the DAG. Let me reconsider.
+        //
+        // Actually the CPDAG of B->D<-C, D->A, C->A:
+        //   Skeleton: B-D, C-D, D-A, C-A
+        //   V-structure: B->D<-C (B,C non-adj)
+        //   R1: B->D, D--A, B not adj A => D->A
+        //   Now for C--A: any parent of A not adj to C? D->A, and D adj C (yes, D<-C). So R1 doesn't fire.
+        //   R2: C--A, is there w: C->w->A? C->D->A. Yes! So R2 fires: C->A.
+        //
+        // So this is actually an R1+R2 combo. Let me construct a proper R3 test.
+        //
+        // R3: a--b and ∃ c,d: c->b, d->b, c !~ d, a--c, a--d => a->b
+        // Need: node b with two parents c,d that are non-adjacent, and a node a
+        // that is undirected-adjacent to b, c, and d.
+        //
+        // DAG: C->B<-D (v-structure, C and D non-adj), A->B, A->C, A->D
+        // Skeleton: C-B, D-B, A-B, A-C, A-D
+        // V-structure at B: C->B<-D
+        // A is adjacent to C and D, so A->B is NOT a v-structure.
+        // After v-structures: C->B<-D, A--B, A--C, A--D
+        // R3: A--B, parents of B = {C, D}, C not adj D, A--C, A--D => A->B
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        // 0:A, 1:B, 2:C, 3:D
+        let mut b = GraphBuilder::new_with_registry(4, true, &reg);
+        b.add_edge(2, 1, d).unwrap(); // C -> B
+        b.add_edge(3, 1, d).unwrap(); // D -> B
+        b.add_edge(0, 1, d).unwrap(); // A -> B
+        b.add_edge(0, 2, d).unwrap(); // A -> C
+        b.add_edge(0, 3, d).unwrap(); // A -> D
+        let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        let cpdag = dag.to_cpdag().unwrap();
+        // C->B and D->B from v-structure, A->B from R3
+        assert!(cpdag.parents_of(1).contains(&0)); // A is parent of B
+        assert!(cpdag.parents_of(1).contains(&2)); // C is parent of B
+        assert!(cpdag.parents_of(1).contains(&3)); // D is parent of B
+        // A--C and A--D should remain undirected
+        assert!(cpdag.neighbors_of(0).contains(&2)); // A--C undirected
+        assert!(cpdag.neighbors_of(0).contains(&3)); // A--D undirected
+    }
+
+    #[test]
+    fn dag_to_cpdag_meek_r4_directed_path() {
+        // R4: a--b and there exists a directed path a => b => orient a->b
+        // DAG: A->C, C->D, D->B, A->B
+        // We need A->C->D->B to be compelled and A--B undirected, so R4 orients A->B.
+        //
+        // Add v-structure at C: X->C<-A (X not adj A)
+        // Then R1 cascades: A->C, C--D (X not adj D) => C->D; C->D, D--B (X not adj B?)
+        // Actually let me be more careful.
+        //
+        // DAG: X->C<-A, C->D, D->B, A->B, A->D
+        // Skeleton: X-C, A-C, C-D, D-B, A-B, A-D
+        // V-structure at C: X->C<-A (X not adj A ✓)
+        // After v-structures: X->C<-A, C--D, D--B, A--B, A--D
+        // R1: A->C, C--D, A adj D? Yes (A--D). So R1 doesn't fire for A->C, C--D.
+        //     X->C, C--D, X adj D? No. So R1 fires: C->D.
+        // Now: C->D, D--B, C adj B? No. So R1 fires: D->B.
+        // Now: D->B, B--A, D adj A? Yes (A--D). So R1 doesn't fire for D->B, B--A.
+        // R2: A--B, is there w: A->w->B? A->C->...->B (not direct). No direct A->w->B.
+        //     A--D, is there w: A->w->D? A->C->D. Yes! So R2 fires: A->D.
+        // Now: A->D, D->B already directed.
+        // R2 again: A--B, A->D->B? Yes! So R2 fires: A->B.
+        //
+        // Hmm, that's R2 not R4. Let me construct a proper R4.
+        //
+        // R4 needs: a--b with directed path a=>b but no single intermediate w with a->w->b.
+        // That means the directed path has length >= 3.
+        //
+        // DAG: A->C1, C1->C2, C2->B, A->B
+        // Need C1->C2 and C2->B to be compelled but no direct A->w->B.
+        //
+        // Use v-structure at C1: X->C1<-A
+        // Skeleton: X-C1, A-C1, C1-C2, C2-B, A-B
+        // V-structure: X->C1<-A
+        // R1: X->C1, C1--C2, X not adj C2 => C1->C2
+        //     C1->C2, C2--B, C1 not adj B => C2->B
+        //     A->C1, C1--C2, A not adj C2 => C1->C2 (already done)
+        // Now: A--B. Directed path A->C1->C2->B exists.
+        // R2: A--B, A->w->B? A has child C1, C1->B? No. So R2 doesn't apply.
+        // R4: A--B, directed path A->C1->C2->B => A->B. ✓
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        // 0:A, 1:C1, 2:C2, 3:B, 4:X
+        let mut b = GraphBuilder::new_with_registry(5, true, &reg);
+        b.add_edge(4, 1, d).unwrap(); // X -> C1
+        b.add_edge(0, 1, d).unwrap(); // A -> C1 (v-structure at C1 with X)
+        b.add_edge(1, 2, d).unwrap(); // C1 -> C2
+        b.add_edge(2, 3, d).unwrap(); // C2 -> B
+        b.add_edge(0, 3, d).unwrap(); // A -> B
+        let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        let cpdag = dag.to_cpdag().unwrap();
+        // A->B should be oriented by R4 (directed path A->C1->C2->B)
+        assert!(cpdag.parents_of(3).contains(&0)); // A is parent of B
+        assert!(cpdag.parents_of(3).contains(&2)); // C2 is parent of B
+        assert_eq!(cpdag.children_of(0), vec![1, 3]); // A has children C1, B
+    }
+
+    #[test]
+    fn dag_to_cpdag_no_rule_fires_edges_stay_undirected() {
+        // pgmpy test case 3: A->B, D->C with B--C.
+        // DAG: A->B, B->C, D->C, but A adj B, D adj C.
+        // Wait, we need a DAG where the CPDAG has some undirected edges that
+        // no Meek rule orients.
+        //
+        // Simple: a chain A->B->C. Equivalence class: A--B--C.
+        // No v-structures, so all edges are undirected in the CPDAG.
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
+        b.add_edge(0, 1, d).unwrap(); // A -> B
+        b.add_edge(1, 2, d).unwrap(); // B -> C
+        let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        let cpdag = dag.to_cpdag().unwrap();
+        // All edges should be undirected
+        assert!(cpdag.parents_of(0).is_empty());
+        assert!(cpdag.parents_of(1).is_empty());
+        assert!(cpdag.parents_of(2).is_empty());
+        assert!(cpdag.children_of(0).is_empty());
+        assert!(cpdag.children_of(1).is_empty());
+        assert!(cpdag.children_of(2).is_empty());
+        // But neighbors should exist
+        assert_eq!(cpdag.neighbors_of(0), &[1]);
+        assert_eq!(cpdag.neighbors_of(1), &[0, 2]);
+        assert_eq!(cpdag.neighbors_of(2), &[1]);
+    }
+
+    #[test]
+    fn dag_to_cpdag_larger_graph_multiple_rules() {
+        // A graph where multiple Meek rules fire in sequence.
+        // DAG: X->W<-A (v-structure), W->B<-Y (v-structure), A->B, A->Y
+        // This is the existing R2 test. Let's do a bigger one.
+        //
+        // DAG with 6 nodes combining v-structures and cascading rules:
+        // V1->X<-V2 (v-structure at X)
+        // X->Y, X->Z, Y->Z (no v-structure at Y or Z since X adj to all)
+        // After v-structures: V1->X<-V2, X--Y, X--Z, Y--Z
+        // R1: V1->X, X--Y, V1 not adj Y => X->Y
+        //     V1->X, X--Z, V1 not adj Z => X->Z
+        // Now X->Y, X->Z: Y--Z, check rules.
+        // R2: Y--Z, Y->w->Z? No. Z->w->Y? No.
+        // R3: Y--Z, parents of Z = {X}. Only one parent, need two. Doesn't fire.
+        // So Y--Z stays undirected.
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        // 0:V1, 1:X, 2:V2, 3:Y, 4:Z
+        let mut b = GraphBuilder::new_with_registry(5, true, &reg);
+        b.add_edge(0, 1, d).unwrap(); // V1 -> X
+        b.add_edge(2, 1, d).unwrap(); // V2 -> X (v-structure)
+        b.add_edge(1, 3, d).unwrap(); // X -> Y
+        b.add_edge(1, 4, d).unwrap(); // X -> Z
+        b.add_edge(3, 4, d).unwrap(); // Y -> Z
+        let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        let cpdag = dag.to_cpdag().unwrap();
+        // V1->X<-V2 compelled (v-structure)
+        assert!(cpdag.parents_of(1).contains(&0));
+        assert!(cpdag.parents_of(1).contains(&2));
+        // X->Y and X->Z compelled by R1
+        assert!(cpdag.children_of(1).contains(&3));
+        assert!(cpdag.children_of(1).contains(&4));
+        // Y--Z stays undirected
+        assert!(cpdag.neighbors_of(3).contains(&4));
+        assert!(cpdag.neighbors_of(4).contains(&3));
+        assert!(!cpdag.parents_of(4).contains(&3));
+        assert!(!cpdag.children_of(3).contains(&4));
+    }
+
+    #[test]
+    fn dag_to_cpdag_isolated_nodes_preserved() {
+        // DAG with isolated nodes: should still work
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        let mut b = GraphBuilder::new_with_registry(5, true, &reg);
+        b.add_edge(0, 2, d).unwrap(); // A -> C
+        b.add_edge(1, 2, d).unwrap(); // B -> C (v-structure with A)
+        // nodes 3, 4 are isolated
+        let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        let cpdag = dag.to_cpdag().unwrap();
+        assert_eq!(cpdag.n(), 5);
+        assert_eq!(cpdag.parents_of(2), vec![0, 1]); // v-structure preserved
+        assert!(cpdag.neighbors_of(3).is_empty());
+        assert!(cpdag.neighbors_of(4).is_empty());
+    }
+
+    #[test]
+    fn dag_to_cpdag_single_edge() {
+        // Single edge A->B: CPDAG is A--B
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        let mut b = GraphBuilder::new_with_registry(2, true, &reg);
+        b.add_edge(0, 1, d).unwrap();
+        let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        let cpdag = dag.to_cpdag().unwrap();
+        assert!(cpdag.parents_of(0).is_empty());
+        assert!(cpdag.parents_of(1).is_empty());
+        assert_eq!(cpdag.neighbors_of(0), &[1]);
+        assert_eq!(cpdag.neighbors_of(1), &[0]);
+    }
+
+    #[test]
+    fn dag_to_cpdag_complete_dag_all_undirected() {
+        // Complete DAG on 3 nodes: A->B, A->C, B->C
+        // No v-structures (all pairs adjacent), so CPDAG is fully undirected
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        let mut b = GraphBuilder::new_with_registry(3, true, &reg);
+        b.add_edge(0, 1, d).unwrap(); // A -> B
+        b.add_edge(0, 2, d).unwrap(); // A -> C
+        b.add_edge(1, 2, d).unwrap(); // B -> C
+        let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        let cpdag = dag.to_cpdag().unwrap();
+        // All edges undirected (complete graph = single equivalence class)
+        for i in 0..3u32 {
+            assert!(cpdag.parents_of(i).is_empty());
+            assert!(cpdag.children_of(i).is_empty());
+        }
+        assert_eq!(cpdag.neighbors_of(0), &[1, 2]);
+        assert_eq!(cpdag.neighbors_of(1), &[0, 2]);
+        assert_eq!(cpdag.neighbors_of(2), &[0, 1]);
+    }
+
+    #[test]
+    fn dag_to_cpdag_r2_directed_path_through_intermediate() {
+        // R2: a--b and ∃ w: a->w->b => a->b
+        // pcalg example: A->B, B->C with A--C.
+        // Need A->B and B->C compelled first.
+        //
+        // DAG: X->B<-A (v-structure at B), B->C, Y->C<-B (v-structure at C), A->C
+        // Skeleton: X-B, A-B, B-C, Y-C, A-C
+        // V-structures: X->B<-A, Y->C<-B (A adj B and B adj C, but X not adj A, Y not adj B)
+        // Wait, X->B<-A: X not adj A? Need to ensure that. Yes, no edge X-A.
+        //       Y->C<-B: Y not adj B? Need to ensure that. Yes, no edge Y-B.
+        // After v-structures: X->B<-A, Y->C<-B
+        // A--C is undirected. R2: A--C, A->B->C? Yes! A->B and B->C. So R2: A->C.
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        // 0:A, 1:B, 2:C, 3:X, 4:Y
+        let mut b = GraphBuilder::new_with_registry(5, true, &reg);
+        b.add_edge(3, 1, d).unwrap(); // X -> B
+        b.add_edge(0, 1, d).unwrap(); // A -> B (v-structure at B with X)
+        b.add_edge(1, 2, d).unwrap(); // B -> C
+        b.add_edge(4, 2, d).unwrap(); // Y -> C (v-structure at C with B)
+        b.add_edge(0, 2, d).unwrap(); // A -> C
+        let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        let cpdag = dag.to_cpdag().unwrap();
+        // A->C should be oriented by R2 (path A->B->C)
+        assert!(cpdag.parents_of(2).contains(&0)); // A is parent of C
+        assert!(cpdag.parents_of(2).contains(&1)); // B is parent of C
+        assert!(cpdag.parents_of(2).contains(&4)); // Y is parent of C
+    }
+
     // ── Latent projection tests ──────────────────────────────────────────────
 
     #[test]

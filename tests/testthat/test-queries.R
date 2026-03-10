@@ -274,6 +274,131 @@ test_that("is_mpdag tracks causal-learn style multi-rule progression", {
   expect_setequal(und_C, "B")
 })
 
+test_that("is_cpdag rejects graphs where Meek R1 would fire", {
+  # R1: a->b, b--c, a not adj c => b->c
+  # If b--c is still undirected when R1 should have oriented it, it's not a CPDAG.
+
+  # a->b with b--c undirected, a not adjacent to c
+  cg <- caugi(A %-->% B, B %---% C, class = "PDAG")
+  expect_false(is_cpdag(cg))
+
+  # Cascading R1: a->b, b--c, c--d with a not adj c, b not adj d
+  cg <- caugi(A %-->% B, B %---% C, C %---% D, class = "PDAG")
+  expect_false(is_cpdag(cg))
+})
+
+test_that("is_cpdag rejects graphs where Meek R2 would fire", {
+  # R2: a--b and ∃ w: a->w->b => a->b
+  # a->w->b with a--b undirected
+  cg <- caugi(A %---% B, A %-->% C, C %-->% B, class = "PDAG")
+  expect_false(is_cpdag(cg))
+})
+
+test_that("is_cpdag rejects graphs where Meek R3 would fire", {
+  # R3: a--b with c->b, d->b, c not adj d, a--c, a--d => a->b
+  cg <- caugi(
+    A %---% B,
+    C %-->% B,
+    D %-->% B,
+    A %---% C,
+    A %---% D,
+    class = "PDAG"
+  )
+  expect_false(is_cpdag(cg))
+})
+
+test_that("is_cpdag rejects graphs where Meek R4 would fire", {
+  # R4: a--b and directed path a => b => orient a->b
+  # a--b with directed path a->c->d->b
+  cg <- caugi(
+    A %---% B,
+    A %-->% C,
+    C %-->% D,
+    D %-->% B,
+    class = "PDAG"
+  )
+  expect_false(is_cpdag(cg))
+})
+
+test_that("is_cpdag accepts valid CPDAGs from pgmpy test cases", {
+  # pgmpy case 3: A->B, D->C with B--C stays undirected (no rule fires)
+  # This is a valid CPDAG: B and C have parents from opposite sides,
+  # but B and C are adjacent, so no additional orientation is needed.
+  # Actually A->B, D->C, B--C: R1 check: A->B, B--C, A adj C? No.
+  # So R1 WOULD fire. This means this is NOT a valid CPDAG.
+  # pgmpy represents it differently. Let me use properly valid CPDAGs.
+
+  # V-structure A->C<-B is a valid CPDAG
+  cg <- caugi(A %-->% C, B %-->% C, class = "PDAG")
+  expect_true(is_cpdag(cg))
+
+  # V-structure with R1 result: A->C<-B, C->D is valid
+  cg <- caugi(A %-->% C, B %-->% C, C %-->% D, class = "PDAG")
+  expect_true(is_cpdag(cg))
+
+  # Fully undirected triangle (complete graph, no v-structures)
+  cg <- caugi(A %---% B, B %---% C, A %---% C, class = "PDAG")
+  expect_true(is_cpdag(cg))
+
+  # Single undirected edge
+  cg <- caugi(A %---% B, class = "PDAG")
+  expect_true(is_cpdag(cg))
+
+  # Undirected chain
+  cg <- caugi(A %---% B, B %---% C, class = "PDAG")
+  expect_true(is_cpdag(cg))
+
+  # V-structure + R1 cascade + undirected component:
+  # B--A, B--D, C->E<-B, D->F<-E
+  cg <- caugi(
+    B %---% A,
+    B %---% D,
+    C %-->% E,
+    B %-->% E,
+    D %-->% F,
+    E %-->% F,
+    class = "PDAG"
+  )
+  expect_true(is_cpdag(cg))
+})
+
+test_that("is_cpdag accepts graphs with isolated nodes", {
+  cg <- caugi(A %-->% C, B %-->% C, D, E, class = "PDAG")
+  expect_true(is_cpdag(cg))
+
+  cg <- caugi(A, B, C, class = "PDAG")
+  expect_true(is_cpdag(cg))
+})
+
+test_that("is_cpdag: pcalg addBgKnowledge-style chain test", {
+  # pcalg example: 3-node undirected chain a--b--c
+  # This is a valid CPDAG (no v-structures, Markov equivalent to a->b->c etc.)
+  cg <- caugi(A %---% B, B %---% C, class = "PDAG")
+  expect_true(is_cpdag(cg))
+
+  # After orienting b->c, Meek R1 should orient b->a too.
+  # So b->c with a--b (a not adj c) is NOT a valid CPDAG (R1 would fire).
+  cg <- caugi(A %---% B, B %-->% C, class = "PDAG")
+  expect_false(is_cpdag(cg))
+
+  # Fully oriented b->a, b->c IS a valid CPDAG (a<-b->c v-structure,
+  # but a and c are non-adjacent so it's a valid v-structure CPDAG).
+  # Wait: a<-b->c with a not adj c: is b a collider? No, b is a parent of both.
+  # It's a "fork" not a collider. The directed edges are not protected.
+  # Actually in b->a, b->c: these are only protected if there's a v-structure.
+  # b->a is protected if ∃ v-structure witness. There's none. So NOT a CPDAG.
+  cg <- caugi(B %-->% A, B %-->% C, class = "PDAG")
+  expect_false(is_cpdag(cg))
+})
+
+test_that("to_cpdag via generate_graph produces valid CPDAGs", {
+  # Exhaustive check: generate random DAGs and verify CPDAGs
+  for (i in 1:20) {
+    cpdag <- generate_graph(n = 8, m = sample(5:12, 1), class = "CPDAG")
+    expect_true(is_cpdag(cpdag))
+  }
+})
+
 test_that("same_nodes works", {
   cg1 <- caugi(A %-->% B, B %-->% C, class = "DAG")
   cg2 <- caugi(B %-->% C, A %-->% B, class = "DAG")
