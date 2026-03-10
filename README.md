@@ -100,7 +100,7 @@ register_caugi_edge(
 )
 
 caugi(A %-->% B, B %<--% C, class = "DAG")
-#> <caugi object; 3 nodes, 2 edges; simple: TRUE; session=0x5679606fdb60>
+#> <caugi object; 3 nodes, 2 edges; simple: TRUE; session=0x000001a3925eceb0>
 #>   graph_class: DAG
 #>   nodes: A, B, C
 #>   edges: A-->B, B<--C
@@ -145,9 +145,9 @@ time.
 
 ## Why?
 
-It’s fast, *dawg* 🐶 See the [vignette on
-performance](https://caugi.org/articles/performance.html) for
-benchmarks.
+It’s fast, *dawg* 🐶 See the [article on
+performance](https://caugi.org/articles/performance.html) on our website
+for benchmarks.
 
 ## Contribution
 
