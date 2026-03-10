@@ -31,6 +31,11 @@ cg_not_mpdag <- caugi(
 is_mpdag(cg_not_mpdag) # FALSE
 
 }
+\references{
+C. Meek (1995). Causal inference and causal explanation with background
+knowledge. In \emph{Proceedings of the Eleventh Conference on Uncertainty in
+Artificial Intelligence (UAI-95)}, pp. 403--411. Morgan Kaufmann.
+}
 \seealso{
 Other queries: 
 \code{\link{ancestors}()},

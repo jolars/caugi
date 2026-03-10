@@ -74,6 +74,11 @@ skeleton <- function(cg) {
 #' @returns A `caugi` object of class `"PDAG"` that is closed under Meek's
 #'   rules.
 #'
+#' @references
+#' C. Meek (1995). Causal inference and causal explanation with background
+#' knowledge. In \emph{Proceedings of the Eleventh Conference on Uncertainty in
+#' Artificial Intelligence (UAI-95)}, pp. 403--411. Morgan Kaufmann.
+#'
 #' @examples
 #' pdag <- caugi(
 #'   A %---% B,

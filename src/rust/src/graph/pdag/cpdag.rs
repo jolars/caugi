@@ -44,6 +44,9 @@ impl Pdag {
     }
 
     /// True if the PDAG is closed under Meek orientation rules (R1..R4).
+    ///
+    /// See: C. Meek (1995). Causal inference and causal explanation with
+    /// background knowledge. UAI-95, pp. 403–411.
     pub fn is_meek_closed(&self) -> bool {
         self.meeks_rules_blocked()
     }

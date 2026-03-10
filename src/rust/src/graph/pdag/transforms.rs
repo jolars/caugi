@@ -26,6 +26,12 @@ impl Pdag {
     /// Orient all compelled edges implied by Meek rules (R1..R4).
     ///
     /// Returns a new PDAG that is closed under Meek orientation rules.
+    ///
+    /// # References
+    ///
+    /// C. Meek (1995). Causal inference and causal explanation with background
+    /// knowledge. In *Proceedings of the Eleventh Conference on Uncertainty in
+    /// Artificial Intelligence (UAI-95)*, pp. 403–411. Morgan Kaufmann.
     pub fn meek_closure(&self) -> Result<Pdag, String> {
         type NodeSet = BTreeSet<u32>;
 
@@ -364,7 +370,10 @@ mod tests {
         }
     }
 
-    // ── pgmpy-inspired tests (test_pdag_to_cpdag) ──────────────────────────
+    // ── Tests derived from pgmpy, pcalg, and Perkovic (2017) ──────────────
+    //
+    // Meek rules: C. Meek (1995). Causal inference and causal explanation
+    // with background knowledge. UAI-95, pp. 403–411.
 
     #[test]
     fn meek_closure_pgmpy_case1_r1_simple() {

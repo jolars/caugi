@@ -28,6 +28,11 @@ mpdag <- meek_closure(pdag)
 edges(mpdag)
 
 }
+\references{
+C. Meek (1995). Causal inference and causal explanation with background
+knowledge. In \emph{Proceedings of the Eleventh Conference on Uncertainty in
+Artificial Intelligence (UAI-95)}, pp. 403--411. Morgan Kaufmann.
+}
 \seealso{
 Other operations: 
 \code{\link{condition_marginalize}()},
