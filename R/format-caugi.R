@@ -88,7 +88,7 @@ write_caugi <- function(x, path, comment = NULL, tags = NULL) {
 #' Reads a caugi graph from a file in the native caugi JSON format.
 #'
 #' @param path Character string specifying the file path.
-#' @param lazy Deprecated, no longer necessary. Logical indicating whether to lazily read the graph.
+#' @param lazy DEPRECATED, no longer necessary. The graph is always built lazily, so this argument is ignored.
 #'
 #' @returns A `caugi` object.
 #'
@@ -201,8 +201,8 @@ caugi_serialize <- function(x, comment = NULL, tags = NULL) {
 #' This is a lower-level function; consider using `read_caugi()` for
 #' reading from files.
 #'
+#' @inheritParams read_caugi
 #' @param json Character string containing the JSON representation.
-#' @param lazy Deprecated, no longer necessary. Logical indicating whether to lazily deserialize the graph.
 #'
 #' @returns A `caugi` object.
 #'

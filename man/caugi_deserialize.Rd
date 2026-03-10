@@ -9,7 +9,7 @@ caugi_deserialize(json, lazy)
 \arguments{
 \item{json}{Character string containing the JSON representation.}
 
-\item{lazy}{Deprecated, no longer necessary. Logical indicating whether to lazily deserialize the graph.}
+\item{lazy}{DEPRECATED, no longer necessary. The graph is always built lazily, so this argument is ignored.}
 }
 \value{
 A \code{caugi} object.

@@ -45,8 +45,9 @@
 #' It will default to `"UNKNOWN"` if no match is found.
 #' @param .session For internal use. Build a graph by supplying a
 #' pre-constructed session pointer from Rust.
-#' @param build Deprecated.
-#' @param state Deprecated. Replaced by `.session`.
+#' @param build DEPRECATED. The graph is always built lazily, so this argument is ignored.
+#' Can use [build()] to force lazy compilation if desired.
+#' @param state DEPRECATED. Replaced by `.session`.
 #'
 #' @returns A `caugi` S7 object containing the nodes, edges, and a
 #' pointer to the underlying Rust graph structure.

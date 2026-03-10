@@ -9,7 +9,7 @@ read_caugi(path, lazy)
 \arguments{
 \item{path}{Character string specifying the file path.}
 
-\item{lazy}{Deprecated, no longer necessary. Logical indicating whether to lazily read the graph.}
+\item{lazy}{DEPRECATED, no longer necessary. The graph is always built lazily, so this argument is ignored.}
 }
 \value{
 A \code{caugi} object.

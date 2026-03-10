@@ -47,7 +47,8 @@ from another \code{caugi} object, \code{cg}.}
 the function will throw an error if the input contains parallel edges or
 self-loops.}
 
-\item{build}{Deprecated.}
+\item{build}{DEPRECATED. The graph is always built lazily, so this argument is ignored.
+Can use \code{\link[=build]{build()}} to force lazy compilation if desired.}
 
 \item{class}{Character; one of \code{"AUTO"}, \code{"DAG"}, \code{"UG"}, \code{"PDAG"}, \code{"ADMG"},
 \code{"AG"}, or \code{"UNKNOWN"}. \code{"AUTO"} will automatically pick the appropriate
@@ -55,7 +56,7 @@ class based on the first match in the order of \code{"DAG"}, \code{"UG"}, \code{
 \code{"ADMG"}, and \code{"AG"}.
 It will default to \code{"UNKNOWN"} if no match is found.}
 
-\item{state}{Deprecated. Replaced by \code{.session}.}
+\item{state}{DEPRECATED. Replaced by \code{.session}.}
 
 \item{.session}{For internal use. Build a graph by supplying a
 pre-constructed session pointer from Rust.}
