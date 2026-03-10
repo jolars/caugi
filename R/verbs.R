@@ -44,28 +44,22 @@ NULL
 
 #' @title Build the `caugi` graph
 #'
-#' @description DEPRECATED. This function is no longer necessary as graph sessions are always created lazily.
-#' This function is now a no-op that returns the input graph invisibly. It is kept for backward compatibility,
-#' but it will be removed in a future release. You can safely remove calls to `build()` from your code.
+#' @description Forces lazy compilation of the `caugi` graph
+#' without running a specific query. Useful to pre-initialize the graph.
 #'
 #' @param cg A `caugi` object.
 #'
-#' @returns The input `caugi` object, invisibly.
+#' @returns The input `caugi` object (invisibly), with its graph built.
 #'
 #' @examples
 #' cg <- caugi(A %-->% B, class = "DAG")
-#' build(cg)
+#' build(cg) # initialize graph without querying
 #'
 #' @family verbs
 #' @concept verbs
 #'
 #' @export
 build <- function(cg) {
-  warning(
-    "The `build()` function is deprecated and no longer has any effect. ",
-    "Graph sessions are now created lazily when needed.",
-    call. = FALSE
-  )
   is_caugi(cg, throw_error = TRUE)
   rs_build(cg@session)
   invisible(cg)

@@ -10,16 +10,15 @@ build(cg)
 \item{cg}{A \code{caugi} object.}
 }
 \value{
-The input \code{caugi} object, invisibly.
+The input \code{caugi} object (invisibly), with its graph built.
 }
 \description{
-DEPRECATED. This function is no longer necessary as graph sessions are always created lazily.
-This function is now a no-op that returns the input graph invisibly. It is kept for backward compatibility,
-but it will be removed in a future release. You can safely remove calls to \code{build()} from your code.
+Forces lazy compilation of the \code{caugi} graph
+without running a specific query. Useful to pre-initialize the graph.
 }
 \examples{
 cg <- caugi(A \%-->\% B, class = "DAG")
-build(cg)
+build(cg) # initialize graph without querying
 
 }
 \seealso{
