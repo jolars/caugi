@@ -27,3 +27,7 @@
 ^CRAN-SUBMISSION$
 ^target$
 ^[.]?air[.]toml$
+^paper$
+^Taskfile\.yml$
+^extras$
+^paper$

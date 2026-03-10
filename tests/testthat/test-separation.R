@@ -287,6 +287,76 @@ test_that("minimal_d_separator enforces I subset of R (deterministic behavior)",
   expect_null(sep)
 })
 
+test_that("d_separated captures naive Bayes conditional independence pattern", {
+  cg <- caugi(
+    A %-->% B,
+    A %-->% C,
+    A %-->% D,
+    A %-->% E,
+    class = "DAG"
+  )
+
+  children <- c("B", "C", "D", "E")
+  pairs <- combn(children, 2, simplify = FALSE)
+  for (pair in pairs) {
+    expect_true(d_separated(cg, pair[1], pair[2], Z = "A"))
+    expect_false(d_separated(cg, pair[1], pair[2]))
+  }
+})
+
+test_that("d_separated handles asia-style fixtures", {
+  cg <- caugi(
+    asia %-->% tuberculosis,
+    smoking %-->% cancer,
+    smoking %-->% bronchitis,
+    tuberculosis %-->% either,
+    cancer %-->% either,
+    either %-->% xray,
+    either %-->% dyspnea,
+    bronchitis %-->% dyspnea,
+    class = "DAG"
+  )
+
+  left <- c("asia", "smoking")
+  right <- c("dyspnea", "xray")
+  for (x in left) {
+    for (y in right) {
+      expect_true(d_separated(cg, x, y, Z = c("bronchitis", "either")))
+    }
+  }
+
+  expect_true(d_separated(
+    cg,
+    "tuberculosis",
+    "bronchitis",
+    Z = c("smoking", "xray")
+  ))
+  expect_true(d_separated(cg, "cancer", "bronchitis", Z = c("smoking", "xray")))
+})
+
+test_that("d_separated errors on non-DAG graphs and unknown nodes", {
+  ug <- caugi(
+    A %---% B,
+    class = "UG"
+  )
+  expect_error(d_separated(ug, "A", "B"), "only defined for DAGs")
+
+  cyclic <- caugi(
+    A %-->% B,
+    B %-->% C,
+    C %-->% A,
+    class = "UNKNOWN"
+  )
+  expect_error(d_separated(cyclic, "A", "C"), "only defined for DAGs")
+
+  dag <- caugi(
+    A %-->% B,
+    class = "DAG"
+  )
+  expect_error(d_separated(dag, "Q", "B"), "Non-existent node name: Q")
+  expect_error(minimal_d_separator(dag, "Q", "B"), "Non-existent node name: Q")
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Tests ported from NetworkX to verify implementation correctness
 # ──────────────────────────────────────────────────────────────────────────────
@@ -454,4 +524,16 @@ test_that("NetworkX Case 6: complex graph for minimality check", {
   if (!is.null(Zmin)) {
     expect_true(d_separated(cg, "C", "F", Z = Zmin))
   }
+})
+
+test_that("minimal_d_separator validates empty X and Y", {
+  cg_sep <- caugi(A %-->% B %-->% C, class = "DAG")
+  expect_error(
+    minimal_d_separator(cg_sep, X = character(0), Y = "C"),
+    "`X` did not match any nodes"
+  )
+  expect_error(
+    minimal_d_separator(cg_sep, X = "A", Y = character(0)),
+    "`Y` did not match any nodes"
+  )
 })

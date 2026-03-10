@@ -9,6 +9,7 @@
 #' @param p Numeric in `[0,1]`. Probability of edge creation. Exactly one of
 #' `m` or `p` must be supplied.
 #' @param class "DAG" or "CPDAG".
+#' @param seed Optional integer; random seed for reproducibility.
 #'
 #' @returns The sampled `caugi` object.
 #'
@@ -23,7 +24,13 @@
 #' @concept simulation
 #'
 #' @export
-generate_graph <- function(n, m = NULL, p = NULL, class = c("DAG", "CPDAG")) {
+generate_graph <- function(
+  n,
+  m = NULL,
+  p = NULL,
+  class = c("DAG", "CPDAG"),
+  seed = NULL
+) {
   class <- match.arg(class)
   n <- as.integer(n)
   if (length(n) != 1L || n <= 0L) {
@@ -31,6 +38,9 @@ generate_graph <- function(n, m = NULL, p = NULL, class = c("DAG", "CPDAG")) {
   }
   if (xor(is.null(m), is.null(p)) == FALSE) {
     stop("Supply exactly one of m or p", call. = FALSE)
+  }
+  if (!is.null(seed)) {
+    set.seed(seed)
   }
 
   tot <- as.integer(n * (n - 1L) / 2L)

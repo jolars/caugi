@@ -60,7 +60,8 @@ Suggests:
     rextendr,
     rmarkdown,
     testthat,
-    waldo
+    waldo,
+    withr
 VignetteBuilder:
     knitr
 Config/rextendr/version: 0.4.2

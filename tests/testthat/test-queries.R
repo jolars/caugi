@@ -601,6 +601,20 @@ test_that("markov_blanket includes undirected neighbors in PDAGs", {
   expect_setequal(mb_B, c("A", "C", "D"))
 })
 
+test_that("markov_blanket matches a multi-parent fixture on DAGs", {
+  cg <- caugi(
+    W %-->% Y,
+    X %-->% W,
+    Z1 %-->% X + Z3,
+    Z2 %-->% Y + Z3,
+    Z3 %-->% X + Y,
+    class = "DAG"
+  )
+
+  expect_setequal(markov_blanket(cg, "Z1"), c("X", "Z2", "Z3"))
+  expect_setequal(markov_blanket(cg, "Y"), c("W", "Z2", "Z3"))
+})
+
 test_that("markov_blanket argument validation", {
   cg <- caugi(A %-->% B)
   expect_error(
@@ -1529,4 +1543,76 @@ test_that("missing(open) uses global option; explicit open overrides it", {
   # Explicit open = FALSE overrides the open global option after reset
   caugi_options(use_open_graph_definition = TRUE)
   expect_equal(ancestors(cg, "B", open = FALSE), c("B", "A"))
+})
+
+test_that("getter and districts branches are covered", {
+  cg <- caugi(
+    A %-->% B,
+    B %-->% C,
+    B %---% D,
+    class = "PDAG"
+  )
+
+  expect_true("B" %in% ancestors(cg, index = 2, open = FALSE))
+  expect_true("A" %in% descendants(cg, index = 1, open = FALSE))
+  expect_true("D" %in% anteriors(cg, index = 4, open = FALSE))
+
+  expect_error(
+    posteriors(cg, nodes = "A", index = 1),
+    "Supply either `nodes` or `index`, not both."
+  )
+  expect_error(
+    posteriors(cg),
+    "Supply one of `nodes` or `index`."
+  )
+  expect_error(
+    posteriors(cg, nodes = 1),
+    "`nodes` must be a character vector of node names."
+  )
+  expect_true("B" %in% posteriors(cg, index = 2, open = FALSE))
+
+  cg_admg <- caugi(
+    A %<->% B,
+    B %<->% C,
+    C %-->% D,
+    class = "ADMG"
+  )
+  expect_setequal(spouses(cg_admg, index = 2), c("A", "C"))
+
+  # Test that deprecated 'all' parameter shows warning
+  expect_warning(
+    districts(cg_admg, all = TRUE),
+    "deprecated"
+  )
+
+  # Test error for invalid index
+  expect_error(
+    districts(cg_admg, index = c(1, NA)),
+    "`index` must be numeric without NA."
+  )
+
+  # Test getting all districts (new API - no parameters)
+  all_districts <- districts(cg_admg)
+  expect_true(is.list(all_districts))
+  expect_true(length(all_districts) >= 1L)
+})
+
+test_that("is_mag class short-circuit branch is covered", {
+  cg <- caugi(A %-->% B, class = "DAG")
+  out <- testthat::with_mocked_bindings(
+    is_mag(cg),
+    rs_class = function(session) "MAG",
+    .package = "caugi"
+  )
+  expect_true(out)
+})
+
+test_that("nodes_to_indices errors when session is missing", {
+  cg <- caugi(A %-->% B, class = "DAG")
+  bad <- cg
+  attr(bad, "session") <- NULL
+  expect_error(
+    caugi:::.nodes_to_indices(bad, "A"),
+    "Cannot look up indices for empty graph."
+  )
 })
