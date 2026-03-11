@@ -870,21 +870,19 @@ mod tests {
     #[test]
     fn dag_to_cpdag_single_edge() {
         // Single edge A->B: CPDAG is A--B
-        b.add_edge(0, 2, d).unwrap();
-        b.add_edge(1, 2, d).unwrap();
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
+        let mut b = GraphBuilder::new_with_registry(2, true, &reg);
+        b.add_edge(0, 1, d).unwrap();
         let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
 
-        let sk_core = dag.skeleton_core().unwrap();
-        let sk = Ug::new(Arc::new(sk_core)).unwrap();
-        assert_eq!(sk.neighbors_of(0), &[2]);
-        assert_eq!(sk.neighbors_of(1), &[2]);
-        assert_eq!(sk.neighbors_of(2), &[0, 1]);
-
-        let moral_core = dag.moralize_core().unwrap();
-        let moral = Ug::new(Arc::new(moral_core)).unwrap();
-        assert_eq!(moral.neighbors_of(0), &[1, 2]);
-        assert_eq!(moral.neighbors_of(1), &[0, 2]);
-        assert_eq!(moral.neighbors_of(2), &[0, 1]);
+        let cpdag = dag.to_cpdag().unwrap();
+        assert!(cpdag.parents_of(0).is_empty());
+        assert!(cpdag.parents_of(1).is_empty());
+        assert_eq!(cpdag.neighbors_of(0), &[1]);
+        assert_eq!(cpdag.neighbors_of(1), &[0]);
     }
 
     #[test]
@@ -944,6 +942,10 @@ mod tests {
         // A--C is undirected. R2: A--C, A->B->C? Yes! A->B and B->C. So R2: A->C.
         // a -> b <- d, and b -> c in the DAG.
         // R1 should orient b -- c into b -> c after v-structure orientation at b.
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+
         let mut b = GraphBuilder::new_with_registry(4, true, &reg);
         b.add_edge(0, 1, d).unwrap();
         b.add_edge(2, 1, d).unwrap();
