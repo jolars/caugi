@@ -199,13 +199,7 @@ mod tests {
             42.0
         };
 
-        conjugate_gradient_optimize(
-            &mut positions,
-            compute_gradient,
-            compute_objective,
-            2,
-            -1.0,
-        );
+        conjugate_gradient_optimize(&mut positions, compute_gradient, compute_objective, 2, -1.0);
 
         assert!((positions[0] - 3.0).abs() < 0.01);
         assert!((positions[1] + 2.0).abs() < 0.01);

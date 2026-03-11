@@ -31,7 +31,7 @@ impl Pdag {
         }
 
         // Meeks rules would not orient any more edges
-        if !self.meeks_rules_blocked() {
+        if !self.is_meek_closed() {
             return false;
         }
 
@@ -41,6 +41,14 @@ impl Pdag {
         }
 
         true
+    }
+
+    /// True if the PDAG is closed under Meek orientation rules (R1..R4).
+    ///
+    /// See: C. Meek (1995). Causal inference and causal explanation with
+    /// background knowledge. UAI-95, pp. 403–411.
+    pub fn is_meek_closed(&self) -> bool {
+        self.meeks_rules_blocked()
     }
 
     /// DFS over undirected edges to get chain components.

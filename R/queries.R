@@ -350,6 +350,11 @@ is_pdag <- function(cg, force_check = FALSE) {
 #' )
 #' is_cpdag(cg_not_cpdag) # FALSE
 #'
+#' @references
+#' C. Meek (1995). Causal inference and causal explanation with background
+#' knowledge. In \emph{Proceedings of the Eleventh Conference on Uncertainty in
+#' Artificial Intelligence (UAI-95)}, pp. 403--411. Morgan Kaufmann.
+#'
 #' @family queries
 #' @concept queries
 #'
@@ -359,6 +364,44 @@ is_cpdag <- function(cg) {
 
   is_it <- rs_is_cpdag(cg@session)
   is_it
+}
+
+#' @title Is the `caugi` graph an MPDAG?
+#'
+#' @description Checks if the given `caugi` graph is a
+#' Maximally oriented Partially Directed Acyclic Graph
+#' (MPDAG), i.e. a PDAG where no additional edge orientations
+#' are implied by Meek's rules (R1--R4).
+#'
+#' @details
+#' If the graph is not PDAG-compatible, the function returns `FALSE`.
+#'
+#' @param cg A `caugi` object.
+#'
+#' @returns A logical value indicating whether the graph is an MPDAG.
+#'
+#' @examples
+#' cg_not_mpdag <- caugi(
+#'   A %---% B,
+#'   A %-->% C,
+#'   C %-->% B,
+#'   class = "PDAG"
+#' )
+#' is_mpdag(cg_not_mpdag) # FALSE
+#'
+#' @references
+#' C. Meek (1995). Causal inference and causal explanation with background
+#' knowledge. In \emph{Proceedings of the Eleventh Conference on Uncertainty in
+#' Artificial Intelligence (UAI-95)}, pp. 403--411. Morgan Kaufmann.
+#'
+#' @family queries
+#' @concept queries
+#'
+#' @export
+is_mpdag <- function(cg) {
+  is_caugi(cg, throw_error = TRUE)
+
+  rs_is_mpdag(cg@session)
 }
 
 #' @title Is the `caugi` graph an UG?
