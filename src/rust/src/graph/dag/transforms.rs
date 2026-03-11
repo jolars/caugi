@@ -707,7 +707,7 @@ mod tests {
         assert!(cpdag.parents_of(1).contains(&0)); // A is parent of B
         assert!(cpdag.parents_of(1).contains(&2)); // C is parent of B
         assert!(cpdag.parents_of(1).contains(&3)); // D is parent of B
-        // A--C and A--D should remain undirected
+                                                   // A--C and A--D should remain undirected
         assert!(cpdag.neighbors_of(0).contains(&2)); // A--C undirected
         assert!(cpdag.neighbors_of(0).contains(&3)); // A--D undirected
     }
@@ -781,7 +781,6 @@ mod tests {
         //
         // Simple: a chain A->B->C. Equivalence class: A--B--C.
         // No v-structures, so all edges are undirected in the CPDAG.
-    fn dag_core_transforms_match_graph_transforms() {
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
         let d = reg.code_of("-->").unwrap();
@@ -858,7 +857,7 @@ mod tests {
         let mut b = GraphBuilder::new_with_registry(5, true, &reg);
         b.add_edge(0, 2, d).unwrap(); // A -> C
         b.add_edge(1, 2, d).unwrap(); // B -> C (v-structure with A)
-        // nodes 3, 4 are isolated
+                                      // nodes 3, 4 are isolated
         let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
 
         let cpdag = dag.to_cpdag().unwrap();
@@ -976,11 +975,11 @@ mod tests {
         assert!(cpdag.parents_of(2).contains(&0)); // A is parent of C
         assert!(cpdag.parents_of(2).contains(&1)); // B is parent of C
         assert!(cpdag.parents_of(2).contains(&4)); // Y is parent of C
-        // Construct a DAG where:
-        // - a -> w is compelled via v-structure at w (x -> w <- a)
-        // - w -> b is compelled via v-structure at b (w -> b <- y)
-        // - a -> b is present but not initially compelled (a adjacent to w and y)
-        // R2 then orients a -- b into a -> b.
+                                                   // Construct a DAG where:
+                                                   // - a -> w is compelled via v-structure at w (x -> w <- a)
+                                                   // - w -> b is compelled via v-structure at b (w -> b <- y)
+                                                   // - a -> b is present but not initially compelled (a adjacent to w and y)
+                                                   // R2 then orients a -- b into a -> b.
         let mut b = GraphBuilder::new_with_registry(5, true, &reg);
         // a=0, w=1, x=2, b=3, y=4
         b.add_edge(0, 1, d).unwrap(); // a -> w
@@ -1550,7 +1549,6 @@ mod tests {
 
     #[test]
     fn latent_project_self_loop_skipped_when_parent_is_also_child() {
-        
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
         let d = reg.code_of("-->").unwrap();
@@ -1571,7 +1569,6 @@ mod tests {
 
     #[test]
     fn to_cpdag_has_dir_path_src_eq_tgt() {
-        
         let mut reg = EdgeRegistry::new();
         reg.register_builtins().unwrap();
         let d = reg.code_of("-->").unwrap();

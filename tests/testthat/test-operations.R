@@ -786,6 +786,8 @@ test_that("meek_closure matches causal-learn style multi-rule regression", {
   )
   expect_true(is_acyclic(g_closed, force_check = TRUE))
   expect_true(is_mpdag(g_closed))
+})
+
 test_that("dag_from_pdag preserves directed edges in mixed extension cases", {
   pdag <- caugi(
     A %-->% B,

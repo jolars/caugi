@@ -1926,9 +1926,7 @@ mod tests {
         // Verify error messages are name-mapped through map_error
         let err = dag.view().unwrap_err();
         assert!(
-            !err.contains("0") && !err.contains("1")
-                || err.contains("A")
-                || err.contains("B"),
+            !err.contains("0") && !err.contains("1") || err.contains("A") || err.contains("B"),
             "Error should use node names, got: {}",
             err
         );

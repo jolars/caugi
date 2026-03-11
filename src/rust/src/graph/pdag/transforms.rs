@@ -573,7 +573,7 @@ mod tests {
         assert!(m.children_of(3).contains(&4)); // D->E
         assert!(m.children_of(2).contains(&4)); // C->E
         assert!(m.children_of(1).contains(&3)); // B->D
-        // A--B and B--C stay undirected
+                                                // A--B and B--C stay undirected
         assert!(m.undirected_of(0).contains(&1)); // A--B
         assert!(m.undirected_of(1).contains(&2)); // B--C
         assert!(m.is_meek_closed());
@@ -681,7 +681,7 @@ mod tests {
         let m = p.meek_closure().unwrap();
         assert!(m.children_of(1).contains(&2)); // X->V2
         assert!(m.children_of(1).contains(&3)); // X->Y
-        // V2--Y stays undirected
+                                                // V2--Y stays undirected
         assert!(m.undirected_of(2).contains(&3));
         assert!(m.undirected_of(3).contains(&2));
         assert!(m.is_meek_closed());
