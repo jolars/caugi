@@ -31,6 +31,11 @@
   [`caugi_options()`](https://caugi.org/dev/reference/caugi_options.md)
   or locally with `open = TRUE/FALSE` argument. Default is
   `open = TRUE`, like it was before implicitly.
+- Add [`is_mpdag()`](https://caugi.org/dev/reference/is_mpdag.md) query
+  to check whether a PDAG is closed under Meek’s orientation rules
+  (R1-R4), and
+  [`meek_closure()`](https://caugi.org/dev/reference/meek_closure.md) to
+  orient all implied edges until Meek closure.
 
 ### Improvements
 
@@ -47,6 +52,15 @@
   - Deprecated compatibility constructor arguments `build` and `state`
     in [`caugi()`](https://caugi.org/dev/reference/caugi.md) now warn
     and are ignored.
+- Deprecated `inplace` parameter in verb functions
+  ([`add_edges()`](https://caugi.org/dev/reference/caugi_verbs.md),
+  [`remove_edges()`](https://caugi.org/dev/reference/caugi_verbs.md),
+  [`set_edges()`](https://caugi.org/dev/reference/caugi_verbs.md),
+  [`add_nodes()`](https://caugi.org/dev/reference/caugi_verbs.md),
+  [`remove_nodes()`](https://caugi.org/dev/reference/caugi_verbs.md)).
+  All graph modifications now use copy-on-write semantics for
+  consistency with R conventions. The parameter is ignored with a
+  deprecation warning.
 - Added `all.equal` and `compare_proxy` methods for caugi objects to
   support graph-content comparison in tests.
 - Add `asp` parameter to
