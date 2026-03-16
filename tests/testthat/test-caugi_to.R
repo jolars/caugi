@@ -285,6 +285,59 @@ test_that("as_dagitty picks dag type for only directed edges", {
   expect_identical(gt(dg), "dag")
 })
 
+test_that("as_dagitty supports numeric-like and dotted node names", {
+  testthat::skip_if_not_installed("dagitty")
+
+  cg <- caugi(
+    from = c("1", "A_1"),
+    edge = c("-->", "-->"),
+    to = c("2", "B.2"),
+    nodes = c("1", "2", "A_1", "B.2"),
+    class = "DAG"
+  )
+
+  dg <- as_dagitty(cg)
+  ed <- as.data.frame(dagitty::edges(dg), stringsAsFactors = FALSE)
+  expect_true(any(ed$v == "1" & ed$w == "2" & ed$e == "->"))
+  expect_true(any(ed$v == "A_1" & ed$w == "B.2" & ed$e == "->"))
+  expect_setequal(names(dg), c("1", "2", "A_1", "B.2"))
+})
+
+test_that("as_dagitty conversion is deterministic for repeated calls", {
+  testthat::skip_if_not_installed("dagitty")
+
+  cg <- caugi(
+    X1 %-->% Z,
+    X2 %-->% Z,
+    Z %-->% Y,
+    class = "DAG"
+  )
+
+  dg1 <- as_dagitty(cg)
+  dg2 <- as_dagitty(cg)
+
+  ed1 <- as.data.frame(dagitty::edges(dg1), stringsAsFactors = FALSE)
+  ed2 <- as.data.frame(dagitty::edges(dg2), stringsAsFactors = FALSE)
+  ord <- function(dd) dd[do.call(order, dd), , drop = FALSE]
+
+  expect_identical(ord(ed1), ord(ed2))
+  expect_identical(sort(names(dg1)), sort(names(dg2)))
+})
+
+test_that("as_dagitty errors on unsupported unicode node names", {
+  testthat::skip_if_not_installed("dagitty")
+
+  cg <- caugi(
+    from = "Å",
+    edge = "-->",
+    to = "B",
+    nodes = c("Å", "B"),
+    class = "DAG"
+  )
+
+  expect_error(as_dagitty(cg), "SyntaxError")
+})
+
 test_that("as_dagitty picks pdag for --> and ---", {
   testthat::skip_if_not_installed("dagitty")
   cg <- caugi(A %-->% B, B %---% C, class = "PDAG")

@@ -451,6 +451,22 @@ test_that("is_mag handles larger disconnected components", {
   expect_true(is_mag(ag_two_chains))
 })
 
+test_that("is_mag returns FALSE for non-maximal ancestral graph", {
+  # Non-adjacent A and C have an inducing connection through mixed paths,
+  # so the graph is ancestral but not maximal.
+  ag_non_maximal <- caugi(
+    A %<->% B,
+    D %-->% A,
+    B %-->% C,
+    B %<->% D,
+    D %-->% C,
+    class = "AG"
+  )
+
+  expect_true(is_ag(ag_non_maximal, force_check = TRUE))
+  expect_false(is_mag(ag_non_maximal, force_check = TRUE))
+})
+
 # ─────────────────────────────────────────────────────────────────────────────
 # MAG - force_check Parameter
 # ─────────────────────────────────────────────────────────────────────────────

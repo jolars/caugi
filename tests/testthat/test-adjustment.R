@@ -235,3 +235,55 @@ test_that("collider-driven adjustment candidates are validated consistently", {
   expect_true("A,Z" %in% set_strings)
   expect_true("B,Z" %in% set_strings)
 })
+
+test_that("game5 structure reproduces minimal and all backdoor sets", {
+  cg <- caugi(
+    A %-->% X,
+    A %-->% B,
+    C %-->% B,
+    C %-->% Y,
+    X %-->% Y,
+    B %-->% X,
+    class = "DAG"
+  )
+
+  minimal_sets <- all_backdoor_sets(cg, X = "X", Y = "Y", minimal = TRUE)
+  expect_setequal(minimal_sets, list(c("A", "B"), "C"))
+  expect_true(is_valid_backdoor(cg, X = "X", Y = "Y", Z = adjustment_set(
+    cg,
+    X = "X",
+    Y = "Y",
+    type = "optimal"
+  )))
+
+  all_sets <- all_backdoor_sets(cg, X = "X", Y = "Y", minimal = FALSE, max_size = 3L)
+  normalize <- function(sets) {
+    vapply(sets, function(z) paste(sort(z), collapse = ","), character(1))
+  }
+  expect_equal(length(all_sets), 5L)
+  expect_setequal(
+    normalize(all_sets),
+    normalize(list("C", c("A", "B"), c("A", "C"), c("B", "C"), c("A", "B", "C")))
+  )
+})
+
+test_that("game6 structure returns minimal sets that always include D", {
+  cg <- caugi(
+    X %-->% F,
+    C %-->% X,
+    A %-->% C,
+    A %-->% D,
+    B %-->% D,
+    B %-->% E,
+    D %-->% X,
+    D %-->% Y,
+    E %-->% Y,
+    F %-->% Y,
+    class = "DAG"
+  )
+
+  minimal_sets <- all_backdoor_sets(cg, X = "X", Y = "Y", minimal = TRUE, max_size = 3L)
+  expect_equal(length(minimal_sets), 4L)
+  expect_true(all(vapply(minimal_sets, function(z) "D" %in% z, logical(1))))
+  expect_setequal(minimal_sets, list(c("C", "D"), c("A", "D"), c("B", "D"), c("D", "E")))
+})

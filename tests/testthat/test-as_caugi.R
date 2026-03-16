@@ -406,6 +406,29 @@ test_that("dagitty -> caugi: isolates are retained alongside edges", {
   expect_equal(nrow(cg@edges), 1L)
 })
 
+test_that("dagitty -> caugi: MAG with quoted names keeps nodes and edge types", {
+  skip_if_not_installed("dagitty")
+  g <- dagitty::dagitty(
+    "mag { \"Wet grass\" -> Rain ; \"Large Name\" <-> Node ; Isolated }"
+  )
+  cg <- as_caugi(g, class = "UNKNOWN")
+
+  expect_setequal(
+    cg@nodes$name,
+    c("Wet grass", "Rain", "Large Name", "Node", "Isolated")
+  )
+  expect_true(any(
+    cg@edges$from == "Wet grass" &
+      cg@edges$to == "Rain" &
+      cg@edges$edge == "-->"
+  ))
+  expect_true(any(
+    cg@edges$edge == "<->" &
+      ((cg@edges$from == "Large Name" & cg@edges$to == "Node") |
+        (cg@edges$from == "Node" & cg@edges$to == "Large Name"))
+  ))
+})
+
 test_that("dagitty -> caugi: PAG class is routed to UNKNOWN until supported", {
   skip_if_not_installed("dagitty")
   g <- dagitty::dagitty("pag { A @-> B }")

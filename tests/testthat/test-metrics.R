@@ -132,6 +132,72 @@ test_that("SHD: larger graph with shuffled edges gives SHD 0", {
   expect_equal(shd(cg1, cg2), 0)
 })
 
+test_that("SHD: reversed single edge has SHD 1", {
+  cg1 <- caugi(A %-->% B, class = "DAG")
+  cg2 <- caugi(B %-->% A, class = "DAG")
+  expect_equal(shd(cg1, cg2), 1)
+})
+
+test_that("SHD: pgmpy fixture with two structural differences", {
+  cg1 <- caugi(A %-->% B, B %-->% D, A %-->% C, C %-->% D, class = "DAG")
+  cg2 <- caugi(A %-->% B, A %-->% C, C %-->% B, C %-->% D, class = "DAG")
+  expect_equal(shd(cg1, cg2), 2)
+})
+
+test_that("SHD: pgmpy fixture with three structural differences", {
+  cg1 <- caugi(
+    A %-->% B,
+    A %-->% C,
+    B %-->% D,
+    C %-->% E,
+    D %-->% E,
+    E %-->% F,
+    class = "DAG"
+  )
+  cg2 <- caugi(
+    A %-->% B,
+    A %-->% C,
+    D %-->% B,
+    C %-->% E,
+    D %-->% F,
+    E %-->% F,
+    class = "DAG"
+  )
+  expect_equal(shd(cg1, cg2), 3)
+})
+
+test_that("SHD: isolated nodes contribute correctly", {
+  cg1 <- caugi(A %-->% B, nodes = c("A", "B", "C"), class = "DAG")
+  cg2 <- caugi(A %-->% B, B %-->% C, nodes = c("A", "B", "C"), class = "DAG")
+  expect_equal(shd(cg1, cg2), 1)
+  expect_equal(shd(cg2, cg1), 1)
+})
+
+test_that("SHD: mixed differences fixture is symmetric", {
+  cg1 <- caugi(
+    A %-->% B,
+    B %-->% C,
+    B %-->% D,
+    D %-->% E,
+    F %-->% E,
+    G %-->% H,
+    nodes = LETTERS[1:10],
+    class = "DAG"
+  )
+  cg2 <- caugi(
+    A %-->% B,
+    B %-->% D,
+    E %-->% D,
+    F %-->% E,
+    H %-->% G,
+    I %-->% J,
+    nodes = LETTERS[1:10],
+    class = "DAG"
+  )
+  expect_equal(shd(cg1, cg2), 4)
+  expect_equal(shd(cg2, cg1), 4)
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ──────────────────────────────────── HD ──────────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────

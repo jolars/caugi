@@ -833,6 +833,36 @@ test_that("dag_from_pdag orients each undirected edge exactly once", {
   expect_equal(nrow(ed), 3L)
 })
 
+test_that("dag_from_pdag matches a constrained mixed-orientation case", {
+  pdag <- caugi(
+    A %-->% C,
+    B %-->% C,
+    D %-->% B,
+    D %-->% C,
+    D %-->% E,
+    E %-->% C,
+    F %-->% B,
+    F %-->% C,
+    F %-->% E,
+    B %---% E,
+    F %---% A,
+    class = "PDAG"
+  )
+
+  dag <- dag_from_pdag(pdag)
+  ed <- edges(dag)
+  has_dir <- function(from, to) {
+    any(ed$from == from & ed$to == to & ed$edge == "-->")
+  }
+
+  expect_true(is_dag(dag))
+  expect_true(has_dir("F", "A"))
+  expect_true(has_dir("E", "B"))
+  expect_false(has_dir("A", "F"))
+  expect_false(has_dir("B", "E"))
+  expect_equal(nrow(ed), 11L)
+})
+
 test_that("condition_marginalize and helper branches are covered", {
   cg_ug <- caugi(A %o->% B, class = "UNKNOWN")
   expect_error(

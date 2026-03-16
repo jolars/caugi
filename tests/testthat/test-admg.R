@@ -42,6 +42,32 @@ test_that("ADMG rejects directed cycles", {
   )
 })
 
+test_that("empty ADMG initializes without nodes and edges", {
+  admg <- caugi(class = "ADMG")
+  expect_true(is_admg(admg))
+  expect_equal(nrow(nodes(admg)), 0L)
+  expect_equal(nrow(edges(admg)), 0L)
+})
+
+test_that("ADMG rejects self bidirected edges in simple graphs", {
+  expect_error(
+    caugi(A %<->% A, class = "ADMG"),
+    regexp = "self|simple"
+  )
+})
+
+test_that("ADMG query methods error on non-existent nodes", {
+  admg <- caugi(
+    A %-->% B,
+    A %<->% C,
+    class = "ADMG"
+  )
+
+  expect_error(parents(admg, "Z"), "Non-existent node")
+  expect_error(children(admg, "Z"), "Non-existent node")
+  expect_error(spouses(admg, "Z"), "Non-existent node")
+})
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Spouses Query
 # ─────────────────────────────────────────────────────────────────────────────
