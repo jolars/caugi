@@ -4,6 +4,7 @@
 pub mod acyclic;
 pub mod bitset;
 pub mod csr;
+pub mod meek;
 pub mod moral;
 pub mod reachability;
 pub mod subsets;

@@ -833,6 +833,63 @@ test_that("dag_from_pdag orients each undirected edge exactly once", {
   expect_equal(nrow(ed), 3L)
 })
 
+test_that("pgmpy Meek fixtures: rs_to_cpdag on PDAG applies Meek closure", {
+  cpdag_from_pdag <- function(pdag) {
+    cp_session <- rs_to_cpdag(pdag@session)
+    .session_to_caugi(cp_session, node_names = nodes(pdag)$name)
+  }
+  edge_set <- function(g) {
+    ed <- edges(g)
+    sort(paste(ed$from, ed$edge, ed$to))
+  }
+
+  # Case 1 (pgmpy test_pdag_to_cpdag): A->B and B-C => B->C
+  pdag1 <- caugi(A %-->% B, B %---% C, class = "PDAG")
+  cpdag1 <- cpdag_from_pdag(pdag1)
+  expect_setequal(
+    edge_set(cpdag1),
+    edge_set(caugi(A %-->% B, B %-->% C, class = "PDAG"))
+  )
+
+  # Case 2: orientation propagates along B-C-D.
+  pdag2 <- caugi(A %-->% B, B %---% C, C %---% D, class = "PDAG")
+  cpdag2 <- cpdag_from_pdag(pdag2)
+  expect_setequal(
+    edge_set(cpdag2),
+    edge_set(caugi(A %-->% B, B %-->% C, C %-->% D, class = "PDAG"))
+  )
+
+  # Case 3 (pgmpy fixture): keep B-C undirected.
+  pdag3 <- caugi(A %-->% B, D %-->% C, B %---% C, class = "PDAG")
+  cpdag3 <- cpdag_from_pdag(pdag3)
+  expect_setequal(
+    edge_set(cpdag3),
+    edge_set(pdag3)
+  )
+
+  # Case 4 (pgmpy fixture): extra parent evidence orients B->C.
+  pdag4 <- caugi(
+    A %-->% B,
+    D %-->% C,
+    D %-->% B,
+    B %---% C,
+    class = "PDAG"
+  )
+  cpdag4 <- cpdag_from_pdag(pdag4)
+  expect_setequal(
+    edge_set(cpdag4),
+    edge_set(caugi(A %-->% B, D %-->% C, D %-->% B, B %-->% C, class = "PDAG"))
+  )
+
+  # Case 5 (rule-2 style): A->B->C and A-C => A->C.
+  pdag5 <- caugi(A %-->% B, B %-->% C, A %---% C, class = "PDAG")
+  cpdag5 <- cpdag_from_pdag(pdag5)
+  expect_setequal(
+    edge_set(cpdag5),
+    edge_set(caugi(A %-->% B, B %-->% C, A %-->% C, class = "PDAG"))
+  )
+})
+
 test_that("condition_marginalize and helper branches are covered", {
   cg_ug <- caugi(A %o->% B, class = "UNKNOWN")
   expect_error(
