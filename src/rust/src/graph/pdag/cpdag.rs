@@ -221,15 +221,29 @@ impl Pdag {
 
     /// No Meeks rule applies (R1..R4).
     fn meeks_rules_blocked(&self) -> bool {
-        // R1: u->v, v--w, u !~ w
+        // R1: u->v, v--w, u !~ w  =>  v->w (if safe)
         for v in 0..self.n() {
             let pa = self.parents_of(v);
             if pa.is_empty() {
                 continue;
             }
             for &w in self.undirected_of(v) {
-                if pa.iter().any(|&u| !self.adjacent(u, w)) {
-                    return false;
+                for &u in pa {
+                    if self.adjacent(u, w) {
+                        continue;
+                    }
+                    // Mirror meek_closure() safeguards: skip orientations that would
+                    // create a directed cycle or a new unshielded collider at w.
+                    if self.has_dir_path(w, v) {
+                        continue;
+                    }
+                    let creates_collider = self
+                        .parents_of(w)
+                        .iter()
+                        .any(|&p| p != v && !self.adjacent(v, p));
+                    if !creates_collider {
+                        return false;
+                    }
                 }
             }
         }

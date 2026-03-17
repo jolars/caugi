@@ -35,6 +35,25 @@ pub(crate) fn orient(
     pa[bi].insert(a);
 }
 
+#[inline]
+fn try_orient(
+    a: u32,
+    b: u32,
+    und: &mut [HashSet<u32>],
+    pa: &mut [HashSet<u32>],
+    ch: &mut [HashSet<u32>],
+) -> bool {
+    let ai = a as usize;
+    if !und[ai].contains(&b) {
+        return false;
+    }
+    if has_dir_path(ch, b, a) {
+        return false;
+    }
+    orient(a, b, und, pa, ch);
+    true
+}
+
 fn has_dir_path(ch: &[HashSet<u32>], src: u32, tgt: u32) -> bool {
     if src == tgt {
         return true;
@@ -104,9 +123,10 @@ pub(crate) fn apply_meek_closure(
                         && (!guard_new_colliders
                             || !creates_new_unshielded_collider(b, c, und, pa, ch))
                     {
-                        orient(b as u32, c, und, pa, ch);
-                        changed = true;
-                        continue 'c_loop;
+                        if try_orient(b as u32, c, und, pa, ch) {
+                            changed = true;
+                            continue 'c_loop;
+                        }
                     }
                 }
             }
@@ -118,13 +138,15 @@ pub(crate) fn apply_meek_closure(
             for b_u in uab {
                 let b = b_u as usize;
                 if ch[a].iter().any(|w| pa[b].contains(w)) {
-                    orient(a as u32, b_u, und, pa, ch);
-                    changed = true;
-                    continue;
+                    if try_orient(a as u32, b_u, und, pa, ch) {
+                        changed = true;
+                        continue;
+                    }
                 }
                 if ch[b].iter().any(|w| pa[a].contains(w)) {
-                    orient(b_u, a as u32, und, pa, ch);
-                    changed = true;
+                    if try_orient(b_u, a as u32, und, pa, ch) {
+                        changed = true;
+                    }
                 }
             }
         }
@@ -143,9 +165,10 @@ pub(crate) fn apply_meek_closure(
                             && und[a].contains(&pb[i])
                             && und[a].contains(&pb[j])
                         {
-                            orient(a as u32, b_u, und, pa, ch);
-                            changed = true;
-                            break 'pairs;
+                            if try_orient(a as u32, b_u, und, pa, ch) {
+                                changed = true;
+                                break 'pairs;
+                            }
                         }
                     }
                 }
@@ -157,11 +180,13 @@ pub(crate) fn apply_meek_closure(
             let uab: Vec<u32> = und[a].clone().into_iter().collect();
             for b_u in uab {
                 if has_dir_path(ch, a as u32, b_u) {
-                    orient(a as u32, b_u, und, pa, ch);
-                    changed = true;
+                    if try_orient(a as u32, b_u, und, pa, ch) {
+                        changed = true;
+                    }
                 } else if has_dir_path(ch, b_u, a as u32) {
-                    orient(b_u, a as u32, und, pa, ch);
-                    changed = true;
+                    if try_orient(b_u, a as u32, und, pa, ch) {
+                        changed = true;
+                    }
                 }
             }
         }
