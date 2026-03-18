@@ -1786,9 +1786,14 @@ mod tests {
         let exo2 = pdag.exogenous_nodes(true).unwrap();
         assert!(exo2.contains(&0));
 
-        // to_cpdag on PDAG (returns clone)
+        // to_cpdag on PDAG applies Meek closure
         let cpdag = pdag.to_cpdag().unwrap();
-        assert!(matches!(cpdag, GraphView::Pdag(_)));
+        match cpdag {
+            GraphView::Pdag(cp) => {
+                assert_eq!(cp.children_of(1), &[2]); // 0->1, 1--2 => 1->2
+            }
+            _ => panic!("expected PDAG"),
+        }
 
         // Error paths for PDAG
         assert!(pdag.d_separated(&[0], &[2], &[1]).is_err());

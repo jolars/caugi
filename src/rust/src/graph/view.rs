@@ -495,8 +495,11 @@ impl GraphView {
                 let p = d.to_cpdag()?;
                 Ok(GraphView::Pdag(std::sync::Arc::new(p)))
             }
-            GraphView::Pdag(_) => Ok(self.clone()),
-            _ => Err("to_cpdag is only defined for DAGs".into()),
+            GraphView::Pdag(p) => {
+                let cp = p.to_cpdag()?;
+                Ok(GraphView::Pdag(std::sync::Arc::new(cp)))
+            }
+            _ => Err("to_cpdag is only defined for DAGs and PDAGs".into()),
         }
     }
 

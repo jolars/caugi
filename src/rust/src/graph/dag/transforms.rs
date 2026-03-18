@@ -4,11 +4,11 @@
 use super::Dag;
 use crate::edges::EdgeClass;
 use crate::graph::admg::Admg;
-use crate::graph::alg::csr;
+use crate::graph::alg::{csr, meek};
 use crate::graph::pdag::Pdag;
 use crate::graph::ug::Ug;
 use crate::graph::CaugiGraph;
-use std::collections::{BTreeSet, HashSet, VecDeque};
+use std::collections::{BTreeSet, HashSet};
 use std::sync::Arc;
 
 impl Dag {
@@ -335,62 +335,6 @@ impl Dag {
         let mut ch: Vec<HashSet<u32>> = vec![HashSet::new(); n];
         let mut und: Vec<HashSet<u32>> = vec![HashSet::new(); n];
 
-        #[inline]
-        fn adjacent(
-            a: usize,
-            b: usize,
-            und: &[HashSet<u32>],
-            pa: &[HashSet<u32>],
-            ch: &[HashSet<u32>],
-        ) -> bool {
-            und[a].contains(&(b as u32))
-                || und[b].contains(&(a as u32))
-                || pa[a].contains(&(b as u32))
-                || ch[a].contains(&(b as u32))
-                || pa[b].contains(&(a as u32))
-                || ch[b].contains(&(a as u32))
-        }
-
-        #[inline]
-        fn orient(
-            a: u32,
-            b: u32,
-            und: &mut [HashSet<u32>],
-            pa: &mut [HashSet<u32>],
-            ch: &mut [HashSet<u32>],
-        ) {
-            let ai = a as usize;
-            let bi = b as usize;
-            und[ai].remove(&b);
-            und[bi].remove(&a);
-            ch[ai].insert(b);
-            pa[bi].insert(a);
-        }
-
-        fn has_dir_path(ch: &[HashSet<u32>], src: u32, tgt: u32) -> bool {
-            if src == tgt {
-                return true;
-            }
-            let n = ch.len();
-            let mut seen = vec![false; n];
-            let mut q = VecDeque::new();
-            q.push_back(src);
-            while let Some(u) = q.pop_front() {
-                if u == tgt {
-                    return true;
-                }
-                if std::mem::replace(&mut seen[u as usize], true) {
-                    continue;
-                }
-                for &v in &ch[u as usize] {
-                    if !seen[v as usize] {
-                        q.push_back(v);
-                    }
-                }
-            }
-            false
-        }
-
         // Skeleton from DAG (undirected)
         for u in 0..self.n() {
             for &v in self.children_of(u) {
@@ -406,95 +350,15 @@ impl Dag {
                 for j in (i + 1)..parents.len() {
                     let a = parents[i] as usize;
                     let c = parents[j] as usize;
-                    if !adjacent(a, c, &und, &pa, &ch) {
-                        orient(parents[i], b, &mut und, &mut pa, &mut ch);
-                        orient(parents[j], b, &mut und, &mut pa, &mut ch);
+                    if !meek::adjacent(a, c, &und, &pa, &ch) {
+                        meek::orient(parents[i], b, &mut und, &mut pa, &mut ch);
+                        meek::orient(parents[j], b, &mut und, &mut pa, &mut ch);
                     }
                 }
             }
         }
 
-        // Meek closure (R1–R4)
-        loop {
-            let mut changed = false;
-
-            // R1: a->b, b--c, a !~ c  ⇒  b->c
-            for b in 0..n {
-                if pa[b].is_empty() || und[b].is_empty() {
-                    continue;
-                }
-                let pb: Vec<u32> = pa[b].iter().copied().collect();
-                let ubs: Vec<u32> = und[b].clone().into_iter().collect();
-                'c_loop: for c in ubs {
-                    let ci = c as usize;
-                    for &a in &pb {
-                        if !adjacent(a as usize, ci, &und, &pa, &ch) {
-                            orient(b as u32, c, &mut und, &mut pa, &mut ch);
-                            changed = true;
-                            continue 'c_loop;
-                        }
-                    }
-                }
-            }
-
-            // R2: a--b and ∃ w: a->w, w->b  ⇒  a->b
-            for a in 0..n {
-                let uab: Vec<u32> = und[a].clone().into_iter().collect();
-                for b_u in uab {
-                    let b = b_u as usize;
-                    if ch[a].iter().any(|w| pa[b].contains(w)) {
-                        orient(a as u32, b_u, &mut und, &mut pa, &mut ch);
-                        changed = true;
-                        continue;
-                    }
-                    if ch[b].iter().any(|w| pa[a].contains(w)) {
-                        orient(b_u, a as u32, &mut und, &mut pa, &mut ch);
-                        changed = true;
-                    }
-                }
-            }
-
-            // R3: a--b and ∃ c,d: c->b, d->b, c !~ d, a--c, a--d  ⇒  a->b
-            for a in 0..n {
-                let uab: Vec<u32> = und[a].clone().into_iter().collect();
-                for b_u in uab {
-                    let b = b_u as usize;
-                    let pb: Vec<u32> = pa[b].iter().copied().collect();
-                    'pairs: for i in 0..pb.len() {
-                        for j in (i + 1)..pb.len() {
-                            let c = pb[i] as usize;
-                            let d = pb[j] as usize;
-                            if !adjacent(c, d, &und, &pa, &ch)
-                                && und[a].contains(&pb[i])
-                                && und[a].contains(&pb[j])
-                            {
-                                orient(a as u32, b_u, &mut und, &mut pa, &mut ch);
-                                changed = true;
-                                break 'pairs;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // R4: a--b and (a ⇒ b or b ⇒ a)  ⇒  orient along reachability
-            for a in 0..n {
-                let uab: Vec<u32> = und[a].clone().into_iter().collect();
-                for b_u in uab {
-                    if has_dir_path(&ch, a as u32, b_u) {
-                        orient(a as u32, b_u, &mut und, &mut pa, &mut ch);
-                        changed = true;
-                    } else if has_dir_path(&ch, b_u, a as u32) {
-                        orient(b_u, a as u32, &mut und, &mut pa, &mut ch);
-                        changed = true;
-                    }
-                }
-            }
-
-            if !changed {
-                break;
-            }
-        }
+        meek::apply_meek_closure(&mut pa, &mut ch, &mut und, false);
 
         // Build CSR core (parents | undirected | children)
         let specs = &self.core_ref().registry.specs;
