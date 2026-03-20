@@ -27,18 +27,22 @@ known as a Markov Graph.
 ## See also
 
 Other operations:
-[`moralize()`](https://frederikfabriciusbjerre.github.io/caugi/reference/moralize.md)
+[`condition_marginalize()`](https://caugi.org/reference/condition_marginalize.md),
+[`dag_from_pdag()`](https://caugi.org/reference/dag_from_pdag.md),
+[`exogenize()`](https://caugi.org/reference/exogenize.md),
+[`latent_project()`](https://caugi.org/reference/latent_project.md),
+[`meek_closure()`](https://caugi.org/reference/meek_closure.md),
+[`moralize()`](https://caugi.org/reference/moralize.md),
+[`mutate_caugi()`](https://caugi.org/reference/mutate_caugi.md),
+[`normalize_latent_structure()`](https://caugi.org/reference/normalize_latent_structure.md)
 
 ## Examples
 
 ``` r
 cg <- caugi(A %-->% B, class = "DAG")
 skeleton(cg) # A --- B
-#>      name
-#>    <char>
-#> 1:      A
-#> 2:      B
-#>      from   edge     to
-#>    <char> <char> <char>
-#> 1:      A    ---      B
+#> <caugi object; 2 nodes, 1 edges; simple: TRUE; session=0x558bf04ecef0>
+#>   graph_class: UG
+#>   nodes: A, B
+#>   edges: A---B
 ```

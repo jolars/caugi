@@ -1,7 +1,10 @@
 # Get parents of nodes in a `caugi`
 
-Get parents of node in a graph. Note that not both nodes and index can
-be given.
+Get parents of nodes in a graph (nodes with directed edges pointing INTO
+the target node). This is equivalent to
+`neighbors(cg, nodes, mode = "in")`.
+
+Note that not both nodes and index can be given.
 
 ## Usage
 
@@ -17,9 +20,7 @@ parents(cg, nodes = NULL, index = NULL)
 
 - nodes:
 
-  A vector of node names, a vector of unquoted node names, or an
-  expression combining these with `+` and
-  [`c()`](https://rdrr.io/r/base/c.html).
+  A character vector of node names.
 
 - index:
 
@@ -33,23 +34,35 @@ or a list of character vectors (if multiple nodes are requested).
 ## See also
 
 Other queries:
-[`ancestors()`](https://frederikfabriciusbjerre.github.io/caugi/reference/ancestors.md),
-[`children()`](https://frederikfabriciusbjerre.github.io/caugi/reference/children.md),
-[`descendants()`](https://frederikfabriciusbjerre.github.io/caugi/reference/descendants.md),
-[`edge_types()`](https://frederikfabriciusbjerre.github.io/caugi/reference/edge_types.md),
-[`edges()`](https://frederikfabriciusbjerre.github.io/caugi/reference/edges.md),
-[`exogenous()`](https://frederikfabriciusbjerre.github.io/caugi/reference/exogenous.md),
-[`is_acyclic()`](https://frederikfabriciusbjerre.github.io/caugi/reference/is_acyclic.md),
-[`is_caugi()`](https://frederikfabriciusbjerre.github.io/caugi/reference/is_caugi.md),
-[`is_cpdag()`](https://frederikfabriciusbjerre.github.io/caugi/reference/is_cpdag.md),
-[`is_dag()`](https://frederikfabriciusbjerre.github.io/caugi/reference/is_dag.md),
-[`is_empty_caugi()`](https://frederikfabriciusbjerre.github.io/caugi/reference/is_empty_caugi.md),
-[`is_pdag()`](https://frederikfabriciusbjerre.github.io/caugi/reference/is_pdag.md),
-[`markov_blanket()`](https://frederikfabriciusbjerre.github.io/caugi/reference/markov_blanket.md),
-[`neighbors()`](https://frederikfabriciusbjerre.github.io/caugi/reference/neighbors.md),
-[`nodes()`](https://frederikfabriciusbjerre.github.io/caugi/reference/nodes.md),
-[`same_nodes()`](https://frederikfabriciusbjerre.github.io/caugi/reference/same_nodes.md),
-[`subgraph()`](https://frederikfabriciusbjerre.github.io/caugi/reference/subgraph.md)
+[`ancestors()`](https://caugi.org/reference/ancestors.md),
+[`anteriors()`](https://caugi.org/reference/anteriors.md),
+[`children()`](https://caugi.org/reference/children.md),
+[`descendants()`](https://caugi.org/reference/descendants.md),
+[`districts()`](https://caugi.org/reference/districts.md),
+[`edge_types()`](https://caugi.org/reference/edge_types.md),
+[`edges()`](https://caugi.org/reference/edges.md),
+[`exogenous()`](https://caugi.org/reference/exogenous.md),
+[`is_acyclic()`](https://caugi.org/reference/is_acyclic.md),
+[`is_admg()`](https://caugi.org/reference/is_admg.md),
+[`is_ag()`](https://caugi.org/reference/is_ag.md),
+[`is_caugi()`](https://caugi.org/reference/is_caugi.md),
+[`is_cpdag()`](https://caugi.org/reference/is_cpdag.md),
+[`is_dag()`](https://caugi.org/reference/is_dag.md),
+[`is_empty_caugi()`](https://caugi.org/reference/is_empty_caugi.md),
+[`is_mag()`](https://caugi.org/reference/is_mag.md),
+[`is_mpdag()`](https://caugi.org/reference/is_mpdag.md),
+[`is_pdag()`](https://caugi.org/reference/is_pdag.md),
+[`is_simple()`](https://caugi.org/reference/is_simple.md),
+[`is_ug()`](https://caugi.org/reference/is_ug.md),
+[`m_separated()`](https://caugi.org/reference/m_separated.md),
+[`markov_blanket()`](https://caugi.org/reference/markov_blanket.md),
+[`neighbors()`](https://caugi.org/reference/neighbors.md),
+[`nodes()`](https://caugi.org/reference/nodes.md),
+[`posteriors()`](https://caugi.org/reference/posteriors.md),
+[`same_nodes()`](https://caugi.org/reference/same_nodes.md),
+[`spouses()`](https://caugi.org/reference/spouses.md),
+[`subgraph()`](https://caugi.org/reference/subgraph.md),
+[`topological_sort()`](https://caugi.org/reference/topological_sort.md)
 
 ## Examples
 

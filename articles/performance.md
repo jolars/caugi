@@ -36,16 +36,19 @@ complexity $\mathcal{O}\left( |V| + |E| \right)$, where $V$ is the
 vertex set and $E$ is the edge set.
 
 However, the graph object will only be rebuilt when the user either
-calls
-[`build()`](https://frederikfabriciusbjerre.github.io/caugi/reference/build.md)
-directly or queries the graph. Therefore, you do not need to worry about
-wasting compute time by iteratively making changes to a `caugi` graph
-object, as the graph rebuilds lazily when queried. By doing this,
-`caugi` graphs *feel* mutable, but, in reality, they are not.
+calls [`build()`](https://caugi.org/reference/build.md) directly or
+queries the graph. Therefore, you do not need to worry about wasting
+compute time by iteratively making changes to a `caugi` graph object, as
+the graph rebuilds lazily when queried. By doing this, `caugi` graphs
+*feel* mutable, but, in reality, they are not.
 
-By doing it this way, we ensure - that the graph object is always in a
-consistent state when queried, and - that queries are as fast as
-possible, while keeping the user experience smooth.
+By doing it this way, we ensure
+
+- that the graph object is always in a consistent state when queried,
+  and
+- that queries are as fast as possible,
+
+while keeping the user experience smooth.
 
 ### Comparison
 
@@ -82,9 +85,10 @@ ggmg <- graphs$ggmg
 bng <- graphs$bng
 dg <- graphs$dg
 
-test_node_index <- sample.int(1000, 1)
+test_node_index <- sample(1000, 1)
 test_node_name <- paste0("V", test_node_index)
-bench::mark(
+
+bm_parents_children <- bench::mark(
   caugi = {
     caugi::parents(cg, test_node_name)
     caugi::children(cg, test_node_name)
@@ -107,51 +111,83 @@ bench::mark(
   },
   check = FALSE # igraph returns igraph object
 )
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
-#> # A tibble: 5 × 6
-#>   expression      min   median `itr/sec` mem_alloc `gc/sec`
-#>   <bch:expr> <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 caugi        64.6µs  70.28µs 12344.      67.36KB     8.00
-#> 2 igraph     534.97µs 575.07µs  1616.     371.34KB     8.00
-#> 3 bnlearn     38.78µs  44.25µs 14768.      38.38KB    14.0 
-#> 4 ggm         23.11ms   25.3ms    30.7     76.59MB    50.0 
-#> 5 dagitty       2.73s    2.73s     0.366    5.09MB     0
+
+plot(bm_parents_children)
 ```
 
-`bnlearn` is fastest here, but is only able to handle smaller graphs,
-whereas `caugi` and `igraph` can handle very large graph objects with
-almost no time increase:
+![Benchmarking parents/children queries for different
+packages.](performance_files/figure-html/benchmark-parents-children-1.png)
+
+Benchmarking parents/children queries for different packages.
+
+As you can see, `bnlearn` performs best for this particular example. In
+our next experiment, however, we will examine if this extends to
+different graph sizes and densities, by parameterizing our benchmark
+over `n` and `p`. Note that we adjust `p` as a function of `n` to keep
+the graphs reasonably sparse.
 
 ``` r
-large_cg <- caugi::generate_graph(n = 40000, m = 1000000, class = "DAG")
-large_ig <- caugi::as_igraph(large_cg)
-test_node_index <- sample.int(40000, 1)
-test_node_name <- paste0("V", test_node_index)
-bench::mark(
-  caugi = {
-    caugi::parents(large_cg, test_node_name)
-    caugi::children(large_cg, test_node_name)
-  },
-  igraph = {
-    igraph::neighbors(large_ig, test_node_name, mode = "in")
-    igraph::neighbors(large_ig, test_node_name, mode = "out")
-  },
-  check = FALSE
-)
-#> # A tibble: 2 × 6
-#>   expression      min   median `itr/sec` mem_alloc `gc/sec`
-#>   <bch:expr> <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 caugi        62.5µs   66.9µs    14567.     1008B     8.40
-#> 2 igraph      778.9µs  831.2µs     1162.    3.05MB    54.5
+bm_parents_children_np <-
+  bench::press(
+    n = c(10, 100, 500, 1000, 5000, 10000),
+    p = c(0.5, 0.9),
+    {
+      p_mod <- 10 * log10(n) / n * p
+      graphs <- generate_graphs(n, p = p_mod)
+      cg <- graphs$cg
+      ig <- graphs$ig
+      ggmg <- graphs$ggmg
+      bng <- graphs$bng
+      dg <- graphs$dg
+
+      test_node_index <- sample(n, 1)
+      test_node_name <- paste0("V", test_node_index)
+
+      bench::mark(
+        caugi = {
+          caugi::parents(cg, test_node_name)
+          caugi::children(cg, test_node_name)
+        },
+        igraph = {
+          igraph::neighbors(ig, test_node_name, mode = "in")
+          igraph::neighbors(ig, test_node_name, mode = "out")
+        },
+        bnlearn = {
+          bnlearn::parents(bng, test_node_name)
+          bnlearn::children(bng, test_node_name)
+        },
+        ggm = {
+          ggm::pa(test_node_name, ggmg)
+          ggm::ch(test_node_name, ggmg)
+        },
+        dagitty = {
+          dagitty::parents(dg, test_node_name)
+          dagitty::children(dg, test_node_name)
+        },
+        check = FALSE # igraph returns igraph object
+      )
+    },
+    .quiet = TRUE
+  )
 ```
+
+Next, we plot the benchmark results. As you can see, `bnlearn` performs
+worse as graph size and density increases, whereas `caugi` is almost
+unaffected by these parameters, outperforming all other packages when
+graphs get larger and denser. `dagitty` and `ggm` perform worst overall,
+quickly becoming infeasible for larger graphs.
+
+![Parameterized benchmarking of parents/children
+queries.](performance_files/figure-html/unnamed-chunk-3-1.png)
+
+Parameterized benchmarking of parents/children queries.
 
 For ancestors and descendants, we see that `caugi` outperforms all other
-packages by a several magnitudes, expect for `igraph`, which it still
-beats, but by a smaller margin::
+packages by a several magnitudes, except for `igraph`, which it still
+beats, but by a smaller margin:
 
 ``` r
-bench::mark(
+bm_ancestors_descendants <- bench::mark(
   caugi = {
     caugi::ancestors(cg, "V500")
     caugi::descendants(cg, "V500")
@@ -170,24 +206,27 @@ bench::mark(
   },
   check = FALSE # dagitty returns V500 as well and igraph returns an igraph
 )
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
-#> # A tibble: 4 × 6
-#>   expression      min   median `itr/sec` mem_alloc `gc/sec`
-#>   <bch:expr> <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 caugi      194.44µs 212.66µs  4540.      65.26KB    2.00 
-#> 2 igraph     627.16µs 657.44µs  1418.     117.85KB    4.00 
-#> 3 bnlearn       1.43s    1.43s     0.700    1.33GB    8.40 
-#> 4 dagitty       2.64s    2.64s     0.379    5.09MB    0.379
+
+plot(bm_ancestors_descendants)
 ```
 
-#### d-separation
+![Benchmarking ancestors/descendants queries for different
+packages.](performance_files/figure-html/benchmark-an-de-1.png)
+
+Benchmarking ancestors/descendants queries for different packages.
+
+#### D-separation
 
 Using the graph from before, we obtain a valid adjustment set and then
 check for d-separation.
 
 ``` r
-valid_adjustment_set <- caugi::adjustment_set(cg, "V500", "V681", type = "backdoor")
+valid_adjustment_set <- caugi::adjustment_set(
+  cg,
+  "V500",
+  "V681",
+  type = "backdoor"
+)
 valid_adjustment_set
 #>   [1] "V7"    "V15"   "V18"   "V24"   "V33"   "V34"   "V68"   "V88"   "V93"  
 #>  [10] "V121"  "V134"  "V157"  "V168"  "V197"  "V202"  "V206"  "V213"  "V232" 
@@ -204,20 +243,19 @@ valid_adjustment_set
 ```
 
 ``` r
-bench::mark(
+bm_dsep <- bench::mark(
   caugi = caugi::d_separated(cg, "V500", "V681", valid_adjustment_set),
   bnlearn = bnlearn::dsep(bng, "V500", "V681", valid_adjustment_set),
   dagitty = dagitty::dseparated(dg, "V500", "V681", valid_adjustment_set)
 )
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
-#> # A tibble: 3 × 6
-#>   expression      min   median `itr/sec` mem_alloc `gc/sec`
-#>   <bch:expr> <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 caugi       35.27ms  35.47ms    28.0     33.02KB     0   
-#> 2 bnlearn       3.42s    3.42s     0.292    3.22GB     4.39
-#> 3 dagitty       2.11s    2.11s     0.473    4.19MB     0
+
+plot(bm_dsep)
 ```
+
+![Benchmarks for obtaining a valid adjustment set for
+d-separation.](performance_files/figure-html/benchmark-d-sep-1.png)
+
+Benchmarks for obtaining a valid adjustment set for d-separation.
 
 #### Subgraph (building)
 
@@ -230,7 +268,8 @@ the graph objects themselves, which shows in the subgraph benchmark:
 ``` r
 subgraph_nodes_index <- sample.int(1000, 500)
 subgraph_nodes <- paste0("V", subgraph_nodes_index)
-bench::mark(
+
+bm_subgraph <- bench::mark(
   caugi = {
     caugi::subgraph(cg, subgraph_nodes)
   },
@@ -242,21 +281,20 @@ bench::mark(
   },
   check = FALSE
 )
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
-#> # A tibble: 3 × 6
-#>   expression      min   median `itr/sec` mem_alloc `gc/sec`
-#>   <bch:expr> <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 caugi       10.64ms  10.98ms    90.9       8.1MB     0   
-#> 2 igraph       1.93ms   2.39ms   426.       81.1KB     0   
-#> 3 bnlearn       1.04s    1.04s     0.964   983.6MB     2.89
+
+plot(bm_subgraph)
 ```
+
+![Benchmarking subgraph extraction for different
+packages.](performance_files/figure-html/benchmark-subgraph-1.png)
+
+Benchmarking subgraph extraction for different packages.
 
 ### Session info
 
 ``` r
 sessionInfo()
-#> R version 4.5.2 (2025-10-31)
+#> R version 4.5.3 (2026-03-11)
 #> Platform: x86_64-pc-linux-gnu
 #> Running under: Ubuntu 24.04.3 LTS
 #> 
@@ -276,23 +314,31 @@ sessionInfo()
 #> attached base packages:
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
+#> other attached packages:
+#> [1] ggplot2_4.0.2
+#> 
 #> loaded via a namespace (and not attached):
-#>  [1] jsonlite_2.0.0      BiocManager_1.30.26 compiler_4.5.2     
-#>  [4] Rcpp_1.1.0          parallel_4.5.2      jquerylib_0.1.4    
-#>  [7] systemfonts_1.3.1   textshaping_1.0.4   boot_1.3-32        
-#> [10] yaml_2.3.10         fastmap_1.2.0       R6_2.6.1           
-#> [13] generics_0.1.4      curl_7.0.0          igraph_2.2.1       
-#> [16] knitr_1.50          BiocGenerics_0.56.0 htmlwidgets_1.6.4  
-#> [19] MASS_7.3-65         graph_1.88.0        tibble_3.3.0       
-#> [22] desc_1.4.3          bslib_0.9.0         pillar_1.11.1      
-#> [25] rlang_1.1.6         utf8_1.2.6          V8_8.0.1           
-#> [28] cachem_1.1.0        bnlearn_5.1         xfun_0.54          
-#> [31] fs_1.6.6            sass_0.4.10         S7_0.2.0           
-#> [34] cli_3.6.5           pkgdown_2.2.0       magrittr_2.0.4     
-#> [37] digest_0.6.37       lifecycle_1.0.4     dagitty_0.3-4      
-#> [40] caugi_0.2.1         vctrs_0.6.5         bench_1.1.4        
-#> [43] ggm_2.5.2           evaluate_1.0.5      glue_1.8.0         
-#> [46] data.table_1.17.8   ragg_1.5.0          stats4_4.5.2       
-#> [49] profmem_0.7.0       rmarkdown_2.30      tools_4.5.2        
-#> [52] pkgconfig_2.0.3     htmltools_0.5.8.1
+#>  [1] tidyr_1.3.2         sass_0.4.10         generics_0.1.4     
+#>  [4] digest_0.6.39       magrittr_2.0.4      evaluate_1.0.5     
+#>  [7] grid_4.5.3          RColorBrewer_1.1-3  fastmap_1.2.0      
+#> [10] jsonlite_2.0.0      graph_1.88.1        bench_1.1.4        
+#> [13] BiocManager_1.30.27 purrr_1.2.1         dagitty_0.3-4      
+#> [16] scales_1.4.0        textshaping_1.0.5   jquerylib_0.1.4    
+#> [19] cli_3.6.5           rlang_1.1.7         ggm_2.5.2          
+#> [22] bnlearn_5.1         withr_3.0.2         cachem_1.1.0       
+#> [25] yaml_2.3.12         otel_0.2.0          ggbeeswarm_0.7.3   
+#> [28] tools_4.5.3         parallel_4.5.3      dplyr_1.2.0        
+#> [31] profmem_0.7.0       boot_1.3-32         BiocGenerics_0.56.0
+#> [34] curl_7.0.0          vctrs_0.7.1         R6_2.6.1           
+#> [37] stats4_4.5.3        lifecycle_1.0.5     fs_1.6.7           
+#> [40] V8_8.0.1            htmlwidgets_1.6.4   vipor_0.4.7        
+#> [43] MASS_7.3-65         ragg_1.5.1          beeswarm_0.4.0     
+#> [46] pkgconfig_2.0.3     desc_1.4.3          pkgdown_2.2.0      
+#> [49] pillar_1.11.1       bslib_0.10.0        gtable_0.3.6       
+#> [52] data.table_1.18.2.1 glue_1.8.0          Rcpp_1.1.1         
+#> [55] systemfonts_1.3.2   tidyselect_1.2.1    xfun_0.56          
+#> [58] tibble_3.3.1        knitr_1.51          farver_2.1.2       
+#> [61] htmltools_0.5.9     igraph_2.2.2        labeling_0.4.3     
+#> [64] rmarkdown_2.30      caugi_1.1.0         compiler_4.5.3     
+#> [67] S7_0.2.1
 ```

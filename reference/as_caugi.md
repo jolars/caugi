@@ -8,9 +8,8 @@ Convert an object to a `caugi`. The object can be a `graphNEL`,
 ``` r
 as_caugi(
   x,
-  class = c("DAG", "PDAG", "PAG", "UNKNOWN"),
+  class = c("DAG", "PDAG", "ADMG", "PAG", "UNKNOWN"),
   simple = TRUE,
-  build = TRUE,
   collapse = FALSE,
   collapse_to = "---",
   ...
@@ -25,19 +24,14 @@ as_caugi(
 
 - class:
 
-  "DAG", "PDAG", "PAG", or "UNKNOWN". "PAG" is only supported for
-  integer coded matrices.
+  "DAG", "PDAG", "ADMG", "PAG", or "UNKNOWN". "PAG" is only supported
+  for integer coded matrices. "ADMG" is for Acyclic Directed Mixed
+  Graphs (with `-->` and `<->` edges).
 
 - simple:
 
   logical. If `TRUE` (default) the graph will be simple (no multiple
   edges or self-loops).
-
-- build:
-
-  logical. If `TRUE` (default) build the graph now, otherwise build
-  lazily on first query or when using
-  [`build()`](https://frederikfabriciusbjerre.github.io/caugi/reference/build.md).
 
 - collapse:
 
@@ -75,10 +69,10 @@ integer codes are as follows (as used in `pcalg`):
 ## See also
 
 Other conversions:
-[`as_adjacency()`](https://frederikfabriciusbjerre.github.io/caugi/reference/as_adjacency.md),
-[`as_bnlearn()`](https://frederikfabriciusbjerre.github.io/caugi/reference/as_bnlearn.md),
-[`as_dagitty()`](https://frederikfabriciusbjerre.github.io/caugi/reference/as_dagitty.md),
-[`as_igraph()`](https://frederikfabriciusbjerre.github.io/caugi/reference/as_igraph.md)
+[`as_adjacency()`](https://caugi.org/reference/as_adjacency.md),
+[`as_bnlearn()`](https://caugi.org/reference/as_bnlearn.md),
+[`as_dagitty()`](https://caugi.org/reference/as_dagitty.md),
+[`as_igraph()`](https://caugi.org/reference/as_igraph.md)
 
 ## Examples
 

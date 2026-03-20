@@ -45,8 +45,8 @@ remove_nodes(cg, ..., name = NULL, inplace = FALSE)
 
 - inplace:
 
-  Logical, whether to modify the graph inplace or not. If `FALSE`
-  (default), a copy of the `caugi` is made and modified.
+  DEPRECATED This parameter is deprecated and will be ignored. Graphs
+  are always modified via copy-on-write.
 
 - name:
 
@@ -74,8 +74,7 @@ Caugi graph verbs
 
 ## See also
 
-Other verbs:
-[`build()`](https://frederikfabriciusbjerre.github.io/caugi/reference/build.md)
+Other verbs: [`build()`](https://caugi.org/reference/build.md)
 
 ## Examples
 
@@ -91,17 +90,7 @@ cg <- cg |>
 cg <- remove_edges(cg, B %---% C) |> # A --> B, C, D, E
   remove_nodes(c("C", "D", "E")) # A --> B
 
-# verbs do not build the Rust backend
-cg@built # FALSE
-#> [1] FALSE
-build(cg)
-#>      name
-#>    <char>
-#> 1:      A
-#> 2:      B
-#>      from   edge     to
-#>    <char> <char> <char>
-#> 1:      A    -->      B
-cg@built # TRUE
-#> [1] TRUE
+# Graphs are now built lazily when needed
+parents(cg, "B") # triggers compilation
+#> [1] "A"
 ```

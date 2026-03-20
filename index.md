@@ -1,7 +1,7 @@
 # caugi
 
-> **Causal Graph Interface (for R)** — a blazingly fast, tidy toolbox
-> for building, coercing and analyzing causal graphs.
+> **Causal Graph Interface (for R)** — a fast and flexible toolbox for
+> building, coercing and analyzing causal graphs.
 
 ## What is `caugi`?
 
@@ -25,6 +25,14 @@ or directly from CRAN with:
 install.packages("caugi")
 ```
 
+### Installing Rust
+
+Rust is required for `caugi` to work. If you don’t have Rust installed,
+visit [rustup.rs](https://rustup.rs/) for installation instructions
+appropriate for your platform.
+
+Alternatively, you may install Rust from your OS package manager.
+
 ## The basic object: `caugi`
 
 A `caugi` graph object is the bread and butter of the `caugi` package.
@@ -35,9 +43,9 @@ library(caugi)
 ```
 
 You can create simple graphs as well as a number of predefined graph
-classes. Currently, we support `"UNKNOWN"`, `"DAG"`, `"PDAG"`, and
-`"UG"`. We plan on supporting several other causal graph types in future
-releases, such as `"PAG"`, `"MAG"`, `"SWIG"`, and `"ADMG"`.
+classes. Currently, we support `"UNKNOWN"`, `"DAG"`, `"PDAG"`, `"ADMG"`,
+and `"UG"`. We plan on supporting several other causal graph types in
+future releases, such as `"PAG"`, `"MAG"`, and `"SWIG"`.
 
 ``` r
 # a tiny DAG
@@ -47,7 +55,11 @@ cg <- caugi(
   C %-->% D,
   class = "DAG"
 )
+
+plot(cg)
 ```
+
+![](reference/figures/README-unnamed-chunk-5-1.png)
 
 ### Edge operators
 
@@ -61,7 +73,7 @@ The available edges in `caugi` are listed below:
 - `%o-o%` (partial)
 
 You can register more types with
-[`register_caugi_edge()`](https://frederikfabriciusbjerre.github.io/caugi/reference/register_caugi_edge.md),
+[`register_caugi_edge()`](https://caugi.org/reference/register_caugi_edge.md),
 if you find that you need a more expressive set of edges. For example,
 if you want to represent a directed edge in the reverse direction, you
 can do so like this:
@@ -76,15 +88,10 @@ register_caugi_edge(
 )
 
 caugi(A %-->% B, B %<--% C, class = "DAG")
-#>      name
-#>    <char>
-#> 1:      A
-#> 2:      B
-#> 3:      C
-#>      from   edge     to
-#>    <char> <char> <char>
-#> 1:      A    -->      B
-#> 2:      B    <--      C
+#> <caugi object; 3 nodes, 2 edges; simple: TRUE; session=0x000001a2318f5e90>
+#>   graph_class: DAG
+#>   nodes: A, B, C
+#>   edges: A-->B, B<--C
 
 # reset the registry to default with original edges
 reset_caugi_registry()
@@ -99,19 +106,18 @@ releases, and we would love your input if you use this feature!
 objects. Some of the available functions are:
 
 - Relational queries, such as
-  [`parents()`](https://frederikfabriciusbjerre.github.io/caugi/reference/parents.md),
-  [`ancestors()`](https://frederikfabriciusbjerre.github.io/caugi/reference/ancestors.md),
-  [`neighbors()`](https://frederikfabriciusbjerre.github.io/caugi/reference/neighbors.md),
-  and more.
+  [`parents()`](https://caugi.org/reference/parents.md),
+  [`ancestors()`](https://caugi.org/reference/ancestors.md),
+  [`neighbors()`](https://caugi.org/reference/neighbors.md), and more.
 - Structural queries, such as
-  [`is_acyclic()`](https://frederikfabriciusbjerre.github.io/caugi/reference/is_acyclic.md),
-  [`is_cpdag()`](https://frederikfabriciusbjerre.github.io/caugi/reference/is_cpdag.md),
-  and more.
-- Graph manipulations, such as `add_edge()`, `remove_node()`, and more.
-- Graph metrics, such as
-  [`shd()`](https://frederikfabriciusbjerre.github.io/caugi/reference/shd.md)
-  and
-  [`aid()`](https://frederikfabriciusbjerre.github.io/caugi/reference/aid.md).
+  [`is_acyclic()`](https://caugi.org/reference/is_acyclic.md),
+  [`is_cpdag()`](https://caugi.org/reference/is_cpdag.md), and more.
+- Graph manipulations, such as
+  [`add_edges()`](https://caugi.org/reference/caugi_verbs.md),
+  [`remove_nodes()`](https://caugi.org/reference/caugi_verbs.md), and
+  more.
+- Graph metrics, such as [`shd()`](https://caugi.org/reference/shd.md)
+  and [`aid()`](https://caugi.org/reference/aid.md).
 
 ## How it works
 
@@ -125,24 +131,22 @@ relations in such a way that it allows for faster queries without
 blowing up the object too much.
 
 To accommodate for the cost of mutations, `caugi` graphs are built
-lazily. This means that when you mutate the graph, for example by adding
-edges to it, the graph edits are stored in R, but not in Rust. When you
-then need to query the graphs, the graph will rebuild itself in Rust,
-and the query will be executed on the newly built graph. You can also
-use the `build(cg)` function to force building the graph in Rust at any
-time.
+lazily, but you can force a build by using the function
+[`build()`](https://caugi.org/reference/build.md).
 
 ## Why?
 
-It’s fast, *dawg* 🐶 See the [vignette on
-performance](https://frederikfabriciusbjerre.github.io/caugi/articles/performance.html)
+It’s fast, *dawg* 🐶 See the [article on
+performance](https://caugi.org/articles/performance.html) on our website
 for benchmarks.
 
 ## Contribution
 
-Would you like to contribute? Great! Please follow the tidyverse style
-guide for R code. Before opening a PR, run `styler::style_pkg()` for R
-and `cargo fmt` for Rust, and make sure to write tests for new features.
+Would you like to contribute? Great! Please see [Contributing to
+caugi](https://caugi.org/CONTRIBUTING.html) for detailed guidelines on
+code style, testing, and the development workflow. Quick tips: follow
+the tidyverse style guide for R code, run `styler::style_pkg()` for R
+and `cargo fmt` for Rust before PRs, and write tests for new features.
 
 Did you find run into problems? That’s *paw-ful*! Please report an
-[issue](https://github.com/frederikfabriciusbjerre/caugi/issues).
+[issue](https://github.com/frederikfabriciusbjerre/caugi/issues)!

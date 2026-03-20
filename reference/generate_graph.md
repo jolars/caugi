@@ -6,7 +6,7 @@ generation.
 ## Usage
 
 ``` r
-generate_graph(n, m = NULL, p = NULL, class = c("DAG", "CPDAG"))
+generate_graph(n, m = NULL, p = NULL, class = c("DAG", "CPDAG"), seed = NULL)
 ```
 
 ## Arguments
@@ -29,9 +29,18 @@ generate_graph(n, m = NULL, p = NULL, class = c("DAG", "CPDAG"))
 
   "DAG" or "CPDAG".
 
+- seed:
+
+  Optional integer; random seed for reproducibility.
+
 ## Value
 
 The sampled `caugi` object.
+
+## See also
+
+Other simulation functions:
+[`simulate_data()`](https://caugi.org/reference/simulate_data.md)
 
 ## Examples
 

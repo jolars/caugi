@@ -107,62 +107,13 @@ Let’s try it out!
 ``` r
 cg <- correlation_implies_causation(df)
 cg
-#>      name
-#>    <char>
-#> 1:     V1
-#> 2:     V2
-#> 3:     V3
-#>      from   edge     to
-#>    <char> <char> <char>
-#> 1:     V1    -->     V2
+#> <caugi object; 3 nodes, 1 edges; simple: TRUE; session=0x55f7607ef8f0>
+#>   graph_class: UNKNOWN
+#>   nodes: V1, V2, V3
+#>   edges: V1-->V2
 ```
 
-## Something is up!
-
-Let’s inspect the object:
-
-``` r
-cg@built
-#> [1] FALSE
-```
-
-We can see that the object is not built yet. So, we have to include that
-as well. Building is important in `caugi`, as it finalizes the graph
-structure and prepares it for analysis. It also makes sure that the
-graph class agrees with the input graph.
-
-``` r
-#' @title Correlation implies causation!
-#'
-#' @param df A `data.frame` with numeric columns
-#'
-#' @returns A `caugi` representing the causal graph that is totally true!
-correlation_implies_causation <- function(df) {
-  cg <- caugi::caugi(nodes = names(df))
-  cor_matrix <- cor(df)
-  # Add edges for correlations above 0.5
-  for (i in seq_len(ncol(cor_matrix))) {
-    for (j in 1:i) {
-      if (i != j && abs(cor_matrix[i, j]) > 0.5) {
-        from <- names(df)[j]
-        to <- names(df)[i]
-        cg <- caugi::add_edges(cg, from = from, edge = "-->", to = to) # add edge to caugi
-      }
-    }
-  }
-  caugi::build(cg)
-  return(cg)
-}
-```
-
-**Hold on, it doesn’t check every iteration?** No, `caugi` is designed
-to be efficient, so it only checks the graph’s validity when you
-explicitly call
-[`build()`](https://frederikfabriciusbjerre.github.io/caugi/reference/build.md).
-This allows you to add multiple edges without incurring the overhead of
-validation after each addition. You *can* ensure that your algorithm
-breaks, when introducing a faulty edge by building at each step. This is
-computationally expensive, but sometimes necessary for debugging.
+The graph is ready to use!
 
 ## Class of the output
 
@@ -173,9 +124,6 @@ algorithm, as that could sometimes cause your function to throw an
 error. You would rather have it return a graph in any case, but if it
 *is* a DAG, then we return a DAG.
 
-This is not ideal in `caugi`. Because of the way `caugi` works, this is
-a bit slower, but we can still do it!
-
 ``` r
 #' @title Correlation implies causation!
 #'
@@ -198,16 +146,7 @@ correlation_implies_causation <- function(df) {
       }
     }
   }
-  it_is <- is_dag(cg) # this builds, since it is a query
-  if (it_is) {
-    cg <- caugi::caugi(
-      from = caugi::edges(cg)$from,
-      edge = caugi::edges(cg)$edge,
-      to = caugi::edges(cg)$to,
-      nodes = caugi::nodes(cg)$name,
-      class = "DAG"
-    )
-  }
+  if (caugi::is_dag(cg)) cg <- caugi::mutate_caugi(cg, class = "DAG")
   return(cg)
 }
 ```
@@ -218,14 +157,10 @@ Now, when you call `correlation_implies_causation(df)`, it will return a
 ``` r
 cg <- correlation_implies_causation(df)
 cg
-#>      name
-#>    <char>
-#> 1:     V1
-#> 2:     V2
-#> 3:     V3
-#>      from   edge     to
-#>    <char> <char> <char>
-#> 1:     V1    -->     V2
+#> <caugi object; 3 nodes, 1 edges; simple: TRUE; session=0x55f759867520>
+#>   graph_class: DAG
+#>   nodes: V1, V2, V3
+#>   edges: V1-->V2
 cg@graph_class
 #> [1] "DAG"
 ```

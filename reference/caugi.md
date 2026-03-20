@@ -18,7 +18,7 @@ The following edge operators are supported by default:
 - `%o-o%` for partial edges (A o-o B)
 
 You can register additional edge types using
-[`register_caugi_edge()`](https://frederikfabriciusbjerre.github.io/caugi/reference/register_caugi_edge.md).
+[`register_caugi_edge()`](https://caugi.org/reference/register_caugi_edge.md).
 
 ## Usage
 
@@ -29,10 +29,12 @@ caugi(
   edge = NULL,
   to = NULL,
   nodes = NULL,
+  edges_df = NULL,
   simple = TRUE,
-  build = TRUE,
-  class = c("UNKNOWN", "DAG", "PDAG", "UG"),
-  state = NULL
+  build = NULL,
+  class = c("AUTO", "DAG", "UG", "PDAG", "ADMG", "AG", "UNKNOWN"),
+  state = NULL,
+  .session = NULL
 )
 ```
 
@@ -67,6 +69,13 @@ caugi(
   graph, including those that appear in edges. If `nodes` is provided,
   the order of nodes in the graph will follow the order in `nodes`.
 
+- edges_df:
+
+  Optional data.frame or data.table with columns `from`, `edge`, and
+  `to` to specify edges. Mutually exclusive with `...` and `from`,
+  `edge`, `to`. Can be used to create graphs using `edges(cg)` from
+  another `caugi` object, `cg`.
+
 - simple:
 
   Logical; if `TRUE` (default), the graph is a simple graph, and the
@@ -75,22 +84,26 @@ caugi(
 
 - build:
 
-  Logical; if `TRUE` (default), the graph will be built using the Rust
-  backend. If `FALSE`, the graph will not be built, and the Rust backend
-  cannot be used. The graph will build, when queries are made to the
-  graph or if calling
-  [`build()`](https://frederikfabriciusbjerre.github.io/caugi/reference/build.md).
-  **Note**: Even if `build = TRUE`, if no edges or nodes are provided,
-  the graph will not be built and the pointer will be `NULL`.
+  DEPRECATED. The graph is always built lazily, so this argument is
+  ignored. Can use [`build()`](https://caugi.org/reference/build.md) to
+  force lazy compilation if desired.
 
 - class:
 
-  Character; one of `"UNKNOWN"`, `"DAG"`, `"PDAG"`, or `"UG"`.
+  Character; one of `"AUTO"`, `"DAG"`, `"UG"`, `"PDAG"`, `"ADMG"`,
+  `"AG"`, or `"UNKNOWN"`. `"AUTO"` will automatically pick the
+  appropriate class based on the first match in the order of `"DAG"`,
+  `"UG"`, `"PDAG"`, `"ADMG"`, and `"AG"`. It will default to `"UNKNOWN"`
+  if no match is found.
 
 - state:
 
-  For internal use. Build a graph by supplying a pre-constructed state
-  environment.
+  DEPRECATED. Replaced by `.session`.
+
+- .session:
+
+  For internal use. Build a graph by supplying a pre-constructed session
+  pointer from Rust.
 
 ## Value
 
@@ -134,19 +147,6 @@ cg4 <- caugi(
 
 cg4@simple # FALSE
 #> [1] FALSE
-cg4@built # TRUE
-#> [1] TRUE
 cg4@graph_class # "UNKNOWN"
 #> [1] "UNKNOWN"
-
-# create graph, but don't built Rust object yet, which is needed for queries
-cg5 <- caugi(
-  A %-->% B + C,
-  B %-->% D,
-  class = "DAG",
-  build = FALSE
-)
-
-cg@built # FALSE
-#> [1] TRUE
 ```
