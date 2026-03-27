@@ -109,7 +109,7 @@ bm_parents_children <- bench::mark(
 plot(bm_parents_children)
 ```
 
-As you can see, `bnlearn` performs best for this particular example.
+As you can see, `caugi` alongside `bnlearn` performs the best for this particular example.
 In our next experiment, however, we will examine if this
 extends to different graph sizes and densities, by parameterizing
 our benchmark over `n` and `p`. Note that we adjust `p` as a function
@@ -192,7 +192,8 @@ plot_parameterized_benchmark <- function(bm) {
 plot_parameterized_benchmark(bm_parents_children_np)
 ```
 
-For ancestors and descendants, we see that `caugi` outperforms all other packages by a several magnitudes, except for `igraph`, which it still beats, but by a smaller margin:
+For ancestors and descendants, we see that `caugi` outperforms all other packages by a several magnitudes,
+except for `igraph`, which it still beats, but by a smaller margin:
 
 ```{r benchmark-an-de}
 #| fig-cap: "Benchmarking ancestors/descendants queries for different packages."
@@ -244,9 +245,12 @@ bm_dsep <- bench::mark(
 plot(bm_dsep)
 ```
 
+We see that `caugi` again outperforms the other packages by a large margin.
+
 #### Subgraph (building)
 
-Here we see an example of where the frontloading hurts performance. When we build a subgraph, we have to rebuild the entire `caugi` graph object. Here, we see that while `caugi` outperforms other packages for queries (except for parents/children for `bnlearn`), it is slower for building the graph objects themselves, which shows in the subgraph benchmark:
+Here we see an example of where the frontloading hurts performance. When we build a subgraph, we have to rebuild the entire `caugi` graph object. Here, we see that while `caugi` outperforms other packages for queries, it is slower for building the graph
+object itself compared to `igraph`, as seen below:
 
 ```{r benchmark-subgraph}
 #| fig-cap: "Benchmarking subgraph extraction for different packages."
