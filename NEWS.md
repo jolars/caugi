@@ -3,7 +3,7 @@
 ## Improvements
 
 - Improved performance of all queries. Speedups are more significant on larger graphs,
-but even on small graphs, queries are roughly 5× faster.
+but even on small graphs, queries are roughly 5x faster.
 
 
 # caugi 1.1.0
