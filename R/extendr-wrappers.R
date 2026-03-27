@@ -58,6 +58,8 @@ rs_graph_class <- function(session) .Call(wrap__rs_graph_class, session)
 
 rs_names <- function(session) .Call(wrap__rs_names, session)
 
+rs_names_subset <- function(session, indicies) .Call(wrap__rs_names_subset, session, indicies)
+
 rs_index_of <- function(session, name) .Call(wrap__rs_index_of, session, name)
 
 rs_indices_of <- function(session, names) .Call(wrap__rs_indices_of, session, names)

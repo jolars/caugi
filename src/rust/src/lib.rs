@@ -794,6 +794,16 @@ fn rs_names(session: ExternalPtr<GraphSession>) -> Strings {
 }
 
 #[extendr]
+fn rs_names_subset(session: ExternalPtr<GraphSession>, indices: Vec<i32>) -> Strings {
+    let names = session.as_ref().names();
+
+    indices
+        .iter()
+        .map(|&i| names[i as usize].as_str())
+        .collect()
+}
+
+#[extendr]
 fn rs_index_of(session: ExternalPtr<GraphSession>, name: &str) -> Robj {
     match session.as_ref().index_of(name) {
         Some(idx) => (idx as i32).into_robj(),
@@ -1503,6 +1513,7 @@ extendr_module! {
     fn rs_class;
     fn rs_graph_class;
     fn rs_names;
+    fn rs_names_subset;
     fn rs_index_of;
     fn rs_indices_of;
     fn rs_edges_df;

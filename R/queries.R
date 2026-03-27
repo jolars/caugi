@@ -1668,18 +1668,16 @@ subgraph <- function(cg, nodes = NULL, index = NULL) {
 #'
 #' @keywords internal
 .getter_output <- function(cg, idx0, nodes) {
-  nm <- cg@nodes$name
   to_names <- function(ix0) {
     if (length(ix0) == 0L) {
       return(NULL)
     }
-    nm[ix0 + 1L]
+    rs_names_subset(cg@session, as.integer(ix0))
   }
 
   # faster check than doing is.null and length == 1, since length(NULL) == 0
   if (length(nodes) <= 1L && length(idx0) == 1L) {
-    ix <- idx0[[1L]]
-    return(to_names(ix))
+    return(to_names(idx0[[1L]]))
   }
 
   out <- lapply(idx0, to_names)
