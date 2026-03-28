@@ -130,6 +130,38 @@ fn parse_parent_index0(index: Robj) -> Vec<i32> {
     throw_r_error("`index` must be numeric.");
 }
 
+fn parse_subgraph_index1(index: Robj) -> Vec<i32> {
+    if index.is_integer() {
+        let idx_int: Integers = index
+            .try_into()
+            .unwrap_or_else(|_| throw_r_error("`index` must be numeric."));
+        let mut out = Vec::with_capacity(idx_int.len());
+        for x in idx_int.iter() {
+            if x.is_na() {
+                throw_r_error("`index` cannot contain NA values.");
+            }
+            out.push(x.inner());
+        }
+        return out;
+    }
+
+    if index.is_real() {
+        let idx_num: Doubles = index
+            .try_into()
+            .unwrap_or_else(|_| throw_r_error("`index` must be numeric."));
+        let mut out = Vec::with_capacity(idx_num.len());
+        for x in idx_num.iter() {
+            if x.is_na() {
+                throw_r_error("`index` cannot contain NA values.");
+            }
+            out.push(x.inner().trunc() as i32);
+        }
+        return out;
+    }
+
+    throw_r_error("`index` must be numeric.");
+}
+
 fn resolve_query_idx0(
     session: &ExternalPtr<GraphSession>,
     nodes: Robj,
@@ -362,6 +394,13 @@ fn session_from_view(view: GraphView, node_names: Vec<String>) -> GraphSession {
     session.set_names(node_names);
     session.set_edges(edge_buffer_from_core(&core));
     session
+}
+
+fn caugi_from_session_ptr(template: &Robj, session: ExternalPtr<GraphSession>) -> Robj {
+    let mut out = template.duplicate();
+    out.set_attrib(sym!(session), Robj::from(session))
+        .unwrap_or_else(|e| throw_r_error(e.to_string()));
+    out
 }
 
 // ── Edge Registry  ────────────────────────────────────────────────────────────────
@@ -1569,13 +1608,11 @@ fn rs_latent_project(
     ExternalPtr::new(session_from_view(view, names))
 }
 
-#[extendr]
-fn rs_induced_subgraph(
-    mut session: ExternalPtr<GraphSession>,
-    keep: Integers,
+fn induced_subgraph_session_from_keep(
+    session: &mut ExternalPtr<GraphSession>,
+    keep_u: &[u32],
 ) -> ExternalPtr<GraphSession> {
-    let keep_u: Vec<u32> = keep.iter().map(|ri| rint_to_u32(ri, "keep")).collect();
-    for &i in &keep_u {
+    for &i in keep_u {
         if i >= session.as_ref().n() {
             throw_r_error(format!("Index {} is out of bounds", i));
         }
@@ -1584,13 +1621,12 @@ fn rs_induced_subgraph(
     let view = session.as_mut().view().unwrap_or_else(|e| throw_r_error(e));
     let sub_view = view
         .as_ref()
-        .induced_subgraph(&keep_u)
+        .induced_subgraph(keep_u)
         .unwrap_or_else(|e| throw_r_error(e));
 
-    let all_names: Vec<String> = session.as_ref().names().to_vec();
     let names: Vec<String> = keep_u
         .iter()
-        .map(|&i| all_names[i as usize].clone())
+        .map(|&i| session.as_ref().names()[i as usize].clone())
         .collect();
 
     // Preserve original input edge orientation/order by filtering the source
@@ -1617,9 +1653,92 @@ fn rs_induced_subgraph(
         }
     }
 
-    let mut out = session_from_view(sub_view, names);
+    // Build output session directly to avoid materializing edge buffer from the
+    // temporary subgraph core (we already have the desired filtered edge order).
+    let sub_core = sub_view.core();
+    let mut out = GraphSession::from_snapshot(
+        Arc::new(sub_core.registry.clone()),
+        sub_core.n(),
+        sub_core.simple,
+        graph_class_from_view(&sub_view),
+    );
+    out.set_names(names);
     out.set_edges(kept_edges);
     ExternalPtr::new(out)
+}
+
+#[extendr]
+fn rs_induced_subgraph(
+    mut session: ExternalPtr<GraphSession>,
+    keep: Integers,
+) -> ExternalPtr<GraphSession> {
+    let keep_u: Vec<u32> = keep.iter().map(|ri| rint_to_u32(ri, "keep")).collect();
+    induced_subgraph_session_from_keep(&mut session, &keep_u)
+}
+
+#[extendr]
+fn subgraph(cg: Robj, nodes: Robj, index: Robj) -> Robj {
+    use std::collections::HashSet;
+
+    let mut session = session_ptr_from_cg(&cg);
+
+    let nodes_supplied = !nodes.is_null();
+    let index_supplied = !index.is_null();
+
+    if nodes_supplied && index_supplied {
+        throw_r_error("Supply either `nodes` or `index`, not both.");
+    }
+    if !nodes_supplied && !index_supplied {
+        throw_r_error("Must supply either `nodes` or `index`.");
+    }
+
+    let keep_u: Vec<u32> = if index_supplied {
+        let idx1 = parse_subgraph_index1(index);
+        let n = session.as_ref().n() as i32;
+        if idx1.iter().any(|&i| i < 1 || i > n) {
+            throw_r_error("`index` out of range (1..n).");
+        }
+        idx1.into_iter().map(|i| (i - 1) as u32).collect()
+    } else {
+        let node_strings: Strings = nodes.try_into().unwrap_or_else(|_| {
+            throw_r_error("`nodes` must be a character vector of node names.")
+        });
+
+        let mut keep = Vec::with_capacity(node_strings.len());
+        let mut miss_seen: HashSet<String> = HashSet::new();
+        let mut miss: Vec<String> = Vec::new();
+
+        for i in 0..node_strings.len() {
+            let s = node_strings.elt(i);
+            if s.is_na() {
+                throw_r_error("`nodes` cannot contain NA values.");
+            }
+            let name = s.as_str();
+            match session.as_ref().index_of(name) {
+                Some(idx) => keep.push(idx),
+                None => {
+                    if miss_seen.insert(name.to_string()) {
+                        miss.push(name.to_string());
+                    }
+                }
+            }
+        }
+
+        if !miss.is_empty() {
+            throw_r_error(format!("Unknown node(s): {}", miss.join(", ")));
+        }
+        keep
+    };
+
+    let mut seen: HashSet<u32> = HashSet::with_capacity(keep_u.len());
+    for &idx in &keep_u {
+        if !seen.insert(idx) {
+            throw_r_error("`nodes`/`index` contains duplicates.");
+        }
+    }
+
+    let sub_session = induced_subgraph_session_from_keep(&mut session, &keep_u);
+    caugi_from_session_ptr(&cg, sub_session)
 }
 
 // ── Session causal queries ───────────────────────────────────────────────────
@@ -1883,6 +2002,7 @@ extendr_module! {
     fn rs_moralize;
     fn rs_latent_project;
     fn rs_induced_subgraph;
+    fn subgraph;
     fn rs_d_separated;
     fn rs_minimal_d_separator;
     fn rs_m_separated;

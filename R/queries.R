@@ -1273,46 +1273,6 @@ m_separated <- function(
 #' @concept queries
 #'
 #' @export
-subgraph <- function(cg, nodes = NULL, index = NULL) {
-  is_caugi(cg, throw_error = TRUE)
-  session_names <- rs_names(cg@session)
-
-  check <- .validate_nodes_and_index(nodes, index)
-
-  if (check$index_supplied) {
-    idx1 <- as.integer(index)
-    n <- length(session_names)
-    if (any(idx1 < 1L) || any(idx1 > n)) {
-      stop("`index` out of range (1..n).", call. = FALSE)
-    }
-    keep_idx0 <- idx1 - 1L
-    keep_names <- session_names[idx1]
-  } else {
-    pos <- match(nodes, session_names)
-    if (anyNA(pos)) {
-      miss <- nodes[is.na(pos)]
-      stop(
-        "Unknown node(s): ",
-        paste(unique(miss), collapse = ", "),
-        call. = FALSE
-      )
-    }
-    keep_names <- nodes
-    keep_idx0 <- pos - 1L
-  }
-
-  if (anyDuplicated(keep_idx0)) {
-    dpos <- duplicated(keep_idx0) | duplicated(keep_idx0, fromLast = TRUE)
-    stop(
-      "`nodes`/`index` contains duplicates: ",
-      paste(unique(keep_names[dpos]), collapse = ", "),
-      call. = FALSE
-    )
-  }
-
-  sub_session <- rs_induced_subgraph(
-    cg@session,
-    as.integer(keep_idx0)
-  )
-  .session_to_caugi(sub_session, node_names = keep_names)
-}
+# Implemented directly in Rust via `subgraph()` in `src/rust/src/lib.rs`.
+subgraph <- subgraph
+formals(subgraph) <- alist(cg = , nodes = NULL, index = NULL)
