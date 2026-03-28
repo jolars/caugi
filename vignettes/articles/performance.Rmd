@@ -109,7 +109,7 @@ bm_parents_children <- bench::mark(
 plot(bm_parents_children)
 ```
 
-As you can see, `caugi` alongside `bnlearn` performs the best for this particular example.
+As you can see, `caugi` followed by `bnlearn` performs the best for this particular example.
 In our next experiment, however, we will examine if this
 extends to different graph sizes and densities, by parameterizing
 our benchmark over `n` and `p`. Note that we adjust `p` as a function
