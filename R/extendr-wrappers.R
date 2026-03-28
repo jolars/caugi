@@ -58,7 +58,7 @@ rs_graph_class <- function(session) .Call(wrap__rs_graph_class, session)
 
 rs_names <- function(session) .Call(wrap__rs_names, session)
 
-rs_names_subset <- function(session, indicies) .Call(wrap__rs_names_subset, session, indicies)
+rs_names_subset <- function(session, indices) .Call(wrap__rs_names_subset, session, indices)
 
 rs_index_of <- function(session, name) .Call(wrap__rs_index_of, session, name)
 
@@ -70,33 +70,29 @@ rs_is_valid <- function(session) .Call(wrap__rs_is_valid, session)
 
 rs_build <- function(session) invisible(.Call(wrap__rs_build, session))
 
-rs_topological_sort <- function(session) .Call(wrap__rs_topological_sort, session)
+children <- function(cg, nodes, index) .Call(wrap__children, cg, nodes, index)
 
-rs_parents_of <- function(session, idxs) .Call(wrap__rs_parents_of, session, idxs)
+neighbors <- function(cg, nodes, index, mode) .Call(wrap__neighbors, cg, nodes, index, mode)
 
-rs_children_of <- function(session, idxs) .Call(wrap__rs_children_of, session, idxs)
+ancestors <- function(cg, nodes, index, open) .Call(wrap__ancestors, cg, nodes, index, open)
 
-rs_undirected_of <- function(session, idxs) .Call(wrap__rs_undirected_of, session, idxs)
+descendants <- function(cg, nodes, index, open) .Call(wrap__descendants, cg, nodes, index, open)
 
-rs_neighbors_of <- function(session, idxs, mode) .Call(wrap__rs_neighbors_of, session, idxs, mode)
+anteriors <- function(cg, nodes, index, open) .Call(wrap__anteriors, cg, nodes, index, open)
 
-rs_ancestors_of <- function(session, node) .Call(wrap__rs_ancestors_of, session, node)
+posteriors <- function(cg, nodes, index, open) .Call(wrap__posteriors, cg, nodes, index, open)
 
-rs_descendants_of <- function(session, node) .Call(wrap__rs_descendants_of, session, node)
+markov_blanket <- function(cg, nodes, index) .Call(wrap__markov_blanket, cg, nodes, index)
 
-rs_anteriors_of <- function(session, node) .Call(wrap__rs_anteriors_of, session, node)
+exogenous <- function(cg, undirected_as_parents) .Call(wrap__exogenous, cg, undirected_as_parents)
 
-rs_posteriors_of <- function(session, node) .Call(wrap__rs_posteriors_of, session, node)
+topological_sort <- function(cg) .Call(wrap__topological_sort, cg)
 
-rs_markov_blanket_of <- function(session, node) .Call(wrap__rs_markov_blanket_of, session, node)
+spouses <- function(cg, nodes, index) .Call(wrap__spouses, cg, nodes, index)
 
-rs_spouses_of <- function(session, idxs) .Call(wrap__rs_spouses_of, session, idxs)
+districts <- function(cg, nodes, index, all) .Call(wrap__districts, cg, nodes, index, all)
 
-rs_exogenous_nodes <- function(session, undirected_as_parents) .Call(wrap__rs_exogenous_nodes, session, undirected_as_parents)
-
-rs_districts <- function(session) .Call(wrap__rs_districts, session)
-
-rs_district_of <- function(session, idx) .Call(wrap__rs_district_of, session, idx)
+parents <- function(cg, nodes, index) .Call(wrap__parents, cg, nodes, index)
 
 rs_is_acyclic <- function(session) .Call(wrap__rs_is_acyclic, session)
 

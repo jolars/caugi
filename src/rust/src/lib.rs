@@ -48,6 +48,247 @@ fn rbool_to_bool(x: Rbool, field: &str) -> bool {
     x.is_true()
 }
 
+fn indices_to_names(indices: &[u32], names: &[String]) -> Robj {
+    indices
+        .iter()
+        .map(|&idx| names[idx as usize].as_str())
+        .collect_robj()
+}
+
+fn indices_to_names_or_null(indices: &[u32], names: &[String]) -> Robj {
+    if indices.is_empty() {
+        ().into_robj()
+    } else {
+        indices_to_names(indices, names)
+    }
+}
+
+fn named_list(values: Vec<Robj>, names: Vec<String>) -> Robj {
+    let mut out = extendr_api::prelude::List::from_values(values);
+    out.set_names(names.iter().map(|s| s.as_str()))
+        .unwrap_or_else(|e| throw_r_error(e.to_string()));
+    out.into_robj()
+}
+
+fn session_ptr_from_cg(cg: &Robj) -> ExternalPtr<GraphSession> {
+    let session = cg
+        .get_attrib(sym!(session))
+        .unwrap_or_else(|| throw_r_error("Input must be a caugi"));
+    if session.is_null() {
+        throw_r_error("Cannot look up indices for empty graph.");
+    }
+    session
+        .try_into()
+        .unwrap_or_else(|_| throw_r_error("Input must be a caugi"))
+}
+
+fn parse_parent_nodes(nodes: Robj) -> Vec<String> {
+    let node_strings: Strings = nodes.try_into().unwrap_or_else(|_| {
+        throw_r_error("`nodes` must be a character vector of node names.")
+    });
+
+    let mut out = Vec::with_capacity(node_strings.len());
+    for i in 0..node_strings.len() {
+        let s = node_strings.elt(i);
+        if s.is_na() {
+            throw_r_error("`nodes` cannot contain NA values.");
+        }
+        out.push(s.to_string());
+    }
+    out
+}
+
+fn parse_parent_index0(index: Robj) -> Vec<i32> {
+    if index.is_integer() {
+        let idx_int: Integers = index
+            .try_into()
+            .unwrap_or_else(|_| throw_r_error("`index` must be numeric."));
+        let mut out = Vec::with_capacity(idx_int.len());
+        for x in idx_int.iter() {
+            if x.is_na() {
+                throw_r_error("`index` cannot contain NA values.");
+            }
+            out.push(x.inner() - 1);
+        }
+        return out;
+    }
+
+    if index.is_real() {
+        let idx_num: Doubles = index
+            .try_into()
+            .unwrap_or_else(|_| throw_r_error("`index` must be numeric."));
+        let mut out = Vec::with_capacity(idx_num.len());
+        for x in idx_num.iter() {
+            if x.is_na() {
+                throw_r_error("`index` cannot contain NA values.");
+            }
+            out.push((x.inner() - 1.0).trunc() as i32);
+        }
+        return out;
+    }
+
+    throw_r_error("`index` must be numeric.");
+}
+
+fn resolve_query_idx0(
+    session: &ExternalPtr<GraphSession>,
+    nodes: Robj,
+    index: Robj,
+    missing_msg: &str,
+) -> Vec<i32> {
+    let nodes_supplied = !nodes.is_null();
+    let index_supplied = !index.is_null();
+
+    if nodes_supplied && index_supplied {
+        throw_r_error("Supply either `nodes` or `index`, not both.");
+    }
+    if !nodes_supplied && !index_supplied {
+        throw_r_error(missing_msg);
+    }
+
+    if nodes_supplied {
+        let node_names = parse_parent_nodes(nodes);
+        session
+            .as_ref()
+            .indices_of(&node_names)
+            .unwrap_or_else(|e| throw_r_error(e))
+            .into_iter()
+            .map(|x| x as i32)
+            .collect()
+    } else {
+        parse_parent_index0(index)
+    }
+}
+
+fn parse_single_logical(value: Robj, err_msg: &str) -> bool {
+    let vals: Logicals = value.try_into().unwrap_or_else(|_| throw_r_error(err_msg));
+    if vals.len() != 1 {
+        throw_r_error(err_msg);
+    }
+    let out = vals.elt(0);
+    if out.is_na() {
+        throw_r_error(err_msg);
+    }
+    out.is_true()
+}
+
+fn parse_open_arg(open: Robj) -> bool {
+    parse_single_logical(open, "`open` must be a single TRUE or FALSE.")
+}
+
+fn parse_neighbors_mode(mode: Robj) -> String {
+    let mode_vals: Strings = mode
+        .try_into()
+        .unwrap_or_else(|_| throw_r_error("`mode` must be a character vector."));
+    if mode_vals.len() != 1 {
+        throw_r_error("`mode` must be length 1.");
+    }
+
+    let raw = mode_vals.elt(0);
+    if raw.is_na() {
+        throw_r_error("`mode` cannot contain NA values.");
+    }
+    let mode_lc = raw.as_str().to_ascii_lowercase();
+
+    const CHOICES: [&str; 6] = ["all", "in", "out", "undirected", "bidirected", "partial"];
+    if CHOICES.iter().any(|&m| m == mode_lc) {
+        return mode_lc;
+    }
+
+    let matches: Vec<&str> = CHOICES
+        .iter()
+        .copied()
+        .filter(|m| m.starts_with(&mode_lc))
+        .collect();
+    match matches.len() {
+        1 => matches[0].to_string(),
+        0 => throw_r_error("`mode` must be one of: all, in, out, undirected, bidirected, partial."),
+        _ => throw_r_error("`mode` is ambiguous. Use one of: all, in, out, undirected, bidirected, partial."),
+    }
+}
+
+fn parse_district_index1(index: Robj) -> Vec<i32> {
+    let err_msg = "`index` must be numeric without NA.";
+
+    if index.is_integer() {
+        let vals: Integers = index.try_into().unwrap_or_else(|_| throw_r_error(err_msg));
+        let mut out = Vec::with_capacity(vals.len());
+        for x in vals.iter() {
+            if x.is_na() {
+                throw_r_error(err_msg);
+            }
+            out.push(x.inner());
+        }
+        return out;
+    }
+
+    if index.is_real() {
+        let vals: Doubles = index.try_into().unwrap_or_else(|_| throw_r_error(err_msg));
+        let mut out = Vec::with_capacity(vals.len());
+        for x in vals.iter() {
+            if x.is_na() {
+                throw_r_error(err_msg);
+            }
+            out.push(x.inner().trunc() as i32);
+        }
+        return out;
+    }
+
+    throw_r_error(err_msg);
+}
+
+fn parse_optional_single_logical(value: Robj, err_msg: &str) -> Option<bool> {
+    if value.is_null() {
+        return None;
+    }
+    let vals: Logicals = value.try_into().unwrap_or_else(|_| throw_r_error(err_msg));
+    if vals.len() != 1 {
+        throw_r_error(err_msg);
+    }
+    let out = vals.elt(0);
+    if out.is_na() {
+        throw_r_error(err_msg);
+    }
+    Some(out.is_true())
+}
+
+fn run_relation_query<F>(
+    session: &mut ExternalPtr<GraphSession>,
+    idx0: Vec<i32>,
+    scalar_field: &str,
+    vector_field: &str,
+    mut query: F,
+) -> Robj
+where
+    F: FnMut(&mut ExternalPtr<GraphSession>, u32) -> std::result::Result<Vec<u32>, String>,
+{
+    if idx0.len() <= 1 {
+        if idx0.is_empty() {
+            throw_r_error("Expected non zero length");
+        }
+        let i = rint_to_u32(Rint::from(idx0[0]), scalar_field);
+        if i >= session.as_ref().n() {
+            throw_r_error(format!("Index {} is out of bounds", i));
+        }
+        let v = query(session, i).unwrap_or_else(|e| throw_r_error(e));
+        return indices_to_names_or_null(&v, session.as_ref().names());
+    }
+
+    let mut out: Vec<Robj> = Vec::with_capacity(idx0.len());
+    let mut out_names: Vec<String> = Vec::with_capacity(idx0.len());
+    for ii in idx0 {
+        let i = rint_to_u32(Rint::from(ii), vector_field);
+        if i >= session.as_ref().n() {
+            throw_r_error(format!("Index {} is out of bounds", i));
+        }
+        out_names.push(session.as_ref().names()[i as usize].clone());
+        let v = query(session, i).unwrap_or_else(|e| throw_r_error(e));
+        out.push(indices_to_names_or_null(&v, session.as_ref().names()));
+    }
+
+    named_list(out, out_names)
+}
+
 /// Convert coordinate pairs to R list with x and y vectors.
 fn coords_to_list(coords: Vec<(f64, f64)>) -> Robj {
     let mut x: Vec<f64> = Vec::with_capacity(coords.len());
@@ -875,211 +1116,307 @@ fn rs_build(mut session: ExternalPtr<GraphSession>) {
     session.as_mut().view().unwrap_or_else(|e| throw_r_error(e));
 }
 
-// Query accessors
 #[extendr]
-fn rs_topological_sort(mut session: ExternalPtr<GraphSession>) -> Robj {
+fn parents(
+    cg: Robj,
+    nodes: Robj,
+    index: Robj,
+) -> Robj {
+    let mut session = session_ptr_from_cg(&cg);
+    let idx0 = resolve_query_idx0(&session, nodes, index, "Must supply either `nodes` or `index`.");
+    run_relation_query(&mut session, idx0, "idx", "idxs", |s, i| {
+        s.as_mut().parents_of(i).map_err(|e| e)
+    })
+}
+
+#[extendr]
+fn children(
+    cg: Robj,
+    nodes: Robj,
+    index: Robj,
+) -> Robj {
+    let mut session = session_ptr_from_cg(&cg);
+    let idx0 = resolve_query_idx0(&session, nodes, index, "Must supply either `nodes` or `index`.");
+    run_relation_query(&mut session, idx0, "idx", "idxs", |s, i| {
+        s.as_mut().children_of(i).map_err(|e| e)
+    })
+}
+
+#[extendr]
+fn neighbors(
+    cg: Robj,
+    nodes: Robj,
+    index: Robj,
+    mode: Robj,
+) -> Robj {
+    use graph::NeighborMode;
+
+    let mut session = session_ptr_from_cg(&cg);
+    let idx0 = resolve_query_idx0(&session, nodes, index, "Must supply either `nodes` or `index`.");
+    let mode_norm = parse_neighbors_mode(mode);
+    let neighbor_mode = NeighborMode::from_str(mode_norm.as_str()).unwrap_or_else(|e| throw_r_error(e));
+
+    run_relation_query(&mut session, idx0, "idx", "idxs", move |s, i| {
+        s.as_mut().neighbors_of(i, neighbor_mode).map_err(|e| e)
+    })
+}
+
+#[extendr]
+fn ancestors(
+    cg: Robj,
+    nodes: Robj,
+    index: Robj,
+    open: Robj,
+) -> Robj {
+    let mut session = session_ptr_from_cg(&cg);
+    let idx0 = resolve_query_idx0(&session, nodes, index, "Must supply either `nodes` or `index`.");
+    let open_flag = parse_open_arg(open);
+
+    run_relation_query(&mut session, idx0, "node", "node", move |s, i| {
+        let mut v = s.as_mut().ancestors_of(i).map_err(|e| e)?;
+        if !open_flag {
+            v.insert(0, i);
+        }
+        Ok(v)
+    })
+}
+
+#[extendr]
+fn descendants(
+    cg: Robj,
+    nodes: Robj,
+    index: Robj,
+    open: Robj,
+) -> Robj {
+    let mut session = session_ptr_from_cg(&cg);
+    let idx0 = resolve_query_idx0(&session, nodes, index, "Must supply either `nodes` or `index`.");
+    let open_flag = parse_open_arg(open);
+
+    run_relation_query(&mut session, idx0, "node", "node", move |s, i| {
+        let mut v = s.as_mut().descendants_of(i).map_err(|e| e)?;
+        if !open_flag {
+            v.insert(0, i);
+        }
+        Ok(v)
+    })
+}
+
+#[extendr]
+fn anteriors(
+    cg: Robj,
+    nodes: Robj,
+    index: Robj,
+    open: Robj,
+) -> Robj {
+    let mut session = session_ptr_from_cg(&cg);
+    let idx0 = resolve_query_idx0(&session, nodes, index, "Must supply either `nodes` or `index`.");
+    let open_flag = parse_open_arg(open);
+
+    run_relation_query(&mut session, idx0, "node", "node", move |s, i| {
+        let mut v = s.as_mut().anteriors_of(i).map_err(|e| e)?;
+        if !open_flag {
+            v.insert(0, i);
+        }
+        Ok(v)
+    })
+}
+
+#[extendr]
+fn posteriors(
+    cg: Robj,
+    nodes: Robj,
+    index: Robj,
+    open: Robj,
+) -> Robj {
+    let mut session = session_ptr_from_cg(&cg);
+    let idx0 = resolve_query_idx0(&session, nodes, index, "Supply one of `nodes` or `index`.");
+    let open_flag = parse_open_arg(open);
+
+    run_relation_query(&mut session, idx0, "node", "node", move |s, i| {
+        let mut v = s.as_mut().posteriors_of(i).map_err(|e| e)?;
+        if !open_flag {
+            v.insert(0, i);
+        }
+        Ok(v)
+    })
+}
+
+#[extendr]
+fn markov_blanket(
+    cg: Robj,
+    nodes: Robj,
+    index: Robj,
+) -> Robj {
+    let mut session = session_ptr_from_cg(&cg);
+    let idx0 = resolve_query_idx0(&session, nodes, index, "Must supply either `nodes` or `index`.");
+    run_relation_query(&mut session, idx0, "node", "node", |s, i| {
+        s.as_mut().markov_blanket_of(i).map_err(|e| e)
+    })
+}
+
+#[extendr]
+fn spouses(
+    cg: Robj,
+    nodes: Robj,
+    index: Robj,
+) -> Robj {
+    let mut session = session_ptr_from_cg(&cg);
+    let idx0 = resolve_query_idx0(&session, nodes, index, "Must supply either `nodes` or `index`.");
+    run_relation_query(&mut session, idx0, "idx", "idxs", |s, i| {
+        s.as_mut().spouses_of(i).map_err(|e| e)
+    })
+}
+
+#[extendr]
+fn districts(
+    cg: Robj,
+    nodes: Robj,
+    index: Robj,
+    all: Robj,
+) -> Robj {
+    let mut session = session_ptr_from_cg(&cg);
+
+    let nodes_supplied = !nodes.is_null();
+    let index_supplied = !index.is_null();
+
+    if nodes_supplied && index_supplied {
+        throw_r_error("Supply either `nodes` or `index`, not both.");
+    }
+
+    let all_opt = parse_optional_single_logical(all, "`all` must be TRUE, FALSE, or NULL.");
+    if all_opt == Some(true) && (nodes_supplied || index_supplied) {
+        throw_r_error("`all = TRUE` cannot be combined with `nodes` or `index`.");
+    }
+
+    if all_opt == Some(false) && !nodes_supplied && !index_supplied {
+        throw_r_error("`all = FALSE` requires `nodes` or `index` to be supplied.");
+    }
+
+    let all_requested = match all_opt {
+        None => !nodes_supplied && !index_supplied,
+        Some(v) => v,
+    };
+
+    if all_requested {
+        let result = session
+            .as_mut()
+            .districts()
+            .unwrap_or_else(|e| throw_r_error(e));
+
+        let out: Vec<Robj> = result
+            .iter()
+            .map(|d| indices_to_names(d, session.as_ref().names()))
+            .collect();
+        return extendr_api::prelude::List::from_values(out).into_robj();
+    }
+
+    if index_supplied {
+        let idx1 = parse_district_index1(index);
+        let n = session.as_ref().n() as i32;
+        if idx1.iter().any(|&i| i < 1 || i > n) {
+            throw_r_error("`index` out of range (1..n).");
+        }
+
+        if idx1.len() <= 1 {
+            if idx1.is_empty() {
+                throw_r_error("Expected non zero length");
+            }
+            let i0 = idx1[0] - 1;
+            let i = rint_to_u32(Rint::from(i0), "idx");
+            let v = session
+                .as_mut()
+                .district_of(i)
+                .unwrap_or_else(|e| throw_r_error(e));
+            return indices_to_names(&v, session.as_ref().names());
+        }
+
+        let mut out: Vec<Robj> = Vec::with_capacity(idx1.len());
+        let mut out_names: Vec<String> = Vec::with_capacity(idx1.len());
+        for i1 in idx1 {
+            let i0 = i1 - 1;
+            let i = rint_to_u32(Rint::from(i0), "idxs");
+            out_names.push(session.as_ref().names()[i as usize].clone());
+            let v = session
+                .as_mut()
+                .district_of(i)
+                .unwrap_or_else(|e| throw_r_error(e));
+            out.push(indices_to_names(&v, session.as_ref().names()));
+        }
+        return named_list(out, out_names);
+    }
+
+    if !nodes_supplied {
+        throw_r_error("Supply one of `nodes` or `index`, or set `all = TRUE`.");
+    }
+
+    let node_vals: Strings = nodes
+        .try_into()
+        .unwrap_or_else(|_| throw_r_error("`nodes` must be a character vector without NA."));
+    let mut node_names = Vec::with_capacity(node_vals.len());
+    for i in 0..node_vals.len() {
+        let s = node_vals.elt(i);
+        if s.is_na() {
+            throw_r_error("`nodes` must be a character vector without NA.");
+        }
+        node_names.push(s.to_string());
+    }
+    let idx0: Vec<i32> = session
+        .as_ref()
+        .indices_of(&node_names)
+        .unwrap_or_else(|e| throw_r_error(e))
+        .into_iter()
+        .map(|x| x as i32)
+        .collect();
+
+    if idx0.len() <= 1 {
+        if idx0.is_empty() {
+            throw_r_error("Expected non zero length");
+        }
+        let i = rint_to_u32(Rint::from(idx0[0]), "idx");
+        let v = session
+            .as_mut()
+            .district_of(i)
+            .unwrap_or_else(|e| throw_r_error(e));
+        return indices_to_names(&v, session.as_ref().names());
+    }
+
+    let mut out: Vec<Robj> = Vec::with_capacity(idx0.len());
+    for &ii in idx0.iter() {
+        let i = rint_to_u32(Rint::from(ii), "idxs");
+        let v = session
+            .as_mut()
+            .district_of(i)
+            .unwrap_or_else(|e| throw_r_error(e));
+        out.push(indices_to_names(&v, session.as_ref().names()));
+    }
+    named_list(out, node_names)
+}
+
+#[extendr]
+fn topological_sort(cg: Robj) -> Robj {
+    let mut session = session_ptr_from_cg(&cg);
     let result = session
         .as_mut()
         .topological_sort()
         .unwrap_or_else(|e| throw_r_error(e));
-    result.iter().map(|&x| x as i32).collect_robj()
+    indices_to_names(&result, session.as_ref().names())
 }
 
 #[extendr]
-fn rs_parents_of(mut session: ExternalPtr<GraphSession>, idxs: Integers) -> Robj {
-    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
-    for ri in idxs.iter() {
-        let i = rint_to_u32(ri, "idxs");
-        if i >= session.as_ref().n() {
-            throw_r_error(format!("Index {} is out of bounds", i));
-        }
-        let v = session
-            .as_mut()
-            .parents_of(i)
-            .unwrap_or_else(|e| throw_r_error(e));
-        out.push(v.iter().map(|&x| x as i32).collect_robj());
-    }
-    extendr_api::prelude::List::from_values(out).into_robj()
-}
-
-#[extendr]
-fn rs_children_of(mut session: ExternalPtr<GraphSession>, idxs: Integers) -> Robj {
-    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
-    for ri in idxs.iter() {
-        let i = rint_to_u32(ri, "idxs");
-        if i >= session.as_ref().n() {
-            throw_r_error(format!("Index {} is out of bounds", i));
-        }
-        let v = session
-            .as_mut()
-            .children_of(i)
-            .unwrap_or_else(|e| throw_r_error(e));
-        out.push(v.iter().map(|&x| x as i32).collect_robj());
-    }
-    extendr_api::prelude::List::from_values(out).into_robj()
-}
-
-#[extendr]
-fn rs_undirected_of(mut session: ExternalPtr<GraphSession>, idxs: Integers) -> Robj {
-    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
-    for ri in idxs.iter() {
-        let i = rint_to_u32(ri, "idxs");
-        if i >= session.as_ref().n() {
-            throw_r_error(format!("Index {} is out of bounds", i));
-        }
-        let v = session
-            .as_mut()
-            .undirected_of(i)
-            .unwrap_or_else(|e| throw_r_error(e));
-        out.push(v.iter().map(|&x| x as i32).collect_robj());
-    }
-    extendr_api::prelude::List::from_values(out).into_robj()
-}
-
-#[extendr]
-fn rs_neighbors_of(mut session: ExternalPtr<GraphSession>, idxs: Integers, mode: Strings) -> Robj {
-    use graph::NeighborMode;
-    // Allow single mode to apply to all indices, or one mode per index
-    if mode.len() != 1 && mode.len() != idxs.len() {
-        throw_r_error("mode must be length 1 or match index length");
-    }
-    let single_mode = mode.len() == 1;
-    let first_mode = if single_mode {
-        Some(
-            NeighborMode::from_str(mode.iter().next().unwrap().as_str())
-                .unwrap_or_else(|e| throw_r_error(e)),
-        )
-    } else {
-        None
-    };
-
-    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
-    for (idx, ri) in idxs.iter().enumerate() {
-        let i = rint_to_u32(ri, "idxs");
-        if i >= session.as_ref().n() {
-            throw_r_error(format!("Index {} is out of bounds", i));
-        }
-        let neighbor_mode = if single_mode {
-            first_mode.unwrap()
-        } else {
-            NeighborMode::from_str(mode.elt(idx).as_str()).unwrap_or_else(|e| throw_r_error(e))
-        };
-        let v = session
-            .as_mut()
-            .neighbors_of(i, neighbor_mode)
-            .unwrap_or_else(|e| throw_r_error(e));
-        out.push(v.iter().map(|&x| x as i32).collect_robj());
-    }
-    extendr_api::prelude::List::from_values(out).into_robj()
-}
-
-#[extendr]
-fn rs_ancestors_of(mut session: ExternalPtr<GraphSession>, node: i32) -> Robj {
-    let idx = rint_to_u32(Rint::from(node), "node");
-    let result = session
-        .as_mut()
-        .ancestors_of(idx)
-        .unwrap_or_else(|e| throw_r_error(e));
-    result.iter().map(|&x| x as i32).collect_robj()
-}
-
-#[extendr]
-fn rs_descendants_of(mut session: ExternalPtr<GraphSession>, node: i32) -> Robj {
-    let idx = rint_to_u32(Rint::from(node), "node");
-    let result = session
-        .as_mut()
-        .descendants_of(idx)
-        .unwrap_or_else(|e| throw_r_error(e));
-    result.iter().map(|&x| x as i32).collect_robj()
-}
-
-#[extendr]
-fn rs_anteriors_of(mut session: ExternalPtr<GraphSession>, node: i32) -> Robj {
-    let idx = rint_to_u32(Rint::from(node), "node");
-    let result = session
-        .as_mut()
-        .anteriors_of(idx)
-        .unwrap_or_else(|e| throw_r_error(e));
-    result.iter().map(|&x| x as i32).collect_robj()
-}
-
-#[extendr]
-fn rs_posteriors_of(mut session: ExternalPtr<GraphSession>, node: i32) -> Robj {
-    let idx = rint_to_u32(Rint::from(node), "node");
-    let result = session
-        .as_mut()
-        .posteriors_of(idx)
-        .unwrap_or_else(|e| throw_r_error(e));
-    result.iter().map(|&x| x as i32).collect_robj()
-}
-
-#[extendr]
-fn rs_markov_blanket_of(mut session: ExternalPtr<GraphSession>, node: i32) -> Robj {
-    let idx = rint_to_u32(Rint::from(node), "node");
-    let result = session
-        .as_mut()
-        .markov_blanket_of(idx)
-        .unwrap_or_else(|e| throw_r_error(e));
-    result.iter().map(|&x| x as i32).collect_robj()
-}
-
-#[extendr]
-fn rs_spouses_of(mut session: ExternalPtr<GraphSession>, idxs: Integers) -> Robj {
-    let mut out: Vec<Robj> = Vec::with_capacity(idxs.len());
-    for ri in idxs.iter() {
-        let i = rint_to_u32(ri, "idxs");
-        if i >= session.as_ref().n() {
-            throw_r_error(format!("Index {} is out of bounds", i));
-        }
-        let v = session
-            .as_mut()
-            .spouses_of(i)
-            .unwrap_or_else(|e| throw_r_error(e));
-        out.push(v.iter().map(|&x| x as i32).collect_robj());
-    }
-    extendr_api::prelude::List::from_values(out).into_robj()
-}
-
-#[extendr]
-fn rs_exogenous_nodes(
-    mut session: ExternalPtr<GraphSession>,
-    undirected_as_parents: Rbool,
+fn exogenous(
+    cg: Robj,
+    undirected_as_parents: Robj,
 ) -> Robj {
+    let mut session = session_ptr_from_cg(&cg);
+    let undirected = parse_single_logical(
+        undirected_as_parents,
+        "`undirected_as_parents` must be a single TRUE or FALSE.",
+    );
     let result = session
         .as_mut()
-        .exogenous_nodes(undirected_as_parents.is_true())
+        .exogenous_nodes(undirected)
         .unwrap_or_else(|e| throw_r_error(e));
-    result.iter().map(|&x| x as i32).collect_robj()
-}
-
-#[extendr]
-fn rs_districts(mut session: ExternalPtr<GraphSession>) -> Robj {
-    let result = session
-        .as_mut()
-        .districts()
-        .unwrap_or_else(|e| throw_r_error(e));
-
-    let out: Vec<Robj> = result
-        .iter()
-        .map(|d| d.iter().map(|&x| x as i32).collect_robj())
-        .collect();
-    extendr_api::prelude::List::from_values(out).into_robj()
-}
-
-#[extendr]
-fn rs_district_of(mut session: ExternalPtr<GraphSession>, idx: i32) -> Robj {
-    if idx < 0 {
-        throw_r_error("idx must be >= 0");
-    }
-    let i = idx as u32;
-    if i >= session.as_ref().n() {
-        throw_r_error(format!("Index {} is out of bounds", i));
-    }
-    let v = session
-        .as_mut()
-        .district_of(i)
-        .unwrap_or_else(|e| throw_r_error(e));
-    v.into_iter().map(|x| x as i32).collect_robj()
+    indices_to_names(&result, session.as_ref().names())
 }
 
 // ── Session validation / class checks ────────────────────────────────────────
@@ -1519,20 +1856,18 @@ extendr_module! {
     fn rs_edges_df;
     fn rs_is_valid;
     fn rs_build;
-    fn rs_topological_sort;
-    fn rs_parents_of;
-    fn rs_children_of;
-    fn rs_undirected_of;
-    fn rs_neighbors_of;
-    fn rs_ancestors_of;
-    fn rs_descendants_of;
-    fn rs_anteriors_of;
-    fn rs_posteriors_of;
-    fn rs_markov_blanket_of;
-    fn rs_spouses_of;
-    fn rs_exogenous_nodes;
-    fn rs_districts;
-    fn rs_district_of;
+    fn children;
+    fn neighbors;
+    fn ancestors;
+    fn descendants;
+    fn anteriors;
+    fn posteriors;
+    fn markov_blanket;
+    fn exogenous;
+    fn topological_sort;
+    fn spouses;
+    fn districts;
+    fn parents;
     fn rs_is_acyclic;
     fn rs_is_dag_type;
     fn rs_is_pdag_type;
