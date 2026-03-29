@@ -719,24 +719,9 @@ edge_types <- function(cg) {
 #' @concept queries
 #'
 #' @export
-parents <- function(cg, nodes = NULL, index = NULL) {
-  check <- .validate_nodes_and_index(nodes, index)
-
-  if (check$index_supplied) {
-    return(.getter_output(
-      cg,
-      rs_parents_of(cg@session, as.integer(index - 1L)),
-      cg@nodes$name[index]
-    ))
-  }
-
-  index <- .nodes_to_indices(cg, nodes)
-  .getter_output(
-    cg,
-    rs_parents_of(cg@session, as.integer(index)),
-    nodes
-  )
-}
+# Implemented directly in Rust via `parents()` in `src/rust/src/lib.rs`.
+parents <- parents
+formals(parents) <- alist(cg = , nodes = NULL, index = NULL)
 
 #' @title Get children of nodes in a `caugi`
 #'
@@ -770,25 +755,9 @@ parents <- function(cg, nodes = NULL, index = NULL) {
 #' @concept queries
 #'
 #' @export
-children <- function(cg, nodes = NULL, index = NULL) {
-  check <- .validate_nodes_and_index(nodes, index)
-
-  if (check$index_supplied) {
-    return(.getter_output(
-      cg,
-      rs_children_of(cg@session, as.integer(index - 1L)),
-      cg@nodes$name[index]
-    ))
-  }
-
-  index <- .nodes_to_indices(cg, nodes)
-
-  .getter_output(
-    cg,
-    rs_children_of(cg@session, as.integer(index)),
-    nodes
-  )
-}
+# Implemented directly in Rust via `children()` in `src/rust/src/lib.rs`.
+children <- children
+formals(children) <- alist(cg = , nodes = NULL, index = NULL)
 
 #' @title Get neighbors of nodes in a `caugi`
 #'
@@ -858,40 +827,9 @@ children <- function(cg, nodes = NULL, index = NULL) {
 #' @concept queries
 #'
 #' @export
-neighbors <- function(
-  cg,
-  nodes = NULL,
-  index = NULL,
-  mode = c(
-    "all",
-    "in",
-    "out",
-    "undirected",
-    "bidirected",
-    "partial"
-  )
-) {
-  check <- .validate_nodes_and_index(nodes, index)
-
-  mode <- match.arg(mode)
-
-  if (check$index_supplied) {
-    idx <- as.integer(index - 1L)
-    return(.getter_output(
-      cg,
-      rs_neighbors_of(cg@session, idx, mode),
-      cg@nodes$name[index]
-    ))
-  }
-
-  index <- rs_indices_of(cg@session, nodes)
-
-  .getter_output(
-    cg,
-    rs_neighbors_of(cg@session, as.integer(index), mode),
-    nodes
-  )
-}
+# Implemented directly in Rust via `neighbors()` in `src/rust/src/lib.rs`.
+neighbors <- neighbors
+formals(neighbors) <- alist(cg = , nodes = NULL, index = NULL, mode = "all")
 
 #' @rdname neighbors
 #' @export
@@ -928,50 +866,14 @@ neighbours <- neighbors
 #' @concept queries
 #'
 #' @export
-ancestors <- function(
-  cg,
+# Implemented directly in Rust via `ancestors()` in `src/rust/src/lib.rs`.
+ancestors <- ancestors
+formals(ancestors) <- alist(
+  cg = ,
   nodes = NULL,
   index = NULL,
   open = caugi_options("use_open_graph_definition")
-) {
-  if (!is.logical(open) || length(open) != 1L) {
-    stop("`open` must be a single TRUE or FALSE.", call. = FALSE)
-  }
-
-  check <- .validate_nodes_and_index(nodes, index)
-
-  if (check$index_supplied) {
-    idx0_list <- lapply(
-      as.integer(index - 1L),
-      function(ix) {
-        anc <- rs_ancestors_of(cg@session, ix)
-        if (!open) {
-          anc <- c(ix, anc)
-        }
-        anc
-      }
-    )
-    return(.getter_output(
-      cg,
-      idx0_list,
-      cg@nodes$name[index]
-    ))
-  }
-
-  index <- rs_indices_of(cg@session, nodes)
-
-  idx0_list <- lapply(
-    as.integer(index),
-    function(ix) {
-      anc <- rs_ancestors_of(cg@session, ix)
-      if (!open) {
-        anc <- c(ix, anc)
-      }
-      anc
-    }
-  )
-  .getter_output(cg, idx0_list, nodes)
-}
+)
 
 #' @title Get descendants of nodes in a `caugi`
 #'
@@ -1004,50 +906,14 @@ ancestors <- function(
 #' @concept queries
 #'
 #' @export
-descendants <- function(
-  cg,
+# Implemented directly in Rust via `descendants()` in `src/rust/src/lib.rs`.
+descendants <- descendants
+formals(descendants) <- alist(
+  cg = ,
   nodes = NULL,
   index = NULL,
   open = caugi_options("use_open_graph_definition")
-) {
-  if (!is.logical(open) || length(open) != 1L) {
-    stop("`open` must be a single TRUE or FALSE.", call. = FALSE)
-  }
-
-  check <- .validate_nodes_and_index(nodes, index)
-
-  if (check$index_supplied) {
-    idx0_list <- lapply(
-      as.integer(index - 1L),
-      function(ix) {
-        anc <- rs_descendants_of(cg@session, ix)
-        if (!open) {
-          anc <- c(ix, anc)
-        }
-        anc
-      }
-    )
-    return(.getter_output(
-      cg,
-      idx0_list,
-      cg@nodes$name[index]
-    ))
-  }
-
-  index <- rs_indices_of(cg@session, nodes)
-
-  idx0_list <- lapply(
-    as.integer(index),
-    function(ix) {
-      anc <- rs_descendants_of(cg@session, ix)
-      if (!open) {
-        anc <- c(ix, anc)
-      }
-      anc
-    }
-  )
-  .getter_output(cg, idx0_list, nodes)
-}
+)
 
 #' @title Get anteriors of nodes in a `caugi`
 #'
@@ -1096,49 +962,14 @@ descendants <- function(
 #' @concept queries
 #'
 #' @export
-anteriors <- function(
-  cg,
+# Implemented directly in Rust via `anteriors()` in `src/rust/src/lib.rs`.
+anteriors <- anteriors
+formals(anteriors) <- alist(
+  cg = ,
   nodes = NULL,
   index = NULL,
   open = caugi_options("use_open_graph_definition")
-) {
-  if (!is.logical(open) || length(open) != 1L) {
-    stop("`open` must be a single TRUE or FALSE.", call. = FALSE)
-  }
-  check <- .validate_nodes_and_index(nodes, index)
-
-  if (check$index_supplied) {
-    idx0_list <- lapply(
-      as.integer(index - 1L),
-      function(ix) {
-        anc <- rs_anteriors_of(cg@session, ix)
-        if (!open) {
-          anc <- c(ix, anc)
-        }
-        anc
-      }
-    )
-    return(.getter_output(
-      cg,
-      idx0_list,
-      cg@nodes$name[index]
-    ))
-  }
-
-  index <- rs_indices_of(cg@session, nodes)
-
-  idx0_list <- lapply(
-    as.integer(index),
-    function(ix) {
-      anc <- rs_anteriors_of(cg@session, ix)
-      if (!open) {
-        anc <- c(ix, anc)
-      }
-      anc
-    }
-  )
-  .getter_output(cg, idx0_list, nodes)
-}
+)
 
 #' @title Get posteriors of nodes in a `caugi`
 #'
@@ -1185,63 +1016,14 @@ anteriors <- function(
 #' @concept queries
 #'
 #' @export
-posteriors <- function(
-  cg,
+# Implemented directly in Rust via `posteriors()` in `src/rust/src/lib.rs`.
+posteriors <- posteriors
+formals(posteriors) <- alist(
+  cg = ,
   nodes = NULL,
   index = NULL,
   open = caugi_options("use_open_graph_definition")
-) {
-  if (!is.logical(open) || length(open) != 1L) {
-    stop("`open` must be a single TRUE or FALSE.", call. = FALSE)
-  }
-  nodes_supplied <- !is.null(nodes)
-  index_supplied <- !is.null(index)
-
-  if (nodes_supplied && index_supplied) {
-    stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
-  }
-
-  if (index_supplied) {
-    idx0_list <- lapply(
-      as.integer(index - 1L),
-      function(ix) {
-        anc <- rs_posteriors_of(cg@session, ix)
-        if (!open) {
-          anc <- c(ix, anc)
-        }
-        anc
-      }
-    )
-    return(.getter_output(
-      cg,
-      idx0_list,
-      cg@nodes$name[index]
-    ))
-  }
-
-  if (!nodes_supplied) {
-    stop("Supply one of `nodes` or `index`.", call. = FALSE)
-  }
-
-  if (!is.character(nodes)) {
-    stop("`nodes` must be a character vector of node names.", call. = FALSE)
-  }
-
-  index <- rs_indices_of(cg@session, nodes)
-
-  idx0_list <- lapply(
-    as.integer(index),
-    function(ix) {
-      anc <- rs_posteriors_of(cg@session, ix)
-      if (!open) {
-        anc <- c(ix, anc)
-      }
-      anc
-    }
-  )
-
-  .getter_output(cg, idx0_list, nodes)
-}
+)
 
 #' @title Get Markov blanket of nodes in a `caugi`
 #'
@@ -1270,29 +1052,9 @@ posteriors <- function(
 #' @concept queries
 #'
 #' @export
-markov_blanket <- function(cg, nodes = NULL, index = NULL) {
-  check <- .validate_nodes_and_index(nodes, index)
-
-  if (check$index_supplied) {
-    idx0_list <- lapply(
-      as.integer(index - 1L),
-      function(ix) rs_markov_blanket_of(cg@session, ix)
-    )
-    return(.getter_output(
-      cg,
-      idx0_list,
-      cg@nodes$name[index]
-    ))
-  }
-
-  index <- rs_indices_of(cg@session, nodes)
-
-  idx0_list <- lapply(
-    as.integer(index),
-    function(ix) rs_markov_blanket_of(cg@session, ix)
-  )
-  .getter_output(cg, idx0_list, nodes)
-}
+# Implemented directly in Rust via `markov_blanket()` in `src/rust/src/lib.rs`.
+markov_blanket <- markov_blanket
+formals(markov_blanket) <- alist(cg = , nodes = NULL, index = NULL)
 
 #' @title Get all exogenous nodes in a `caugi`
 #'
@@ -1318,12 +1080,9 @@ markov_blanket <- function(cg, nodes = NULL, index = NULL) {
 #' @concept queries
 #'
 #' @export
-exogenous <- function(cg, undirected_as_parents = FALSE) {
-  is_caugi(cg, throw_error = TRUE)
-
-  idx0 <- rs_exogenous_nodes(cg@session, undirected_as_parents)
-  cg@nodes$name[idx0 + 1L]
-}
+# Implemented directly in Rust via `exogenous()` in `src/rust/src/lib.rs`.
+exogenous <- exogenous
+formals(exogenous) <- alist(cg = , undirected_as_parents = FALSE)
 
 #' @title Get a topological ordering of a DAG
 #'
@@ -1357,12 +1116,8 @@ exogenous <- function(cg, undirected_as_parents = FALSE) {
 #' @concept queries
 #'
 #' @export
-topological_sort <- function(cg) {
-  is_caugi(cg, throw_error = TRUE)
-
-  idx0 <- rs_topological_sort(cg@session)
-  cg@nodes$name[idx0 + 1L]
-}
+# Implemented directly in Rust via `topological_sort()` in `src/rust/src/lib.rs`.
+topological_sort <- topological_sort
 
 # ──────────────────────────────────────────────────────────────────────────────
 # ─────────────────────────── ADMG-specific queries ────────────────────────────
@@ -1392,25 +1147,9 @@ topological_sort <- function(cg) {
 #' @concept queries
 #'
 #' @export
-spouses <- function(cg, nodes = NULL, index = NULL) {
-  check <- .validate_nodes_and_index(nodes, index)
-
-  if (check$index_supplied) {
-    return(.getter_output(
-      cg,
-      rs_spouses_of(cg@session, as.integer(index - 1L)),
-      cg@nodes$name[index]
-    ))
-  }
-
-  index <- rs_indices_of(cg@session, nodes)
-
-  .getter_output(
-    cg,
-    rs_spouses_of(cg@session, as.integer(index)),
-    nodes
-  )
-}
+# Implemented directly in Rust via `spouses()` in `src/rust/src/lib.rs`.
+spouses <- spouses
+formals(spouses) <- alist(cg = , nodes = NULL, index = NULL)
 
 #' @title Get districts (c-components) of an ADMG or AG
 #'
@@ -1446,91 +1185,18 @@ spouses <- function(cg, nodes = NULL, index = NULL) {
 #' @concept queries
 #'
 #' @export
-districts <- function(cg, nodes = NULL, index = NULL, all) {
-  is_caugi(cg, throw_error = TRUE)
-
+# Implemented directly in Rust via `districts()` in `src/rust/src/lib.rs`,
+# with deprecation-warning compatibility handled in R.
+districts <- function(cg, nodes = NULL, index = NULL, all = NULL) {
   if (!missing(all)) {
-    # TODO: Remove in a future major release
     warning(
       "`all` argument is deprecated and will be removed in a future version. ",
       "To get all districts, simply call `districts(cg)` without `nodes` or `index`.",
       call. = FALSE
     )
-
-    if (
-      !is.null(all) && (!is.logical(all) || length(all) != 1L || is.na(all))
-    ) {
-      stop("`all` must be TRUE, FALSE, or NULL.", call. = FALSE)
-    }
-  } else {
-    all <- is.null(nodes) && is.null(index)
   }
 
-  nodes_supplied <- !is.null(nodes)
-  index_supplied <- !is.null(index)
-
-  if (nodes_supplied && index_supplied) {
-    stop("Supply either `nodes` or `index`, not both.", call. = FALSE)
-  }
-
-  if (isTRUE(all) && (nodes_supplied || index_supplied)) {
-    stop(
-      "`all = TRUE` cannot be combined with `nodes` or `index`.",
-      call. = FALSE
-    )
-  }
-
-  if (identical(all, FALSE) && !nodes_supplied && !index_supplied) {
-    stop(
-      "`all = FALSE` requires `nodes` or `index` to be supplied.",
-      call. = FALSE
-    )
-  }
-
-  all_requested <- if (is.null(all)) {
-    !nodes_supplied && !index_supplied
-  } else {
-    isTRUE(all)
-  }
-
-  if (all_requested) {
-    idx0_list <- rs_districts(cg@session)
-    return(lapply(idx0_list, function(idx0) cg@nodes$name[idx0 + 1L]))
-  }
-
-  if (index_supplied) {
-    if (!is.numeric(index) || anyNA(index)) {
-      stop("`index` must be numeric without NA.", call. = FALSE)
-    }
-    idx1 <- as.integer(index)
-    n <- nrow(cg@nodes)
-    if (any(idx1 < 1L) || any(idx1 > n)) {
-      stop("`index` out of range (1..n).", call. = FALSE)
-    }
-
-    idx0_list <- lapply(
-      as.integer(idx1 - 1L),
-      function(ix) rs_district_of(cg@session, ix)
-    )
-    return(.getter_output(cg, idx0_list, cg@nodes$name[idx1]))
-  }
-
-  if (!nodes_supplied) {
-    stop(
-      "Supply one of `nodes` or `index`, or set `all = TRUE`.",
-      call. = FALSE
-    )
-  }
-
-  if (!is.character(nodes) || anyNA(nodes)) {
-    stop("`nodes` must be a character vector without NA.", call. = FALSE)
-  }
-
-  idx0 <- rs_indices_of(cg@session, nodes)
-  idx0_list <- lapply(as.integer(idx0), function(ix) {
-    rs_district_of(cg@session, ix)
-  })
-  .getter_output(cg, idx0_list, nodes)
+  .Call(wrap__districts, cg, nodes, index, all)
 }
 
 #' @title M-separation test for AGs and ADMGs
@@ -1607,82 +1273,6 @@ m_separated <- function(
 #' @concept queries
 #'
 #' @export
-subgraph <- function(cg, nodes = NULL, index = NULL) {
-  is_caugi(cg, throw_error = TRUE)
-  session_names <- rs_names(cg@session)
-
-  check <- .validate_nodes_and_index(nodes, index)
-
-  if (check$index_supplied) {
-    idx1 <- as.integer(index)
-    n <- length(session_names)
-    if (any(idx1 < 1L) || any(idx1 > n)) {
-      stop("`index` out of range (1..n).", call. = FALSE)
-    }
-    keep_idx0 <- idx1 - 1L
-    keep_names <- session_names[idx1]
-  } else {
-    pos <- match(nodes, session_names)
-    if (anyNA(pos)) {
-      miss <- nodes[is.na(pos)]
-      stop(
-        "Unknown node(s): ",
-        paste(unique(miss), collapse = ", "),
-        call. = FALSE
-      )
-    }
-    keep_names <- nodes
-    keep_idx0 <- pos - 1L
-  }
-
-  if (anyDuplicated(keep_idx0)) {
-    dpos <- duplicated(keep_idx0) | duplicated(keep_idx0, fromLast = TRUE)
-    stop(
-      "`nodes`/`index` contains duplicates: ",
-      paste(unique(keep_names[dpos]), collapse = ", "),
-      call. = FALSE
-    )
-  }
-
-  sub_session <- rs_induced_subgraph(
-    cg@session,
-    as.integer(keep_idx0)
-  )
-  .session_to_caugi(sub_session, node_names = keep_names)
-}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# ──────────────────────────── Relations helpers ───────────────────────────────
-# ──────────────────────────────────────────────────────────────────────────────
-
-#' @title Output object of getter queries
-#'
-#' @description Helper to format the output of getter queries.
-#'
-#' @param cg A `caugi` object.
-#' @param idx0 A vector of zero-based node indices.
-#' @param nodes A vector of node names.
-#'
-#' @returns A list of character vectors, each a set of node names.
-#' If only one node is requested, returns a character vector.
-#'
-#' @keywords internal
-.getter_output <- function(cg, idx0, nodes) {
-  nm <- cg@nodes$name
-  to_names <- function(ix0) {
-    if (length(ix0) == 0L) {
-      return(NULL)
-    }
-    nm[ix0 + 1L]
-  }
-
-  # faster check than doing is.null and length == 1, since length(NULL) == 0
-  if (length(nodes) <= 1L && length(idx0) == 1L) {
-    ix <- idx0[[1L]]
-    return(to_names(ix))
-  }
-
-  out <- lapply(idx0, to_names)
-  names(out) <- nodes
-  out
-}
+# Implemented directly in Rust via `subgraph()` in `src/rust/src/lib.rs`.
+subgraph <- subgraph
+formals(subgraph) <- alist(cg = , nodes = NULL, index = NULL)

@@ -33,89 +33,38 @@ test_that("graph builder works for directed edge in reverse direction", {
   reset_caugi_registry()
 })
 
-test_that("queries work for DAGs and PDAGs via session", {
+test_that("queries work for DAGs and PDAGs", {
   # DAG EXAMPLE
   cg <- caugi(A %-->% B, class = "DAG")
 
-  expect_identical(
-    rs_parents_of(cg@session, 0L),
-    list(integer(0))
-  )
-  expect_identical(
-    rs_children_of(cg@session, 0L),
-    list(1L)
-  )
-  expect_identical(
-    rs_parents_of(cg@session, 1L),
-    list(0L)
-  )
-  expect_identical(
-    rs_children_of(cg@session, 1L),
-    list(integer(0))
-  )
+  expect_null(parents(cg, index = 1L))
+  expect_identical(children(cg, index = 1L), "B")
+  expect_identical(parents(cg, index = 2L), "A")
+  expect_null(children(cg, index = 2L))
 
   cg <- add_edges(cg, B %-->% C)
   # Session syncs automatically
 
-  expect_identical(
-    rs_parents_of(cg@session, 0L),
-    list(integer(0))
-  )
-  expect_identical(
-    rs_children_of(cg@session, 0L),
-    list(1L)
-  )
-  expect_identical(
-    rs_parents_of(cg@session, 1L),
-    list(0L)
-  )
-  expect_identical(
-    rs_children_of(cg@session, 1L),
-    list(2L)
-  )
-  expect_identical(
-    rs_parents_of(cg@session, 2L),
-    list(1L)
-  )
-  expect_identical(
-    rs_children_of(cg@session, 2L),
-    list(integer(0))
-  )
+  expect_null(parents(cg, index = 1L))
+  expect_identical(children(cg, index = 1L), "B")
+  expect_identical(parents(cg, index = 2L), "A")
+  expect_identical(children(cg, index = 2L), "C")
+  expect_identical(parents(cg, index = 3L), "B")
+  expect_null(children(cg, index = 3L))
 
   # PDAG EXAMPLE
   cg <- caugi(A %-->% B, class = "PDAG")
-  expect_identical(
-    rs_parents_of(cg@session, 0L),
-    list(integer(0))
-  )
-  expect_identical(
-    rs_children_of(cg@session, 0L),
-    list(1L)
-  )
-  expect_identical(
-    rs_parents_of(cg@session, 1L),
-    list(0L)
-  )
-  expect_identical(
-    rs_children_of(cg@session, 1L),
-    list(integer(0))
-  )
+  expect_null(parents(cg, index = 1L))
+  expect_identical(children(cg, index = 1L), "B")
+  expect_identical(parents(cg, index = 2L), "A")
+  expect_null(children(cg, index = 2L))
 
   cg <- add_edges(cg, B %---% C)
   # Session syncs automatically
 
-  expect_identical(
-    rs_parents_of(cg@session, 0L),
-    list(integer(0))
-  )
-  expect_identical(
-    rs_children_of(cg@session, 0L),
-    list(1L)
-  )
-  expect_identical(
-    rs_undirected_of(cg@session, 1L),
-    list(2L)
-  )
+  expect_null(parents(cg, index = 1L))
+  expect_identical(children(cg, index = 1L), "B")
+  expect_identical(neighbors(cg, index = 2L, mode = "undirected"), "C")
 })
 
 test_that("rs_build compiles core and view lazily", {

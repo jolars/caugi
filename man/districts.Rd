@@ -4,7 +4,7 @@
 \alias{districts}
 \title{Get districts (c-components) of an ADMG or AG}
 \usage{
-districts(cg, nodes = NULL, index = NULL, all)
+districts(cg, nodes = NULL, index = NULL, all = NULL)
 }
 \arguments{
 \item{cg}{A \code{caugi} object of class ADMG or AG.}

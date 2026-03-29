@@ -5,19 +5,9 @@
 \alias{neighbours}
 \title{Get neighbors of nodes in a \code{caugi}}
 \usage{
-neighbors(
-  cg,
-  nodes = NULL,
-  index = NULL,
-  mode = c("all", "in", "out", "undirected", "bidirected", "partial")
-)
+neighbors(cg, nodes = NULL, index = NULL, mode = "all")
 
-neighbours(
-  cg,
-  nodes = NULL,
-  index = NULL,
-  mode = c("all", "in", "out", "undirected", "bidirected", "partial")
-)
+neighbours(cg, nodes = NULL, index = NULL, mode = "all")
 }
 \arguments{
 \item{cg}{A \code{caugi} object.}
