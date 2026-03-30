@@ -28,3 +28,9 @@ gadjid = ['dep:gadjid']
 [profile.release]
 lto = true
 codegen-units = 1
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package.caugi]
+opt-level = 3
