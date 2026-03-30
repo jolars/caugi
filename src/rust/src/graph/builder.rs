@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 //! GraphBuilder: collects edges and emits class-agnostic CSR.
 
-use std::collections::HashSet;
 use std::sync::Arc;
 
+use rustc_hash::FxHashSet;
+
 use super::error::BuilderError;
+use super::session::EdgeBuffer;
 use super::{CaugiGraph, RegistrySnapshot};
 use crate::edges::{EdgeRegistry, EdgeSpec};
 
@@ -14,8 +16,8 @@ pub struct GraphBuilder {
     simple: bool,
     specs: Arc<[EdgeSpec]>,
     rows: Vec<Vec<HalfEdge>>,
-    seen: HashSet<(u32, u32, u8, bool)>,
-    pair_seen: HashSet<(u32, u32)>,
+    seen: FxHashSet<(u32, u32, u8, bool)>,
+    pair_seen: FxHashSet<(u32, u32)>,
 }
 
 /// Encodes the position of this endpoint in the edge: 0 = tail position, 1 = head position.
@@ -73,22 +75,36 @@ impl GraphBuilder {
             simple,
             specs,
             rows: vec![Vec::new(); n_us],
-            seen: HashSet::new(),
-            pair_seen: HashSet::new(),
+            seen: FxHashSet::default(),
+            pair_seen: FxHashSet::default(),
         }
     }
 
     /// Create a new builder from an existing registry snapshot.
     /// This is more efficient when the snapshot already exists (e.g., in GraphSession).
     pub fn new_from_snapshot(n: u32, simple: bool, snapshot: Arc<RegistrySnapshot>) -> Self {
+        Self::new_from_snapshot_with_capacity(n, simple, snapshot, 0)
+    }
+
+    /// Create a new builder with pre-reserved hash set capacity for expected edge count.
+    pub fn new_from_snapshot_with_capacity(
+        n: u32,
+        simple: bool,
+        snapshot: Arc<RegistrySnapshot>,
+        expected_edges: usize,
+    ) -> Self {
         let n_us = n as usize;
         Self {
             n,
             simple,
             specs: Arc::clone(&snapshot.specs),
             rows: vec![Vec::new(); n_us],
-            seen: HashSet::new(),
-            pair_seen: HashSet::new(),
+            seen: FxHashSet::with_capacity_and_hasher(expected_edges, Default::default()),
+            pair_seen: if simple {
+                FxHashSet::with_capacity_and_hasher(expected_edges, Default::default())
+            } else {
+                FxHashSet::default()
+            },
         }
     }
 
@@ -117,10 +133,9 @@ impl GraphBuilder {
             return Err(BuilderError::SelfLoop { node: u });
         }
 
-        let spec: EdgeSpec = self
+        let spec = self
             .specs
             .get(etype as usize)
-            .cloned()
             .ok_or(BuilderError::InvalidEdgeCode { code: etype })?;
 
         if self.simple {
@@ -159,6 +174,82 @@ impl GraphBuilder {
         });
     }
 
+    /// Build CSR directly from a trusted EdgeBuffer, skipping per-edge validation.
+    ///
+    /// This is safe when edges have already been validated (e.g., from a session
+    /// that validated them on insertion). Skips hash-set duplicate detection and
+    /// bounds checks, going straight to CSR construction.
+    pub fn build_from_edge_buffer(
+        n: u32,
+        simple: bool,
+        edges: &EdgeBuffer,
+        snapshot: Arc<RegistrySnapshot>,
+    ) -> Result<CaugiGraph, String> {
+        let n_us = n as usize;
+        let edge_count = edges.len();
+
+        // Pre-allocate rows with estimated capacity (2 halves per edge, spread across n nodes).
+        let avg_degree = if n_us > 0 {
+            (2 * edge_count / n_us).max(1)
+        } else {
+            0
+        };
+        let mut rows: Vec<Vec<HalfEdge>> = (0..n_us)
+            .map(|_| Vec::with_capacity(avg_degree))
+            .collect();
+
+        for i in 0..edge_count {
+            let u = edges.from[i];
+            let v = edges.to[i];
+            let etype = edges.etype[i];
+
+            // Tail half at u (source), head half at v (target).
+            rows[u as usize].push(HalfEdge {
+                nbr: v,
+                etype,
+                side: Side::Tail,
+            });
+            rows[v as usize].push(HalfEdge {
+                nbr: u,
+                etype,
+                side: Side::Head,
+            });
+        }
+
+        // Sort each row for CSR canonical order.
+        for row in &mut rows {
+            row.sort_unstable();
+        }
+
+        // Build CSR arrays.
+        let mut row_index = Vec::with_capacity(n_us + 1);
+        row_index.push(0);
+        for row in &rows {
+            row_index.push(row_index.last().unwrap() + row.len() as u32);
+        }
+
+        let nnz = *row_index.last().unwrap() as usize;
+        let mut col = vec![0u32; nnz];
+        let mut ety = vec![0u8; nnz];
+        let mut side_arr = vec![0u8; nnz];
+
+        for (i, row) in rows.iter().enumerate() {
+            let mut k = row_index[i] as usize;
+            for h in row {
+                col[k] = h.nbr;
+                ety[k] = h.etype;
+                side_arr[k] = match h.side {
+                    Side::Tail => 0,
+                    Side::Head => 1,
+                };
+                k += 1;
+            }
+        }
+
+        let snap = RegistrySnapshot::from_specs(snapshot.specs.clone(), 1);
+        CaugiGraph::from_csr(row_index, col, ety, side_arr, simple, snap)
+    }
+
     pub fn finalize(mut self) -> Result<CaugiGraph, String> {
         self.take_and_build()
     }
@@ -177,7 +268,7 @@ impl GraphBuilder {
     fn build_from_rows(
         &mut self,
         mut rows: Vec<Vec<HalfEdge>>,
-        _seen: HashSet<(u32, u32, u8, bool)>,
+        _seen: FxHashSet<(u32, u32, u8, bool)>,
     ) -> Result<CaugiGraph, String> {
         let n = self.n as usize;
 

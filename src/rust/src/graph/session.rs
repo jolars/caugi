@@ -17,6 +17,7 @@ use super::CaugiGraph;
 use super::RegistrySnapshot;
 use crate::edges::{EdgeRegistry, EdgeSpec};
 use crate::graph::NeighborMode;
+use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
@@ -122,7 +123,7 @@ impl EdgeBuffer {
 /// The session holds:
 /// - **Variables**: Mutable inputs (n, simple, class, registry, edges, names)
 /// - **Declarations**: Lazily computed outputs (core, view)
-/// - **Queries**: Computed on demand without caching
+/// - **Queries**: Computed on demand (no query-level caching)
 ///
 /// # Invalidation Rules
 ///
@@ -140,13 +141,17 @@ pub struct GraphSession {
     edges: EdgeBuffer,
     names: Vec<String>,
     /// Maps node names to their 0-based indices for fast lookup.
-    name_to_index: HashMap<String, u32>,
+    /// Built lazily for sessions constructed from known index inputs.
+    name_to_index: RefCell<Option<HashMap<String, u32>>>,
 
     // ═══════════════════════════════════════════════════════════════════════════
     // VALIDITY FLAGS
     // ═══════════════════════════════════════════════════════════════════════════
     core_valid: bool,
     view_valid: bool,
+    /// When true, edges are known to be valid (e.g., subset of an already-valid
+    /// graph) and `build_core` can skip per-edge validation.
+    edges_trusted: bool,
 
     // ═══════════════════════════════════════════════════════════════════════════
     // DECLARATIONS (computed values)
@@ -170,7 +175,7 @@ impl GraphSession {
         let snapshot = Arc::new(RegistrySnapshot::from_specs(specs, registry.len() as u32));
 
         let names: Vec<String> = (0..n).map(|i| format!("{}", i)).collect();
-        let name_to_index = Self::build_name_to_index(&names);
+        let name_to_index = Some(Self::build_name_to_index(&names));
 
         Self {
             n,
@@ -179,10 +184,11 @@ impl GraphSession {
             registry: snapshot,
             edges: EdgeBuffer::new(),
             names,
-            name_to_index,
+            name_to_index: RefCell::new(name_to_index),
 
             core_valid: false,
             view_valid: false,
+            edges_trusted: false,
 
             core: None,
             view: None,
@@ -197,7 +203,7 @@ impl GraphSession {
         class: GraphClass,
     ) -> Self {
         let names: Vec<String> = (0..n).map(|i| format!("{}", i)).collect();
-        let name_to_index = Self::build_name_to_index(&names);
+        let name_to_index = Some(Self::build_name_to_index(&names));
 
         Self {
             n,
@@ -206,12 +212,77 @@ impl GraphSession {
             registry,
             edges: EdgeBuffer::new(),
             names,
-            name_to_index,
+            name_to_index: RefCell::new(name_to_index),
 
             core_valid: false,
             view_valid: false,
+            edges_trusted: false,
 
             core: None,
+            view: None,
+        }
+    }
+
+    /// Create a new session from an existing registry snapshot plus full data.
+    /// Edges are marked as trusted (skipping validation on build).
+    pub fn from_snapshot_with_data(
+        registry: Arc<RegistrySnapshot>,
+        simple: bool,
+        class: GraphClass,
+        edges: EdgeBuffer,
+        names: Vec<String>,
+    ) -> Self {
+        let n = names.len() as u32;
+        Self {
+            n,
+            simple,
+            graph_class: class,
+            registry,
+            edges,
+            names,
+            name_to_index: RefCell::new(None),
+            core_valid: false,
+            view_valid: false,
+            edges_trusted: true,
+            core: None,
+            view: None,
+        }
+    }
+
+    /// Create a session with a pre-built CSR core (e.g., from CSR-based subgraph extraction).
+    /// The edge buffer is reconstructed from the CSR so future mutations are possible.
+    pub fn from_prebuilt_core(
+        registry: Arc<RegistrySnapshot>,
+        simple: bool,
+        class: GraphClass,
+        core: CaugiGraph,
+        names: Vec<String>,
+    ) -> Self {
+        // Reconstruct edge buffer from CSR: collect tail-side half-edges only
+        // (each undirected edge has both a tail and head half; we only want one copy).
+        let n = core.n();
+        let mut edges = EdgeBuffer::new();
+        for u in 0..n {
+            for k in core.row_range(u) {
+                if core.side[k] == 0 {
+                    // side 0 = Tail position → this node is the source
+                    edges.push(u, core.col_index[k], core.etype[k]);
+                }
+            }
+        }
+
+        Self {
+            n,
+            simple,
+            graph_class: class,
+            registry,
+            edges,
+            names,
+            name_to_index: RefCell::new(None),
+            core_valid: true,
+            view_valid: false,
+            edges_trusted: true,
+            core: Some(Arc::new(core)),
             view: None,
         }
     }
@@ -228,11 +299,12 @@ impl GraphSession {
             registry: Arc::clone(&self.registry),
             edges: self.edges.clone(),
             names: self.names.clone(),
-            name_to_index: self.name_to_index.clone(),
+            name_to_index: RefCell::new(self.name_to_index.borrow().as_ref().cloned()),
 
             // Invalidate all declarations in the clone
             core_valid: false,
             view_valid: false,
+            edges_trusted: self.edges_trusted,
             core: None,
             view: None,
         }
@@ -244,6 +316,7 @@ impl GraphSession {
 
     fn invalidate_core(&mut self) {
         self.core_valid = false;
+        self.edges_trusted = false;
         self.core = None;
         self.invalidate_view();
     }
@@ -336,7 +409,7 @@ impl GraphSession {
     }
 
     pub fn set_names(&mut self, names: Vec<String>) {
-        self.name_to_index = Self::build_name_to_index(&names);
+        *self.name_to_index.get_mut() = Some(Self::build_name_to_index(&names));
         self.names = names;
         // No invalidation - names are metadata
     }
@@ -361,7 +434,7 @@ impl GraphSession {
         self.graph_class = class;
         self.registry = registry;
         self.edges = edges;
-        self.name_to_index = Self::build_name_to_index(&names);
+        *self.name_to_index.get_mut() = Some(Self::build_name_to_index(&names));
         self.names = names;
         self.invalidate_core();
     }
@@ -371,8 +444,21 @@ impl GraphSession {
     // ═══════════════════════════════════════════════════════════════════════════
 
     fn build_core(&self) -> Result<CaugiGraph, String> {
-        let mut builder =
-            GraphBuilder::new_from_snapshot(self.n, self.simple, Arc::clone(&self.registry));
+        if self.edges_trusted {
+            return GraphBuilder::build_from_edge_buffer(
+                self.n,
+                self.simple,
+                &self.edges,
+                Arc::clone(&self.registry),
+            );
+        }
+
+        let mut builder = GraphBuilder::new_from_snapshot_with_capacity(
+            self.n,
+            self.simple,
+            Arc::clone(&self.registry),
+            self.edges.len(),
+        );
 
         for i in 0..self.edges.len() {
             builder
@@ -811,15 +897,32 @@ impl GraphSession {
     /// Look up the 0-based index of a node by name.
     /// Returns `None` if the name is not found.
     pub fn index_of(&self, name: &str) -> Option<u32> {
-        self.name_to_index.get(name).copied()
+        if let Some(map) = self.name_to_index.borrow().as_ref() {
+            return map.get(name).copied();
+        }
+
+        let built = Self::build_name_to_index(&self.names);
+        let out = built.get(name).copied();
+        *self.name_to_index.borrow_mut() = Some(built);
+        out
     }
 
     /// Look up the 0-based indices of multiple nodes by name.
     /// Returns an error if any name is not found.
     pub fn indices_of(&self, names: &[String]) -> Result<Vec<u32>, String> {
+        if self.name_to_index.borrow().is_none() {
+            let built = Self::build_name_to_index(&self.names);
+            *self.name_to_index.borrow_mut() = Some(built);
+        }
+
+        let map_ref = self.name_to_index.borrow();
+        let map = map_ref
+            .as_ref()
+            .expect("name_to_index must be initialized before lookup");
+
         let mut result = Vec::with_capacity(names.len());
         for name in names {
-            match self.name_to_index.get(name) {
+            match map.get(name) {
                 Some(&idx) => result.push(idx),
                 None => return Err(format!("Non-existent node name: {}", name)),
             }
