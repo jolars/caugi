@@ -331,8 +331,7 @@ bm_subgraph_large_dense <- bench::mark(
 plot(bm_subgraph_large_dense)
 ```
 
-We see that `caugi` is competitive with `igraph` for subgraph extraction, even though `caugi` must rebuild its full CSR representation for the result, even though `igraph` has a slight edge.
-
+We see that `caugi` is competitive with `igraph` for subgraph extraction, even though `caugi` must rebuild its full CSR representation for the result. `igraph` does still have a slight edge. 
 ### Session info
 
 ```{r session-info}
