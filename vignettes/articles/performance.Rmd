@@ -309,7 +309,7 @@ plot(bm_subgraph_large_sparse)
 ```
 
 ```{r benchmark-subgraph-large-dense}
-#| fig-cap: "Subgraph extraction on a large dense graph (n = 10000, p = 0.25)."
+#| fig-cap: "Subgraph extraction on a large dense graph (`n = 10000`, `p = 0.25`)."
 cg_large_dense <- caugi::generate_graph(n = n_large, p = 0.25, class = "DAG")
 caugi::build(cg_large_dense)
 ig_large_dense <- caugi::as_igraph(cg_large_dense)
