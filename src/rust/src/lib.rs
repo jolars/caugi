@@ -83,9 +83,9 @@ fn session_ptr_from_cg(cg: &Robj) -> ExternalPtr<GraphSession> {
 }
 
 fn parse_parent_nodes(nodes: Robj) -> Vec<String> {
-    let node_strings: Strings = nodes.try_into().unwrap_or_else(|_| {
-        throw_r_error("`nodes` must be a character vector of node names.")
-    });
+    let node_strings: Strings = nodes
+        .try_into()
+        .unwrap_or_else(|_| throw_r_error("`nodes` must be a character vector of node names."));
 
     let mut out = Vec::with_capacity(node_strings.len());
     for i in 0..node_strings.len() {
@@ -130,7 +130,10 @@ fn parse_parent_index0(index: Robj) -> Vec<i32> {
     throw_r_error("`index` must be numeric.");
 }
 
-fn parse_subgraph_index1(index: Robj) -> Vec<i32> {
+fn parse_subgraph_keep_index(index: Robj, n: u32) -> Vec<u32> {
+    let mut seen = vec![false; n as usize];
+    let n_i32 = n as i32;
+
     if index.is_integer() {
         let idx_int: Integers = index
             .try_into()
@@ -140,7 +143,16 @@ fn parse_subgraph_index1(index: Robj) -> Vec<i32> {
             if x.is_na() {
                 throw_r_error("`index` cannot contain NA values.");
             }
-            out.push(x.inner());
+            let i = x.inner();
+            if i < 1 || i > n_i32 {
+                throw_r_error("`index` out of range (1..n).");
+            }
+            let ui = (i - 1) as usize;
+            if seen[ui] {
+                throw_r_error("`nodes`/`index` contains duplicates.");
+            }
+            seen[ui] = true;
+            out.push(ui as u32);
         }
         return out;
     }
@@ -154,7 +166,16 @@ fn parse_subgraph_index1(index: Robj) -> Vec<i32> {
             if x.is_na() {
                 throw_r_error("`index` cannot contain NA values.");
             }
-            out.push(x.inner().trunc() as i32);
+            let i = x.inner().trunc() as i32;
+            if i < 1 || i > n_i32 {
+                throw_r_error("`index` out of range (1..n).");
+            }
+            let ui = (i - 1) as usize;
+            if seen[ui] {
+                throw_r_error("`nodes`/`index` contains duplicates.");
+            }
+            seen[ui] = true;
+            out.push(ui as u32);
         }
         return out;
     }
@@ -235,7 +256,9 @@ fn parse_neighbors_mode(mode: Robj) -> String {
     match matches.len() {
         1 => matches[0].to_string(),
         0 => throw_r_error("`mode` must be one of: all, in, out, undirected, bidirected, partial."),
-        _ => throw_r_error("`mode` is ambiguous. Use one of: all, in, out, undirected, bidirected, partial."),
+        _ => throw_r_error(
+            "`mode` is ambiguous. Use one of: all, in, out, undirected, bidirected, partial.",
+        ),
     }
 }
 
@@ -1156,44 +1179,47 @@ fn rs_build(mut session: ExternalPtr<GraphSession>) {
 }
 
 #[extendr]
-fn parents(
-    cg: Robj,
-    nodes: Robj,
-    index: Robj,
-) -> Robj {
+fn parents(cg: Robj, nodes: Robj, index: Robj) -> Robj {
     let mut session = session_ptr_from_cg(&cg);
-    let idx0 = resolve_query_idx0(&session, nodes, index, "Must supply either `nodes` or `index`.");
+    let idx0 = resolve_query_idx0(
+        &session,
+        nodes,
+        index,
+        "Must supply either `nodes` or `index`.",
+    );
     run_relation_query(&mut session, idx0, "idx", "idxs", |s, i| {
         s.as_mut().parents_of(i).map_err(|e| e)
     })
 }
 
 #[extendr]
-fn children(
-    cg: Robj,
-    nodes: Robj,
-    index: Robj,
-) -> Robj {
+fn children(cg: Robj, nodes: Robj, index: Robj) -> Robj {
     let mut session = session_ptr_from_cg(&cg);
-    let idx0 = resolve_query_idx0(&session, nodes, index, "Must supply either `nodes` or `index`.");
+    let idx0 = resolve_query_idx0(
+        &session,
+        nodes,
+        index,
+        "Must supply either `nodes` or `index`.",
+    );
     run_relation_query(&mut session, idx0, "idx", "idxs", |s, i| {
         s.as_mut().children_of(i).map_err(|e| e)
     })
 }
 
 #[extendr]
-fn neighbors(
-    cg: Robj,
-    nodes: Robj,
-    index: Robj,
-    mode: Robj,
-) -> Robj {
+fn neighbors(cg: Robj, nodes: Robj, index: Robj, mode: Robj) -> Robj {
     use graph::NeighborMode;
 
     let mut session = session_ptr_from_cg(&cg);
-    let idx0 = resolve_query_idx0(&session, nodes, index, "Must supply either `nodes` or `index`.");
+    let idx0 = resolve_query_idx0(
+        &session,
+        nodes,
+        index,
+        "Must supply either `nodes` or `index`.",
+    );
     let mode_norm = parse_neighbors_mode(mode);
-    let neighbor_mode = NeighborMode::from_str(mode_norm.as_str()).unwrap_or_else(|e| throw_r_error(e));
+    let neighbor_mode =
+        NeighborMode::from_str(mode_norm.as_str()).unwrap_or_else(|e| throw_r_error(e));
 
     run_relation_query(&mut session, idx0, "idx", "idxs", move |s, i| {
         s.as_mut().neighbors_of(i, neighbor_mode).map_err(|e| e)
@@ -1201,14 +1227,14 @@ fn neighbors(
 }
 
 #[extendr]
-fn ancestors(
-    cg: Robj,
-    nodes: Robj,
-    index: Robj,
-    open: Robj,
-) -> Robj {
+fn ancestors(cg: Robj, nodes: Robj, index: Robj, open: Robj) -> Robj {
     let mut session = session_ptr_from_cg(&cg);
-    let idx0 = resolve_query_idx0(&session, nodes, index, "Must supply either `nodes` or `index`.");
+    let idx0 = resolve_query_idx0(
+        &session,
+        nodes,
+        index,
+        "Must supply either `nodes` or `index`.",
+    );
     let open_flag = parse_open_arg(open);
 
     run_relation_query(&mut session, idx0, "node", "node", move |s, i| {
@@ -1221,14 +1247,14 @@ fn ancestors(
 }
 
 #[extendr]
-fn descendants(
-    cg: Robj,
-    nodes: Robj,
-    index: Robj,
-    open: Robj,
-) -> Robj {
+fn descendants(cg: Robj, nodes: Robj, index: Robj, open: Robj) -> Robj {
     let mut session = session_ptr_from_cg(&cg);
-    let idx0 = resolve_query_idx0(&session, nodes, index, "Must supply either `nodes` or `index`.");
+    let idx0 = resolve_query_idx0(
+        &session,
+        nodes,
+        index,
+        "Must supply either `nodes` or `index`.",
+    );
     let open_flag = parse_open_arg(open);
 
     run_relation_query(&mut session, idx0, "node", "node", move |s, i| {
@@ -1241,14 +1267,14 @@ fn descendants(
 }
 
 #[extendr]
-fn anteriors(
-    cg: Robj,
-    nodes: Robj,
-    index: Robj,
-    open: Robj,
-) -> Robj {
+fn anteriors(cg: Robj, nodes: Robj, index: Robj, open: Robj) -> Robj {
     let mut session = session_ptr_from_cg(&cg);
-    let idx0 = resolve_query_idx0(&session, nodes, index, "Must supply either `nodes` or `index`.");
+    let idx0 = resolve_query_idx0(
+        &session,
+        nodes,
+        index,
+        "Must supply either `nodes` or `index`.",
+    );
     let open_flag = parse_open_arg(open);
 
     run_relation_query(&mut session, idx0, "node", "node", move |s, i| {
@@ -1261,12 +1287,7 @@ fn anteriors(
 }
 
 #[extendr]
-fn posteriors(
-    cg: Robj,
-    nodes: Robj,
-    index: Robj,
-    open: Robj,
-) -> Robj {
+fn posteriors(cg: Robj, nodes: Robj, index: Robj, open: Robj) -> Robj {
     let mut session = session_ptr_from_cg(&cg);
     let idx0 = resolve_query_idx0(&session, nodes, index, "Supply one of `nodes` or `index`.");
     let open_flag = parse_open_arg(open);
@@ -1281,38 +1302,35 @@ fn posteriors(
 }
 
 #[extendr]
-fn markov_blanket(
-    cg: Robj,
-    nodes: Robj,
-    index: Robj,
-) -> Robj {
+fn markov_blanket(cg: Robj, nodes: Robj, index: Robj) -> Robj {
     let mut session = session_ptr_from_cg(&cg);
-    let idx0 = resolve_query_idx0(&session, nodes, index, "Must supply either `nodes` or `index`.");
+    let idx0 = resolve_query_idx0(
+        &session,
+        nodes,
+        index,
+        "Must supply either `nodes` or `index`.",
+    );
     run_relation_query(&mut session, idx0, "node", "node", |s, i| {
         s.as_mut().markov_blanket_of(i).map_err(|e| e)
     })
 }
 
 #[extendr]
-fn spouses(
-    cg: Robj,
-    nodes: Robj,
-    index: Robj,
-) -> Robj {
+fn spouses(cg: Robj, nodes: Robj, index: Robj) -> Robj {
     let mut session = session_ptr_from_cg(&cg);
-    let idx0 = resolve_query_idx0(&session, nodes, index, "Must supply either `nodes` or `index`.");
+    let idx0 = resolve_query_idx0(
+        &session,
+        nodes,
+        index,
+        "Must supply either `nodes` or `index`.",
+    );
     run_relation_query(&mut session, idx0, "idx", "idxs", |s, i| {
         s.as_mut().spouses_of(i).map_err(|e| e)
     })
 }
 
 #[extendr]
-fn districts(
-    cg: Robj,
-    nodes: Robj,
-    index: Robj,
-    all: Robj,
-) -> Robj {
+fn districts(cg: Robj, nodes: Robj, index: Robj, all: Robj) -> Robj {
     let mut session = session_ptr_from_cg(&cg);
 
     let nodes_supplied = !nodes.is_null();
@@ -1442,10 +1460,7 @@ fn topological_sort(cg: Robj) -> Robj {
 }
 
 #[extendr]
-fn exogenous(
-    cg: Robj,
-    undirected_as_parents: Robj,
-) -> Robj {
+fn exogenous(cg: Robj, undirected_as_parents: Robj) -> Robj {
     let mut session = session_ptr_from_cg(&cg);
     let undirected = parse_single_logical(
         undirected_as_parents,
@@ -1612,58 +1627,73 @@ fn induced_subgraph_session_from_keep(
     session: &mut ExternalPtr<GraphSession>,
     keep_u: &[u32],
 ) -> ExternalPtr<GraphSession> {
-    for &i in keep_u {
-        if i >= session.as_ref().n() {
-            throw_r_error(format!("Index {} is out of bounds", i));
+    let s = session.as_mut();
+    let n_old = s.n() as usize;
+
+    // Collect names for kept nodes.
+    let mut names: Vec<String> = Vec::with_capacity(keep_u.len());
+    for &old_i in keep_u {
+        if (old_i as usize) >= n_old {
+            throw_r_error(format!("Index {} is out of bounds", old_i));
         }
+        names.push(s.names()[old_i as usize].clone());
     }
 
-    let view = session.as_mut().view().unwrap_or_else(|e| throw_r_error(e));
-    let sub_view = view
-        .as_ref()
-        .induced_subgraph(keep_u)
-        .unwrap_or_else(|e| throw_r_error(e));
+    // Fast path: if CSR core is already built, use CSR-induced subgraph.
+    // This only touches the adjacency of kept nodes instead of scanning all edges.
+    if s.is_core_valid() {
+        let core = s.core().unwrap_or_else(|e| throw_r_error(e));
+        let (sub_core, _new_to_old, _old_to_new) = core
+            .induced_subgraph(keep_u)
+            .unwrap_or_else(|e| throw_r_error(e));
 
-    let names: Vec<String> = keep_u
-        .iter()
-        .map(|&i| session.as_ref().names()[i as usize].clone())
-        .collect();
+        let out = GraphSession::from_prebuilt_core(
+            Arc::clone(s.registry()),
+            s.simple(),
+            s.class(),
+            sub_core,
+            names,
+        );
+        return ExternalPtr::new(out);
+    }
 
-    // Preserve original input edge orientation/order by filtering the source
-    // session EdgeBuffer, then remap old node ids to induced-subgraph ids.
-    let n_old = session.as_ref().n() as usize;
+    // Slow path: scan edge buffer when CSR is not yet built.
     let mut old_to_new = vec![u32::MAX; n_old];
     for (new_i, &old_i) in keep_u.iter().enumerate() {
+        if old_to_new[old_i as usize] != u32::MAX {
+            throw_r_error("duplicate node id in `keep`");
+        }
         old_to_new[old_i as usize] = new_i as u32;
     }
 
-    let src_edges = session.as_ref().edge_buffer();
-    let mut kept_edges = EdgeBuffer::with_capacity(src_edges.len());
-    for i in 0..src_edges.len() {
-        let old_from = src_edges.from[i] as usize;
-        let old_to = src_edges.to[i] as usize;
+    // Single pass with heuristic capacity estimate.
+    let eb = s.edge_buffer();
+    let edge_len = eb.len();
+    let keep_frac = keep_u.len() as f64 / n_old.max(1) as f64;
+    let est = (keep_frac * keep_frac * edge_len as f64) as usize;
+    let mut kept_edges = EdgeBuffer::with_capacity(est);
+    for i in 0..edge_len {
+        let old_from = eb.from[i] as usize;
+        let old_to = eb.to[i] as usize;
         if old_from >= n_old || old_to >= n_old {
             continue;
         }
-
         let new_from = old_to_new[old_from];
         let new_to = old_to_new[old_to];
         if new_from != u32::MAX && new_to != u32::MAX {
-            kept_edges.push(new_from, new_to, src_edges.etype[i]);
+            kept_edges.push(new_from, new_to, eb.etype[i]);
         }
     }
 
-    // Build output session directly to avoid materializing edge buffer from the
-    // temporary subgraph core (we already have the desired filtered edge order).
-    let sub_core = sub_view.core();
-    let mut out = GraphSession::from_snapshot(
-        Arc::new(sub_core.registry.clone()),
-        sub_core.n(),
-        sub_core.simple,
-        graph_class_from_view(&sub_view),
+    // Edges are trusted (subset of a valid graph) so build_core will use
+    // the fast bulk path when the CSR is eventually needed.
+    let out = GraphSession::from_snapshot_with_data(
+        Arc::clone(s.registry()),
+        s.simple(),
+        s.class(),
+        kept_edges,
+        names,
     );
-    out.set_names(names);
-    out.set_edges(kept_edges);
     ExternalPtr::new(out)
 }
 
@@ -1693,49 +1723,64 @@ fn subgraph(cg: Robj, nodes: Robj, index: Robj) -> Robj {
     }
 
     let keep_u: Vec<u32> = if index_supplied {
-        let idx1 = parse_subgraph_index1(index);
-        let n = session.as_ref().n() as i32;
-        if idx1.iter().any(|&i| i < 1 || i > n) {
-            throw_r_error("`index` out of range (1..n).");
-        }
-        idx1.into_iter().map(|i| (i - 1) as u32).collect()
+        parse_subgraph_keep_index(index, session.as_ref().n())
     } else {
-        let node_strings: Strings = nodes.try_into().unwrap_or_else(|_| {
-            throw_r_error("`nodes` must be a character vector of node names.")
-        });
+        let node_strings: Strings = nodes
+            .try_into()
+            .unwrap_or_else(|_| throw_r_error("`nodes` must be a character vector of node names."));
+        let sref = session.as_ref();
+        let n = sref.n();
 
         let mut keep = Vec::with_capacity(node_strings.len());
-        let mut miss_seen: HashSet<String> = HashSet::new();
-        let mut miss: Vec<String> = Vec::new();
+        let mut seen = vec![false; n as usize];
+        let mut has_duplicate = false;
+        let mut first_missing: Option<String> = None;
 
-        for i in 0..node_strings.len() {
-            let s = node_strings.elt(i);
+        for s in node_strings.iter() {
             if s.is_na() {
                 throw_r_error("`nodes` cannot contain NA values.");
             }
             let name = s.as_str();
-            match session.as_ref().index_of(name) {
-                Some(idx) => keep.push(idx),
-                None => {
-                    if miss_seen.insert(name.to_string()) {
-                        miss.push(name.to_string());
+            let idx = sref.index_of(name);
+            match idx {
+                Some(idx) => {
+                    let ui = idx as usize;
+                    if seen[ui] {
+                        has_duplicate = true;
+                    } else {
+                        seen[ui] = true;
                     }
+                    keep.push(idx);
+                }
+                None => {
+                    first_missing = Some(name.to_string());
+                    break;
                 }
             }
         }
 
-        if !miss.is_empty() {
+        if let Some(first) = first_missing {
+            let mut miss_seen: HashSet<String> = HashSet::new();
+            let mut miss: Vec<String> = Vec::new();
+            miss_seen.insert(first.clone());
+            miss.push(first);
+            for s in node_strings.iter() {
+                if s.is_na() {
+                    continue;
+                }
+                let name = s.as_str();
+                let missing = sref.index_of(name).is_none();
+                if missing && miss_seen.insert(name.to_string()) {
+                    miss.push(name.to_string());
+                }
+            }
             throw_r_error(format!("Unknown node(s): {}", miss.join(", ")));
+        }
+        if has_duplicate {
+            throw_r_error("`nodes`/`index` contains duplicates.");
         }
         keep
     };
-
-    let mut seen: HashSet<u32> = HashSet::with_capacity(keep_u.len());
-    for &idx in &keep_u {
-        if !seen.insert(idx) {
-            throw_r_error("`nodes`/`index` contains duplicates.");
-        }
-    }
 
     let sub_session = induced_subgraph_session_from_keep(&mut session, &keep_u);
     caugi_from_session_ptr(&cg, sub_session)

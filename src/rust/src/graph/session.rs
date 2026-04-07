@@ -17,7 +17,8 @@ use super::CaugiGraph;
 use super::RegistrySnapshot;
 use crate::edges::{EdgeRegistry, EdgeSpec};
 use crate::graph::NeighborMode;
-use std::collections::{HashMap, HashSet};
+use rustc_hash::FxHashSet;
+use std::collections::HashMap;
 use std::sync::Arc;
 
 /// The target graph class for typed view construction.
@@ -122,7 +123,7 @@ impl EdgeBuffer {
 /// The session holds:
 /// - **Variables**: Mutable inputs (n, simple, class, registry, edges, names)
 /// - **Declarations**: Lazily computed outputs (core, view)
-/// - **Queries**: Computed on demand without caching
+/// - **Queries**: Computed on demand (no query-level caching)
 ///
 /// # Invalidation Rules
 ///
@@ -147,6 +148,9 @@ pub struct GraphSession {
     // ═══════════════════════════════════════════════════════════════════════════
     core_valid: bool,
     view_valid: bool,
+    /// When true, edges are known to be valid (e.g., subset of an already-valid
+    /// graph) and `build_core` can skip per-edge validation.
+    edges_trusted: bool,
 
     // ═══════════════════════════════════════════════════════════════════════════
     // DECLARATIONS (computed values)
@@ -183,6 +187,7 @@ impl GraphSession {
 
             core_valid: false,
             view_valid: false,
+            edges_trusted: false,
 
             core: None,
             view: None,
@@ -210,8 +215,75 @@ impl GraphSession {
 
             core_valid: false,
             view_valid: false,
+            edges_trusted: false,
 
             core: None,
+            view: None,
+        }
+    }
+
+    /// Create a new session from an existing registry snapshot plus full data.
+    /// Edges are marked as trusted (skipping validation on build).
+    pub fn from_snapshot_with_data(
+        registry: Arc<RegistrySnapshot>,
+        simple: bool,
+        class: GraphClass,
+        edges: EdgeBuffer,
+        names: Vec<String>,
+    ) -> Self {
+        let n = names.len() as u32;
+        let name_to_index = Self::build_name_to_index(&names);
+        Self {
+            n,
+            simple,
+            graph_class: class,
+            registry,
+            edges,
+            names,
+            name_to_index,
+            core_valid: false,
+            view_valid: false,
+            edges_trusted: true,
+            core: None,
+            view: None,
+        }
+    }
+
+    /// Create a session with a pre-built CSR core (e.g., from CSR-based subgraph extraction).
+    /// The edge buffer is reconstructed from the CSR so future mutations are possible.
+    pub fn from_prebuilt_core(
+        registry: Arc<RegistrySnapshot>,
+        simple: bool,
+        class: GraphClass,
+        core: CaugiGraph,
+        names: Vec<String>,
+    ) -> Self {
+        // Reconstruct edge buffer from CSR: collect tail-side half-edges only
+        // (each undirected edge has both a tail and head half; we only want one copy).
+        let n = core.n();
+        let mut edges = EdgeBuffer::new();
+        for u in 0..n {
+            for k in core.row_range(u) {
+                if core.side[k] == 0 {
+                    // side 0 = Tail position → this node is the source
+                    edges.push(u, core.col_index[k], core.etype[k]);
+                }
+            }
+        }
+
+        let name_to_index = Self::build_name_to_index(&names);
+        Self {
+            n,
+            simple,
+            graph_class: class,
+            registry,
+            edges,
+            names,
+            name_to_index,
+            core_valid: true,
+            view_valid: false,
+            edges_trusted: true,
+            core: Some(Arc::new(core)),
             view: None,
         }
     }
@@ -233,6 +305,7 @@ impl GraphSession {
             // Invalidate all declarations in the clone
             core_valid: false,
             view_valid: false,
+            edges_trusted: self.edges_trusted,
             core: None,
             view: None,
         }
@@ -244,6 +317,7 @@ impl GraphSession {
 
     fn invalidate_core(&mut self) {
         self.core_valid = false;
+        self.edges_trusted = false;
         self.core = None;
         self.invalidate_view();
     }
@@ -277,7 +351,7 @@ impl GraphSession {
     }
 
     pub fn replace_edges_for_pairs(&mut self, new_edges: EdgeBuffer) {
-        let mut remove_pairs: HashSet<(u32, u32)> = HashSet::with_capacity(new_edges.len());
+        let mut remove_pairs: FxHashSet<(u32, u32)> = FxHashSet::with_capacity_and_hasher(new_edges.len(), Default::default());
         if self.simple {
             for i in 0..new_edges.len() {
                 let u = new_edges.from[i];
@@ -292,8 +366,8 @@ impl GraphSession {
         }
 
         let mut kept = EdgeBuffer::with_capacity(self.edges.len() + new_edges.len());
-        let mut seen: HashSet<(u32, u32, u8)> =
-            HashSet::with_capacity(self.edges.len() + new_edges.len());
+        let mut seen: FxHashSet<(u32, u32, u8)> =
+            FxHashSet::with_capacity_and_hasher(self.edges.len() + new_edges.len(), Default::default());
 
         for i in 0..self.edges.len() {
             let u = self.edges.from[i];
@@ -371,8 +445,21 @@ impl GraphSession {
     // ═══════════════════════════════════════════════════════════════════════════
 
     fn build_core(&self) -> Result<CaugiGraph, String> {
-        let mut builder =
-            GraphBuilder::new_from_snapshot(self.n, self.simple, Arc::clone(&self.registry));
+        if self.edges_trusted {
+            return GraphBuilder::build_from_edge_buffer(
+                self.n,
+                self.simple,
+                &self.edges,
+                Arc::clone(&self.registry),
+            );
+        }
+
+        let mut builder = GraphBuilder::new_from_snapshot_with_capacity(
+            self.n,
+            self.simple,
+            Arc::clone(&self.registry),
+            self.edges.len(),
+        );
 
         for i in 0..self.edges.len() {
             builder
