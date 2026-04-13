@@ -553,8 +553,11 @@ fn graphview_new(core: ExternalPtr<CaugiGraph>, class: &str) -> ExternalPtr<Grap
             let dag = Dag::new(Arc::clone(&core_arc)).unwrap_or_else(|e| throw_r_error(e));
             ExternalPtr::new(GraphView::Dag(Arc::new(dag)))
         }
-        "PDAG" | "CPDAG" => {
+        "PDAG" | "CPDAG" | "MPDAG" => {
             let pdag = Pdag::new(Arc::clone(&core_arc)).unwrap_or_else(|e| throw_r_error(e));
+            if class.trim().eq_ignore_ascii_case("MPDAG") && !pdag.is_meek_closed() {
+                throw_r_error("graph is not MPDAG (not closed under Meek rules)");
+            }
             ExternalPtr::new(GraphView::Pdag(Arc::new(pdag)))
         }
         "UG" => {
@@ -595,8 +598,19 @@ fn graph_builder_resolve_class(mut b: ExternalPtr<GraphBuilder>, class: &str) ->
         .as_mut()
         .finalize_in_place()
         .unwrap_or_else(|e| throw_r_error(e));
-    let view = graphview_new(ExternalPtr::new(core), class);
-    graph_class_label_from_view(view.as_ref()).to_string()
+    let graph_class = GraphClass::from_str(class).unwrap_or_else(|e| throw_r_error(e));
+    let mut session = GraphSession::from_snapshot(
+        Arc::new(core.registry.clone()),
+        core.n(),
+        core.simple,
+        GraphClass::Unknown,
+    );
+    session.set_edges(edge_buffer_from_core(&core));
+    session
+        .resolve_class(graph_class)
+        .unwrap_or_else(|e| throw_r_error(e))
+        .as_str()
+        .to_string()
 }
 
 // ── Metrics ────────────────────────────────────────────────────────────────

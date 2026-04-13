@@ -265,6 +265,26 @@ test_that("building PDAG with bidirected edges results in error", {
   )
 })
 
+test_that("building MPDAG validates Meek closure", {
+  expect_s7_class(
+    caugi(
+      A %---% B,
+      A %-->% C,
+      B %-->% C,
+      class = "MPDAG"
+    ),
+    caugi
+  )
+
+  expect_error(
+    caugi(
+      A %-->% B,
+      B %---% C,
+      class = "MPDAG"
+    )
+  )
+})
+
 # ──────────────────────────────────────────────────────────────────────────────
 # ──────────────────────────────── AUTO tests ──────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
@@ -280,6 +300,8 @@ test_that("AUTO class picks the correct class", {
   expect_equal(cg@graph_class, "UNKNOWN")
   cg <- caugi(A %-->% B %---% C, class = "AUTO")
   expect_equal(cg@graph_class, "PDAG")
+  cg <- caugi(A %---% B, A %-->% C, B %-->% C, class = "AUTO")
+  expect_equal(cg@graph_class, "MPDAG")
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
