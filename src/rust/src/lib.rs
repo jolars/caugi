@@ -545,6 +545,7 @@ fn graph_builder_add_edges(
 }
 
 // ── Constructors for class views ────────────────────────────────────────────────────────────────
+#[allow(dead_code)]
 fn graphview_new(core: ExternalPtr<CaugiGraph>, class: &str) -> ExternalPtr<GraphView> {
     let core_arc = Arc::new(core.as_ref().clone());
 
