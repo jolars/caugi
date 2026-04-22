@@ -205,6 +205,30 @@ test_that("mutate_caugi works from DAG to PDAG", {
   expect_equal(nodes(cg_pdag), nodes(cg_dag))
 })
 
+test_that("mutate_caugi supports MPDAG target when valid", {
+  cg_pdag <- caugi(
+    A %---% B,
+    A %-->% C,
+    B %-->% C,
+    class = "PDAG"
+  )
+  expect_true(is_mpdag(cg_pdag))
+  cg_mpdag <- mutate_caugi(cg_pdag, class = "MPDAG")
+  expect_equal(cg_mpdag@graph_class, "MPDAG")
+  expect_equal(edges(cg_mpdag), edges(cg_pdag))
+
+  cg_not_mpdag <- caugi(
+    A %-->% B,
+    B %---% C,
+    class = "PDAG"
+  )
+  expect_false(is_mpdag(cg_not_mpdag))
+  expect_error(
+    mutate_caugi(cg_not_mpdag, class = "MPDAG"),
+    "Cannot convert caugi"
+  )
+})
+
 test_that("mutate_caugi works from PDAG to DAG if PDAG is a DAG", {
   cg_pdag <- caugi(
     A %-->% B,
@@ -228,6 +252,10 @@ test_that("mutate_caugi works on empty caugi", {
   cg_empty_ug <- mutate_caugi(cg_empty, class = "UG")
   expect_equal(length(cg_empty_ug), 0)
   expect_equal(cg_empty_ug@graph_class, "UG")
+
+  cg_empty_mpdag <- mutate_caugi(cg_empty, class = "MPDAG")
+  expect_equal(length(cg_empty_mpdag), 0)
+  expect_equal(cg_empty_mpdag@graph_class, "MPDAG")
 })
 
 test_that("mutate_caugi doesn't change class if old class is equal to new class", {
@@ -637,7 +665,7 @@ test_that("dag_from_pdag errors on non-PDAG input", {
     B %-->% C,
     class = "DAG"
   )
-  expect_error(dag_from_pdag(cg), "Input must be a caugi PDAG graph")
+  expect_error(dag_from_pdag(cg), "Input must be a caugi PDAG/MPDAG graph")
 })
 
 test_that("dag_from_pdag errors if PDAG cannot be extended to a DAG", {

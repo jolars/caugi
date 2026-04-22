@@ -28,6 +28,8 @@ pub enum GraphClass {
     Dag,
     /// Partially Directed Acyclic Graph (`-->`, `---`)
     Pdag,
+    /// Maximally Oriented Partially Directed Acyclic Graph (Meek-closed PDAG)
+    Mpdag,
     /// Undirected Graph (only `---`)
     Ug,
     /// Acyclic Directed Mixed Graph (`-->`, `<->`)
@@ -47,6 +49,7 @@ impl std::str::FromStr for GraphClass {
         match s.to_lowercase().as_str() {
             "dag" => Ok(GraphClass::Dag),
             "pdag" | "cpdag" => Ok(GraphClass::Pdag),
+            "mpdag" => Ok(GraphClass::Mpdag),
             "ug" => Ok(GraphClass::Ug),
             "admg" => Ok(GraphClass::Admg),
             "ag" | "mag" | "pag" => Ok(GraphClass::Ag),
@@ -62,6 +65,7 @@ impl GraphClass {
         match self {
             GraphClass::Dag => "DAG",
             GraphClass::Pdag => "PDAG",
+            GraphClass::Mpdag => "MPDAG",
             GraphClass::Ug => "UG",
             GraphClass::Admg => "ADMG",
             GraphClass::Ag => "AG",
@@ -480,6 +484,14 @@ impl GraphSession {
                 let pdag = Pdag::new(core).map_err(|e| self.map_error(e))?;
                 Ok(GraphView::Pdag(Arc::new(pdag)))
             }
+            GraphClass::Mpdag => {
+                let pdag = Pdag::new(core).map_err(|e| self.map_error(e))?;
+                if pdag.is_meek_closed() {
+                    Ok(GraphView::Pdag(Arc::new(pdag)))
+                } else {
+                    Err("graph is not MPDAG (not closed under Meek rules)".to_string())
+                }
+            }
             GraphClass::Ug => {
                 let ug = Ug::new(core).map_err(|e| self.map_error(e))?;
                 Ok(GraphView::Ug(Arc::new(ug)))
@@ -694,6 +706,14 @@ impl GraphSession {
                 Pdag::new(Arc::new(core.as_ref().clone())).map_err(|e| self.map_error(e))?;
                 Ok(GraphClass::Pdag)
             }
+            GraphClass::Mpdag => {
+                let pdag = Pdag::new(Arc::new(core.as_ref().clone())).map_err(|e| self.map_error(e))?;
+                if pdag.is_meek_closed() {
+                    Ok(GraphClass::Mpdag)
+                } else {
+                    Err("graph is not MPDAG (not closed under Meek rules)".to_string())
+                }
+            }
             GraphClass::Ug => {
                 Ug::new(Arc::new(core.as_ref().clone())).map_err(|e| self.map_error(e))?;
                 Ok(GraphClass::Ug)
@@ -712,8 +732,12 @@ impl GraphSession {
                     Ok(GraphClass::Dag)
                 } else if Ug::new(Arc::new(core.as_ref().clone())).is_ok() {
                     Ok(GraphClass::Ug)
-                } else if Pdag::new(Arc::new(core.as_ref().clone())).is_ok() {
-                    Ok(GraphClass::Pdag)
+                } else if let Ok(pdag) = Pdag::new(Arc::new(core.as_ref().clone())) {
+                    if pdag.is_meek_closed() {
+                        Ok(GraphClass::Mpdag)
+                    } else {
+                        Ok(GraphClass::Pdag)
+                    }
                 } else if Admg::new(Arc::new(core.as_ref().clone())).is_ok() {
                     Ok(GraphClass::Admg)
                 } else if Ag::new(Arc::new(core.as_ref().clone())).is_ok() {
@@ -1212,6 +1236,7 @@ mod tests {
     fn graph_class_from_str_and_as_str() {
         assert_eq!("dag".parse::<GraphClass>().unwrap(), GraphClass::Dag);
         assert_eq!("CPDAG".parse::<GraphClass>().unwrap(), GraphClass::Pdag);
+        assert_eq!("mpdag".parse::<GraphClass>().unwrap(), GraphClass::Mpdag);
         assert_eq!("ug".parse::<GraphClass>().unwrap(), GraphClass::Ug);
         assert_eq!("admg".parse::<GraphClass>().unwrap(), GraphClass::Admg);
         assert_eq!("mag".parse::<GraphClass>().unwrap(), GraphClass::Ag);
@@ -1221,6 +1246,7 @@ mod tests {
 
         assert_eq!(GraphClass::Dag.as_str(), "DAG");
         assert_eq!(GraphClass::Pdag.as_str(), "PDAG");
+        assert_eq!(GraphClass::Mpdag.as_str(), "MPDAG");
         assert_eq!(GraphClass::Ug.as_str(), "UG");
         assert_eq!(GraphClass::Admg.as_str(), "ADMG");
         assert_eq!(GraphClass::Ag.as_str(), "AG");
@@ -1514,6 +1540,23 @@ mod tests {
         assert_eq!(
             pdag.resolve_class(GraphClass::Auto).unwrap(),
             GraphClass::Pdag
+        );
+
+        let mut mpdag =
+            GraphSession::from_snapshot(Arc::clone(&snapshot), 3, true, GraphClass::Mpdag);
+        let mut mpdag_edges = EdgeBuffer::new();
+        mpdag_edges.push(0, 2, d);
+        mpdag_edges.push(1, 2, d);
+        mpdag.set_edges(mpdag_edges);
+        assert!(matches!(&*mpdag.view().unwrap(), GraphView::Pdag(_)));
+        assert_eq!(
+            mpdag.resolve_class(GraphClass::Mpdag).unwrap(),
+            GraphClass::Mpdag
+        );
+        assert_eq!(
+            mpdag.resolve_class(GraphClass::Auto).unwrap(),
+            // AUTO prioritizes DAG over (M)PDAG when both are valid.
+            GraphClass::Dag
         );
 
         let mut ug = GraphSession::from_snapshot(Arc::clone(&snapshot), 2, true, GraphClass::Ug);

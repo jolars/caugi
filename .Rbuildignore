@@ -35,6 +35,7 @@
 ^\.direnv$
 ^\.devenv$
 ^\.envrc$
-^\devenv.lock$
-^\devenv.nix$
-^\devenv.yaml$
+^devenv\.lock$
+^devenv\.nix$
+^devenv\.yaml$
+^\.pre-commit-config\.yaml$

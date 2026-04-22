@@ -19,7 +19,10 @@
 as_igraph <- function(x, ...) {
   is_caugi(x, throw_error = TRUE)
 
-  if (!(x@graph_class %in% c("DAG", "PDAG", "ADMG", "UG", "AG", "UNKNOWN"))) {
+  if (
+    !(x@graph_class %in%
+      c("DAG", "PDAG", "MPDAG", "ADMG", "UG", "AG", "UNKNOWN"))
+  ) {
     stop(
       "caugi graphs of class '",
       x@graph_class,

@@ -69,6 +69,14 @@ test_that("matrix validation errors", {
   expect_error(as_caugi(z, class = "PAG"), "integer codes 0-3", fixed = TRUE)
 })
 
+test_that("MPDAG class is accepted for matrix conversion", {
+  m <- matrix(0L, 2, 2, dimnames = list(c("A", "B"), c("A", "B")))
+  m["A", "B"] <- 1L
+
+  cg <- as_caugi(m, class = "MPDAG")
+  expect_identical(cg@graph_class, "MPDAG")
+})
+
 test_that("logical matrices are accepted for non-PAG and rejected for PAG", {
   m <- matrix(FALSE, 2, 2)
   m[1, 2] <- TRUE

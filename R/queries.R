@@ -127,7 +127,8 @@ same_nodes <- function(cg1, cg2, throw_error = FALSE) {
 #' it, if possible.
 #'
 #' @details
-#' Logically, it should not be possible to have a graph class of "DAG" or "PDAG"
+#' Logically, it should not be possible to have a graph class of "DAG", "PDAG",
+#' or "MPDAG"
 #' that has cycles, but in case the user modified the graph after creation in
 #' some unforeseen way that could have introduced cycles, this function allows
 #' to force a check of acyclicity, if needed.
@@ -160,7 +161,8 @@ is_acyclic <- function(cg, force_check = FALSE) {
     is_it <- rs_is_acyclic(cg@session)
   } else if (
     identical(cg@graph_class, "DAG") ||
-      identical(cg@graph_class, "PDAG")
+      identical(cg@graph_class, "PDAG") ||
+      identical(cg@graph_class, "MPDAG")
   ) {
     is_it <- TRUE
   } else {
@@ -315,7 +317,7 @@ is_dag <- function(cg, force_check = FALSE) {
 is_pdag <- function(cg, force_check = FALSE) {
   is_caugi(cg, throw_error = TRUE)
 
-  if (identical(cg@graph_class, "PDAG") && !force_check) {
+  if (cg@graph_class %in% c("PDAG", "MPDAG") && !force_check) {
     is_it <- TRUE
   } else {
     # if we can't be sure from the class, we check

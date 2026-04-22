@@ -35,6 +35,17 @@ test_that("is_acyclic forces check when requested", {
   expect_true(is_acyclic(cg, force_check = TRUE))
 })
 
+test_that("is_acyclic fast path handles MPDAG class", {
+  cg <- caugi(
+    A %---% B,
+    A %-->% C,
+    B %-->% C,
+    class = "MPDAG"
+  )
+  expect_true(is_acyclic(cg))
+  expect_true(is_acyclic(cg, force_check = TRUE))
+})
+
 test_that("is_simple reflects declared state and force_check path", {
   cg_simple <- caugi(A %-->% B, class = "DAG")
   expect_true(is_simple(cg_simple))
@@ -272,6 +283,17 @@ test_that("is_mpdag tracks causal-learn style multi-rule progression", {
   expect_setequal(und_A, "B")
   expect_setequal(und_B, c("A", "C"))
   expect_setequal(und_C, "B")
+})
+
+test_that("is_pdag fast path handles MPDAG class", {
+  cg <- caugi(
+    A %---% B,
+    A %-->% C,
+    B %-->% C,
+    class = "MPDAG"
+  )
+  expect_true(is_pdag(cg))
+  expect_true(is_mpdag(cg))
 })
 
 test_that("is_cpdag rejects graphs where Meek R1 would fire", {

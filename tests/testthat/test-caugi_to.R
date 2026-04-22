@@ -100,6 +100,22 @@ test_that("mixed edges: directed kept, undirected duplicated as bidirected", {
   expect_equal(nrow(ed), 5L)
 })
 
+test_that("MPDAG converts to igraph like PDAG", {
+  cg <- caugi(
+    A %---% B,
+    A %-->% C,
+    B %-->% C,
+    class = "MPDAG"
+  )
+  ig <- as_igraph(cg)
+  expect_true(igraph::is_directed(ig))
+  ed <- igraph::as_data_frame(ig)
+  expect_true(any(ed$from == "A" & ed$to == "C"))
+  expect_true(any(ed$from == "B" & ed$to == "C"))
+  expect_true(any(ed$from == "A" & ed$to == "B"))
+  expect_true(any(ed$from == "B" & ed$to == "A"))
+})
+
 test_that("conversion from UG --> igraph works", {
   cg <- caugi(A %---% B, class = "UG")
   ig <- as_igraph(cg)
