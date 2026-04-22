@@ -561,6 +561,19 @@ impl GraphView {
         }
     }
 
+    pub fn normalize_latent_structure(
+        &self,
+        latents: &[u32],
+    ) -> Result<(GraphView, Vec<u32>), String> {
+        match self {
+            GraphView::Dag(d) => {
+                let (out, kept_old) = d.normalize_latent_structure(latents)?;
+                Ok((GraphView::Dag(Arc::new(out)), kept_old))
+            }
+            _ => Err("normalize_latent_structure is only defined for DAGs".into()),
+        }
+    }
+
     /// Proper backdoor graph for Xs → Ys. Defined for DAG only.
     pub fn proper_backdoor_graph(&self, xs: &[u32], ys: &[u32]) -> Result<GraphView, String> {
         match self {

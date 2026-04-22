@@ -1657,6 +1657,31 @@ fn rs_exogenize(
     ExternalPtr::new(session_from_view(view, names))
 }
 
+#[extendr]
+fn rs_normalize_latent_structure(
+    mut session: ExternalPtr<GraphSession>,
+    latents: Integers,
+) -> ExternalPtr<GraphSession> {
+    let latents_u: Vec<u32> = latents
+        .iter()
+        .map(|ri| rint_to_u32(ri, "latents"))
+        .collect();
+    for &i in &latents_u {
+        if i >= session.as_ref().n() {
+            throw_r_error(format!("Index {} is out of bounds", i));
+        }
+    }
+    let (view, keep_old) = session
+        .as_mut()
+        .normalize_latent_structure(&latents_u)
+        .unwrap_or_else(|e| throw_r_error(e));
+    let names: Vec<String> = keep_old
+        .iter()
+        .map(|&old_i| session.as_ref().names()[old_i as usize].clone())
+        .collect();
+    ExternalPtr::new(session_from_view(view, names))
+}
+
 fn induced_subgraph_session_from_keep(
     session: &mut ExternalPtr<GraphSession>,
     keep_u: &[u32],
@@ -2081,6 +2106,7 @@ extendr_module! {
     fn rs_moralize;
     fn rs_latent_project;
     fn rs_exogenize;
+    fn rs_normalize_latent_structure;
     fn rs_induced_subgraph;
     fn subgraph;
     fn rs_d_separated;

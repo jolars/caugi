@@ -790,6 +790,16 @@ impl GraphSession {
         view.exogenize(nodes).map_err(|e| self.map_error(e))
     }
 
+    /// Normalize latent structure (DAG only).
+    pub fn normalize_latent_structure(
+        &mut self,
+        latents: &[u32],
+    ) -> Result<(GraphView, Vec<u32>), String> {
+        let view = self.view()?;
+        view.normalize_latent_structure(latents)
+            .map_err(|e| self.map_error(e))
+    }
+
     /// D-separation query (DAG only).
     pub fn d_separated(&mut self, xs: &[u32], ys: &[u32], z: &[u32]) -> Result<bool, String> {
         let view = self.view()?;
