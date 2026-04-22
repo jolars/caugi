@@ -643,45 +643,25 @@ condition_marginalize <- function(cg, cond_vars = NULL, marg_vars = NULL) {
   other_nodes,
   cond_vars
 ) {
-  n_other <- length(other_nodes)
-
-  # Generate all subsets of other_nodes
-  subsets <- if (n_other == 0L) {
-    list(NULL)
+  node_idx <- .nodes_to_indices(cg, c(node_a, node_b))
+  other_idx <- if (length(other_nodes) == 0L) {
+    integer(0)
   } else {
-    # Build subsets from largest to smallest (often finds separation faster)
-    c(
-      list(other_nodes),
-      if (n_other > 1L) {
-        unlist(
-          lapply(
-            seq_len(n_other - 1L),
-            function(k) combn(other_nodes, n_other - k, simplify = FALSE)
-          ),
-          recursive = FALSE
-        )
-      },
-      list(NULL)
-    )
+    .nodes_to_indices(cg, other_nodes)
+  }
+  cond_idx <- if (length(cond_vars) == 0L) {
+    integer(0)
+  } else {
+    .nodes_to_indices(cg, cond_vars)
   }
 
-  # Check each conditioning set
-
-  for (subset in subsets) {
-    conditioning_set <- c(cond_vars, subset)
-    if (length(conditioning_set) == 0L) {
-      conditioning_set <- NULL
-    }
-
-    if (m_separated(cg, X = node_a, Y = node_b, Z = conditioning_set)) {
-      # Found a set that m-separates them: no edge needed
-      return(FALSE)
-    }
-  }
-
-  # Not m-separated for any conditioning set: edge is required
-
-  TRUE
+  rs_not_m_separated_for_all_subsets(
+    cg@session,
+    node_idx[[1]],
+    node_idx[[2]],
+    other_idx,
+    cond_idx
+  )
 }
 
 #' @title
