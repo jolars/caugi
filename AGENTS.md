@@ -1,4 +1,4 @@
-# Copilot Instructions for caugi
+# Agent Instructions for caugi
 
 ## Repository Overview
 

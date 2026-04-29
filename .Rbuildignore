@@ -39,3 +39,5 @@
 ^devenv\.nix$
 ^devenv\.yaml$
 ^\.pre-commit-config\.yaml$
+^AGENTS\.md$
+^CLAUDE\.md$
