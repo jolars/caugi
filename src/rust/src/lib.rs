@@ -1924,6 +1924,79 @@ fn rs_m_separated(
 }
 
 #[extendr]
+fn rs_not_m_separated_for_all_subsets(
+    mut session: ExternalPtr<GraphSession>,
+    node_a: i32,
+    node_b: i32,
+    other_nodes: Integers,
+    cond_vars: Integers,
+) -> bool {
+    let a = rint_to_u32(Rint::from(node_a), "node_a");
+    let b = rint_to_u32(Rint::from(node_b), "node_b");
+
+    if a >= session.as_ref().n() {
+        throw_r_error(format!("Index {} is out of bounds", a));
+    }
+    if b >= session.as_ref().n() {
+        throw_r_error(format!("Index {} is out of bounds", b));
+    }
+
+    let mut z_base: Vec<u32> = cond_vars
+        .iter()
+        .map(|ri| rint_to_u32(ri, "cond_vars"))
+        .collect();
+    let other_u: Vec<u32> = other_nodes
+        .iter()
+        .map(|ri| rint_to_u32(ri, "other_nodes"))
+        .collect();
+
+    for &i in &z_base {
+        if i >= session.as_ref().n() {
+            throw_r_error(format!("Index {} is out of bounds", i));
+        }
+    }
+    for &i in &other_u {
+        if i >= session.as_ref().n() {
+            throw_r_error(format!("Index {} is out of bounds", i));
+        }
+    }
+
+    let m = other_u.len();
+
+    for k in (0..=m).rev() {
+        let mut idx: Vec<usize> = (0..k).collect();
+        loop {
+            z_base.truncate(cond_vars.len());
+            for &ii in &idx {
+                z_base.push(other_u[ii]);
+            }
+
+            if session
+                .as_mut()
+                .m_separated(&[a], &[b], &z_base)
+                .unwrap_or_else(|e| throw_r_error(e))
+            {
+                return false;
+            }
+
+            let mut i = k;
+            while i > 0 && idx[i - 1] == i - 1 + (m - k) {
+                i -= 1;
+            }
+            if i == 0 {
+                break;
+            }
+            idx[i - 1] += 1;
+            for j in i..k {
+                idx[j] = idx[j - 1] + 1;
+            }
+        }
+    }
+
+    true
+}
+
+#[extendr]
 fn rs_adjustment_set_parents(
     mut session: ExternalPtr<GraphSession>,
     xs: Integers,
@@ -2112,6 +2185,7 @@ extendr_module! {
     fn rs_d_separated;
     fn rs_minimal_d_separator;
     fn rs_m_separated;
+    fn rs_not_m_separated_for_all_subsets;
     fn rs_adjustment_set_parents;
     fn rs_adjustment_set_backdoor;
     fn rs_adjustment_set_optimal;
