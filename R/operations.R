@@ -401,90 +401,12 @@ normalize_latent_structure <- function(cg, latents) {
     )
   }
 
-  cg <- exogenize(cg, nodes = latents)
-
-  changed <- TRUE
-
-  while (changed) {
-    changed <- FALSE
-    current_latents <- intersect(latents, nodes(cg)$name)
-
-    if (length(current_latents) == 0L) {
-      break
-    }
-
-    # Lemma 3: remove exogenous latents with <= 1 child
-    child_counts <- vapply(
-      current_latents,
-      function(l) {
-        ch <- children(cg, l)
-
-        if (is.null(ch)) {
-          0L
-        } else {
-          length(ch)
-        }
-      },
-      integer(1)
-    )
-
-    to_drop <- current_latents[child_counts <= 1L]
-
-    if (length(to_drop) > 0L) {
-      cg <- remove_nodes(cg, name = to_drop)
-      changed <- TRUE
-      next
-    }
-
-    # Lemma 2: remove nested child sets among exogenous latents
-    current_latents <- intersect(latents, nodes(cg)$name)
-
-    if (length(current_latents) < 2L) {
-      break
-    }
-
-    child_sets <- lapply(
-      current_latents,
-      function(l) {
-        ch <- children(cg, l)
-        if (is.null(ch)) {
-          character(0)
-        } else {
-          sort(unique(ch))
-        }
-      }
-    )
-
-    drop_one <- NULL
-
-    for (i in seq_len(length(current_latents) - 1L)) {
-      for (j in (i + 1L):length(current_latents)) {
-        ch_i <- child_sets[[i]]
-        ch_j <- child_sets[[j]]
-
-        if (length(ch_i) < length(ch_j) && all(ch_i %in% ch_j)) {
-          drop_one <- current_latents[i]
-          break
-        }
-
-        if (length(ch_j) < length(ch_i) && all(ch_j %in% ch_i)) {
-          drop_one <- current_latents[j]
-          break
-        }
-      }
-
-      if (!is.null(drop_one)) {
-        break
-      }
-    }
-
-    if (!is.null(drop_one)) {
-      cg <- remove_nodes(cg, name = drop_one)
-      changed <- TRUE
-    }
-  }
-
-  cg
+  latent_indices <- .nodes_to_indices(cg, latents)
+  normalized_session <- rs_normalize_latent_structure(
+    cg@session,
+    latent_indices
+  )
+  .session_to_caugi(normalized_session)
 }
 
 

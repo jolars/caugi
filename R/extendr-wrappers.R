@@ -124,6 +124,8 @@ rs_latent_project <- function(session, latents) .Call(wrap__rs_latent_project, s
 
 rs_exogenize <- function(session, nodes) .Call(wrap__rs_exogenize, session, nodes)
 
+rs_normalize_latent_structure <- function(session, latents) .Call(wrap__rs_normalize_latent_structure, session, latents)
+
 rs_induced_subgraph <- function(session, keep) .Call(wrap__rs_induced_subgraph, session, keep)
 
 subgraph <- function(cg, nodes, index) .Call(wrap__subgraph, cg, nodes, index)

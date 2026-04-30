@@ -94,6 +94,89 @@ test_that("normalize_latent_structure is idempotent", {
   expect_equal(shd(norm1, norm2), 0)
 })
 
+test_that("normalize_latent_structure matches R reference implementation", {
+  normalize_reference_r <- function(cg, latents) {
+    latents <- unique(latents)
+    if (length(latents) == 0L) {
+      return(cg)
+    }
+    cg <- exogenize(cg, nodes = latents)
+
+    changed <- TRUE
+    while (changed) {
+      changed <- FALSE
+      current_latents <- intersect(latents, nodes(cg)$name)
+      if (length(current_latents) == 0L) {
+        break
+      }
+
+      child_counts <- vapply(
+        current_latents,
+        function(l) {
+          ch <- children(cg, l)
+          if (is.null(ch)) 0L else length(ch)
+        },
+        integer(1)
+      )
+      to_drop <- current_latents[child_counts <= 1L]
+      if (length(to_drop) > 0L) {
+        cg <- remove_nodes(cg, name = to_drop)
+        changed <- TRUE
+        next
+      }
+
+      current_latents <- intersect(latents, nodes(cg)$name)
+      if (length(current_latents) < 2L) {
+        break
+      }
+
+      child_sets <- lapply(
+        current_latents,
+        function(l) {
+          ch <- children(cg, l)
+          if (is.null(ch)) character(0) else sort(unique(ch))
+        }
+      )
+
+      drop_one <- NULL
+      for (i in seq_len(length(current_latents) - 1L)) {
+        for (j in (i + 1L):length(current_latents)) {
+          ch_i <- child_sets[[i]]
+          ch_j <- child_sets[[j]]
+          if (length(ch_i) < length(ch_j) && all(ch_i %in% ch_j)) {
+            drop_one <- current_latents[i]
+            break
+          }
+          if (length(ch_j) < length(ch_i) && all(ch_j %in% ch_i)) {
+            drop_one <- current_latents[j]
+            break
+          }
+        }
+        if (!is.null(drop_one)) {
+          break
+        }
+      }
+
+      if (!is.null(drop_one)) {
+        cg <- remove_nodes(cg, name = drop_one)
+        changed <- TRUE
+      }
+    }
+
+    cg
+  }
+
+  set.seed(42)
+  dag <- generate_graph(n = 80, m = 8, class = "DAG")
+  latents <- sample(nodes(dag)$name, size = 12)
+
+  rust_norm <- normalize_latent_structure(dag, latents = latents)
+  ref_norm <- normalize_reference_r(dag, latents = latents)
+
+  expect_equal(shd(rust_norm, ref_norm), 0)
+  expect_setequal(nodes(rust_norm)$name, nodes(ref_norm)$name)
+})
+
 test_that("normalize_latent_structure validation and loop branches are covered", {
   cg_pdag <- caugi(A %---% B, class = "PDAG")
   expect_error(
@@ -130,23 +213,10 @@ test_that("normalize_latent_structure validation and loop branches are covered",
     "U1" %in% out_nested@nodes$name && "U2" %in% out_nested@nodes$name
   )
 
-  # Force child_sets NULL branch in Lemma 2 (coverage for character(0) path).
-  dag_mock <- caugi(
-    U1 %-->% X + Y,
-    U2 %-->% X + Y,
-    class = "DAG"
+  # Empty/overlap branch behavior.
+  overlap <- normalize_latent_structure(
+    caugi(U1 %-->% X + Y, U2 %-->% X + Y, class = "DAG"),
+    latents = c("U1", "U2")
   )
-  normalize_for_null_children <- normalize_latent_structure
-  environment(normalize_for_null_children) <- list2env(
-    list(
-      vapply = function(X, FUN, FUN.VALUE, ..., USE.NAMES = TRUE) {
-        rep.int(2L, length(X))
-      },
-      children = function(cg, l) NULL
-    ),
-    parent = environment(normalize_latent_structure)
-  )
-  expect_silent(
-    normalize_for_null_children(dag_mock, latents = c("U1", "U2"))
-  )
+  expect_true(all(c("U1", "U2") %in% nodes(overlap)$name))
 })

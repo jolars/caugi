@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-//! Graph transformations for DAGs: skeleton, moralize, to_cpdag, latent_project.
+//! Graph transformations for DAGs.
 
 use super::Dag;
 use crate::edges::EdgeClass;
@@ -156,6 +156,235 @@ impl Dag {
             self.core_ref().registry.clone(),
         )?;
         Dag::new(Arc::new(core))
+    }
+
+    /// Normalize latent structure in a DAG for a given latent set.
+    ///
+    /// Applies:
+    /// 1) exogenization of all latent nodes,
+    /// 2) iterative removal of latent nodes with <= 1 child,
+    /// 3) iterative removal of one latent node whose child set is a strict subset
+    ///    of another latent node's child set.
+    ///
+    /// Returns the normalized DAG and the original indices of nodes kept.
+    pub fn normalize_latent_structure(&self, latents: &[u32]) -> Result<(Dag, Vec<u32>), String> {
+        let n = self.n() as usize;
+        let specs = &self.core_ref().registry.specs;
+        let mut dir_code: Option<u8> = None;
+        for (i, s) in specs.iter().enumerate() {
+            if matches!(s.class, EdgeClass::Directed) && (dir_code.is_none() || s.glyph == "-->") {
+                dir_code = Some(i as u8);
+            }
+        }
+        let dir = dir_code.ok_or("No Directed edge spec in registry")?;
+
+        // Mutable deterministic adjacency over original node indices.
+        let mut pa: Vec<BTreeSet<u32>> = vec![BTreeSet::new(); n];
+        let mut ch: Vec<BTreeSet<u32>> = vec![BTreeSet::new(); n];
+        let mut active = vec![true; n];
+
+        for u in 0..self.n() {
+            for &c in self.children_of(u) {
+                ch[u as usize].insert(c);
+                pa[c as usize].insert(u);
+            }
+        }
+
+        fn add_dir(u: u32, v: u32, pa: &mut [BTreeSet<u32>], ch: &mut [BTreeSet<u32>]) {
+            if u == v {
+                return;
+            }
+            if ch[u as usize].insert(v) {
+                pa[v as usize].insert(u);
+            }
+        }
+
+        fn remove_node(
+            u: u32,
+            active: &mut [bool],
+            pa: &mut [BTreeSet<u32>],
+            ch: &mut [BTreeSet<u32>],
+        ) {
+            let ui = u as usize;
+            if !active[ui] {
+                return;
+            }
+            let parents_u: Vec<u32> = pa[ui].iter().copied().collect();
+            let children_u: Vec<u32> = ch[ui].iter().copied().collect();
+
+            for p in parents_u {
+                ch[p as usize].remove(&u);
+            }
+            for c in children_u {
+                pa[c as usize].remove(&u);
+            }
+            pa[ui].clear();
+            ch[ui].clear();
+            active[ui] = false;
+        }
+
+        // Step 1: Exogenize all latents in input order.
+        for &u in latents {
+            if u >= self.n() {
+                return Err(format!("Index {} is out of bounds", u));
+            }
+            if !active[u as usize] {
+                continue;
+            }
+            let ui = u as usize;
+            let parents_u: Vec<u32> = pa[ui].iter().copied().collect();
+            let children_u: Vec<u32> = ch[ui].iter().copied().collect();
+
+            for &p in &parents_u {
+                for &c in &children_u {
+                    add_dir(p, c, &mut pa, &mut ch);
+                }
+            }
+            for &p in &parents_u {
+                ch[p as usize].remove(&u);
+            }
+            pa[ui].clear();
+        }
+
+        // Steps 2-3: iterate until stable.
+        let mut changed = true;
+        while changed {
+            changed = false;
+
+            let current_latents: Vec<u32> = latents
+                .iter()
+                .copied()
+                .filter(|&u| (u as usize) < active.len() && active[u as usize])
+                .collect();
+
+            if current_latents.is_empty() {
+                break;
+            }
+
+            // Step 2: remove all active latents with <= 1 child.
+            let to_drop: Vec<u32> = current_latents
+                .iter()
+                .copied()
+                .filter(|&u| {
+                    ch[u as usize]
+                        .iter()
+                        .filter(|&&v| active[v as usize])
+                        .count()
+                        <= 1usize
+                })
+                .collect();
+
+            if !to_drop.is_empty() {
+                for u in to_drop {
+                    remove_node(u, &mut active, &mut pa, &mut ch);
+                }
+                changed = true;
+                continue;
+            }
+
+            // Step 3: remove one latent whose child set is a strict subset of another.
+            if current_latents.len() < 2 {
+                break;
+            }
+
+            let child_sets: Vec<Vec<u32>> = current_latents
+                .iter()
+                .map(|&u| {
+                    ch[u as usize]
+                        .iter()
+                        .copied()
+                        .filter(|&v| active[v as usize])
+                        .collect::<Vec<u32>>()
+                })
+                .collect();
+
+            let mut drop_one: Option<u32> = None;
+            'outer: for i in 0..(current_latents.len() - 1) {
+                for j in (i + 1)..current_latents.len() {
+                    let ch_i = &child_sets[i];
+                    let ch_j = &child_sets[j];
+                    if ch_i.len() < ch_j.len() && ch_i.iter().all(|x| ch_j.binary_search(x).is_ok())
+                    {
+                        drop_one = Some(current_latents[i]);
+                        break 'outer;
+                    }
+                    if ch_j.len() < ch_i.len() && ch_j.iter().all(|x| ch_i.binary_search(x).is_ok())
+                    {
+                        drop_one = Some(current_latents[j]);
+                        break 'outer;
+                    }
+                }
+            }
+
+            if let Some(u) = drop_one {
+                remove_node(u, &mut active, &mut pa, &mut ch);
+                changed = true;
+            }
+        }
+
+        let kept_old: Vec<u32> = (0..self.n()).filter(|&u| active[u as usize]).collect();
+        let m = kept_old.len();
+        let mut old_to_new: Vec<Option<u32>> = vec![None; n];
+        for (new_i, &old_i) in kept_old.iter().enumerate() {
+            old_to_new[old_i as usize] = Some(new_i as u32);
+        }
+
+        let mut row_index = Vec::with_capacity(m + 1);
+        row_index.push(0u32);
+        for &old_i in &kept_old {
+            let oi = old_i as usize;
+            let pa_ct = pa[oi]
+                .iter()
+                .filter(|&&p| old_to_new[p as usize].is_some())
+                .count() as u32;
+            let ch_ct = ch[oi]
+                .iter()
+                .filter(|&&c| old_to_new[c as usize].is_some())
+                .count() as u32;
+            let last = *row_index
+                .last()
+                .expect("row_index has at least one element");
+            row_index.push(last + pa_ct + ch_ct);
+        }
+
+        let nnz = *row_index.last().unwrap_or(&0u32) as usize;
+        let mut col_index = vec![0u32; nnz];
+        let mut etype = vec![0u8; nnz];
+        let mut side = vec![0u8; nnz];
+        let mut cur = row_index[..m].to_vec();
+
+        for (new_i, &old_i) in kept_old.iter().enumerate() {
+            let oi = old_i as usize;
+            for &p in pa[oi].iter() {
+                if let Some(np) = old_to_new[p as usize] {
+                    let k = cur[new_i] as usize;
+                    col_index[k] = np;
+                    etype[k] = dir;
+                    side[k] = 1;
+                    cur[new_i] += 1;
+                }
+            }
+            for &c in ch[oi].iter() {
+                if let Some(nc) = old_to_new[c as usize] {
+                    let k = cur[new_i] as usize;
+                    col_index[k] = nc;
+                    etype[k] = dir;
+                    side[k] = 0;
+                    cur[new_i] += 1;
+                }
+            }
+        }
+
+        let core = CaugiGraph::from_csr(
+            row_index,
+            col_index,
+            etype,
+            side,
+            /*simple=*/ true,
+            self.core_ref().registry.clone(),
+        )?;
+        let dag = Dag::new(Arc::new(core))?;
+        Ok((dag, kept_old))
     }
 
     /// Project out latent variables from a DAG to produce an ADMG.
@@ -626,6 +855,44 @@ mod tests {
             assert_eq!(exo_once.parents_of(i), exo_twice.parents_of(i));
             assert_eq!(exo_once.children_of(i), exo_twice.children_of(i));
         }
+    }
+
+    #[test]
+    fn dag_normalize_latent_structure_drops_singleton_latent() {
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+        // U -> X
+        let mut b = GraphBuilder::new_with_registry(2, true, &reg);
+        b.add_edge(0, 1, d).unwrap();
+        let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        let (norm, kept_old) = dag.normalize_latent_structure(&[0]).unwrap();
+        assert_eq!(norm.n(), 1);
+        assert_eq!(kept_old, vec![1]);
+        assert!(norm.parents_of(0).is_empty());
+        assert!(norm.children_of(0).is_empty());
+    }
+
+    #[test]
+    fn dag_normalize_latent_structure_drops_nested_child_set() {
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let d = reg.code_of("-->").unwrap();
+        // U -> X,Y,Z and W -> X,Y where latents are [U,W]
+        // W child set is strict subset of U, so W is dropped.
+        // node order: U=0, W=1, X=2, Y=3, Z=4
+        let mut b = GraphBuilder::new_with_registry(5, true, &reg);
+        b.add_edge(0, 2, d).unwrap();
+        b.add_edge(0, 3, d).unwrap();
+        b.add_edge(0, 4, d).unwrap();
+        b.add_edge(1, 2, d).unwrap();
+        b.add_edge(1, 3, d).unwrap();
+        let dag = Dag::new(Arc::new(b.finalize().unwrap())).unwrap();
+
+        let (norm, kept_old) = dag.normalize_latent_structure(&[0, 1]).unwrap();
+        assert_eq!(norm.n(), 4);
+        assert_eq!(kept_old, vec![0, 2, 3, 4]); // W removed
     }
 
     #[test]
