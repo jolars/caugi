@@ -11,6 +11,8 @@ coverage](https://codecov.io/gh/frederikfabriciusbjerre/caugi/graph/badge.svg)](
 [![CRAN
 downloads](https://cranlogs.r-pkg.org/badges/caugi)](https://cran.r-project.org/package=caugi)
 [![extendr](https://img.shields.io/badge/extendr-%5E0.9.0-276DC2)](https://extendr.rs/extendr/extendr_api/)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/caugi)](https://CRAN.R-project.org/package=caugi)
 <!-- badges: end -->
 
 > **Causal Graph Interface (for R)** — a fast and flexible toolbox for
