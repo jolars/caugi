@@ -1,0 +1,336 @@
+---
+title: "Performance"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Performance}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.align = "center",
+  fig.width = 7,
+  fig.height = 4,
+  warning = FALSE,
+  message = FALSE,
+  echo = FALSE
+)
+```
+
+```{r}
+#| label: data
+#| include: false
+
+benchmarks <- readRDS("data/benchmarks.rds")
+metadata <- jsonlite::fromJSON("data/metadata.json", simplifyVector = FALSE)
+benchmarks$median_ms <- benchmarks$median_ns / 1e6
+```
+
+This article compares the performance of `caugi` against R packages
+([`igraph`](https://r.igraph.org/), [`bnlearn`](https://www.bnlearn.com/),
+[`dagitty`](https://dagitty.net/),
+[`ggm`](https://cran.r-project.org/package=ggm),
+[`pcalg`](https://pcalg.r-forge.r-project.org/)), the Python package
+[`pgmpy`](https://pgmpy.org/), and the Java library
+[Tetrad](https://www.cmu.edu/dietrich/philosophy/tetrad/). We focus on the
+practical trade-offs that arise from different core data structures and design
+choices.
+
+The headline is: `caugi` frontloads computation. That is, `caugi` spends more
+effort when constructing a graph and preparing indexes, so that queries are
+wicked fast. The high performance is also due to the Rust backend.
+
+A note on Tetrad: it is included as a reference point---the de facto golden
+standard implementation in causal discovery---but the comparison is not strictly
+apples-to-apples, since Tetrad runs on the JVM (compiled Java) while the R
+packages and `caugi` run with R-level dispatch overhead on every call. Read the
+Tetrad numbers as a "what's possible with compiled code" benchmark rather than a
+head-to-head with the R-side competitors.
+
+Benchmarks below are **precomputed**, with the last run on
+`r metadata$generated` on host `r metadata$host$nodename`
+(`r metadata$host$sysname`).
+
+Versions:
+
+- caugi `r metadata$versions$caugi`
+- igraph `r metadata$versions$igraph`
+- bnlearn `r metadata$versions$bnlearn`
+- dagitty `r metadata$versions$dagitty`
+- ggm `r metadata$versions$ggm`
+- pcalg `r metadata$versions$pcalg`
+- pgmpy `r metadata$versions$pgmpy`
+- Tetrad `r metadata$versions$tetrad`.
+
+## Design choices
+
+### Compressed Sparse Row (CSR) Representation
+
+The core data structure in `caugi` is a compressed sparse row (CSR)
+representation of the graph. CSR representations store, for each vertex, a
+contiguous slice of neighbor IDs with a pointer (offset) array that marks the
+start and end of each slice. This format is memory-efficient for sparse graphs.
+The `caugi` graph object also stores important query information in the object,
+leading to parent, child, and neighbor queries to be done in $\mathcal{O}(1)$
+time. This yields a larger memory footprint, but the trade-off is that queries
+are extremely fast.
+
+### Mutation and Lazy Building
+
+The `caugi` graph objects are expensive to build. This is the performance
+downside of using `caugi`. For each time we make a modification to a `caugi`
+graph object, we need to rebuild the graph completely since the graph object is
+immutable by design. This has complexity $\mathcal{O}(|V| + |E|)$, where $V$ is
+the vertex set and $E$ is the edge set.
+
+However, the graph object will only be rebuilt when the user either calls
+`build()` directly or queries the graph. Therefore, you do not need to worry
+about wasting compute time by iteratively making changes to a `caugi` graph
+object, as the graph rebuilds lazily when queried. By doing this, `caugi` graphs
+*feel* mutable, but, in reality, they are not.
+
+By doing it this way, we ensure
+
+- that the graph object is always in a consistent state when queried and
+- that queries are as fast as possible,
+
+while keeping the user experience smooth.
+
+## Comparison
+
+The comparison covers seven operations across a parameter grid of graph sizes
+$n$ and edge densities. All packages run on the same generated DAG fixtures so
+query results are directly comparable.
+
+The grid covers $n \in \{100, 500, 1000\}$ at two density levels, parametrised
+by the **average in-degree** $d$ (equivalently the average out-degree, or total
+edges divided by number of nodes). We sample DAGs with per-edge probability
+$p = 2d / (n - 1)$, which makes the expected in-degree exactly $d$ regardless of
+$n$. The grid uses $d = 3$ for the sparser cells and $d = 6$ for the denser
+ones, so a node has on average \~3 (or \~6) parents and \~3 (or \~6) children,
+with edge counts that grow linearly with $n$. Each package runs against the same
+generated graphs.
+
+```{r}
+#| label: helpers
+#| include: false
+
+library(ggplot2)
+
+pkg_levels <- c(
+  "caugi",
+  "igraph",
+  "bnlearn",
+  "dagitty",
+  "ggm",
+  "pcalg",
+  "pgmpy",
+  "tetrad"
+)
+benchmarks$package <- factor(benchmarks$package, levels = pkg_levels)
+
+plot_op <- function(op) {
+  d <- benchmarks[benchmarks$operation == op, ]
+  op_manual <- switch(
+    op,
+    d_separated = "d-separation",
+    op
+  )
+
+  op_title <- tools::toTitleCase(gsub("_", " ", op_manual))
+  ggplot(d, aes(n, median_ms, color = package)) +
+    geom_line() +
+    geom_point() +
+    scale_x_log10() +
+    scale_y_log10() +
+    facet_wrap(
+      ~avg_degree,
+      labeller = as_labeller(c("3" = "Sparser (avg degree 3)", "6" = "Denser (avg degree 6)"))
+    ) +
+    labs(
+      x = "Number of nodes",
+      y = "Median time (ms)",
+      color = NULL,
+      title = op_title
+    ) +
+    theme_minimal(base_size = 11) +
+    theme(legend.position = "bottom")
+}
+```
+
+### Relational Queries
+
+Direct neighbor lookups (`parents`, `children`) are $O(1)$ for `caugi`,
+`igraph`, `bnlearn`, and Tetrad---they all maintain adjacency tables. `pgmpy` is
+a thin wrapper over NetworkX's predecessor/successor lookups. `pcalg` and `ggm`
+scan a row or column of the adjacency matrix on each call ($O(n)$), with `ggm`
+paying noticeably more R-level overhead. `dagitty` is the outlier: it re-derives
+neighbors from its string DSL representation each call and pays a
+linear-in-edges cost.
+
+```{r}
+#| label: plot-parents
+
+plot_op("parents")
+```
+
+```{r}
+#| label: plot-children
+
+plot_op("children")
+```
+
+As you can see from the plots, Tetrad is generally fastest, with pgmpy and caugi
+close behind. The $O(1)$ packages stay flat as $n$ grows; pcalg also looks
+nearly flat in practice because the per-call overhead dominates its $O(n)$ row
+scan at these sizes. ggm and dagitty, in contrast, pay visibly for their design
+choice to re-derive neighbors on each call. Note that the times are generally
+very small (in milliseconds), and the differences between the front-runners may
+not be that important in practice and likely reflect overhead differences
+between Python, R, and Java.
+
+### Ancestors and Descendants
+
+These require transitive closure (BFS/DFS over the directed graph). Here
+`caugi`'s CSR pays off---both forward and reverse adjacency are precomputed, so
+traversal is tight pointer-chasing in Rust.
+
+```{r}
+#| label: plot-ancestors
+
+plot_op("ancestors")
+```
+
+```{r}
+#| label: plot-descendants
+
+plot_op("descendants")
+```
+
+`caugi` is the most consistent here: sub-millisecond timings on every fixture
+for both ancestors and descendants. `igraph::subcomponent()` and `pgmpy`'s
+NetworkX-backed traversal also stay fast across the grid. Tetrad and `pgmpy`
+trade leads on ancestors, while Tetrad's descendants routine slows dramatically
+on the dense $n = 1000$ fixture (into the hundreds of milliseconds). `bnlearn`
+and `pcalg` are uneven, occasionally spiking on the denser graphs. `dagitty` is
+again one to two orders of magnitude slower than the rest, paying its
+DSL-reparsing cost on every call.
+
+### Markov Blanket
+
+The Markov blanket of a node $v$ is
+`parents(v) ∪ children(v) ∪ parents(children(v))`. `caugi`, `bnlearn`, and
+Tetrad have direct accessors backed by adjacency tables; `dagitty` re-derives it
+from its DSL representation each call; `pgmpy` walks NetworkX edges. `pcalg` and
+`ggm` do not expose a Markov-blanket helper and are omitted.
+
+```{r}
+#| label: plot-markov-blanket
+
+plot_op("markov_blanket")
+```
+
+`caugi`, `pgmpy`, and `bnlearn` all resolve Markov blankets in microseconds
+across the entire grid. Tetrad is comparably fast on small graphs but slows down
+on the dense $n = 1000$ fixture. `dagitty` is again the outlier, into the
+hundreds of milliseconds on the larger graphs because it re-derives the blanket
+from its DSL representation each call.
+
+### D-separation
+
+For each fixture we compute a valid backdoor adjustment set with
+`caugi::adjustment_set()` once, and pass that same conditioning set to every
+package's d-separation routine. Tetrad uses the m-separation generalisation
+(equivalent on DAGs). `pcalg::dsep()` follows Lauritzen's moralization-based
+test on a `graphNEL`.
+
+```{r}
+#| label: plot-dsep
+
+plot_op("d_separated")
+```
+
+`caugi`, Tetrad, and `pgmpy` cluster at the fast end, all sub-millisecond on
+small graphs and within a few milliseconds at $n = 1000$. `dagitty` is roughly
+two orders of magnitude slower, while `bnlearn` and `pcalg` pay the cost of
+building a moralized graph on each call: `bnlearn` reaches tens of milliseconds
+on the larger fixtures and `pcalg` reaches the hundreds, with `pcalg` slowest
+overall.
+
+### Subgraph Extraction
+
+Subgraph extraction is where we explicitly test graph **building** performance.
+For `caugi` we time `subgraph(cg, nodes) |> build()` together so the CSR rebuild
+cost is captured. `igraph`, `bnlearn`, `pgmpy`, and Tetrad all return
+adjacency-backed subgraphs without an analogous index rebuild step. `pcalg`
+exposes no native subgraph constructor (users typically call `graph::subGraph()`
+on the underlying `graphNEL`), so it is omitted here.
+
+```{r}
+#| label: plot-subgraph
+
+plot_op("subgraph")
+```
+
+`caugi` and `igraph` finish in well under a millisecond even at $n = 1000$, with
+`caugi` slightly ahead despite paying for a CSR rebuild on every call. Tetrad
+sits in the single-digit-millisecond range at $n = 1000$. `bnlearn` and `pgmpy` are roughly two orders
+of magnitude slower on the largest fixtures, copying nodes and edges into a
+fresh object each call. The takeaway is that even though `caugi` graphs are
+nominally expensive to construct, the rebuild after `subgraph()` is fast enough
+to be competitive with adjacency-list constructors that do not rebuild any
+indexes at all.
+
+## Summary
+
+Across the seven operations, `caugi` either leads or sits in the leading group
+on R-side competitors:
+
+- It matches or beats `igraph` and `bnlearn` on the $O(1)$ adjacency lookups
+  (`parents`, `children`, Markov blanket).
+- It is the fastest R package by a wide margin on transitive-closure operations
+  (`ancestors`, `descendants`, d-separation), where the CSR's precomputed
+  forward and reverse adjacency pays off.
+- Even on `subgraph()`, where the CSR has to be rebuilt, performance is
+  competitive with packages that do not rebuild any index.
+
+Tetrad (compiled Java) and `pgmpy` (NetworkX-backed) consistently beat `caugi`
+on the simplest lookups by a small constant factor, which is unsurprising given
+the R-level dispatch overhead `caugi` pays on every call. Where Tetrad slows
+down---descendants on dense large graphs, dense Markov blankets---`caugi` keeps
+its lead.
+
+The headline still holds: by frontloading work into the build step and querying
+a CSR-backed structure, `caugi` keeps query times effectively constant in graph
+size for the operations users hit most often. The price is paid up front, in the
+rebuild step that runs lazily on the first query after a mutation.
+
+## Reproducing these benchmarks
+
+The harness lives in
+[`tools/benchmark/`](https://github.com/frederikfabriciusbjerre/caugi/tree/main/tools/benchmark)
+and uses [Task](https://taskfile.dev) to orchestrate the cross-language runners.
+To reproduce just the R numbers (no Python or Java toolchains needed):
+
+```sh
+cd tools/benchmark
+task fixtures && task r
+```
+
+`task r` prints a per-package, per-operation summary to the console and writes
+the raw timings to `results/r.csv`. See `tools/benchmark/README.md` for the full
+pipeline (`task all`) and per- language details.
+
+## Session Info
+
+```{r}
+#| label: session-info
+
+sessionInfo()
+```
