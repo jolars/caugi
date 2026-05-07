@@ -25,7 +25,7 @@ general focus, and the languages they are packaged for.
   | dagitty     | Causal graphs                   | R, Web       | <https://www.dagitty.net>                   |
   | bnlearn     | Bayesian networks               | R            | <https://www.bnlearn.com>                   |
   | ggm         | Graphical Markov models         | R            | <https://CRAN.R-project.org/package=ggm>    |
-  | MixedGraphs | Causal graphs                   | Python       | <https://github.com/rje42/MixedGraphs>      |
+  | MixedGraphs | Causal graphs                   | R            | <https://github.com/rje42/MixedGraphs>      |
   | NetworkX    | General-purpose                 | Python       | <https://networkx.org>                      |
   | pgmpy       | Probabilitistc graphical models | Python       | <https://github.com/pgmpy/pgmpy>            |
   | Tetrad      | Causal graphs                   | Java         | <http://www.phil.cmu.edu/tetrad>            |
