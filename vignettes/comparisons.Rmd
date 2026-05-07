@@ -67,7 +67,7 @@ Two adjacent areas are intentionally out of scope:
   | MixedGraphs | ◐[^mixedgraphs-dag] | ○                 | ○                | ○              | ○              | ◐[^mixedgraphs-admg] | ○    | ●               | ●                  |
   | NetworkX    | ◐[^networkx-dag]    | ○                 | ○                | ○              | ○              | ○                    | ○    | ◐[^networkx-ug] | ◐[^networkx-mixed] |
   | pgmpy       | ●                   | ◐[^pgmpy-cpdag]   | ○[^pgmpy-mpdag]  | ●              | ○              | ●                    | ○    | ●               | ○[^pgmpy-mixed]    |
-  | Tetrad      | ●                   | ◐[^tetrad-cpdag]  | ◐[^tetrad-mpdag] | ◐[^tetrad-mag] | ◐[^tetrad-pag] | ◐[^tetrad-admg]      | ○    | ◐[^tetrad-ug]   | ◐[^tetrad-mixed]   |
+  | Tetrad      | ●                   | ◐[^tetrad-cpdag]  | ◐[^tetrad-mpdag] | ◐[^tetrad-mag] | ●[^tetrad-pag] | ◐[^tetrad-admg]      | ○    | ◐[^tetrad-ug]   | ◐[^tetrad-mixed]   |
 
   : Supported graph types for the packages in this comparison. `●` indicates a
     dedicated class with type-level invariants; `◐` indicates representability
