@@ -81,8 +81,8 @@ Two adjacent areas are intentionally out of scope:
 
 [^caugi-mag]: `caugi` accepts `class = "AG"` (ancestral graph) in the
     constructor and exports `is_mag()` to validate maximality post-hoc, but
-    there is no dedicated MAG class --- MAGs are representable as AGs and
-    checked rather than enforced.
+    there is no dedicated MAG class---MAGs are representable as AGs and checked
+    rather than enforced.
 
 [^igraph-dag]: igraph has no dedicated DAG class. `is_dag()` tests whether a
     directed graph is acyclic, but the package's single `igraph` object class
@@ -153,7 +153,7 @@ Two adjacent areas are intentionally out of scope:
 
 [^dagitty-cpdag]: `dagitty` recognises only `"dag"`, `"pdag"`, `"mag"`, `"pag"`
     via `graphType()`. `equivalenceClass()` calls `dagToCpdag` internally and is
-    documented as producing a CPDAG, but the result is typed `"pdag"` --- no
+    documented as producing a CPDAG, but the result is typed `"pdag"`---no
     distinct CPDAG class or invariant enforcement. MPDAG is likewise
     representable as `"pdag"` without Meek-completion logic. `"ug"`, `"admg"`,
     `"swig"` are absent from both the R API and the JS engine.
@@ -165,7 +165,7 @@ Two adjacent areas are intentionally out of scope:
 
 [^bnlearn-ug]: `skeleton()` produces a fully undirected graph and `valid.ug()`
     validates whether a `bn` object is completely undirected, but the result is
-    still a plain `bn` object --- no dedicated UG class with enforced undirected
+    still a plain `bn` object---no dedicated UG class with enforced undirected
     invariants exists.
 
 [^bnlearn-mixed]: A `bn` object can hold a mix of directed and undirected arcs
@@ -212,7 +212,7 @@ Two adjacent areas are intentionally out of scope:
 [^networkx-dag]: NetworkX's `DiGraph` class stores directed edges and supports
     DAG-related algorithms (`is_directed_acyclic_graph`, `topological_sort`,
     `ancestors`, `descendants`), but the class itself does not enforce
-    acyclicity as an invariant --- a `DiGraph` can hold cycles. There is no
+    acyclicity as an invariant---a `DiGraph` can hold cycles. There is no
     dedicated `DAG` subclass.
 
 [^networkx-ug]: NetworkX's `Graph` class stores undirected edges, making it
@@ -276,8 +276,8 @@ Two adjacent areas are intentionally out of scope:
 [^tetrad-mixed]: `EdgeListGraph` is the universal mixed-edge container and
     accepts all five endpoint combinations (directed, undirected, bidirected,
     partially-oriented, nondirected). It does not commit to any single graph
-    semantics, but it is not branded as a distinct "mixed/general" class --- it
-    is simply the default implementation of the `Graph` interface.
+    semantics, but it is not branded as a distinct "mixed/general" class---it is
+    simply the default implementation of the `Graph` interface.
 
 ## Graph Queries and Structural Operations
 
@@ -391,12 +391,12 @@ Two adjacent areas are intentionally out of scope:
 
 [^mixedgraphs-acyclic]: `is_cyclic()` is exported and checks directed cycles,
     and `topologicalOrder()` / `isTopological()` implicitly validate acyclicity,
-    but `is_cyclic()` documentation notes it is "Not tested" --- `◐` reflects
-    this caveat.
+    but `is_cyclic()` documentation notes it is "Not tested"---`◐` reflects this
+    caveat.
 
 [^mixedgraphs-mb]: `mb()` finds the "Markov blanket for a vertex in an ancestral
     set" but requires the user to supply an explicit ancestral set `A` and the
-    vertex must be childless in that set --- a constrained helper rather than a
+    vertex must be childless in that set---a constrained helper rather than a
     standard graph-wide Markov-blanket function.
 
 [^networkx-par]: `DiGraph.predecessors()` and `DiGraph.successors()` return
@@ -489,7 +489,7 @@ Two adjacent areas are intentionally out of scope:
     from intervention nodes.
 
 [^dagitty-backdoor]: `adjustmentSets(effect = "total")` and `isAdjustmentSet()`
-    both invoke `GraphTransformer.backDoorGraph()` in the JS engine --- Pearl's
+    both invoke `GraphTransformer.backDoorGraph()` in the JS engine---Pearl's
     back-door graph construction, not the generalized Perkovic criterion. The R
     documentation cites Perkovic et al. (2015), but the JS implementation
     (`listMsasTotalEffect` in `jslib/graph/GraphAnalyzer.js`) applies the
@@ -499,7 +499,7 @@ Two adjacent areas are intentionally out of scope:
     optimality criterion in the Rotnitzky/Henckel sense.
 
 [^dagitty-mutilate]: `backDoorGraph(x)` removes the first directed edge on every
-    proper causal path (with PAG handling via `pagToPdag` conversion) --- the
+    proper causal path (with PAG handling via `pagToPdag` conversion)---the
     back-door-graph helper, not a general `do()`-style mutilation that removes
     all incoming edges to an arbitrary intervention set. No `mutilate()` or
     `do()` function is exported.
@@ -545,7 +545,7 @@ Two adjacent areas are intentionally out of scope:
   : Comparison of supported graph I/O formats and interoperability features.
 
 [^caugi-dot]: `to_dot()` / `write_dot()` write Graphviz DOT format, but caugi
-    has no DOT reader --- round-trip via DOT is not supported.
+    has no DOT reader---round-trip via DOT is not supported.
 
 [^caugi-json]: `caugi_serialize()` / `caugi_deserialize()` (and `read_caugi()` /
     `write_caugi()`) read and write caugi's own JSON-based serialization format
@@ -590,7 +590,7 @@ Two adjacent areas are intentionally out of scope:
     dagitty. No coercion to/from `graphNEL`, `pcalg`, or other classes.
 
 [^bnlearn-dot]: `write.dot()` exports the network structure to Graphviz DOT
-    format, but there is no corresponding `read.dot()` --- DOT support is
+    format, but there is no corresponding `read.dot()`---DOT support is
     write-only.
 
 [^ggm-coerce]: `grMAT()` converts graphNEL (from `graph`) and igraph objects
@@ -709,7 +709,7 @@ Two adjacent areas are intentionally out of scope:
 [^networkx-sparse]: NetworkX stores graphs internally as a
     dict-of-dicts-of-dicts (adjacency dictionary), which is *effectively* sparse
     for large, sparse graphs (only present edges are stored), but this is not a
-    CSR/CSC/COO sparse matrix --- it is a plain Python dictionary structure.
+    CSR/CSC/COO sparse matrix---it is a plain Python dictionary structure.
     Conversion to SciPy sparse arrays is available via `to_scipy_sparse_array`.
 
 [^networkx-plot]: NetworkX includes `nx.draw()`, `nx.draw_networkx()`, and
