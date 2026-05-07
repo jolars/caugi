@@ -16,21 +16,26 @@ packages in R, Python, and Java.
 The following table summarizes the packages included in this comparison, their
 general focus, and the languages they are packaged for.
 
-  | Package     | Type                            | Language     | URL                                         |
-  | :---------- | ------------------------------- | ------------ | :------------------------------------------ |
-  | igraph      | General-purpose                 | R, Python, C | <https://igraph.org>                        |
-  | graph       | General-purpose                 | R            | <https://github.com/Bioconductor/graph>     |
-  | gRbase      | Graphical models                | R            | <https://CRAN.R-project.org/package=gRbase> |
-  | pcalg       | Causal graphs                   | R            | <https://pcalg.r-forge.r-project.org>       |
-  | dagitty     | Causal graphs                   | R, Web       | <https://www.dagitty.net>                   |
-  | bnlearn     | Bayesian networks               | R            | <https://www.bnlearn.com>                   |
-  | ggm         | Graphical Markov models         | R            | <https://CRAN.R-project.org/package=ggm>    |
-  | MixedGraphs | Causal graphs                   | R            | <https://github.com/rje42/MixedGraphs>      |
-  | NetworkX    | General-purpose                 | Python       | <https://networkx.org>                      |
-  | pgmpy       | Probabilitistc graphical models | Python       | <https://github.com/pgmpy/pgmpy>            |
-  | Tetrad      | Causal graphs                   | Java         | <http://www.phil.cmu.edu/tetrad>            |
+  | Package     | Type                            | Language                        | URL                                         |
+  | :---------- | ------------------------------- | ------------------------------- | :------------------------------------------ |
+  | igraph      | General-purpose                 | R, Python, C                    | <https://igraph.org>                        |
+  | graph       | General-purpose                 | R                               | <https://github.com/Bioconductor/graph>     |
+  | gRbase      | Graphical models                | R                               | <https://CRAN.R-project.org/package=gRbase> |
+  | pcalg       | Causal graphs                   | R                               | <https://pcalg.r-forge.r-project.org>       |
+  | dagitty     | Causal graphs                   | R, Web                          | <https://www.dagitty.net>                   |
+  | bnlearn     | Bayesian networks               | R                               | <https://www.bnlearn.com>                   |
+  | ggm         | Graphical Markov models         | R                               | <https://CRAN.R-project.org/package=ggm>    |
+  | MixedGraphs | Causal graphs                   | R                               | <https://github.com/rje42/MixedGraphs>      |
+  | NetworkX    | General-purpose                 | Python                          | <https://networkx.org>                      |
+  | pgmpy       | Probabilitistc graphical models | Python                          | <https://github.com/pgmpy/pgmpy>            |
+  | Tetrad      | Causal graphs                   | Java, CLI, R[^tetrad-r], Python | <http://www.phil.cmu.edu/tetrad>            |
 
   : An overview of the packages included in this comparison
+
+[^tetrad-r]: Bindings for Tetrad exist in
+    <https://github.com/cmu-phil/r-tetrad>, but not in the form of a formal R
+    package. The authors instead recommend using the Python bindings from R
+    instead.
 
 ## Scope
 
