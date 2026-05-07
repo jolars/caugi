@@ -530,7 +530,7 @@ Two adjacent areas are intentionally out of scope:
   | MixedGraphs | ○                | ○       | ○       | ○              | ●                                  |
   | NetworkX    | ◐[^networkx-dot] | ○       | ●       | ●              | ◐[^networkx-coerce]                |
   | pgmpy       | ◐[^pgmpy-dot]    | ○       | ○       | ○              | ◐[^pgmpy-coerce]                   |
-  | Tetrad      | ◐[^tetrad-dot]   | ○       | ○       | ○              | ○                                  |
+  | Tetrad      | ◐[^tetrad-dot]   | ○       | ○       | ●              | ○                                  |
 
   : Comparison of supported graph I/O formats and interoperability features.
 
