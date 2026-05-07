@@ -450,7 +450,7 @@ Two adjacent areas are intentionally out of scope:
 
   | Package     | Back-door adj.       | Generalized adj. | Optimal adj.       | ID algorithm | Do-calculus | Counterfactuals | SHD | AID | Interventions/mutilation |
   | :---------- | :------------------- | :--------------- | :----------------- | :----------- | :---------- | :-------------- | :-- | :-- | :----------------------- |
-  | **caugi**   | ●                    | ●                | ○                  | ○            | ○           | ○               | ●   | ●   | ○                        |
+  | **caugi**   | ●                    | ●                | ◐[^caugi-optimal]  | ○            | ○           | ○               | ●   | ●   | ○                        |
   | igraph      | ○                    | ○                | ○                  | ○            | ○           | ○               | ○   | ○   | ○                        |
   | graph       | ○                    | ○                | ○                  | ○            | ○           | ○               | ○   | ○   | ○                        |
   | gRbase      | ○                    | ○                | ○                  | ○            | ○           | ○               | ○   | ○   | ○                        |
@@ -465,6 +465,11 @@ Two adjacent areas are intentionally out of scope:
 
   : Overview of available causal-inference algorithms in the packages in the
     comparison.
+
+[^caugi-optimal]: `adjustment_set(cg, X, Y, type = "optimal")` returns the O-set
+    of Henckel/Perković/Maathuis (2019), but only for DAGs---the underlying Rust
+    implementation errors on non-DAG graph classes. There is no O-set support
+    for CPDAGs, MPDAGs, MAGs, or PAGs.
 
 [^pcalg-backdoor]: `backdoor(amat, x, y, type)` implements the Generalized
     Backdoor Criterion (GBC) of Maathuis & Colombo (2015), which subsumes
