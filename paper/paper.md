@@ -256,7 +256,7 @@ community-readiness signals). The evidence should be compelling and specific,
 not aspirational. -->
 
 `caugi` provides the underlying graph representation for two downstream `R`
-packages: `CausalDisco`\ [@kristensen2026], a CRAN-released toolbox for causal
+packages: `causalDisco`\ [@kristensen2026], a CRAN-released toolbox for causal
 discovery on observational data, and `meraconstraints`\ [@sachs2026b], which
 derives complete equality constraints in hidden-variable causal models and
 underpins recent methodological work by @sachs2026.^[We note that some authors
