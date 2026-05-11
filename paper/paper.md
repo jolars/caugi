@@ -205,28 +205,28 @@ when queried.
 You create a `caugi` graph object through the `caugi()` function, which uses
 infix operators to define edges. For instance, the following code creates a
 simple directed acyclic graph\ (DAG) with four nodes and four edges, encoding a
-typical confounding structure in which `Z` is a common cause of treatment `X`
-and outcome `Y`, with `M` mediating part of the effect of `X` on `Y`:
+confounding structure in which `A` is a common cause of treatment `B` and
+outcome `C`, with `D` as a descendant of the treatment:
 
 ```r
 library(caugi)
 
 cg <- caugi(
-  Z %-->% X + Y,
-  X %-->% M %-->% Y,
+  A %-->% B %-->% C + D,
+  A %-->% C,
   class = "DAG"
 )
 
 cg
-#> <caugi object; 4 nodes, 4 edges; simple: TRUE; session=0x575d4d1dc720>
+#> <caugi object; 4 nodes, 4 edges; simple: TRUE; session=0x62d5bd0f4500>
 #>   graph_class: DAG
-#>   nodes: Z, X, Y, M
-#>   edges: Z-->X, Z-->Y, X-->M, M-->Y
+#>   nodes: A, B, C, D
+#>   edges: A-->B, A-->C, B-->C, B-->D
 ```
 
-In the example above, `Z %-->% X` creates the edge `-->` from `Z` to `X`. The
-syntax `Z %-->% X + Y` is equivalent to `Z %-->% X` *and* `Z %-->% Y`, and
-`X %-->% M %-->% Y` chains two edges. To visualize the graph, you can simply
+In the example above, `A %-->% B` creates the edge `-->` from `A` to `B`. The
+syntax `B %-->% C + D` is equivalent to `B %-->% C` *and* `B %-->% D`, and
+`A %-->% B %-->% C` chains two edges. To visualize the graph, you can simply
 call `plot()` on the graph object, with the result shown in
 \autoref{fig:example-plot}.
 
@@ -238,16 +238,15 @@ plot(cg)
 
 `caugi` supports a wide range of queries and algorithms that operate directly on
 the graph object. For instance, to identify a valid back-door adjustment set for
-estimating the causal effect of `X` on `Y`, we can use `adjustment_set()`:
+estimating the causal effect of `B` on `C`, we can use `adjustment_set()`:
 
 ```r
-adjustment_set(cg, "X", "Y", type = "backdoor")
-#> [1] "Z"
+adjustment_set(cg, "B", "C", type = "backdoor")
+#> [1] "A"
 ```
 
-The set `{Z}` blocks the back-door path `X <-- Z --> Y` without conditioning on
-the mediator `M`, which would otherwise block part of the causal effect we wish
-to estimate.
+The set `{A}` blocks the back-door path `B <-- A --> C`, yielding a valid
+adjustment set for the causal effect of `B` on `C`.
 
 # Research Impact Statement
 

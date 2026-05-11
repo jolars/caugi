@@ -22,4 +22,4 @@ dev.off()
 
 # Example 2
 
-descendants(cg, parents(cg, "C"))
+adjustment_set(cg, "B", "C", type = "backdoor")
