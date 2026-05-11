@@ -446,20 +446,20 @@ Two adjacent areas are intentionally out of scope:
 
 ## Causal-Inference Algorithms
 
-  | Package     | Back-door adj.       | Generalized adj. | Optimal adj.       | ID algorithm | Do-calculus | Counterfactuals | SHD | AID | Interventions/mutilation |
-  | :---------- | :------------------- | :--------------- | :----------------- | :----------- | :---------- | :-------------- | :-- | :-- | :----------------------- |
-  | **caugi**   | ●                    | ●                | ◐[^caugi-optimal]  | ○            | ○           | ○               | ●   | ●   | ○                        |
-  | igraph      | ○                    | ○                | ○                  | ○            | ○           | ○               | ○   | ○   | ○                        |
-  | graph       | ○                    | ○                | ○                  | ○            | ○           | ○               | ○   | ○   | ○                        |
-  | gRbase      | ○                    | ○                | ○                  | ○            | ○           | ○               | ○   | ○   | ○                        |
-  | pcalg       | ◐[^pcalg-backdoor]   | ●                | ●                  | ○            | ○           | ○               | ●   | ○   | ◐[^pcalg-ivent]          |
-  | dagitty     | ◐[^dagitty-backdoor] | ○                | ○                  | ○            | ○           | ○               | ○   | ○   | ◐[^dagitty-mutilate]     |
-  | bnlearn     | ○                    | ○                | ○                  | ○            | ○           | ●               | ●   | ○   | ●                        |
-  | ggm         | ○                    | ○                | ○                  | ○            | ○           | ○               | ○   | ○   | ○                        |
-  | MixedGraphs | ○                    | ○                | ○                  | ○            | ○           | ○               | ○   | ○   | ◐[^mixedgraphs-mutilate] |
-  | NetworkX    | ○                    | ○                | ○                  | ○            | ○           | ○               | ○   | ○   | ○                        |
-  | pgmpy       | ●                    | ●                | ○                  | ○            | ○           | ○               | ●   | ○   | ●                        |
-  | Tetrad      | ◐[^tetrad-backdoor]  | ●                | ◐[^tetrad-optimal] | ○            | ○           | ○               | ●   | ○   | ○                        |
+  | Package     | Back-door adj.       | Generalized adj. | Optimal adj.       | ID algorithm | Do-calculus | Counterfactuals | Interventions/mutilation |
+  | :---------- | :------------------- | :--------------- | :----------------- | :----------- | :---------- | :-------------- | :----------------------- |
+  | **caugi**   | ●                    | ●                | ◐[^caugi-optimal]  | ○            | ○           | ○               | ○                        |
+  | igraph      | ○                    | ○                | ○                  | ○            | ○           | ○               | ○                        |
+  | graph       | ○                    | ○                | ○                  | ○            | ○           | ○               | ○                        |
+  | gRbase      | ○                    | ○                | ○                  | ○            | ○           | ○               | ○                        |
+  | pcalg       | ◐[^pcalg-backdoor]   | ●                | ●                  | ○            | ○           | ○               | ◐[^pcalg-ivent]          |
+  | dagitty     | ◐[^dagitty-backdoor] | ○                | ○                  | ○            | ○           | ○               | ◐[^dagitty-mutilate]     |
+  | bnlearn     | ○                    | ○                | ○                  | ○            | ○           | ●               | ●                        |
+  | ggm         | ○                    | ○                | ○                  | ○            | ○           | ○               | ○                        |
+  | MixedGraphs | ○                    | ○                | ○                  | ○            | ○           | ○               | ◐[^mixedgraphs-mutilate] |
+  | NetworkX    | ○                    | ○                | ○                  | ○            | ○           | ○               | ○                        |
+  | pgmpy       | ●                    | ●                | ○                  | ○            | ○           | ○               | ●                        |
+  | Tetrad      | ◐[^tetrad-backdoor]  | ●                | ◐[^tetrad-optimal] | ○            | ○           | ○               | ○                        |
 
   : Overview of available causal-inference algorithms in the packages in the
     comparison.
