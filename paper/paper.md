@@ -91,7 +91,7 @@ packages in the research area. If related tools exist, provide a clear “build
 vs. contribute” justification explaining your unique scholarly contribution and
 why existing alternatives are insufficient. -->
 
-Graph packages in high-level langauges suc has `R` and `Python` span a wide
+Graph packages in high-level langauges such as `R` and `Python` span a wide
 range of scopes, from general-purpose graph libraries to specialised
 causal-inference toolkits. \autoref{tab:packages-comparison} illustrates where
 `caugi` sits in this landscape; a full feature-by-feature comparison, covering
