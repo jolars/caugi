@@ -132,8 +132,8 @@ the package's online documentation at [caugi.org](https://caugi.org).
     within it.\label{tab:packages-comparison}
 
 Canonical citations, source-code locations, and project websites for the
-packages above are listed in \autoref{tab:packages-citations}. A dash indicates
-that no separate URL of that kind exists for the package.
+packages above are listed in \autoref{tab:packages-citations}. An empty space
+indicates that no separate URL of that kind exists for the package.
 
   ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
   Package                          Citation                        Source Code                                                            Project Site
