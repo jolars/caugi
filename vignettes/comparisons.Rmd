@@ -46,11 +46,9 @@ it implements, and how it interoperates with other tooling.
 Two adjacent areas are intentionally out of scope:
 
 - **Causal discovery** (PC, FCI, GES, GFCI, LiNGAM, etc.). `caugi` does not
-  implement discovery algorithms. For that, see `pcalg`, `bnlearn`, `Tetrad`, or
-  `pgmpy`.
+  implement discovery algorithms.
 - **Statistical inference and parameter learning** (CPT estimation, likelihood,
-  parameter fitting): also out of scope for `caugi`. See `bnlearn`, `gRbase`, or
-  `pgmpy`.
+  parameter fitting): also out of scope for `caugi`.
 
 ## Graph Types Supported
 
