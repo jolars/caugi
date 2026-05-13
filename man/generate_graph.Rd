@@ -34,7 +34,7 @@ Erdős-Rényi for random graph generation.
 dag <- generate_graph(n = 5, m = 4, class = "DAG")
 
 # generate a random CPDAG with 5 nodes and edge probability 0.3
-# (returned as an MPDAG; see Details)
+# (returned as an MPDAG)
 mpdag <- generate_graph(n = 5, p = 0.3, class = "CPDAG")
 
 }
