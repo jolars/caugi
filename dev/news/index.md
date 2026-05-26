@@ -2,6 +2,30 @@
 
 ## caugi (development version)
 
+### New Features
+
+- Add `==` and `!=` methods for `caugi` objects so `cg1 == cg2` returns
+  a single logical comparing graph content (class, nodes, edges,
+  `simple`) rather than session identity.
+
+### Improvements
+
+- Meek-closed PDAGs are now reported with `@graph_class = "MPDAG"`
+  instead of `"PDAG"`. This affects the result of
+  [`meek_closure()`](https://caugi.org/dev/reference/meek_closure.md)
+  and `generate_graph(class = "CPDAG")`. Predicates and verbs defined on
+  PDAGs ([`is_pdag()`](https://caugi.org/dev/reference/is_pdag.md),
+  [`mutate_caugi()`](https://caugi.org/dev/reference/mutate_caugi.md),
+  etc.) continue to accept MPDAGs unchanged.
+
+### Bug Fixes
+
+- Fix
+  [`dag_from_pdag()`](https://caugi.org/dev/reference/dag_from_pdag.md)
+  failing with `` `from`, `edge`, `to` must be equal length. `` when a
+  sink had multiple undirected neighbors
+  ([\#298](https://github.com/frederikfabriciusbjerre/caugi/issues/298)).
+
 ## caugi 1.2.0
 
 CRAN release: 2026-05-05

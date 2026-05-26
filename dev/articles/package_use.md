@@ -113,7 +113,7 @@ Let’s try it out!
 
 cg <- correlation_implies_causation(df)
 cg
-#> <caugi object; 3 nodes, 1 edges; simple: TRUE; session=0x564e18b6d0f0>
+#> <caugi object; 3 nodes, 1 edges; simple: TRUE; session=0x55b07d3c0210>
 #>   graph_class: UNKNOWN
 #>   nodes: V1, V2, V3
 #>   edges: V1-->V2
@@ -165,7 +165,7 @@ Now, when you call `correlation_implies_causation(df)`, it will return a
 
 cg <- correlation_implies_causation(df)
 cg
-#> <caugi object; 3 nodes, 1 edges; simple: TRUE; session=0x564e1a6a4490>
+#> <caugi object; 3 nodes, 1 edges; simple: TRUE; session=0x55b0797df5e0>
 #>   graph_class: DAG
 #>   nodes: V1, V2, V3
 #>   edges: V1-->V2
