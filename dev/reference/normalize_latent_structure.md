@@ -58,7 +58,7 @@ dag <- caugi(
 )
 
 normalize_latent_structure(dag, latents = "U")
-#> <caugi object; 4 nodes, 4 edges; simple: TRUE; session=0x5567907401f0>
+#> <caugi object; 4 nodes, 4 edges; simple: TRUE; session=0x55aaee14ff10>
 #>   graph_class: DAG
 #>   nodes: A, U, X, Y
 #>   edges: A-->X, A-->Y, U-->X, U-->Y
@@ -71,7 +71,7 @@ dag2 <- caugi(
   class = "DAG"
 )
 normalize_latent_structure(dag2, c("U", "U2"))
-#> <caugi object; 5 nodes, 6 edges; simple: TRUE; session=0x556791dd53b0>
+#> <caugi object; 5 nodes, 6 edges; simple: TRUE; session=0x55aaf5521770>
 #>   graph_class: DAG
 #>   nodes: A, U, X, Y, Z
 #>   edges: A-->X, A-->Y, A-->Z, U-->X, U-->Y, U-->Z
