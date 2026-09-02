@@ -88,8 +88,9 @@ node has on average $`\approx 3`$ (or $`\approx 6`$) parents and
 $`\approx 3`$ (or $`\approx 6`$) children, with edge counts that grow
 linearly with $`n`$. The slowest packages (`dagitty`, `ggm`, plus
 [`bnlearn::dsep`](https://rdrr.io/pkg/bnlearn/man/dsep.html) and
-`pcalg::dsep`) are skipped at $`n = 10\,000`$ via the `skip` table in
-`spec.json`; the affected lines simply end at $`n = 1\,000`$.
+[`pcalg::dsep`](https://rdrr.io/pkg/pcalg/man/dsep.html)) are skipped at
+$`n = 10\,000`$ via the `skip` table in `spec.json`; the affected lines
+simply end at $`n = 1\,000`$.
 
 ### Relational Queries
 
@@ -255,8 +256,9 @@ is, a smallest set of nodes whose conditioning blocks every path between
 `X` and `Y` in the DAG. The same triple `(X, Y, Z)` is then passed to
 every package’s d-separation routine, so every package answers “is
 `X ⫫ Y | Z`?” on identical inputs. Tetrad uses the m-separation
-generalisation (equivalent on DAGs). `pcalg::dsep()` follows Lauritzen’s
-moralization-based test on a `graphNEL`.
+generalisation (equivalent on DAGs).
+[`pcalg::dsep()`](https://rdrr.io/pkg/pcalg/man/dsep.html) follows
+Lauritzen’s moralization-based test on a `graphNEL`.
 
 ``` r
 
@@ -428,7 +430,7 @@ pipeline (`task all`) and per-language details.
     #>  [1] vctrs_0.7.3        cli_3.6.6          knitr_1.51         rlang_1.3.0       
     #>  [5] xfun_0.60          otel_0.2.0         generics_0.1.4     S7_0.2.2          
     #>  [9] textshaping_1.0.5  jsonlite_2.0.0     glue_1.8.1         htmltools_0.5.9   
-    #> [13] ragg_1.5.2         sass_0.4.10        scales_1.4.0       rmarkdown_2.31    
+    #> [13] ragg_1.5.2         sass_0.4.10        scales_1.4.0       rmarkdown_2.32    
     #> [17] grid_4.6.1         tibble_3.3.1       evaluate_1.0.5     jquerylib_0.1.4   
     #> [21] fastmap_1.2.0      yaml_2.3.12        lifecycle_1.0.5    compiler_4.6.1    
     #> [25] dplyr_1.2.1        RColorBrewer_1.1-3 fs_2.1.0           pkgconfig_2.0.3   

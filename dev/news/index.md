@@ -4,6 +4,12 @@
 
 ### New Features
 
+- Add
+  [`enumerate_dags()`](https://caugi.org/dev/reference/enumerate_dags.md)
+  to enumerate every DAG in the Markov equivalence class of a PDAG, and
+  [`count_dags()`](https://caugi.org/dev/reference/count_dags.md) to
+  return the MEC size without materializing every DAG
+  ([\#297](https://github.com/frederikfabriciusbjerre/caugi/issues/297)).
 - [`plot()`](https://caugi.org/dev/reference/plot.md) now automatically
   bends edges around non-incident nodes that they would otherwise pass
   straight through, so edges between collinear nodes (e.g. within a
@@ -31,6 +37,18 @@
 
 ### Improvements
 
+- [`aid()`](https://caugi.org/dev/reference/aid.md) is now implemented
+  natively in caugi’s Rust backend, removing the external `gadjid`
+  dependency (and its pinned git revision and vendored sources). Results
+  are unchanged. The AID implementation (`src/rust/src/graph/aid.rs`) is
+  a derivative of `gadjid` and is licensed MPL-2.0; the rest of the
+  crate remains MIT. [`aid()`](https://caugi.org/dev/reference/aid.md)
+  now takes inputs of class `"DAG"` or `"CPDAG"` (previously `"DAG"` or
+  `"PDAG"`), reusing the first-class `"CPDAG"` graph class.
+- Licensing of bundled code is now declared for CRAN: a top-level
+  `LICENSE.note` documents the MPL-2.0 component (the AID files derived
+  from `gadjid`) and the licenses of the vendored Rust crates, and their
+  copyright holders are recorded via `cph`/`ctb` roles in `Authors@R`.
 - Meek-closed PDAGs are now reported with `@graph_class = "MPDAG"`
   instead of `"PDAG"`. This affects the result of
   [`meek_closure()`](https://caugi.org/dev/reference/meek_closure.md)
@@ -105,6 +123,14 @@
   silently converting partial `--o` and `o-o` edges into plain directed
   edges, dropping the circle endpoints
   ([\#307](https://github.com/frederikfabriciusbjerre/caugi/issues/307)).
+
+### Deprecations
+
+- The first argument of
+  [`dag_from_pdag()`](https://caugi.org/dev/reference/dag_from_pdag.md)
+  is now named `cg`, matching the convention used by the rest of the
+  package. The previous name `PDAG` continues to work as an alias but
+  emits a deprecation warning.
 
 ## caugi 1.2.0
 
