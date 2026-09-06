@@ -19,11 +19,11 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Frederik Fabricius-Bjerre \email{frederik@fabriciusbjerre.dk} [copyright holder]
+\strong{Maintainer}: Frederik Fabricius-Bjerre \email{frederik@fabriciusbjerre.dk} (\href{https://orcid.org/0009-0004-1079-1616}{ORCID}) [copyright holder]
 
 Authors:
 \itemize{
-  \item Frederik Fabricius-Bjerre \email{frederik@fabriciusbjerre.dk} [copyright holder]
+  \item Frederik Fabricius-Bjerre \email{frederik@fabriciusbjerre.dk} (\href{https://orcid.org/0009-0004-1079-1616}{ORCID}) [copyright holder]
   \item Johan Larsson \email{johan@jolars.co} (\href{https://orcid.org/0000-0002-4029-5945}{ORCID})
   \item Michael Sachs \email{sachsmc@gmail.com} (\href{https://orcid.org/0000-0002-1279-8676}{ORCID})
   \item Bjarke Hautop Kristensen \email{bjarke.hautop@gmail.com}
