@@ -8,7 +8,9 @@
 #'
 #' @param x A `caugi` object.
 #'
-#' @name length
+#' @name length-caugi
+#' @aliases length
+#' @usage length(x)
 #'
 #' @returns An integer representing the number of nodes.
 #'
@@ -29,7 +31,7 @@
 #' @family caugi methods
 #' @concept methods
 #'
-#' @export
+#' @export length
 S7::method(length, caugi) <- function(x) {
   nrow(x@nodes)
 }
@@ -48,6 +50,8 @@ S7::method(length, caugi) <- function(x) {
 #' @returns The input `caugi` object, invisibly.
 #'
 #' @name print
+#' @usage print(x, max_nodes = getOption("caugi.max_nodes"),
+#'   max_edges = getOption("caugi.max_edges"), ...)
 #'
 #' @examples
 #' cg <- caugi(A %-->% B, class = "DAG")

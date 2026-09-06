@@ -3,6 +3,10 @@
 \name{print}
 \alias{print}
 \title{Print a \code{caugi}}
+\usage{
+print(x, max_nodes = getOption("caugi.max_nodes"),
+  max_edges = getOption("caugi.max_edges"), ...)
+}
 \arguments{
 \item{x}{A \code{caugi} object.}
 
@@ -30,7 +34,7 @@ print(cg)
 \seealso{
 Other caugi methods: 
 \code{\link{caugi-equality}},
-\code{\link{length}()}
+\code{\link{length-caugi}}
 }
 \concept{caugi methods}
 \concept{methods}

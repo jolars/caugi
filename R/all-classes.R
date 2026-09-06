@@ -78,6 +78,7 @@ knit_print <- S7::new_external_generic("knitr", "knit_print", "x")
 #' to_dot(cg)
 #' ```
 #' @name knit_print.caugi_export
+#' @usage \method{knit_print}{caugi_export}(x, ...)
 #' @family export
 #' @concept export
 S7::method(

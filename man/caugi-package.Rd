@@ -28,6 +28,14 @@ Authors:
   \item Bjarke Hautop Kristensen \email{bjarke.hautop@gmail.com}
 }
 
+Other contributors:
+\itemize{
+  \item Leonard Henckel (author of the 'gadjid' crate, from which src/rust/src/graph/aid.rs is derived (MPL-2.0); see LICENSE.note) [contributor, copyright holder]
+  \item Theo Würtzen (author of the 'gadjid' crate; see LICENSE.note) [contributor, copyright holder]
+  \item Sebastian Weichwald (author of the 'gadjid' crate; see LICENSE.note) [contributor, copyright holder]
+  \item Authors of the bundled Rust crates (vendored under src/rust/vendor; see LICENSE.note) [contributor, copyright holder]
+}
+
 }
 \keyword{internal}
 \keyword{package}
