@@ -1,4 +1,4 @@
-# caugi (development version)
+# caugi 1.3.0
 
 ## New Features
 
@@ -22,6 +22,10 @@
   `@graph_class = "CPDAG"` instead of `"MPDAG"`, the precise label for the
   essential graph of a Markov equivalence class. Predicates defined on PDAGs and
   MPDAGs (`is_pdag()`, `is_mpdag()`, etc.) continue to accept CPDAGs unchanged.
+- Meek-closed PDAGs are now reported with `@graph_class = "MPDAG"` instead of
+  `"PDAG"`. This affects the result of `meek_closure()` and
+  `generate_graph(class = "CPDAG")`. Predicates and verbs defined on PDAGs
+  (`is_pdag()`, `mutate_caugi()`, etc.) continue to accept MPDAGs unchanged.
 
 ## Improvements
 
@@ -30,25 +34,15 @@
   sources). Results are unchanged. The AID implementation
   (`src/rust/src/graph/aid.rs`) is a derivative of `gadjid` and is licensed
   MPL-2.0; the rest of the crate remains MIT. `aid()` now takes inputs of class
-  `"DAG"` or `"CPDAG"` (previously `"DAG"` or `"PDAG"`), reusing the
-  first-class `"CPDAG"` graph class.
+  `"DAG"` or `"CPDAG"` (previously `"DAG"` or `"PDAG"`).
 - Licensing of bundled code is now declared for CRAN: a top-level `LICENSE.note`
   documents the MPL-2.0 component (the AID files derived from `gadjid`) and the
   licenses of the vendored Rust crates, and their copyright holders are recorded
   via `cph`/`ctb` roles in `Authors@R`.
-- Meek-closed PDAGs are now reported with `@graph_class = "MPDAG"` instead of
-  `"PDAG"`. This affects the result of `meek_closure()` and
-  `generate_graph(class = "CPDAG")`. Predicates and verbs defined on PDAGs
-  (`is_pdag()`, `mutate_caugi()`, etc.) continue to accept MPDAGs unchanged.
 - `adjustment_set(type = "backdoor")` now returns an inclusion-minimal backdoor
   adjustment set, computed in linear time as a minimal d-separator in the proper
   backdoor graph, rather than the full set of parents of the exposure.
-  `"PDAG"`. This affects the result of `meek_closure()`. Predicates and verbs
-  defined on PDAGs (`is_pdag()`, `mutate_caugi()`, etc.) continue to accept
-  MPDAGs unchanged.
-  `"PDAG"`. This affects the result of `meek_closure()` and
-  `generate_graph(class = "CPDAG")`. Predicates and verbs defined on PDAGs
-  (`is_pdag()`, `mutate_caugi()`, etc.) continue to accept MPDAGs unchanged.
+  `"PDAG"`. This affects the result of `meek_closure()`. 
 - The performance vignette is now a true vignette (rather than a pkgdown-only
   article) and is rebuilt manually from a cross-language harness under
   `tools/benchmark/`. The harness compares `caugi` to `igraph`, `bnlearn`,
@@ -62,23 +56,21 @@
 - Fix `hd()` returning results that depended on the order in which nodes were
   declared. The Hamming distance now aligns nodes by name before comparing, so
   logically identical graphs always give the same distance (#323).
-- Fix `dag_from_pdag()` failing with `` `from`, `edge`, `to` must be equal
-  length. `` when a sink had multiple undirected neighbors (#298).
+- Fix `dag_from_pdag()` failing when a sink had multiple undirected neighbors .
 - Fixed a bug causing a partially undirected (`--o`) edges to
   be plotted as undirected edges.
 - Fix `adjustment_set(type = "backdoor")` returning an invalid (often empty)
   set when a parent of the exposure lies on a backdoor path but is not an
-  ancestor of the outcome (#308). The result is now always a valid backdoor
+  ancestor of the outcome. The result is now always a valid backdoor
   adjustment set.
-
 - Fixed `is_mag()` returning incorrect results for some ancestral graphs.
 - Stripped non-build files (`tests/`, `examples/`, trybuild fixtures) from the
   vendored Rust dependencies so no vendored path exceeds 100 characters. This
   silences pak's "very long paths" warning and avoids installation failures on
-  Windows without long-path support (#319).
-  Adjacency was tested by binary-searching the concatenation of separately
+  Windows without long-path support.
+- Adjacency was tested by binary-searching the concatenation of separately
   sorted neighbor buckets, which is not globally sorted, so some adjacent
-  pairs were missed (#309).
+  pairs were missed.
 - Fixed `to_dot()` and `to_mermaid()` (and `write_dot()`/`write_mermaid()`)
   silently converting partial `--o` and `o-o` edges into plain directed edges,
   dropping the circle endpoints (#307).
