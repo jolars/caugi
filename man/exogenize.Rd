@@ -26,16 +26,16 @@ exogenize(cg, nodes = "B") # A, B
 
 }
 \seealso{
-Other operations: 
-\code{\link{condition_marginalize}()},
-\code{\link{count_dags}()},
-\code{\link{dag_from_pdag}()},
-\code{\link{enumerate_dags}()},
-\code{\link{latent_project}()},
-\code{\link{meek_closure}()},
-\code{\link{moralize}()},
-\code{\link{mutate_caugi}()},
-\code{\link{normalize_latent_structure}()},
-\code{\link{skeleton}()}
+Other operations:
+\code{\link[=condition_marginalize]{condition_marginalize()}},
+\code{\link[=count_dags]{count_dags()}},
+\code{\link[=dag_from_pdag]{dag_from_pdag()}},
+\code{\link[=enumerate_dags]{enumerate_dags()}},
+\code{\link[=latent_project]{latent_project()}},
+\code{\link[=meek_closure]{meek_closure()}},
+\code{\link[=moralize]{moralize()}},
+\code{\link[=mutate_caugi]{mutate_caugi()}},
+\code{\link[=normalize_latent_structure]{normalize_latent_structure()}},
+\code{\link[=skeleton]{skeleton()}}
 }
 \concept{operations}

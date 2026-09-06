@@ -24,10 +24,6 @@ any additional arguments passed via \code{...}.
 \item A pre-computed layout data.frame with columns \code{name}, \code{x}, and \code{y}.
 }}
 
-\item{...}{Additional arguments passed to \code{\link[=caugi_layout]{caugi_layout()}}. For bipartite
-layouts, include \code{partition} (logical vector) and \code{orientation} (\code{"rows"}
-or \code{"columns"}).}
-
 \item{node_style}{List of node styling parameters. Supports:
 \itemize{
 \item Appearance (passed to \code{gpar()}): \code{fill}, \code{col}, \code{lwd}, \code{lty}, \code{alpha}
@@ -106,6 +102,10 @@ Default is \code{grid::unit(2, "mm")}.}
 
 \item{title_gap}{Grid unit specifying gap between title and graph.
 Default is \code{grid::unit(1, "lines")}.}
+
+\item{...}{Additional arguments passed to \code{\link[=caugi_layout]{caugi_layout()}}. For bipartite
+layouts, include \code{partition} (logical vector) and \code{orientation} (\code{"rows"}
+or \code{"columns"}).}
 }
 \value{
 A \code{caugi_plot} object that wraps a \code{gTree} for grid graphics
@@ -170,16 +170,16 @@ plot(cg, asp = 1)
 
 }
 \seealso{
-Other plotting: 
+Other plotting:
 \code{\link{add-caugi_plot-caugi_plot}},
-\code{\link{caugi_layout}()},
-\code{\link{caugi_layout_bipartite}()},
-\code{\link{caugi_layout_circle}()},
-\code{\link{caugi_layout_fruchterman_reingold}()},
-\code{\link{caugi_layout_kamada_kawai}()},
-\code{\link{caugi_layout_sugiyama}()},
-\code{\link{caugi_layout_tiered}()},
-\code{\link{caugi_plot}()},
+\code{\link[=caugi_layout]{caugi_layout()}},
+\code{\link[=caugi_layout_bipartite]{caugi_layout_bipartite()}},
+\code{\link[=caugi_layout_circle]{caugi_layout_circle()}},
+\code{\link[=caugi_layout_fruchterman_reingold]{caugi_layout_fruchterman_reingold()}},
+\code{\link[=caugi_layout_kamada_kawai]{caugi_layout_kamada_kawai()}},
+\code{\link[=caugi_layout_sugiyama]{caugi_layout_sugiyama()}},
+\code{\link[=caugi_layout_tiered]{caugi_layout_tiered()}},
+\code{\link[=caugi_plot]{caugi_plot()}},
 \code{\link{divide-caugi_plot-caugi_plot}}
 }
 \concept{plotting}

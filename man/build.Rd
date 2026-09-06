@@ -22,7 +22,7 @@ build(cg) # initialize graph without querying
 
 }
 \seealso{
-Other verbs: 
+Other verbs:
 \code{\link{caugi_verbs}}
 }
 \concept{verbs}

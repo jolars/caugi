@@ -36,8 +36,8 @@ aid(truth, guess) # 0.0187
 
 }
 \seealso{
-Other metrics: 
-\code{\link{hd}()},
-\code{\link{shd}()}
+Other metrics:
+\code{\link[=hd]{hd()}},
+\code{\link[=shd]{shd()}}
 }
 \concept{metrics}

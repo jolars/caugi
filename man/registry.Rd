@@ -78,7 +78,7 @@ reset_caugi_registry()
 
 }
 \seealso{
-Other registry: 
-\code{\link{register_caugi_edge}()}
+Other registry:
+\code{\link[=register_caugi_edge]{register_caugi_edge()}}
 }
 \concept{registry}

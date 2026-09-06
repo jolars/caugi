@@ -28,8 +28,8 @@ hd(cg1, cg2) # 0
 
 }
 \seealso{
-Other metrics: 
-\code{\link{aid}()},
-\code{\link{shd}()}
+Other metrics:
+\code{\link[=aid]{aid()}},
+\code{\link[=shd]{shd()}}
 }
 \concept{metrics}

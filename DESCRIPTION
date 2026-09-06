@@ -91,6 +91,6 @@ VignetteBuilder:
 Config/rextendr/version: 0.5.0
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 SystemRequirements: Cargo (Rust's package manager), rustc >= 1.80.0, xz
 Config/Needs/website: rmarkdown
+Config/roxygen2/version: 8.1.0

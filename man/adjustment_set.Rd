@@ -62,12 +62,12 @@ adjustment_set(cg, "X", "Y", type = "optimal") # K
 
 }
 \seealso{
-Other adjustment: 
-\code{\link{all_adjustment_sets_admg}()},
-\code{\link{all_backdoor_sets}()},
-\code{\link{d_separated}()},
-\code{\link{is_valid_adjustment_admg}()},
-\code{\link{is_valid_backdoor}()},
-\code{\link{minimal_separator}()}
+Other adjustment:
+\code{\link[=all_adjustment_sets_admg]{all_adjustment_sets_admg()}},
+\code{\link[=all_backdoor_sets]{all_backdoor_sets()}},
+\code{\link[=d_separated]{d_separated()}},
+\code{\link[=is_valid_adjustment_admg]{is_valid_adjustment_admg()}},
+\code{\link[=is_valid_backdoor]{is_valid_backdoor()}},
+\code{\link[=minimal_separator]{minimal_separator()}}
 }
 \concept{adjustment}

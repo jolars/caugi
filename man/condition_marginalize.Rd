@@ -39,16 +39,16 @@ Markov models." Ann. Statist. 30 (4) 962 - 1030, August 2002.
 \doi{10.1214/aos/1031689015}
 }
 \seealso{
-Other operations: 
-\code{\link{count_dags}()},
-\code{\link{dag_from_pdag}()},
-\code{\link{enumerate_dags}()},
-\code{\link{exogenize}()},
-\code{\link{latent_project}()},
-\code{\link{meek_closure}()},
-\code{\link{moralize}()},
-\code{\link{mutate_caugi}()},
-\code{\link{normalize_latent_structure}()},
-\code{\link{skeleton}()}
+Other operations:
+\code{\link[=count_dags]{count_dags()}},
+\code{\link[=dag_from_pdag]{dag_from_pdag()}},
+\code{\link[=enumerate_dags]{enumerate_dags()}},
+\code{\link[=exogenize]{exogenize()}},
+\code{\link[=latent_project]{latent_project()}},
+\code{\link[=meek_closure]{meek_closure()}},
+\code{\link[=moralize]{moralize()}},
+\code{\link[=mutate_caugi]{mutate_caugi()}},
+\code{\link[=normalize_latent_structure]{normalize_latent_structure()}},
+\code{\link[=skeleton]{skeleton()}}
 }
 \concept{operations}

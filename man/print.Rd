@@ -32,7 +32,7 @@ print(cg)
 
 }
 \seealso{
-Other caugi methods: 
+Other caugi methods:
 \code{\link{caugi-equality}},
 \code{\link{length-caugi}}
 }

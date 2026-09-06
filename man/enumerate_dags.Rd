@@ -39,16 +39,16 @@ Chickering, D. M. (2002). "Learning Equivalence Classes of Bayesian-Network
 Structures". \emph{Journal of Machine Learning Research}, 2:445--498.
 }
 \seealso{
-Other operations: 
-\code{\link{condition_marginalize}()},
-\code{\link{count_dags}()},
-\code{\link{dag_from_pdag}()},
-\code{\link{exogenize}()},
-\code{\link{latent_project}()},
-\code{\link{meek_closure}()},
-\code{\link{moralize}()},
-\code{\link{mutate_caugi}()},
-\code{\link{normalize_latent_structure}()},
-\code{\link{skeleton}()}
+Other operations:
+\code{\link[=condition_marginalize]{condition_marginalize()}},
+\code{\link[=count_dags]{count_dags()}},
+\code{\link[=dag_from_pdag]{dag_from_pdag()}},
+\code{\link[=exogenize]{exogenize()}},
+\code{\link[=latent_project]{latent_project()}},
+\code{\link[=meek_closure]{meek_closure()}},
+\code{\link[=moralize]{moralize()}},
+\code{\link[=mutate_caugi]{mutate_caugi()}},
+\code{\link[=normalize_latent_structure]{normalize_latent_structure()}},
+\code{\link[=skeleton]{skeleton()}}
 }
 \concept{operations}

@@ -47,7 +47,7 @@ reset_caugi_registry()
 
 }
 \seealso{
-Other registry: 
+Other registry:
 \code{\link{registry}}
 }
 \concept{registry}

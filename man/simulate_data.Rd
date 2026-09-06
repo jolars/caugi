@@ -67,8 +67,8 @@ df <- simulate_data(cg, n = 100, seed = 42)
 
 }
 \seealso{
-Other simulation functions: 
-\code{\link{generate_graph}()}
+Other simulation functions:
+\code{\link[=generate_graph]{generate_graph()}}
 }
 \concept{simulation}
 \concept{simulation functions}
