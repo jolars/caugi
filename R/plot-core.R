@@ -132,10 +132,7 @@
 #' plot(cg, asp = 1)
 #'
 #' @name plot
-#' @usage plot(x, layout = "auto", node_style = list(),
-#'   edge_style = list(), label_style = list(), tier_style = list(),
-#'   main = NULL, title_style = list(), asp = NA,
-#'   outer_margin = grid::unit(2, "mm"), title_gap = grid::unit(1, "lines"), ...)
+#' @usage NULL
 #' @family plotting
 #' @concept plotting
 #'
@@ -549,7 +546,6 @@ S7::method(plot, caugi_plot) <- function(x, newpage = TRUE, ...) {
 #' p1 + p2
 #'
 #' @name add-caugi_plot-caugi_plot
-#' @usage e1 + e2
 NULL
 
 S7::method(`+`, list(caugi_plot, caugi_plot)) <- function(e1, e2) {
@@ -558,7 +554,6 @@ S7::method(`+`, list(caugi_plot, caugi_plot)) <- function(e1, e2) {
 
 #' @rdname add-caugi_plot-caugi_plot
 #' @name pipe-caugi_plot-caugi_plot
-#' @usage e1 | e2
 NULL
 
 S7::method(`|`, list(caugi_plot, caugi_plot)) <- function(e1, e2) {
@@ -601,7 +596,6 @@ S7::method(`|`, list(caugi_plot, caugi_plot)) <- function(e1, e2) {
 #' (p1 + p2) / p1
 #'
 #' @name divide-caugi_plot-caugi_plot
-#' @usage e1 / e2
 NULL
 
 S7::method(`/`, list(caugi_plot, caugi_plot)) <- function(e1, e2) {

@@ -4,11 +4,6 @@
 \alias{add-caugi_plot-caugi_plot}
 \alias{pipe-caugi_plot-caugi_plot}
 \title{Compose Plots Horizontally}
-\usage{
-e1 + e2
-
-e1 | e2
-}
 \arguments{
 \item{e1}{A \code{caugi_plot} object (left plot)}
 

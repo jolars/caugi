@@ -3,9 +3,6 @@
 \name{divide-caugi_plot-caugi_plot}
 \alias{divide-caugi_plot-caugi_plot}
 \title{Compose Plots Vertically}
-\usage{
-e1 / e2
-}
 \arguments{
 \item{e1}{A \code{caugi_plot} object (top plot)}
 

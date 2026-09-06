@@ -3,12 +3,6 @@
 \name{plot}
 \alias{plot}
 \title{Create a caugi Graph Plot Object}
-\usage{
-plot(x, layout = "auto", node_style = list(),
-  edge_style = list(), label_style = list(), tier_style = list(),
-  main = NULL, title_style = list(), asp = NA,
-  outer_margin = grid::unit(2, "mm"), title_gap = grid::unit(1, "lines"), ...)
-}
 \arguments{
 \item{x}{A \code{caugi} object. Must contain only directed edges for Sugiyama
 layout.}

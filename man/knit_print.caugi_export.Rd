@@ -3,9 +3,6 @@
 \name{knit_print.caugi_export}
 \alias{knit_print.caugi_export}
 \title{Knit Print Method for caugi_export}
-\usage{
-\method{knit_print}{caugi_export}(x, ...)
-}
 \arguments{
 \item{x}{A \code{caugi_export} object.}
 

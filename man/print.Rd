@@ -3,10 +3,6 @@
 \name{print}
 \alias{print}
 \title{Print a \code{caugi}}
-\usage{
-print(x, max_nodes = getOption("caugi.max_nodes"),
-  max_edges = getOption("caugi.max_edges"), ...)
-}
 \arguments{
 \item{x}{A \code{caugi} object.}
 

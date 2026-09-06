@@ -50,8 +50,7 @@ S7::method(length, caugi) <- function(x) {
 #' @returns The input `caugi` object, invisibly.
 #'
 #' @name print
-#' @usage print(x, max_nodes = getOption("caugi.max_nodes"),
-#'   max_edges = getOption("caugi.max_edges"), ...)
+#' @usage NULL
 #'
 #' @examples
 #' cg <- caugi(A %-->% B, class = "DAG")
