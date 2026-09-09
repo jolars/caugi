@@ -2,6 +2,7 @@
 % Please edit documentation in R/plot-core.R
 \name{plot.caugi}
 \alias{plot.caugi}
+\alias{plot}
 \title{Create a caugi Graph Plot Object}
 \usage{
 \method{plot}{caugi}(x, layout = "auto", node_style = list(),

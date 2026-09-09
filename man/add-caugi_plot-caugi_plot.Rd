@@ -4,6 +4,7 @@
 \alias{add-caugi_plot-caugi_plot}
 \alias{+.caugi_plot}
 \alias{|.caugi_plot}
+\alias{pipe-caugi_plot-caugi_plot}
 \title{Compose Plots Horizontally}
 \usage{
 \method{+}{caugi_plot}(e1, e2)

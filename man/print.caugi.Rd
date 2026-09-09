@@ -2,6 +2,7 @@
 % Please edit documentation in R/methods.R
 \name{print.caugi}
 \alias{print.caugi}
+\alias{print}
 \title{Print a \code{caugi}}
 \usage{
 \method{print}{caugi}(x, max_nodes = getOption("caugi.max_nodes"),

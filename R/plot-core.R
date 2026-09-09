@@ -132,6 +132,7 @@
 #' plot(cg, asp = 1)
 #'
 #' @name plot.caugi
+#' @aliases plot
 #' @usage \method{plot}{caugi}(x, layout = "auto", node_style = list(),
 #'   edge_style = list(), label_style = list(), tier_style = list(),
 #'   main = NULL, title_style = list(), asp = NA,
@@ -550,7 +551,7 @@ S7::method(plot, caugi_plot) <- function(x, newpage = TRUE, ...) {
 #' p1 + p2
 #'
 #' @name add-caugi_plot-caugi_plot
-#' @aliases +.caugi_plot |.caugi_plot
+#' @aliases +.caugi_plot |.caugi_plot pipe-caugi_plot-caugi_plot
 #' @usage \method{+}{caugi_plot}(e1, e2)
 #'
 #' \method{|}{caugi_plot}(e1, e2)

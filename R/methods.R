@@ -52,6 +52,7 @@ S7::method(length, caugi) <- length.caugi
 #' @returns The input `caugi` object, invisibly.
 #'
 #' @name print.caugi
+#' @aliases print
 #' @usage \method{print}{caugi}(x, max_nodes = getOption("caugi.max_nodes"),
 #'   max_edges = getOption("caugi.max_edges"), ...)
 #'
