@@ -2,7 +2,11 @@
 % Please edit documentation in R/plot-core.R
 \name{divide-caugi_plot-caugi_plot}
 \alias{divide-caugi_plot-caugi_plot}
+\alias{/.caugi_plot}
 \title{Compose Plots Vertically}
+\usage{
+\method{/}{caugi_plot}(e1, e2)
+}
 \arguments{
 \item{e1}{A \code{caugi_plot} object (top plot)}
 
@@ -52,6 +56,6 @@ Other plotting:
 \code{\link[=caugi_layout_sugiyama]{caugi_layout_sugiyama()}},
 \code{\link[=caugi_layout_tiered]{caugi_layout_tiered()}},
 \code{\link[=caugi_plot]{caugi_plot()}},
-\code{\link[=plot]{plot()}}
+\code{\link[=plot.caugi]{plot.caugi()}}
 }
 \concept{plotting}

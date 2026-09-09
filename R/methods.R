@@ -8,9 +8,9 @@
 #'
 #' @param x A `caugi` object.
 #'
-#' @name length-caugi
+#' @name length.caugi
 #' @aliases length
-#' @usage length(x)
+#' @usage \method{length}{caugi}(x)
 #'
 #' @returns An integer representing the number of nodes.
 #'
@@ -31,10 +31,12 @@
 #' @family caugi methods
 #' @concept methods
 #'
-#' @export length
-S7::method(length, caugi) <- function(x) {
+#' @export
+#' @rawNamespace export(length)
+length.caugi <- function(x) {
   nrow(x@nodes)
 }
+S7::method(length, caugi) <- length.caugi
 
 #' Print a `caugi`
 #'
@@ -49,8 +51,9 @@ S7::method(length, caugi) <- function(x) {
 #'
 #' @returns The input `caugi` object, invisibly.
 #'
-#' @name print
-#' @usage NULL
+#' @name print.caugi
+#' @usage \method{print}{caugi}(x, max_nodes = getOption("caugi.max_nodes"),
+#'   max_edges = getOption("caugi.max_edges"), ...)
 #'
 #' @examples
 #' cg <- caugi(A %-->% B, class = "DAG")
@@ -60,7 +63,7 @@ S7::method(length, caugi) <- function(x) {
 #' @concept methods
 #'
 #' @export
-S7::method(print, caugi) <- function(
+print.caugi <- function(
   x,
   max_nodes = getOption("caugi.max_nodes"),
   max_edges = getOption("caugi.max_edges"),
@@ -217,6 +220,7 @@ S7::method(print, caugi) <- function(
 
   invisible(x)
 }
+S7::method(print, caugi) <- print.caugi
 
 #' @title Fit items on a line
 #'

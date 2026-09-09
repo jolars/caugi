@@ -2,8 +2,14 @@
 % Please edit documentation in R/plot-core.R
 \name{add-caugi_plot-caugi_plot}
 \alias{add-caugi_plot-caugi_plot}
-\alias{pipe-caugi_plot-caugi_plot}
+\alias{+.caugi_plot}
+\alias{|.caugi_plot}
 \title{Compose Plots Horizontally}
+\usage{
+\method{+}{caugi_plot}(e1, e2)
+
+\method{|}{caugi_plot}(e1, e2)
+}
 \arguments{
 \item{e1}{A \code{caugi_plot} object (left plot)}
 
@@ -56,6 +62,6 @@ Other plotting:
 \code{\link[=caugi_layout_tiered]{caugi_layout_tiered()}},
 \code{\link[=caugi_plot]{caugi_plot()}},
 \code{\link{divide-caugi_plot-caugi_plot}},
-\code{\link[=plot]{plot()}}
+\code{\link[=plot.caugi]{plot.caugi()}}
 }
 \concept{plotting}

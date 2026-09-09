@@ -58,7 +58,7 @@ would otherwise cross (default: \code{TRUE})
 }
 
 Options set via \code{caugi_options()} serve as global defaults that can be
-overridden by arguments to \code{\link[=plot]{plot()}}.
+overridden by arguments to \code{\link[=plot.caugi]{plot.caugi()}}.
 }
 \examples{
 # Query all options
@@ -95,7 +95,7 @@ caugi_options(caugi_default_options())
 
 }
 \seealso{
-\code{\link[=plot]{plot()}} for per-plot style arguments, \code{\link[grid:gpar]{grid::gpar()}} for
+\code{\link[=plot.caugi]{plot.caugi()}} for per-plot style arguments, \code{\link[grid:gpar]{grid::gpar()}} for
 available graphical parameters
 }
 \concept{options}

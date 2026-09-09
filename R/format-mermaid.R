@@ -16,6 +16,8 @@ NULL
 #'
 #' @param content A character string containing the Mermaid format graph.
 #'
+#' @returns A `caugi_mermaid` S7 object wrapping the Mermaid string.
+#'
 #' @family export
 #' @concept export
 #'

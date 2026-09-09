@@ -11,6 +11,9 @@ caugi_export(content = character(0), format = character(0))
 
 \item{format}{A character string indicating the export format.}
 }
+\value{
+A \code{caugi_export} S7 object with \code{content} and \code{format} properties.
+}
 \description{
 A base class for all caugi export formats. Provides common structure
 and behavior for different export formats (DOT, GraphML, etc.).
@@ -27,7 +30,7 @@ Other export:
 \code{\link{format-dot}},
 \code{\link{format-graphml}},
 \code{\link{format-mermaid}},
-\code{\link{knit_print.caugi_export}},
+\code{\link[=knit_print.caugi_export]{knit_print.caugi_export()}},
 \code{\link[=read_caugi]{read_caugi()}},
 \code{\link[=read_graphml]{read_graphml()}},
 \code{\link[=to_dot]{to_dot()}},

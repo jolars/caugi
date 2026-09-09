@@ -88,6 +88,6 @@ Other plotting:
 \code{\link[=caugi_layout_sugiyama]{caugi_layout_sugiyama()}},
 \code{\link[=caugi_plot]{caugi_plot()}},
 \code{\link{divide-caugi_plot-caugi_plot}},
-\code{\link[=plot]{plot()}}
+\code{\link[=plot.caugi]{plot.caugi()}}
 }
 \concept{plotting}

@@ -16,6 +16,8 @@ NULL
 #'
 #' @param content A character string containing the DOT format graph.
 #'
+#' @returns A `caugi_dot` S7 object wrapping the DOT string.
+#'
 #' @family export
 #' @concept export
 #'

@@ -9,6 +9,9 @@ caugi_plot(grob = NULL)
 \arguments{
 \item{grob}{A grid gTree representing the graph plot.}
 }
+\value{
+A \code{caugi_plot} S7 object wrapping the supplied \code{grob}.
+}
 \description{
 An S7 object that wraps a grid gTree for displaying caugi graphs.
 Similar to ggplot objects, these are created by the plot method but
@@ -27,6 +30,6 @@ Other plotting:
 \code{\link[=caugi_layout_sugiyama]{caugi_layout_sugiyama()}},
 \code{\link[=caugi_layout_tiered]{caugi_layout_tiered()}},
 \code{\link{divide-caugi_plot-caugi_plot}},
-\code{\link[=plot]{plot()}}
+\code{\link[=plot.caugi]{plot.caugi()}}
 }
 \concept{plotting}

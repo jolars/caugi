@@ -14,6 +14,8 @@ NULL
 #'
 #' @param content A character string containing the GraphML format graph.
 #'
+#' @returns A `caugi_graphml` S7 object wrapping the GraphML string.
+#'
 #' @family export
 #'
 #' @export

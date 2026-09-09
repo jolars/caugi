@@ -63,7 +63,7 @@ Other export:
 \code{\link{format-dot}},
 \code{\link{format-graphml}},
 \code{\link{format-mermaid}},
-\code{\link{knit_print.caugi_export}},
+\code{\link[=knit_print.caugi_export]{knit_print.caugi_export()}},
 \code{\link[=read_caugi]{read_caugi()}},
 \code{\link[=read_graphml]{read_graphml()}},
 \code{\link[=to_dot]{to_dot()}},

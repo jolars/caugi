@@ -47,6 +47,6 @@ Other plotting:
 \code{\link[=caugi_layout_tiered]{caugi_layout_tiered()}},
 \code{\link[=caugi_plot]{caugi_plot()}},
 \code{\link{divide-caugi_plot-caugi_plot}},
-\code{\link[=plot]{plot()}}
+\code{\link[=plot.caugi]{plot.caugi()}}
 }
 \concept{plotting}

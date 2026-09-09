@@ -31,8 +31,8 @@ cg1 != caugi(A \%-->\% C, class = "DAG") # TRUE
 }
 \seealso{
 Other caugi methods:
-\code{\link{length-caugi}},
-\code{\link[=print]{print()}}
+\code{\link[=length.caugi]{length.caugi()}},
+\code{\link[=print.caugi]{print.caugi()}}
 }
 \concept{caugi methods}
 \concept{methods}

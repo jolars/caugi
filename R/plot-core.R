@@ -131,13 +131,16 @@
 #' # Respect aspect ratio (1:1)
 #' plot(cg, asp = 1)
 #'
-#' @name plot
-#' @usage NULL
+#' @name plot.caugi
+#' @usage \method{plot}{caugi}(x, layout = "auto", node_style = list(),
+#'   edge_style = list(), label_style = list(), tier_style = list(),
+#'   main = NULL, title_style = list(), asp = NA,
+#'   outer_margin = grid::unit(2, "mm"), title_gap = grid::unit(1, "lines"), ...)
 #' @family plotting
 #' @concept plotting
 #'
 #' @export
-S7::method(plot, caugi) <- function(
+plot.caugi <- function(
   x,
   layout = "auto",
   node_style = list(),
@@ -492,6 +495,7 @@ S7::method(plot, caugi) <- function(
 
   caugi_plot(grob = final_grob)
 }
+S7::method(plot, caugi) <- plot.caugi
 
 #' @export
 S7::method(print, caugi_plot) <- function(x, ...) {
@@ -546,19 +550,21 @@ S7::method(plot, caugi_plot) <- function(x, newpage = TRUE, ...) {
 #' p1 + p2
 #'
 #' @name add-caugi_plot-caugi_plot
-NULL
-
-S7::method(`+`, list(caugi_plot, caugi_plot)) <- function(e1, e2) {
+#' @aliases +.caugi_plot |.caugi_plot
+#' @usage \method{+}{caugi_plot}(e1, e2)
+#'
+#' \method{|}{caugi_plot}(e1, e2)
+#' @export
+`+.caugi_plot` <- function(e1, e2) {
   compose_plots(e1, e2, horizontal = TRUE)
 }
+S7::method(`+`, list(caugi_plot, caugi_plot)) <- `+.caugi_plot`
 
-#' @rdname add-caugi_plot-caugi_plot
-#' @name pipe-caugi_plot-caugi_plot
-NULL
-
-S7::method(`|`, list(caugi_plot, caugi_plot)) <- function(e1, e2) {
+#' @export
+`|.caugi_plot` <- function(e1, e2) {
   e1 + e2
 }
+S7::method(`|`, list(caugi_plot, caugi_plot)) <- `|.caugi_plot`
 
 #' Compose Plots Vertically
 #'
@@ -596,11 +602,13 @@ S7::method(`|`, list(caugi_plot, caugi_plot)) <- function(e1, e2) {
 #' (p1 + p2) / p1
 #'
 #' @name divide-caugi_plot-caugi_plot
-NULL
-
-S7::method(`/`, list(caugi_plot, caugi_plot)) <- function(e1, e2) {
+#' @aliases /.caugi_plot
+#' @usage \method{/}{caugi_plot}(e1, e2)
+#' @export
+`/.caugi_plot` <- function(e1, e2) {
   compose_plots(e1, e2, horizontal = FALSE)
 }
+S7::method(`/`, list(caugi_plot, caugi_plot)) <- `/.caugi_plot`
 
 #' Internal function for plot composition
 #'

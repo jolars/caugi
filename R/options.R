@@ -99,9 +99,9 @@ caugi_default_options <- function() {
 #'   - `fontsize`: Font size in pts (default: `14.4`)
 #'
 #' Options set via `caugi_options()` serve as global defaults that can be
-#' overridden by arguments to [caugi::plot()].
+#' overridden by arguments to [plot.caugi()].
 #'
-#' @seealso [caugi::plot()] for per-plot style arguments, [grid::gpar()] for
+#' @seealso [plot.caugi()] for per-plot style arguments, [grid::gpar()] for
 #'   available graphical parameters
 #'
 #' @concept options
