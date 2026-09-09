@@ -9,6 +9,9 @@ caugi_plot(grob = NULL)
 \arguments{
 \item{grob}{A grid gTree representing the graph plot.}
 }
+\value{
+A \code{caugi_plot} S7 object wrapping the supplied \code{grob}.
+}
 \description{
 An S7 object that wraps a grid gTree for displaying caugi graphs.
 Similar to ggplot objects, these are created by the plot method but
@@ -17,16 +20,16 @@ returning plot objects from functions and controlling when/where
 they are displayed.
 }
 \seealso{
-Other plotting: 
+Other plotting:
 \code{\link{add-caugi_plot-caugi_plot}},
-\code{\link{caugi_layout}()},
-\code{\link{caugi_layout_bipartite}()},
-\code{\link{caugi_layout_circle}()},
-\code{\link{caugi_layout_fruchterman_reingold}()},
-\code{\link{caugi_layout_kamada_kawai}()},
-\code{\link{caugi_layout_sugiyama}()},
-\code{\link{caugi_layout_tiered}()},
+\code{\link[=caugi_layout]{caugi_layout()}},
+\code{\link[=caugi_layout_bipartite]{caugi_layout_bipartite()}},
+\code{\link[=caugi_layout_circle]{caugi_layout_circle()}},
+\code{\link[=caugi_layout_fruchterman_reingold]{caugi_layout_fruchterman_reingold()}},
+\code{\link[=caugi_layout_kamada_kawai]{caugi_layout_kamada_kawai()}},
+\code{\link[=caugi_layout_sugiyama]{caugi_layout_sugiyama()}},
+\code{\link[=caugi_layout_tiered]{caugi_layout_tiered()}},
 \code{\link{divide-caugi_plot-caugi_plot}},
-\code{\link{plot}()}
+\code{\link[=plot.caugi]{plot.caugi()}}
 }
 \concept{plotting}

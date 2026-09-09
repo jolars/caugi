@@ -45,12 +45,12 @@ is_valid_adjustment_admg(cg, X = "X", Y = "Y", Z = "L") # TRUE
 
 }
 \seealso{
-Other adjustment: 
-\code{\link{adjustment_set}()},
-\code{\link{all_adjustment_sets_admg}()},
-\code{\link{all_backdoor_sets}()},
-\code{\link{d_separated}()},
-\code{\link{is_valid_backdoor}()},
-\code{\link{minimal_separator}()}
+Other adjustment:
+\code{\link[=adjustment_set]{adjustment_set()}},
+\code{\link[=all_adjustment_sets_admg]{all_adjustment_sets_admg()}},
+\code{\link[=all_backdoor_sets]{all_backdoor_sets()}},
+\code{\link[=d_separated]{d_separated()}},
+\code{\link[=is_valid_backdoor]{is_valid_backdoor()}},
+\code{\link[=minimal_separator]{minimal_separator()}}
 }
 \concept{adjustment}

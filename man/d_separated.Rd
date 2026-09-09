@@ -50,12 +50,12 @@ d_separated(cg, "X", "Y", Z = NULL) # FALSE
 
 }
 \seealso{
-Other adjustment: 
-\code{\link{adjustment_set}()},
-\code{\link{all_adjustment_sets_admg}()},
-\code{\link{all_backdoor_sets}()},
-\code{\link{is_valid_adjustment_admg}()},
-\code{\link{is_valid_backdoor}()},
-\code{\link{minimal_separator}()}
+Other adjustment:
+\code{\link[=adjustment_set]{adjustment_set()}},
+\code{\link[=all_adjustment_sets_admg]{all_adjustment_sets_admg()}},
+\code{\link[=all_backdoor_sets]{all_backdoor_sets()}},
+\code{\link[=is_valid_adjustment_admg]{is_valid_adjustment_admg()}},
+\code{\link[=is_valid_backdoor]{is_valid_backdoor()}},
+\code{\link[=minimal_separator]{minimal_separator()}}
 }
 \concept{adjustment}

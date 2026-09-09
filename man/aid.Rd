@@ -26,7 +26,7 @@ Compute the Adjustment Identification Distance (AID) between two
 graphs. AID counts how often the adjustment-identification strategy applied
 to \code{guess} yields a causal inference that is incorrect relative to \code{truth}.
 Implemented in caugi's Rust backend following Henckel, Würtzen & Weichwald
-(2024), \doi{10.48550/arXiv.2402.08616}.
+(2024), \url{doi:10.48550/arXiv.2402.08616}.
 }
 \examples{
 set.seed(1)
@@ -36,8 +36,8 @@ aid(truth, guess) # 0.0187
 
 }
 \seealso{
-Other metrics: 
-\code{\link{hd}()},
-\code{\link{shd}()}
+Other metrics:
+\code{\link[=hd]{hd()}},
+\code{\link[=shd]{shd()}}
 }
 \concept{metrics}

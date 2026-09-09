@@ -19,13 +19,22 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Frederik Fabricius-Bjerre \email{frederik@fabriciusbjerre.dk} [copyright holder]
+\strong{Maintainer}: Frederik Fabricius-Bjerre \email{frederik@fabriciusbjerre.dk} (\href{https://orcid.org/0009-0004-1079-1616}{ORCID}) [copyright holder]
 
 Authors:
 \itemize{
+  \item Frederik Fabricius-Bjerre \email{frederik@fabriciusbjerre.dk} (\href{https://orcid.org/0009-0004-1079-1616}{ORCID}) [copyright holder]
   \item Johan Larsson \email{johan@jolars.co} (\href{https://orcid.org/0000-0002-4029-5945}{ORCID})
   \item Michael Sachs \email{sachsmc@gmail.com} (\href{https://orcid.org/0000-0002-1279-8676}{ORCID})
   \item Bjarke Hautop Kristensen \email{bjarke.hautop@gmail.com}
+}
+
+Other contributors:
+\itemize{
+  \item Leonard Henckel (author of the 'gadjid' crate, from which src/rust/src/graph/aid.rs is derived (MPL-2.0); see LICENSE.note) [contributor, copyright holder]
+  \item Theo Würtzen (author of the 'gadjid' crate; see LICENSE.note) [contributor, copyright holder]
+  \item Sebastian Weichwald (author of the 'gadjid' crate; see LICENSE.note) [contributor, copyright holder]
+  \item Authors of the bundled Rust crates (vendored under src/rust/vendor; see LICENSE.note) [contributor, copyright holder]
 }
 
 }

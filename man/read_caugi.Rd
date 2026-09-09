@@ -37,26 +37,26 @@ unlink(tmp)
 
 }
 \seealso{
-Other export: 
-\code{\link{caugi_deserialize}()},
-\code{\link{caugi_dot}()},
-\code{\link{caugi_export}()},
-\code{\link{caugi_graphml}()},
-\code{\link{caugi_mermaid}()},
-\code{\link{caugi_serialize}()},
+Other export:
+\code{\link[=caugi_deserialize]{caugi_deserialize()}},
+\code{\link[=caugi_dot]{caugi_dot()}},
+\code{\link[=caugi_export]{caugi_export()}},
+\code{\link[=caugi_graphml]{caugi_graphml()}},
+\code{\link[=caugi_mermaid]{caugi_mermaid()}},
+\code{\link[=caugi_serialize]{caugi_serialize()}},
 \code{\link{export-classes}},
 \code{\link{format-caugi}},
 \code{\link{format-dot}},
 \code{\link{format-graphml}},
 \code{\link{format-mermaid}},
-\code{\link{knit_print.caugi_export}},
-\code{\link{read_graphml}()},
-\code{\link{to_dot}()},
-\code{\link{to_graphml}()},
-\code{\link{to_mermaid}()},
-\code{\link{write_caugi}()},
-\code{\link{write_dot}()},
-\code{\link{write_graphml}()},
-\code{\link{write_mermaid}()}
+\code{\link[=knit_print.caugi_export]{knit_print.caugi_export()}},
+\code{\link[=read_graphml]{read_graphml()}},
+\code{\link[=to_dot]{to_dot()}},
+\code{\link[=to_graphml]{to_graphml()}},
+\code{\link[=to_mermaid]{to_mermaid()}},
+\code{\link[=write_caugi]{write_caugi()}},
+\code{\link[=write_dot]{write_dot()}},
+\code{\link[=write_graphml]{write_graphml()}},
+\code{\link[=write_mermaid]{write_mermaid()}}
 }
 \concept{export}

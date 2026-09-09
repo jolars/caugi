@@ -54,7 +54,7 @@ A `caugi` graph object is the bread and butter of the `caugi` package. It is eas
 library(caugi)
 ```
 
-You can create simple graphs as well as a number of predefined graph classes. Currently, we support `"UNKNOWN"`, `"DAG"`, `"PDAG"`, `"ADMG"`, and `"UG"`. We plan on supporting several other causal graph types in future releases, such as `"PAG"`, `"MAG"`, and `"SWIG"`.
+You can create simple graphs as well as a number of predefined graph classes. Currently, we support the classes `"DAG"`, `"PDAG"`, `"MPDAG"`, `"CPGAG"`, `"ADMG"`, `"AG"`, `"UG"` as well as an `"UNKNOWN"` class. We plan on supporting several other causal graph types in future releases, such as `"PAG"`, `"MAG"`, and `"SWIG"`.
 
 ```{r}
 #| fig-width: 2
@@ -104,10 +104,10 @@ We expect this feature to be needing further polishing in future releases, and w
 
 `caugi` provides a number of functions to query and analyze `caugi` objects. Some of the available functions are:
 
-* Relational queries, such as `parents()`, `ancestors()`, `neighbors()`, and more.
-* Structural queries, such as `is_acyclic()`, `is_cpdag()`, and more.
-* Graph manipulations, such as `add_edges()`, `remove_nodes()`, and more.
-* Graph metrics, such as `shd()` and `aid()`. 
+* Relational queries
+* Structural queries
+* Graph manipulations
+* Graph metrics
 
 ## How it works 
 

@@ -1,12 +1,13 @@
 Package: caugi
 Title: Causal Graph Interface
-Version: 1.2.0.9000
+Version: 1.3.0
 Authors@R: c(
     person(
       given = "Frederik",
       family = "Fabricius-Bjerre",
       email = "frederik@fabriciusbjerre.dk",
-      role = c("aut", "cre", "cph")
+      role = c("aut", "cre", "cph"),
+      comment = c(ORCID = "0009-0004-1079-1616")
     ),
     person(
       given = "Johan",
@@ -91,6 +92,6 @@ VignetteBuilder:
 Config/rextendr/version: 0.5.0
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 SystemRequirements: Cargo (Rust's package manager), rustc >= 1.80.0, xz
 Config/Needs/website: rmarkdown
+Config/roxygen2/version: 8.1.0

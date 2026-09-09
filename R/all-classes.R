@@ -27,6 +27,8 @@ NULL
 #' @param content A character string containing the exported graph.
 #' @param format A character string indicating the export format.
 #'
+#' @returns A `caugi_export` S7 object with `content` and `format` properties.
+#'
 #' @family export
 #' @concept export
 #'
@@ -78,17 +80,16 @@ knit_print <- S7::new_external_generic("knitr", "knit_print", "x")
 #' to_dot(cg)
 #' ```
 #' @name knit_print.caugi_export
+#' @usage \method{knit_print}{caugi_export}(x, ...)
 #' @family export
 #' @concept export
-S7::method(
-  knit_print,
-  caugi_export
-) <- function(
+knit_print.caugi_export <- function(
   x,
   ...
 ) {
   knitr::asis_output(paste0("```{", x@format, "}\n", x@content, "\n```\n"))
 }
+S7::method(knit_print, caugi_export) <- knit_print.caugi_export
 
 #' S7 Class for caugi Plot
 #'
@@ -99,6 +100,8 @@ S7::method(
 #' they are displayed.
 #'
 #' @param grob A grid gTree representing the graph plot.
+#'
+#' @returns A `caugi_plot` S7 object wrapping the supplied `grob`.
 #'
 #' @family plotting
 #' @concept plotting

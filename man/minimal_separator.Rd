@@ -106,12 +106,12 @@ Uncertainty in Artificial Intelligence (UAI 2020)}, PMLR 115:637--647.
 \url{https://proceedings.mlr.press/v115/van-der-zander20a.html}.
 }
 \seealso{
-Other adjustment: 
-\code{\link{adjustment_set}()},
-\code{\link{all_adjustment_sets_admg}()},
-\code{\link{all_backdoor_sets}()},
-\code{\link{d_separated}()},
-\code{\link{is_valid_adjustment_admg}()},
-\code{\link{is_valid_backdoor}()}
+Other adjustment:
+\code{\link[=adjustment_set]{adjustment_set()}},
+\code{\link[=all_adjustment_sets_admg]{all_adjustment_sets_admg()}},
+\code{\link[=all_backdoor_sets]{all_backdoor_sets()}},
+\code{\link[=d_separated]{d_separated()}},
+\code{\link[=is_valid_adjustment_admg]{is_valid_adjustment_admg()}},
+\code{\link[=is_valid_backdoor]{is_valid_backdoor()}}
 }
 \concept{adjustment}

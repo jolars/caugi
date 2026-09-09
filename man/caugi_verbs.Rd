@@ -78,7 +78,7 @@ parents(cg, "B") # triggers compilation
 
 }
 \seealso{
-Other verbs: 
-\code{\link{build}()}
+Other verbs:
+\code{\link[=build]{build()}}
 }
 \concept{verbs}

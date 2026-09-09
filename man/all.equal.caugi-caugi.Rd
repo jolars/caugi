@@ -4,7 +4,7 @@
 \alias{all.equal.caugi::caugi}
 \title{Compare caugi objects for equality}
 \usage{
-\method{all}{`equal.caugi::caugi`}(target, current, ...)
+\method{all.equal}{`caugi::caugi`}(target, current, ...)
 }
 \arguments{
 \item{target}{A \code{caugi} object.}

@@ -58,9 +58,10 @@ library(caugi)
 ```
 
 You can create simple graphs as well as a number of predefined graph
-classes. Currently, we support `"UNKNOWN"`, `"DAG"`, `"PDAG"`, `"ADMG"`,
-and `"UG"`. We plan on supporting several other causal graph types in
-future releases, such as `"PAG"`, `"MAG"`, and `"SWIG"`.
+classes. Currently, we support `"UNKNOWN"`, `"DAG"`, `"PDAG"`,
+`"MPDAG"`, `"CPGAG"`, `"ADMG"`, `"AG"`, and `"UG"`. We plan on
+supporting several other causal graph types in future releases, such as
+`"PAG"`, `"MAG"`, and `"SWIG"`.
 
 ``` r
 # a tiny DAG
@@ -102,7 +103,7 @@ register_caugi_edge(
 )
 
 caugi(A %-->% B, B %<--% C, class = "DAG")
-#> <caugi object; 3 nodes, 2 edges; simple: TRUE; session=0x585b58ab7cf0>
+#> <caugi object; 3 nodes, 2 edges; simple: TRUE; session=0x7adebc2b0>
 #>   graph_class: DAG
 #>   nodes: A, B, C
 #>   edges: A-->B, B<--C
@@ -119,12 +120,10 @@ releases, and we would love your input if you use this feature!
 `caugi` provides a number of functions to query and analyze `caugi`
 objects. Some of the available functions are:
 
-- Relational queries, such as `parents()`, `ancestors()`, `neighbors()`,
-  and more.
-- Structural queries, such as `is_acyclic()`, `is_cpdag()`, and more.
-- Graph manipulations, such as `add_edges()`, `remove_nodes()`, and
-  more.
-- Graph metrics, such as `shd()` and `aid()`.
+- Relational queries
+- Structural queries
+- Graph manipulations
+- Graph metrics
 
 ## How it works
 

@@ -24,10 +24,10 @@ adj <- as_adjacency(cg)
 
 }
 \seealso{
-Other conversions: 
-\code{\link{as_bnlearn}()},
-\code{\link{as_caugi}()},
-\code{\link{as_dagitty}()},
-\code{\link{as_igraph}()}
+Other conversions:
+\code{\link[=as_bnlearn]{as_bnlearn()}},
+\code{\link[=as_caugi]{as_caugi()}},
+\code{\link[=as_dagitty]{as_dagitty()}},
+\code{\link[=as_igraph]{as_igraph()}}
 }
 \concept{conversions}
