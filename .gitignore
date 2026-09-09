@@ -58,3 +58,4 @@ tools/benchmark/bench_r.R
 
 # Claude Code agent state
 .claude/
+revdep/

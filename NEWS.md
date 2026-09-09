@@ -4,7 +4,7 @@
 
 - Add `enumerate_dags()` to enumerate every DAG in the Markov equivalence
   class of a PDAG, and `count_dags()` to return the MEC size without
-  materializing every DAG (#297).
+  materializing every DAG ([#297](https://github.com/frederikfabriciusbjerre/caugi/issues/297)).
 - `plot()` now automatically bends edges around non-incident nodes that they
   would otherwise pass straight through, so edges between collinear nodes (e.g.
   within a tier) and edges crossing unrelated nodes stay visible. This is
@@ -42,7 +42,6 @@
 - `adjustment_set(type = "backdoor")` now returns an inclusion-minimal backdoor
   adjustment set, computed in linear time as a minimal d-separator in the proper
   backdoor graph, rather than the full set of parents of the exposure.
-  `"PDAG"`. This affects the result of `meek_closure()`. 
 - The performance vignette is now a true vignette (rather than a pkgdown-only
   article) and is rebuilt manually from a cross-language harness under
   `tools/benchmark/`. The harness compares `caugi` to `igraph`, `bnlearn`,
@@ -55,25 +54,27 @@
 
 - Fix `hd()` returning results that depended on the order in which nodes were
   declared. The Hamming distance now aligns nodes by name before comparing, so
-  logically identical graphs always give the same distance (#323).
-- Fix `dag_from_pdag()` failing when a sink had multiple undirected neighbors .
+  logically identical graphs always give the same distance ([#323](https://github.com/frederikfabriciusbjerre/caugi/issues/323)).
+- Fix `dag_from_pdag()` failing with `` `from`, `edge`, `to` must be equal
+  length. `` when a sink had multiple undirected neighbors ([#298](https://github.com/frederikfabriciusbjerre/caugi/issues/298)).
 - Fixed a bug causing a partially undirected (`--o`) edges to
   be plotted as undirected edges.
 - Fix `adjustment_set(type = "backdoor")` returning an invalid (often empty)
   set when a parent of the exposure lies on a backdoor path but is not an
-  ancestor of the outcome. The result is now always a valid backdoor
+  ancestor of the outcome ([#308](https://github.com/frederikfabriciusbjerre/caugi/issues/308)). The result is now always a valid backdoor
   adjustment set.
-- Fixed `is_mag()` returning incorrect results for some ancestral graphs.
+- Fixed `is_mag()` returning incorrect results for some ancestral graphs
+  ([#309](https://github.com/frederikfabriciusbjerre/caugi/issues/309)).
+  Adjacency was tested by binary-searching the concatenation of separately
+  sorted neighbor buckets, which is not globally sorted, so some adjacent
+  pairs were missed.
 - Stripped non-build files (`tests/`, `examples/`, trybuild fixtures) from the
   vendored Rust dependencies so no vendored path exceeds 100 characters. This
   silences pak's "very long paths" warning and avoids installation failures on
-  Windows without long-path support.
-- Adjacency was tested by binary-searching the concatenation of separately
-  sorted neighbor buckets, which is not globally sorted, so some adjacent
-  pairs were missed.
+  Windows without long-path support ([#319](https://github.com/frederikfabriciusbjerre/caugi/issues/319)).
 - Fixed `to_dot()` and `to_mermaid()` (and `write_dot()`/`write_mermaid()`)
   silently converting partial `--o` and `o-o` edges into plain directed edges,
-  dropping the circle endpoints (#307).
+  dropping the circle endpoints ([#307](https://github.com/frederikfabriciusbjerre/caugi/issues/307)).
 
 ## Deprecations
 
@@ -86,7 +87,7 @@
 ## New Features
 
 - Add `caugi_layout_circle()` and a `"circle"` method for `caugi_layout()` that
-  places nodes evenly along the perimeter of a circle (#108).
+  places nodes evenly along the perimeter of a circle ([#108](https://github.com/frederikfabriciusbjerre/caugi/issues/108)).
 - Add `list_caugi_edges()` function to list all available edge types.
 - Add first-class `"MPDAG"` graph class support across constructor, class
   mutation, and class resolution. `class = "AUTO"` now resolves Meek-closed
@@ -115,7 +116,7 @@
   via a per-neighbour decomposition. The old check trivially accepted neighbours
   of `X` that were themselves in `Z`, so it falsely classified `{C}` as a valid
   adjustment set in the M-bias ADMG `C -> X, C <-> X, C -> Y, C <-> Y, X -> Y`
-  (#277).
+  ([#277](https://github.com/frederikfabriciusbjerre/caugi/issues/277)).
 
 # caugi 1.1.0
 
@@ -158,14 +159,14 @@
   graph-content comparison in tests.
 - Add `asp` parameter to `plot()` for controlling the aspect ratio. When `asp = 1`,
   the plot respects equal units on both axes, preserving the layout
-  coordinates. Works like base R's `asp` parameter (y/x aspect ratio) (#195).
+  coordinates. Works like base R's `asp` parameter (y/x aspect ratio) ([#195](https://github.com/frederikfabriciusbjerre/caugi/issues/195)).
 - Add `pdag_to_dag()` function that generates a random DAG consistent with a
-  given CPDAG/PDAG structure if possible (#201).
+  given CPDAG/PDAG structure if possible ([#201](https://github.com/frederikfabriciusbjerre/caugi/issues/201)).
 
 ## Bug Fixes
 
 - Fixed a bug causing `plot()` to use incorrect layout if node names were not
-  in the same order as in the graph object (#198).
+  in the same order as in the graph object ([#198](https://github.com/frederikfabriciusbjerre/caugi/issues/198)).
 - Fixed `set_edges()` so that it correctly replaces symmetric edges in
   simple graphs.
 
