@@ -389,3 +389,27 @@ test_that("chains respect class constraints", {
   expect_error(caugi(A %---% B %-->% C, class = "DAG"))
   expect_error(caugi(A %o->% B %o-o% C, class = "PDAG"))
 })
+
+test_that("table constructors do not modify or share caller vectors", {
+  from <- c("Z", "A", "M")
+  edge <- c("-->", "<->", "---")
+  to <- c("C", "B", "D")
+  dt <- .edge_constructor(from, edge, to)
+  expect_identical(from, c("Z", "A", "M"))
+  expect_identical(edge, c("-->", "<->", "---"))
+  expect_identical(to, c("C", "B", "D"))
+  data.table::set(dt, j = "from", value = "changed")
+  expect_identical(from, c("Z", "A", "M"))
+
+  dt <- .edge_constructor_idx(c(3L, 1L, 2L), edge, c(1L, 2L, 3L), from)
+  expect_identical(edge, c("-->", "<->", "---"))
+  data.table::set(dt, j = "edge", value = "changed")
+  expect_identical(edge, c("-->", "<->", "---"))
+
+  for (sort in c(FALSE, TRUE)) {
+    dt <- .node_constructor(from, sort = sort)
+    expect_identical(from, c("Z", "A", "M"))
+    data.table::set(dt, j = "name", value = "changed")
+    expect_identical(from, c("Z", "A", "M"))
+  }
+})

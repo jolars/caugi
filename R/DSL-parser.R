@@ -432,11 +432,15 @@
   edge = character(),
   to = character()
 ) {
-  dt <- data.table::data.table(
-    from = from,
-    edge = edge,
-    to = to
-  )
+  if (length(from) == length(edge) && length(edge) == length(to)) {
+    dt <- data.table::setDT(data.table::copy(list(
+      from = from,
+      edge = edge,
+      to = to
+    )))
+  } else {
+    dt <- data.table::data.table(from = from, edge = edge, to = to)
+  }
   data.table::setorder(dt, "from", "to", "edge")
   return(dt)
 }
@@ -455,11 +459,14 @@
 #'
 #' @keywords internal
 .edge_constructor_idx <- function(from_idx, edge, to_idx, node_names) {
-  dt <- data.table::data.table(
+  if (length(from_idx) != length(edge) || length(edge) != length(to_idx)) {
+    return(.edge_constructor(node_names[from_idx], edge, node_names[to_idx]))
+  }
+  dt <- data.table::setDT(list(
     from = node_names[from_idx],
-    edge = edge,
+    edge = data.table::copy(edge),
     to = node_names[to_idx]
-  )
+  ))
   data.table::setorder(dt, "from", "to", "edge")
   return(dt)
 }
@@ -481,9 +488,9 @@
 #'
 #' @keywords internal
 .node_constructor <- function(names = character(), sort = FALSE) {
-  dt <- data.table::data.table(
-    name = names
-  )
+  dt <- data.table::setDT(list(
+    name = data.table::copy(names)
+  ))
   if (sort) {
     data.table::setorder(dt, "name") # sorts inplace
   }
