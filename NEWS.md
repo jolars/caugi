@@ -1,5 +1,11 @@
 # caugi (development version)
 
+## New Features
+
+* Add `components()` to partition graphs into weakly connected components or
+  strongly connected components of the directed part, including cyclic graphs
+  of class `"UNKNOWN"`.
+
 ## Bug Fixes
 
 - `dag_from_pdag()` no longer adds v-structures the input PDAG did not have.
