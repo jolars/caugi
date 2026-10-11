@@ -71,11 +71,9 @@ impl Admg {
 
     /// Build a moral adjacency for m-separation in an ADMG.
     ///
-    /// This extends the standard moralization to handle bidirected edges:
-    /// 1. Connect parents with children (undirected)
-    /// 2. Marry every pair of arrowhead endpoints at a common node
-    ///    (i.e. every pair in `pa(v) ∪ sp(v)`)
-    /// 3. Add bidirected edges as undirected edges
+    /// The augmented graph connects the endpoints of every collider path.
+    /// In an ADMG, the internal edges of such a path are bidirected, so each
+    /// district of the induced subgraph and its parents form a clique.
     fn moral_adj_admg(&self, mask: &[bool]) -> Vec<Vec<u32>> {
         self.moral_adj_admg_filtered(mask, &HashSet::new())
     }
@@ -90,45 +88,33 @@ impl Admg {
     ) -> Vec<Vec<u32>> {
         let n = self.n() as usize;
         let mut adj = vec![Vec::<u32>::new(); n];
+        let mut seen = vec![false; n];
+        let mut stack = Vec::new();
 
         for v in 0..n as u32 {
-            if !mask[v as usize] {
+            if !mask[v as usize] || seen[v as usize] {
                 continue;
             }
 
-            // Effective directed parents (after deleting edges in `removed_directed`).
-            let pa: Vec<u32> = self
-                .parents_of(v)
-                .iter()
-                .copied()
-                .filter(|&u| !removed_directed.contains(&(u, v)))
-                .collect();
-
-            // Connect with parents (as in standard moralization)
-            for &p in &pa {
-                if mask[p as usize] {
-                    adj[v as usize].push(p);
-                    adj[p as usize].push(v);
+            let mut heads = Vec::new();
+            seen[v as usize] = true;
+            stack.push(v);
+            while let Some(u) = stack.pop() {
+                heads.push(u);
+                for &p in self.parents_of(u) {
+                    if mask[p as usize] && !removed_directed.contains(&(p, u)) {
+                        heads.push(p);
+                    }
+                }
+                for &s in self.spouses_of(u) {
+                    if mask[s as usize] && !seen[s as usize] {
+                        seen[s as usize] = true;
+                        stack.push(s);
+                    }
                 }
             }
 
-            // Add bidirected edges as undirected (spouses connect in moral graph)
-            for &s in self.spouses_of(v) {
-                if mask[s as usize] {
-                    adj[v as usize].push(s);
-                    // Note: the reverse will be added when we process node s
-                }
-            }
-
-            // Marry every pair of arrowhead endpoints at v: pa(v) ∪ sp(v).
-            // Both directed parents and spouses contribute an arrowhead at v,
-            // so the full moralization rule must form a clique on this union.
-            let mut heads: Vec<u32> = pa
-                .iter()
-                .copied()
-                .chain(self.spouses_of(v).iter().copied())
-                .filter(|u| mask[*u as usize])
-                .collect();
+            // Closing an entire district preserves collider paths of any length.
             heads.sort_unstable();
             heads.dedup();
             for i in 0..heads.len() {
@@ -199,7 +185,7 @@ impl Admg {
     ///
     /// M-separation generalizes d-separation to ADMGs by:
     /// 1. Taking the ancestral subgraph of `xs ∪ ys ∪ z`
-    /// 2. Moralizing it (marrying parents, keeping bidirected edges)
+    /// 2. Augmenting it (connecting endpoints of every collider path)
     /// 3. Removing conditioning nodes
     /// 4. Testing path connectivity
     ///
@@ -298,6 +284,7 @@ mod tests {
     use super::*;
     use crate::edges::EdgeRegistry;
     use crate::graph::builder::GraphBuilder;
+    use crate::graph::dag::Dag;
     use std::sync::Arc;
 
     fn two_parents_one_child() -> Admg {
@@ -325,6 +312,73 @@ mod tests {
             builder.add_edge(u, v, b).unwrap();
         }
         Admg::new(Arc::new(builder.finalize().unwrap())).unwrap()
+    }
+
+    #[test]
+    fn msep_multiple_bidirected_colliders() {
+        let g = build_admg(4, &[(0, 1)], &[(1, 2), (2, 3)]);
+        assert!(g.m_separated(&[0], &[3], &[]));
+        assert!(g.m_separated(&[0], &[3], &[1]));
+        assert!(g.m_separated(&[0], &[3], &[2]));
+        assert!(!g.m_separated(&[0], &[3], &[1, 2]));
+        assert!(!g.m_separated(&[3], &[0], &[1, 2]));
+    }
+
+    #[test]
+    fn msep_pbg_multiple_bidirected_colliders() {
+        let g = build_admg(4, &[(0, 3)], &[(0, 1), (1, 2), (2, 3)]);
+        assert!(g.m_separated_pbg(&[0], &[3], &[]));
+        assert!(g.m_separated_pbg(&[0], &[3], &[1]));
+        assert!(!g.m_separated_pbg(&[0], &[3], &[1, 2]));
+        assert!(!g.is_valid_adjustment_set(&[0], &[3], &[1, 2]));
+    }
+
+    #[test]
+    fn msep_matches_latent_dag_for_all_four_node_admgs() {
+        let mut reg = EdgeRegistry::new();
+        reg.register_builtins().unwrap();
+        let dir = reg.code_of("-->").unwrap();
+        let bid = reg.code_of("<->").unwrap();
+        let pairs = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
+
+        // Every pair independently has no edge, a directed edge, a bidirected
+        // edge, or a bow. The node order is topological for directed edges.
+        for encoding in 0..4096u32 {
+            let mut admg_builder = GraphBuilder::new_with_registry(4, false, &reg);
+            let mut dag_builder = GraphBuilder::new_with_registry(10, true, &reg);
+            for (i, &(u, v)) in pairs.iter().enumerate() {
+                let code = (encoding >> (2 * i)) & 3;
+                if code & 1 != 0 {
+                    admg_builder.add_edge(u, v, dir).unwrap();
+                    dag_builder.add_edge(u, v, dir).unwrap();
+                }
+                if code & 2 != 0 {
+                    admg_builder.add_edge(u, v, bid).unwrap();
+                    let latent = 4 + i as u32;
+                    dag_builder.add_edge(latent, u, dir).unwrap();
+                    dag_builder.add_edge(latent, v, dir).unwrap();
+                }
+            }
+            let admg = Admg::new(Arc::new(admg_builder.finalize().unwrap())).unwrap();
+            let dag = Dag::new(Arc::new(dag_builder.finalize().unwrap())).unwrap();
+
+            for &(x, y) in &pairs {
+                let others: Vec<u32> = (0..4).filter(|&v| v != x && v != y).collect();
+                for subset in 0..4 {
+                    let z: Vec<u32> = others
+                        .iter()
+                        .enumerate()
+                        .filter(|(i, _)| subset & (1 << i) != 0)
+                        .map(|(_, &v)| v)
+                        .collect();
+                    assert_eq!(
+                        admg.m_separated(&[x], &[y], &z),
+                        dag.d_separated(&[x], &[y], &z),
+                        "encoding={encoding}, X={x}, Y={y}, Z={z:?}"
+                    );
+                }
+            }
+        }
     }
 
     #[test]

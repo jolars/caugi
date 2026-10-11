@@ -9,6 +9,11 @@
 
 ## Bug Fixes
 
+* `m_separated()` now handles ADMG collider paths with multiple bidirected
+  edges, such as `a -> b <-> c <-> d` given `{b, c}`. This also fixes
+  `is_valid_adjustment_admg()` and `all_adjustment_sets_admg()`, which use the
+  same separation routine in the proper backdoor graph.
+
 - `dag_from_pdag()` no longer adds v-structures the input PDAG did not have.
   Dor and Tarsi's condition (b) requires every undirected neighbour of the
   candidate sink to be adjacent to *all* its other neighbours; the previous
