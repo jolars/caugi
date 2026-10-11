@@ -2,7 +2,32 @@
 
 ## caugi (development version)
 
+### New Features
+
+- Add [`components()`](https://caugi.org/reference/components.md) to
+  partition graphs into weakly connected components or strongly
+  connected components of the directed part, including cyclic graphs of
+  class `"UNKNOWN"`.
+
+### Performance Improvements
+
+- [`remove_edges()`](https://caugi.org/reference/caugi_verbs.md) now
+  removes edges directly in Rust, avoiding graph table reconstruction
+  and redundant session cloning.
+- Node and edge tables use faster constructors, reducing overhead when
+  building graphs and retrieving
+  [`nodes()`](https://caugi.org/reference/nodes.md) and
+  [`edges()`](https://caugi.org/reference/edges.md).
+
 ### Bug Fixes
+
+- [`m_separated()`](https://caugi.org/reference/m_separated.md) now
+  handles ADMG collider paths with multiple bidirected edges, such as
+  `a -> b <-> c <-> d` given `{b, c}`. This also fixes
+  [`is_valid_adjustment_admg()`](https://caugi.org/reference/is_valid_adjustment_admg.md)
+  and
+  [`all_adjustment_sets_admg()`](https://caugi.org/reference/all_adjustment_sets_admg.md),
+  which use the same separation routine in the proper backdoor graph.
 
 - [`dag_from_pdag()`](https://caugi.org/reference/dag_from_pdag.md) no
   longer adds v-structures the input PDAG did not have. Dor and Tarsi’s
