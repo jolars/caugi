@@ -1,5 +1,11 @@
 # caugi (development version)
 
+## New Features
+
+* Add `components()` to partition graphs into weakly connected components or
+  strongly connected components of the directed part, including cyclic graphs
+  of class `"UNKNOWN"`.
+  
 ## Performance Improvements
 
 * `remove_edges()` now removes edges directly in Rust, avoiding graph table
