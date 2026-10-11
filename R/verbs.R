@@ -155,26 +155,37 @@ remove_edges <- function(
       stop("`from` and `to` must be equal length.", call. = FALSE)
     }
 
-    pairs <- data.table::data.table(
-      from = as.character(from),
-      to = as.character(to)
-    )
-
-    # Remove both directions of the edge
-    pairs <- unique(data.table::rbindlist(list(
-      pairs,
-      pairs[, .(from = to, to = from)]
-    )))
-
-    return(.update_caugi(
-      cg,
-      edges = pairs,
-      action = "remove"
+    return(caugi(
+      .session = rs_remove_edges(
+        cg@session,
+        as.character(from),
+        as.character(to),
+        NULL
+      )
     ))
   }
 
-  edges <- .get_edges(from, edge, to, calls, simple = cg@simple)
-  .update_caugi(cg, edges = edges, action = "remove")
+  if (has_vec) {
+    if (is.null(from) || is.null(edge) || is.null(to)) {
+      stop("`from`, `edge`, `to` must all be supplied.", call. = FALSE)
+    }
+    if (!(length(from) == length(to) && length(to) == length(edge))) {
+      stop("`from`, `edge`, `to` must be equal length.", call. = FALSE)
+    }
+  } else {
+    edges <- .get_edges(from, edge, to, calls, simple = cg@simple)
+    from <- edges$from
+    edge <- edges$edge
+    to <- edges$to
+  }
+  caugi(
+    .session = rs_remove_edges(
+      cg@session,
+      as.character(from),
+      as.character(to),
+      as.character(edge)
+    )
+  )
 }
 
 

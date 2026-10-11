@@ -405,6 +405,54 @@ impl GraphSession {
         self.invalidate_core();
     }
 
+    /// Copy the session without the requested edges, validating its graph class.
+    ///
+    /// Typed requests match the stored orientation. Untyped pairs remove every
+    /// edge between the endpoints in either direction, as in R's `remove_edges`.
+    pub fn without_edges(
+        &self,
+        typed: &[(u32, u32, u8)],
+        pairs: &[(u32, u32)],
+    ) -> Result<Self, String> {
+        let typed: FxHashSet<_> = typed.iter().copied().collect();
+        let pairs: FxHashSet<_> = pairs
+            .iter()
+            .map(|&(u, v)| if u <= v { (u, v) } else { (v, u) })
+            .collect();
+        let mut kept = EdgeBuffer::with_capacity(self.edges.len());
+        let mut seen = FxHashSet::default();
+        for i in 0..self.edges.len() {
+            let u = self.edges.from[i];
+            let v = self.edges.to[i];
+            let t = self.edges.etype[i];
+            let pair = if u <= v { (u, v) } else { (v, u) };
+            if !typed.contains(&(u, v, t)) && !pairs.contains(&pair) && seen.insert((u, v, t)) {
+                kept.push(u, v, t);
+            }
+        }
+
+        // Only the surviving edges need copying; node metadata and the registry
+        // stay unchanged, and the source session retains its compiled caches.
+        let mut out = Self {
+            n: self.n,
+            simple: self.simple,
+            graph_class: self.graph_class,
+            registry: Arc::clone(&self.registry),
+            edges: kept,
+            names: self.names.clone(),
+            name_to_index: self.name_to_index.clone(),
+            edges_trusted: self.edges_trusted || self.core.is_present(),
+            core: Memo::empty(),
+            view: Memo::empty(),
+        };
+        if !out.edges.is_empty() {
+            // Edge deletion can break CPDAG or MPDAG invariants even though it
+            // cannot introduce a cycle, so retain the existing class checks.
+            out.graph_class = out.resolve_class(self.graph_class)?;
+        }
+        Ok(out)
+    }
+
     pub fn replace_edges_for_pairs(&mut self, new_edges: EdgeBuffer) {
         let mut remove_pairs: FxHashSet<(u32, u32)> =
             FxHashSet::with_capacity_and_hasher(new_edges.len(), Default::default());
@@ -613,6 +661,7 @@ impl GraphSession {
         spouses_of(node: u32) -> Vec<u32>;
         exogenous_nodes(undirected_as_parents: bool) -> Vec<u32>;
         to_cpdag() -> GraphView;
+        dag_extension() -> GraphView;
         skeleton() -> GraphView;
         moralize() -> GraphView;
         latent_project(latents: &[u32]) -> GraphView;
@@ -1283,6 +1332,54 @@ mod tests {
         assert_eq!(non_simple.edge_buffer().from, vec![1, 0]);
         assert_eq!(non_simple.edge_buffer().to, vec![0, 1]);
         assert_eq!(non_simple.edge_buffer().etype, vec![d, u]);
+    }
+
+    #[test]
+    fn without_edges_preserves_source_caches_and_mixed_edge_types() {
+        let reg = make_registry();
+        let d = reg.code_of("-->").unwrap();
+        let b = reg.code_of("<->").unwrap();
+        let mut s = GraphSession::new(&reg, 3, false, GraphClass::Unknown);
+        s.set_names(vec!["B".into(), "A".into(), "isolated".into()]);
+        s.set_edges_from_vecs(vec![0, 0, 1], vec![1, 1, 0], vec![d, b, d]);
+        let core = s.core().unwrap();
+        s.view().unwrap();
+
+        let mut out = s.without_edges(&[(0, 1, b), (0, 1, b)], &[]).unwrap();
+        assert_eq!(out.edge_buffer().etype, vec![d, d]);
+        assert_eq!(out.edge_buffer().from, vec![0, 1]);
+        assert_eq!(out.names(), s.names());
+        assert_eq!(out.class(), GraphClass::Unknown);
+        assert!(!out.simple());
+        assert_eq!(out.neighbors_of(0, NeighborMode::Out).unwrap(), vec![1]);
+        assert_eq!(s.edge_buffer().len(), 3);
+        assert!(Arc::ptr_eq(&core, s.built_core().unwrap()));
+        assert!(s.built_view().is_some());
+
+        let reversed = s.without_edges(&[(1, 0, b)], &[]).unwrap();
+        assert_eq!(reversed.edge_buffer().len(), 3);
+        let empty = s.without_edges(&[], &[(1, 0)]).unwrap();
+        assert!(empty.edge_buffer().is_empty());
+        assert_eq!(empty.n(), 3);
+        assert_eq!(empty.class(), GraphClass::Unknown);
+    }
+
+    #[test]
+    fn without_edges_handles_unbuilt_sessions_and_empty_requests() {
+        let reg = make_registry();
+        let d = reg.code_of("-->").unwrap();
+        let mut s = GraphSession::new(&reg, 3, true, GraphClass::Dag);
+        s.set_edges_from_vecs(vec![0, 1], vec![1, 2], vec![d, d]);
+        let mut out = s.without_edges(&[(0, 1, d)], &[]).unwrap();
+        assert!(s.built_core().is_none());
+        assert_eq!(out.parents_of(1).unwrap(), Vec::<u32>::new());
+        assert_eq!(out.parents_of(2).unwrap(), vec![1]);
+        assert_eq!(s.without_edges(&[], &[]).unwrap().edge_buffer().len(), 2);
+        assert!(s
+            .without_edges(&[], &[(1, 0), (2, 1)])
+            .unwrap()
+            .edge_buffer()
+            .is_empty());
     }
 
     #[test]

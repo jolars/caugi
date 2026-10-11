@@ -963,6 +963,62 @@ fn rs_replace_edges(
 }
 
 #[extendr]
+fn rs_remove_edges(
+    session: ExternalPtr<GraphSession>,
+    from: Strings,
+    to: Strings,
+    glyphs: Robj,
+) -> ExternalPtr<GraphSession> {
+    let glyphs: Option<Strings> = if glyphs.is_null() {
+        None
+    } else {
+        Some(
+            glyphs
+                .try_into()
+                .unwrap_or_else(|_| throw_r_error("`edge` must be a character vector.")),
+        )
+    };
+    if from.len() != to.len() || glyphs.as_ref().is_some_and(|g| g.len() != from.len()) {
+        throw_r_error("`from`, `edge`, `to` must be equal length.");
+    }
+    let s = session.as_ref();
+    if glyphs.is_none() && !s.simple() {
+        throw_r_error("When removing edges without specifying `edge`, `cg` must be simple.");
+    }
+    let mut typed = Vec::new();
+    let mut pairs = Vec::new();
+    for i in 0..from.len() {
+        let from = from.elt(i);
+        let to = to.elt(i);
+        if from.is_na() || to.is_na() {
+            continue;
+        }
+        let (Some(u), Some(v)) = (s.index_of(from.as_ref()), s.index_of(to.as_ref())) else {
+            continue;
+        };
+        if let Some(glyphs) = &glyphs {
+            let glyph = glyphs.elt(i);
+            if !glyph.is_na() {
+                if let Some(code) = s
+                    .registry()
+                    .specs
+                    .iter()
+                    .position(|spec| spec.glyph == glyph.as_ref())
+                {
+                    typed.push((u, v, code as u8));
+                }
+            }
+        } else {
+            pairs.push((u, v));
+        }
+    }
+    ExternalPtr::new(
+        s.without_edges(&typed, &pairs)
+            .unwrap_or_else(|e| throw_r_error(e)),
+    )
+}
+
+#[extendr]
 fn rs_set_n(mut session: ExternalPtr<GraphSession>, n: i32) {
     if n < 0 {
         throw_r_error("n must be >= 0");
@@ -1578,6 +1634,16 @@ fn rs_to_cpdag(mut session: ExternalPtr<GraphSession>) -> ExternalPtr<GraphSessi
 }
 
 #[extendr]
+fn rs_dag_extension(mut session: ExternalPtr<GraphSession>) -> ExternalPtr<GraphSession> {
+    let view = session
+        .as_mut()
+        .dag_extension()
+        .unwrap_or_else(|e| throw_r_error(e));
+    let names: Vec<String> = session.as_ref().names().to_vec();
+    ExternalPtr::new(session_from_view(view, names))
+}
+
+#[extendr]
 fn rs_meek_closure(mut session: ExternalPtr<GraphSession>) -> ExternalPtr<GraphSession> {
     let view = session
         .as_mut()
@@ -2162,6 +2228,7 @@ extendr_module! {
     fn rs_clone;
     fn rs_set_edges;
     fn rs_replace_edges;
+    fn rs_remove_edges;
     fn rs_set_n;
     fn rs_set_simple;
     fn rs_set_class;
@@ -2203,6 +2270,7 @@ extendr_module! {
     fn rs_is_cpdag;
     fn rs_is_mpdag;
     fn rs_to_cpdag;
+    fn rs_dag_extension;
     fn rs_meek_closure;
     fn rs_enumerate_dags;
     fn rs_count_dags;

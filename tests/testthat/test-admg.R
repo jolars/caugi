@@ -178,9 +178,69 @@ test_that("m_separated handles bidirected confounding", {
   expect_false(m_separated(admg2, X = "X", Y = "Y", Z = "L"))
 })
 
+test_that("m_separated opens paths through multiple bidirected colliders", {
+  expanded <- caugi(
+    a %-->% b,
+    u %-->% b + c,
+    v %-->% c + d,
+    class = "DAG"
+  )
+
+  for (built in c(FALSE, TRUE)) {
+    admg <- caugi(
+      a %-->% b,
+      b %<->% c,
+      c %<->% d,
+      class = "ADMG"
+    )
+    if (built) {
+      admg <- build(admg)
+    }
+    for (z in list(NULL, "b", "c", c("b", "c"))) {
+      expected <- d_separated(expanded, "a", "d", Z = z)
+      expect_identical(m_separated(admg, "a", "d", Z = z), expected)
+      expect_identical(m_separated(admg, "d", "a", Z = z), expected)
+    }
+  }
+  expect_false(m_separated(admg, X_index = 1, Y_index = 4, Z_index = 2:3))
+})
+
+test_that("m_separated activates multiple colliders through their descendants", {
+  admg <- caugi(
+    a %-->% b,
+    b %<->% c,
+    c %<->% d,
+    b %-->% e,
+    c %-->% f,
+    class = "ADMG"
+  )
+
+  expect_true(m_separated(admg, "a", "d", Z = "e"))
+  expect_true(m_separated(admg, "a", "d", Z = "f"))
+  expect_false(m_separated(admg, "a", "d", Z = c("e", "f")))
+})
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Adjustment Functions
 # ─────────────────────────────────────────────────────────────────────────────
+
+test_that("ADMG adjustment rejects opened bidirected collider chains", {
+  admg <- caugi(
+    a %-->% d,
+    a %<->% b,
+    b %<->% c,
+    c %<->% d,
+    class = "ADMG"
+  )
+
+  expect_true(is_valid_adjustment_admg(admg, "a", "d"))
+  expect_true(is_valid_adjustment_admg(admg, "a", "d", Z = "b"))
+  expect_true(is_valid_adjustment_admg(admg, "a", "d", Z = "c"))
+  expect_false(is_valid_adjustment_admg(admg, "a", "d", Z = c("b", "c")))
+  sets <- all_adjustment_sets_admg(admg, "a", "d", minimal = FALSE)
+  expect_length(sets, 3)
+  expect_false(any(vapply(sets, setequal, logical(1), c("b", "c"))))
+})
 
 test_that("is_valid_adjustment_admg works for confounding", {
   admg <- caugi(

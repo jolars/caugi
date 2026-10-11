@@ -1,13 +1,33 @@
 # caugi (development version)
 
+## Performance Improvements
+
+- `remove_edges()` now removes edges directly in Rust, avoiding graph table
+  reconstruction and redundant session cloning.
+- Node and edge tables use faster constructors, reducing overhead when building
+  graphs and retrieving `nodes()` and `edges()`.
+
 ## Bug Fixes
 
+- `m_separated()` now handles ADMG collider paths with multiple bidirected
+  edges, such as `a -> b <-> c <-> d` given `{b, c}`. This also fixes
+  `is_valid_adjustment_admg()` and `all_adjustment_sets_admg()`, which use the
+  same separation routine in the proper backdoor graph.
+
+- `dag_from_pdag()` no longer adds v-structures the input PDAG did not have.
+  Dor and Tarsi's condition (b) requires every undirected neighbour of the
+  candidate sink to be adjacent to *all* its other neighbours; the previous
+  implementation only required the undirected neighbours to be pairwise
+  adjacent, so on e.g. `A --> B <-- C` with `B --- D` it oriented `D --> B`
+  and created two v-structures. The algorithm now lives in Rust, like every
+  other graph algorithm in the package.
+
 - `==` and `!=` for `caugi` objects now compare a symmetric edge as an
-  unordered pair, so `caugi(A %---% B) == caugi(B %---% A)` is `TRUE` as it
-  should be. This affected `---`, `<->` and `o-o`, and any symmetric edge added
-  with `register_caugi_edge()`; whether a glyph is symmetric is read from the
-  registry rather than hard-coded. Asymmetric glyphs remain
-  direction-sensitive.
+unordered pair, so `caugi(A %---% B) == caugi(B %---% A)` is `TRUE` as it
+should be. This affected `---`, `<->` and `o-o`, and any symmetric edge added
+with `register_caugi_edge()`; whether a glyph is symmetric is read from the
+registry rather than hard-coded. Asymmetric glyphs remain
+direction-sensitive.
 
 # caugi 1.3.0
 
