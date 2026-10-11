@@ -26,8 +26,15 @@
 unordered pair, so `caugi(A %---% B) == caugi(B %---% A)` is `TRUE` as it
 should be. This affected `---`, `<->` and `o-o`, and any symmetric edge added
 with `register_caugi_edge()`; whether a glyph is symmetric is read from the
-registry rather than hard-coded. Asymmetric glyphs remain
-direction-sensitive.
+graph's own registry rather than hard-coded. Asymmetric glyphs remain
+direction-sensitive. testthat's `expect_equal()` now agrees with `==`.
+
+- Graphs now keep the edge definitions they were built with after
+`reset_caugi_registry()` and re-registration. Previously `==`, `add_edges()`,
+`mutate_caugi()` and other verbs, `write_caugi()`, `caugi_serialize()` and
+`to_graphml()` used the current global registry instead, so they could
+compare edges wrongly, fail with `Invalid edge code`, or write the wrong
+glyphs. Adding an edge type the graph was not built with is now an error.
 
 # caugi 1.3.0
 

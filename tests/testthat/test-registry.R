@@ -211,3 +211,38 @@ test_that("a custom symmetric edge is canonicalised when comparing graphs", {
   )
   reset_caugi_registry()
 })
+
+test_that("existing graphs keep their registry after it is redefined", {
+  # Build graphs with x-x as a directed edge, then redefine x-x as symmetric
+  # and register y-y before it so the global codes shift.
+  reset_caugi_registry()
+  register_caugi_edge("x-x", "tail", "arrow", "directed")
+  cg1 <- caugi(A %x-x% B, class = "UNKNOWN")
+  cg2 <- caugi(B %x-x% A, class = "UNKNOWN")
+
+  reset_caugi_registry()
+  register_caugi_edge("y-y", "other", "other", "undirected", symmetric = TRUE)
+  register_caugi_edge("x-x", "other", "other", "undirected", symmetric = TRUE)
+  cg3 <- caugi(B %x-x% A, class = "UNKNOWN")
+
+  # Equality uses each graph's own definition of x-x.
+  expect_false(cg1 == cg2)
+  expect_false(cg2 == cg3)
+
+  # Mutation encodes glyphs with the graph's own registry.
+  cg4 <- add_edges(cg1, from = "B", edge = "x-x", to = "C")
+  expect_equal(cg4@edges$edge, c("x-x", "x-x"))
+  expect_equal(neighbors(cg4, "B", mode = "out"), "C")
+  expect_error(
+    add_edges(cg1, from = "B", edge = "y-y", to = "C"),
+    "not in this graph's registry"
+  )
+
+  # So does changing the graph class.
+  expect_equal(children(mutate_caugi(cg1, "DAG"), "A"), "B")
+
+  # Serialization writes the graph's own glyphs.
+  expect_true(grepl("x-x", caugi_serialize(cg1), fixed = TRUE))
+  expect_true(grepl("x-x", to_graphml(cg1), fixed = TRUE))
+  reset_caugi_registry()
+})

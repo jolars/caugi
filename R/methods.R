@@ -278,16 +278,12 @@ S7::method(print, caugi) <- print.caugi
 #' @export
 `compare_proxy.caugi::caugi` <- function(x, path) {
   # Return a proxy with comparable properties (not the session pointer)
-  e <- x@edges
-  if (nrow(e) > 0) {
-    data.table::setorder(e, from, to, edge)
-  }
   list(
     object = list(
       simple = x@simple,
       graph_class = x@graph_class,
       nodes = sort(x@nodes$name),
-      edges = e
+      edges = rs_canonical_edges(x@session)
     ),
     path = path
   )
@@ -356,34 +352,20 @@ S7::method(print, caugi) <- print.caugi
     )
   }
 
-  # Compare edges (sorted for consistent comparison)
-  target_edges <- data.table::copy(target@edges)
-  current_edges <- data.table::copy(current@edges)
-  if (nrow(target_edges) != nrow(current_edges)) {
+  # Compare edges in the canonical form Rust gives them
+  target_edges <- rs_canonical_edges(target@session)
+  current_edges <- rs_canonical_edges(current@session)
+  if (length(target_edges$from) != length(current_edges$from)) {
     diffs <- c(
       diffs,
       sprintf(
         "edges differ: target has %d edges, current has %d edges",
-        nrow(target_edges),
-        nrow(current_edges)
+        length(target_edges$from),
+        length(current_edges$from)
       )
     )
-  } else if (nrow(target_edges) > 0) {
-    # A symmetric glyph denotes the same edge either way round, so orient
-    # those consistently before comparing, then sort to ignore row order.
-    target_edges <- .canonical_edge_order(target_edges)
-    current_edges <- .canonical_edge_order(current_edges)
-    data.table::setorder(target_edges, from, to, edge)
-    data.table::setorder(current_edges, from, to, edge)
-    if (
-      !isTRUE(all.equal(
-        as.data.frame(target_edges),
-        as.data.frame(current_edges),
-        check.attributes = FALSE
-      ))
-    ) {
-      diffs <- c(diffs, "edges have different content")
-    }
+  } else if (!identical(target_edges, current_edges)) {
+    diffs <- c(diffs, "edges have different content")
   }
 
   if (length(diffs) == 0) {
@@ -391,37 +373,6 @@ S7::method(print, caugi) <- print.caugi
   } else {
     diffs
   }
-}
-
-#' @title Canonicalise symmetric edges for comparison
-#'
-#' @description
-#' A symmetric glyph denotes the same edge either way round, so `A --- B` and
-#' `B --- A` must compare equal. Orients every symmetric edge so that `from`
-#' sorts before `to`, leaving asymmetric edges alone.
-#'
-#' Which glyphs are symmetric is read from the edge registry rather than
-#' hard-coded, so custom edges added with [register_caugi_edge()] are handled
-#' too.
-#'
-#' @param e A `data.table` of edges with `from`, `edge` and `to` columns.
-#'
-#' @returns `e` with symmetric edges oriented canonically.
-#'
-#' @keywords internal
-.canonical_edge_order <- function(e) {
-  if (nrow(e) == 0L) {
-    return(e)
-  }
-  reg <- list_caugi_edges()
-  symmetric <- reg$glyph[!is.na(reg$symmetric) & reg$symmetric]
-  swap <- e$edge %in% symmetric & e$from > e$to
-  if (any(swap)) {
-    held <- e$from[swap]
-    e$from[swap] <- e$to[swap]
-    e$to[swap] <- held
-  }
-  e
 }
 
 #' Equality operators for caugi objects
@@ -432,9 +383,11 @@ S7::method(print, caugi) <- print.caugi
 #' caugi object.
 #'
 #' @details
-#' Row order is ignored, and an edge whose glyph is symmetric in the edge
-#' registry is compared as an unordered pair, so `A --- B` and `B --- A` are
-#' the same edge. Asymmetric glyphs are direction-sensitive, so
+#' Row order is ignored, and an edge whose glyph is symmetric in the graph's
+#' own edge registry is compared as an unordered pair, so `A --- B` and
+#' `B --- A` are the same edge. Edges are also compared by their full
+#' definition, so a glyph re-registered with a different meaning does not
+#' match the original. Asymmetric glyphs are direction-sensitive, so
 #' `A --> B` and `B --> A` are not.
 #'
 #' @param e1,e2 A `caugi` object (one or both sides).

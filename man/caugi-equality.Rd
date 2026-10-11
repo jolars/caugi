@@ -23,9 +23,11 @@ identity. Returns \code{FALSE} (resp. \code{TRUE}) when the other operand is not
 caugi object.
 }
 \details{
-Row order is ignored, and an edge whose glyph is symmetric in the edge
-registry is compared as an unordered pair, so \code{A --- B} and \code{B --- A} are
-the same edge. Asymmetric glyphs are direction-sensitive, so
+Row order is ignored, and an edge whose glyph is symmetric in the graph's
+own edge registry is compared as an unordered pair, so \code{A --- B} and
+\code{B --- A} are the same edge. Edges are also compared by their full
+definition, so a glyph re-registered with a different meaning does not
+match the original. Asymmetric glyphs are direction-sensitive, so
 \verb{A --> B} and \verb{B --> A} are not.
 }
 \examples{
