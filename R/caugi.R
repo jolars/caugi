@@ -416,7 +416,7 @@ caugi <- S7::new_class(
       # No declared nodes: use edge order
       all_node_names <- edge_node_names
     }
-    nodes <- data.table::data.table(name = all_node_names)
+    nodes <- .node_constructor(all_node_names)
     n <- nrow(nodes)
     id <- seq_len(n) - 1L
     names(id) <- nodes$name

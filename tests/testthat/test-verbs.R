@@ -160,6 +160,85 @@ test_that("remove_edges works and keeps other edges", {
   )
 })
 
+test_that("edge removal preserves bows, directions, nodes, and its input", {
+  for (built in c(FALSE, TRUE)) {
+    cg <- caugi(
+      from = c("B", "A", "B"),
+      edge = c("<->", "-->", "-->"),
+      to = c("A", "B", "A"),
+      nodes = c("isolated", "B", "A"),
+      simple = FALSE,
+      class = "UNKNOWN"
+    )
+    if (built) {
+      cg <- build(cg)
+    }
+    original <- edges(cg)
+    out <- remove_edges(cg, B %<->% A)
+    expect_identical(nodes(out)$name, c("isolated", "B", "A"))
+    expect_equal(edges(out), original[which(original$edge == "-->")])
+    expect_equal(edges(cg), original)
+    expect_equal(out@graph_class, "UNKNOWN")
+    expect_false(out@simple)
+
+    out <- remove_edges(cg, from = "A", edge = "-->", to = "B")
+    expect_equal(
+      edges(out),
+      original[which(!(original$from == "A" & original$edge == "-->"))]
+    )
+    expect_equal(edges(remove_edges(cg, A %<->% B)), original)
+  }
+})
+
+test_that("edge removal ignores unknown requests and accepts duplicate requests", {
+  cg <- caugi(A %-->% B, B %-->% C, class = "DAG")
+  out <- remove_edges(
+    cg,
+    from = c("missing", NA_character_, "A", "A", "A"),
+    edge = c("-->", "-->", "missing", "-->", "-->"),
+    to = rep("B", 5)
+  )
+  expect_equal(edges(out), edges(caugi(B %-->% C, class = "DAG")))
+  expect_identical(nodes(out)$name, nodes(cg)$name)
+  expect_equal(nrow(edges(cg)), 2)
+
+  empty <- remove_edges(cg, from = c("B", "C"), to = c("A", "B"))
+  expect_equal(nrow(edges(empty)), 0)
+  expect_equal(empty@graph_class, "DAG")
+  expect_identical(nodes(empty)$name, nodes(cg)$name)
+  expect_equal(
+    nrow(edges(remove_edges(
+      cg,
+      from = character(),
+      edge = character(),
+      to = character()
+    ))),
+    2
+  )
+  expect_equal(
+    nrow(edges(remove_edges(caugi(nodes = "A", class = "DAG"), A %-->% B))),
+    0
+  )
+})
+
+test_that("edge removal validates CPDAG invariants after deletion", {
+  cg <- caugi(A %-->% C, B %-->% C, C %-->% D, class = "CPDAG")
+  expect_error(remove_edges(cg, A %-->% C), "CPDAG|protected")
+  expect_equal(nrow(edges(cg)), 3)
+})
+
+test_that("edge removal uses the graph's registered edge types", {
+  reset_caugi_registry()
+  on.exit(reset_caugi_registry())
+  register_caugi_edge("===>", "tail", "arrow", "directed", FALSE)
+  cg <- caugi(from = "A", edge = "===>", to = "B", class = "DAG")
+  expect_equal(
+    nrow(edges(remove_edges(cg, from = "A", edge = "===>", to = "B"))),
+    0
+  )
+  expect_equal(nrow(edges(cg)), 1)
+})
+
 test_that("set_edges replaces any existing edges for pairs", {
   # Use simple=FALSE to allow parallel edges for this test
   cg <- caugi(simple = FALSE, class = "UNKNOWN")

@@ -5,6 +5,13 @@
 * Add `components()` to partition graphs into weakly connected components or
   strongly connected components of the directed part, including cyclic graphs
   of class `"UNKNOWN"`.
+  
+## Performance Improvements
+
+* `remove_edges()` now removes edges directly in Rust, avoiding graph table
+  reconstruction and redundant session cloning.
+* Node and edge tables use faster constructors, reducing overhead when building
+  graphs and retrieving `nodes()` and `edges()`.
 
 ## Bug Fixes
 
