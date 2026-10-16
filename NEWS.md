@@ -1,5 +1,7 @@
 # caugi (development version)
 
+* Updates for compatibility with S7 > 0.2.2.
+
 ## New Features
 
 * Add `components()` to partition graphs into weakly connected components or
