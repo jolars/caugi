@@ -9,6 +9,13 @@
 
 ## Bug Fixes
 
+- `mutate_caugi()` no longer forces `simple = TRUE` on every target class. A
+  non-simple graph converted to `"UNKNOWN"`, `"ADMG"` or `"AG"` keeps
+  `simple = FALSE`, so e.g. a bow (`A %-->% B`, `A %<->% B`) converts to a
+  valid ADMG instead of a simple graph with parallel edges that failed on
+  `build()` or any query. The converted graph is now built eagerly, so invalid
+  conversions fail immediately.
+
 - `m_separated()` now handles ADMG collider paths with multiple bidirected
   edges, such as `a -> b <-> c <-> d` given `{b, c}`. This also fixes
   `is_valid_adjustment_admg()` and `all_adjustment_sets_admg()`, which use the

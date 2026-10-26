@@ -257,8 +257,15 @@ mutate_caugi <- function(cg, class) {
   } else {
     # Clone the session so the graph keeps its own edge registry.
     session <- rs_clone(cg@session)
-    rs_set_simple(session, TRUE)
+    # Only UNKNOWN, ADMG, and AG may be non-simple (cf. the caugi validator).
+    rs_set_simple(
+      session,
+      cg@simple || !class %in% c("UNKNOWN", "ADMG", "AG")
+    )
     rs_set_class(session, class)
+    # Validate eagerly: class checks ignore multiplicity, so parallel edges in
+    # a non-simple source surface here rather than on first query.
+    rs_build(session)
     return(caugi(.session = session))
   }
 }

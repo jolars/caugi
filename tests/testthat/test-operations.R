@@ -158,6 +158,30 @@ test_that("mutate_caugi throws error, when mutation isn't possible", {
   expect_error(mutate_caugi(cg, class = "DAG"), "Cannot convert caugi of class")
 })
 
+test_that("mutate_caugi keeps simple = FALSE where the target class allows it", {
+  # A bow is a valid, non-simple ADMG.
+  cg <- caugi(A %-->% B, A %<->% B, class = "UNKNOWN", simple = FALSE)
+  cg_admg <- mutate_caugi(cg, class = "ADMG")
+  expect_false(cg_admg@simple)
+  expect_silent(build(cg_admg))
+  expect_equal(children(cg_admg, "A"), "B")
+  expect_equal(spouses(cg_admg, "A"), "B")
+
+  cg_back <- mutate_caugi(cg_admg, class = "UNKNOWN")
+  expect_false(cg_back@simple)
+  expect_silent(build(cg_back))
+
+  # Simple-only targets become simple.
+  cg_dag_like <- caugi(A %-->% B, B %-->% C, class = "UNKNOWN", simple = FALSE)
+  cg_dag <- mutate_caugi(cg_dag_like, class = "DAG")
+  expect_true(cg_dag@simple)
+  expect_silent(build(cg_dag))
+  expect_equal(children(cg_dag, "A"), "B")
+
+  # Simple sources stay simple.
+  expect_true(mutate_caugi(caugi(A %-->% B), class = "ADMG")@simple)
+})
+
 test_that("mutate_caugi works for all classes to UNKNOWN", {
   cg_pdag <- caugi(
     A %-->% B,
