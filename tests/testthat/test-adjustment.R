@@ -339,6 +339,17 @@ test_that("ADMG adjustment with several treatments uses proper causal paths", {
     minimal = FALSE
   )
   expect_setequal(lapply(sets, sort), list(character(0), "W"))
+
+  # W is no longer forbidden, but it is still a collider on X1 --> W <-> Y,
+  # while X2 <-- W <-> Y needs W: no valid set exists.
+  cg <- caugi(
+    X1 %-->% W,
+    W %-->% X2,
+    X2 %-->% Y,
+    W %<->% Y,
+    class = "ADMG"
+  )
+  expect_length(all_adjustment_sets_admg(cg, X = c("X1", "X2"), Y = "Y"), 0)
 })
 
 test_that("ADMG adjustment forbids descendants of the outcome", {
