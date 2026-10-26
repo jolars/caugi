@@ -24,6 +24,15 @@
   `build()` or any query. The converted graph is now built eagerly, so invalid
   conversions fail immediately.
 
+- `is_valid_adjustment_admg()` and `all_adjustment_sets_admg()` now follow the
+  generalized adjustment criterion's *proper* causal paths, i.e. those whose
+  only treatment node is the first. With several treatments, a node that
+  reaches `Y` only through another treatment was treated as causal and
+  forbidden, so e.g. `{W}` was rejected for `X1 --> W --> X2 --> Y` with
+  `X = c("X1", "X2")`. The forbidden set also left out the descendants of `Y`,
+  so `{D}` was accepted for `X --> Y --> D`. Both are now checked against a
+  brute-force implementation of the criterion.
+
 - `m_separated()` now handles ADMG collider paths with multiple bidirected
   edges, such as `a -> b <-> c <-> d` given `{b, c}`. This also fixes
   `is_valid_adjustment_admg()` and `all_adjustment_sets_admg()`, which use the
