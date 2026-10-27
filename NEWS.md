@@ -1,4 +1,4 @@
-# caugi (development version)
+# caugi 1.4.0
 
 * Updates for compatibility with S7 > 0.2.2.
 
