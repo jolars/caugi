@@ -13,11 +13,14 @@ impl Admg {
 
     /// Compute the "forbidden" set for adjustment per the Generalized Adjustment Criterion.
     ///
-    /// The forbidden set is: forb_G(X,Y) = De(cn(X,Y) \ Y) ∪ X
+    /// The forbidden set is: forb_G(X,Y) = De(cn(X,Y)) ∪ X
     ///
-    /// where cn(X,Y) = nodes on proper causal paths from X to Y, i.e., nodes v such that:
-    /// - v is reachable from X via directed edges (v ∈ De(X) ∪ X), AND
-    /// - Y is reachable from v via directed edges (v ∈ An(Y) ∪ Y)
+    /// where cn(X,Y) = nodes outside X on proper causal paths from X to Y (directed
+    /// paths whose only node in X is the first), i.e., nodes v ∉ X such that:
+    /// - v is reachable from X via directed edges (v ∈ De(X)), AND
+    /// - Y is reachable from v via directed edges avoiding X
+    ///
+    /// cn contains Y when Y ∈ De(X), so De(Y) is forbidden as well.
     ///
     /// Adjusting for any node in this set can:
     /// 1. Block the causal effect (if on the path itself)
@@ -28,31 +31,24 @@ impl Admg {
         // Step 1: Compute De(X) ∪ X (nodes reachable from X, including X)
         let de_x = self.descendants_mask(xs);
 
-        // Step 2: Compute An(Y) ∪ Y (nodes that can reach Y, including Y)
-        let an_y = self.ancestors_mask(ys);
+        // Step 2: Compute An(Y) ∪ Y along directed paths that avoid X
+        let an_y = self.ancestors_mask_avoiding(ys, xs);
 
-        // Step 3: Find cn(X,Y) = nodes on proper causal paths
-        // A node v is on a causal path if v ∈ (De(X) ∪ X) AND v ∈ (An(Y) ∪ Y)
+        // Step 3: Find cn(X,Y) = nodes outside X on proper causal paths
+        // A node v is on a proper causal path if v ∈ De(X) AND v reaches Y avoiding X
+        let x_mask = bitset::mask_from(xs, self.n());
         let mut causal_nodes: Vec<u32> = Vec::new();
         for v in 0..n as u32 {
-            if de_x[v as usize] && an_y[v as usize] {
+            if de_x[v as usize] && an_y[v as usize] && !x_mask[v as usize] {
                 causal_nodes.push(v);
             }
         }
 
-        // Step 4: Compute cn \ Y (exclude Y from causal nodes for descendants computation)
-        // Use HashSet for O(1) membership lookup instead of O(|Y|) linear search
-        let y_set: HashSet<u32> = ys.iter().copied().collect();
-        let causal_nodes_minus_y: Vec<u32> = causal_nodes
-            .into_iter()
-            .filter(|v| !y_set.contains(v))
-            .collect();
-
-        // Step 5: Compute De(cn \ Y) - this includes cn \ Y itself since descendants_mask
+        // Step 4: Compute De(cn) - this includes cn itself since descendants_mask
         // includes the seeds
-        let mut forbidden = self.descendants_mask(&causal_nodes_minus_y);
+        let mut forbidden = self.descendants_mask(&causal_nodes);
 
-        // Step 6: Add X to forbidden set
+        // Step 5: Add X to forbidden set
         for &x in xs {
             forbidden[x as usize] = true;
         }
@@ -62,16 +58,19 @@ impl Admg {
 
     /// Validate whether Z is a valid adjustment set for estimating X → Y.
     ///
-    /// Uses the generalized adjustment criterion (GAC) for ADMGs (Perković,
-    /// Textor, Kalisch, Maathuis 2018):
-    /// 1. Z ∩ forb(X,Y) = ∅, where forb(X,Y) = De(cn(X,Y) \ Y) ∪ X
+    /// Uses the adjustment criterion of Shpitser, VanderWeele & Robins (2010),
+    /// which is stated for latent projections (ADMGs), in the forbidden-set and
+    /// proper-backdoor-graph form of Perković et al. (2018) and van der Zander,
+    /// Liśkiewicz & Textor (2019). Those two papers cover DAGs, CPDAGs, MAGs
+    /// and PAGs, not ADMGs:
+    /// 1. Z ∩ forb(X,Y) = ∅, where forb(X,Y) = De(cn(X,Y)) ∪ X
     ///    (Z must not contain any node in the forbidden set)
     /// 2. X and Y are m-separated by Z in the proper backdoor graph
     ///    (G with the first edges of every proper causal path from X to Y
     ///    removed).
     ///
     /// The forbidden set includes X, all nodes on proper causal paths from X to Y,
-    /// and all descendants of those path nodes (except Y). Conditioning on forbidden
+    /// and all descendants of those path nodes. Conditioning on forbidden
     /// nodes can block the causal effect or open spurious paths via collider bias.
     pub fn is_valid_adjustment_set(&self, xs: &[u32], ys: &[u32], z: &[u32]) -> bool {
         // Condition 1: Z contains no forbidden nodes.

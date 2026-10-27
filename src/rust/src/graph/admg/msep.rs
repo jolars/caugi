@@ -35,6 +35,25 @@ impl Admg {
         bitset::ancestors_mask(seeds, |u| self.parents_of(u), self.n())
     }
 
+    /// Ancestors of `seeds` along directed paths that avoid `avoid`. Nodes in
+    /// `avoid` are marked when reached but never climbed through, so with
+    /// `seeds = Y` and `avoid = X`, a node `v ∉ X` is marked iff it has a
+    /// directed path to `Y` avoiding `X`.
+    pub(super) fn ancestors_mask_avoiding(&self, seeds: &[u32], avoid: &[u32]) -> Vec<bool> {
+        let avoid = bitset::mask_from(avoid, self.n());
+        bitset::ancestors_mask(
+            seeds,
+            |u| {
+                if avoid[u as usize] {
+                    &[]
+                } else {
+                    self.parents_of(u)
+                }
+            },
+            self.n(),
+        )
+    }
+
     /// Ancestors mask in the graph obtained by deleting every directed edge
     /// `(u → v)` in `removed_directed`.
     fn ancestors_mask_filtered(
@@ -224,18 +243,21 @@ impl Admg {
     /// causal path from `xs` to `ys` removed. A proper causal path is a
     /// directed path `x = v0 → v1 → ... → vk = y` whose internal nodes
     /// `v1, …, vk` are not in `xs`. Equivalently, the deleted edges are
-    /// `x → v` with `x ∈ xs`, `v ∉ xs`, and `v ∈ An(ys) ∪ ys`.
+    /// `x → v` with `x ∈ xs`, `v ∉ xs`, and a directed path from `v` to `ys`
+    /// that avoids `xs`.
     ///
     /// Returns `true` iff `xs ⊥_m ys | z` in that graph. Together with the
-    /// forbidden-set check, this is the second condition of the Generalized
-    /// Adjustment Criterion of Perković et al. (2018).
+    /// forbidden-set check, this is the adjustment criterion for ADMGs
+    /// (Shpitser, VanderWeele & Robins, 2010), in the proper-backdoor-graph
+    /// form of van der Zander, Liśkiewicz & Textor (2019).
     pub(super) fn m_separated_pbg(&self, xs: &[u32], ys: &[u32], z: &[u32]) -> bool {
         if xs.is_empty() || ys.is_empty() {
             return true;
         }
 
-        // First edges of proper causal paths from `xs` to `ys`.
-        let an_y = self.ancestors_mask(ys);
+        // First edges of proper causal paths from `xs` to `ys`: x --> v with
+        // v ∉ X and a directed path from v to Y avoiding X.
+        let an_y = self.ancestors_mask_avoiding(ys, xs);
         let x_set: HashSet<u32> = xs.iter().copied().collect();
         let mut removed: HashSet<(u32, u32)> = HashSet::new();
         for &x in xs {
