@@ -255,3 +255,170 @@ test_that("collider-driven adjustment candidates are validated consistently", {
   expect_true("A,Z" %in% set_strings)
   expect_true("B,Z" %in% set_strings)
 })
+
+# Generalized adjustment criterion (Perković et al. 2018) straight from its
+# definition: enumerate every path from X to Y, so it shares no code with the
+# Rust implementation (masks, proper backdoor graph, moralisation).
+.gac_oracle <- function(edges, X, Y) {
+  dir <- edges[edges$edge == "-->", ]
+  closure <- function(seeds, step) {
+    out <- seeds
+    repeat {
+      nxt <- union(out, step(out))
+      if (length(nxt) == length(out)) {
+        return(out)
+      }
+      out <- nxt
+    }
+  }
+  an <- function(s) closure(s, function(v) dir$from[dir$to %in% v])
+  de <- function(s) closure(s, function(v) dir$to[dir$from %in% v])
+  # arrowhead of edge i at node v
+  head_at <- function(i, v) {
+    edges$edge[i] == "<->" || edges$to[i] == v
+  }
+
+  # All proper paths (only the first node in X) from X to Y, as lists of
+  # node and edge index sequences.
+  paths <- list()
+  walk <- function(path, used) {
+    v <- path[length(path)]
+    if (length(path) > 1 && v %in% Y) {
+      paths[[length(paths) + 1]] <<- list(nodes = path, edges = used)
+    }
+    for (i in which(edges$from == v | edges$to == v)) {
+      w <- if (edges$from[i] == v) edges$to[i] else edges$from[i]
+      if (!w %in% path && !w %in% X) walk(c(path, w), c(used, i))
+    }
+  }
+  for (x in X) {
+    walk(x, integer(0))
+  }
+
+  is_causal <- vapply(
+    paths,
+    function(p) {
+      all(edges$edge[p$edges] == "-->") &&
+        all(edges$from[p$edges] == p$nodes[-length(p$nodes)])
+    },
+    logical(1)
+  )
+  cn <- unique(unlist(lapply(paths[is_causal], function(p) p$nodes[-1])))
+  forb <- union(de(cn), X)
+
+  function(Z) {
+    if (any(Z %in% forb)) {
+      return(FALSE)
+    }
+    an_z <- an(Z)
+    for (p in paths[!is_causal]) {
+      k <- length(p$nodes)
+      open <- TRUE
+      for (j in seq_len(k - 2) + 1) {
+        v <- p$nodes[j]
+        collider <- head_at(p$edges[j - 1], v) && head_at(p$edges[j], v)
+        if (collider && !v %in% an_z || !collider && v %in% Z) {
+          open <- FALSE
+          break
+        }
+      }
+      if (open) return(FALSE)
+    }
+    TRUE
+  }
+}
+
+test_that("ADMG adjustment with several treatments uses proper causal paths", {
+  # W reaches Y only through the other treatment X2, so it is not causal.
+  cg <- caugi(X1 %-->% W, W %-->% X2, X2 %-->% Y, class = "ADMG")
+  expect_true(is_valid_adjustment_admg(cg, X = c("X1", "X2"), Y = "Y", Z = "W"))
+  sets <- all_adjustment_sets_admg(
+    cg,
+    X = c("X1", "X2"),
+    Y = "Y",
+    minimal = FALSE
+  )
+  expect_setequal(lapply(sets, sort), list(character(0), "W"))
+
+  # W is no longer forbidden, but it is still a collider on X1 --> W <-> Y,
+  # while X2 <-- W <-> Y needs W: no valid set exists.
+  cg <- caugi(
+    X1 %-->% W,
+    W %-->% X2,
+    X2 %-->% Y,
+    W %<->% Y,
+    class = "ADMG"
+  )
+  expect_length(all_adjustment_sets_admg(cg, X = c("X1", "X2"), Y = "Y"), 0)
+})
+
+test_that("ADMG adjustment allows descendants of X off the causal paths", {
+  # main forbade all of De(X) here, as X is an ancestor of Y.
+  cg <- caugi(X %-->% Y + D, class = "ADMG")
+  expect_true(is_valid_adjustment_admg(cg, X = "X", Y = "Y", Z = "D"))
+  sets <- all_adjustment_sets_admg(cg, X = "X", Y = "Y", minimal = FALSE)
+  expect_setequal(lapply(sets, sort), list(character(0), "D"))
+})
+
+test_that("ADMG adjustment forbids descendants of the outcome", {
+  cg <- caugi(X %-->% Y, Y %-->% D, class = "ADMG")
+  expect_false(is_valid_adjustment_admg(cg, X = "X", Y = "Y", Z = "D"))
+  expect_true(is_valid_adjustment_admg(cg, X = "X", Y = "Y", Z = character(0)))
+})
+
+test_that("ADMG adjustment agrees with a brute-force oracle on random graphs", {
+  set.seed(20261026)
+  nodes <- paste0("V", 1:6)
+  for (rep in seq_len(150)) {
+    ord <- sample(nodes)
+    pairs <- t(combn(6, 2))
+    kind <- sample(
+      c("", "-->", "<->"),
+      nrow(pairs),
+      replace = TRUE,
+      prob = c(0.45, 0.35, 0.2)
+    )
+    keep <- kind != ""
+    edges <- data.frame(
+      from = ord[pairs[keep, 1]],
+      edge = kind[keep],
+      to = ord[pairs[keep, 2]]
+    )
+    cg <- caugi(
+      from = edges$from,
+      edge = edges$edge,
+      to = edges$to,
+      nodes = nodes,
+      class = "ADMG"
+    )
+    X <- sample(nodes, sample(1:2, 1))
+    Y <- sample(setdiff(nodes, X), sample(1:2, 1))
+    rest <- setdiff(nodes, c(X, Y))
+    oracle <- .gac_oracle(edges, X, Y)
+
+    subsets <- unlist(
+      lapply(0:length(rest), function(k) combn(rest, k, simplify = FALSE)),
+      recursive = FALSE
+    )
+    truth <- vapply(subsets, oracle, logical(1))
+    got <- vapply(
+      subsets,
+      function(z) is_valid_adjustment_admg(cg, X = X, Y = Y, Z = z),
+      logical(1)
+    )
+    expect_identical(got, truth, label = paste("rep", rep))
+
+    all_sets <- all_adjustment_sets_admg(
+      cg,
+      X = X,
+      Y = Y,
+      minimal = FALSE,
+      max_size = length(rest)
+    )
+    key <- function(z) paste(sort(z), collapse = ",")
+    expect_setequal(
+      vapply(all_sets, key, character(1)),
+      vapply(subsets[truth], key, character(1))
+    )
+  }
+})
