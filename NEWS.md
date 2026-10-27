@@ -1,5 +1,19 @@
 # caugi (development version)
 
+## Bug Fixes
+
+- `is_valid_adjustment_admg()` and `all_adjustment_sets_admg()` no longer
+  reject valid adjustment sets that contain a descendant of a treatment. The
+  forbidden set counted every treatment that is an ancestor of `Y` as a node
+  on a causal path, so it forbade all of `De(X ∩ An(Y))` instead of only the
+  descendants of the non-treatment nodes on *proper* causal paths (those whose
+  only treatment node is the first). With one treatment, `{D}` was rejected
+  for `X --> Y`, `X --> D`; with several, `{W}` was rejected for
+  `X1 --> W --> X2 --> Y` with `X = c("X1", "X2")`. Both functions are now
+  checked against a brute-force implementation of the criterion.
+
+# caugi 1.4.0
+
 * Updates for compatibility with S7 > 0.2.2.
 
 ## New Features
@@ -23,16 +37,6 @@
   valid ADMG instead of a simple graph with parallel edges that failed on
   `build()` or any query. The converted graph is now built eagerly, so invalid
   conversions fail immediately.
-
-- `is_valid_adjustment_admg()` and `all_adjustment_sets_admg()` no longer
-  reject valid adjustment sets that contain a descendant of a treatment. The
-  forbidden set counted every treatment that is an ancestor of `Y` as a node
-  on a causal path, so it forbade all of `De(X ∩ An(Y))` instead of only the
-  descendants of the non-treatment nodes on *proper* causal paths (those whose
-  only treatment node is the first). With one treatment, `{D}` was rejected
-  for `X --> Y`, `X --> D`; with several, `{W}` was rejected for
-  `X1 --> W --> X2 --> Y` with `X = c("X1", "X2")`. Both functions are now
-  checked against a brute-force implementation of the criterion.
 
 - `m_separated()` now handles ADMG collider paths with multiple bidirected
   edges, such as `a -> b <-> c <-> d` given `{b, c}`. This also fixes
