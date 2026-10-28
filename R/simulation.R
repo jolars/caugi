@@ -47,7 +47,7 @@ generate_graph <- function(
     .local_seed(seed)
   }
 
-  tot <- as.integer(n * (n - 1L) / 2L)
+  tot <- n * (n - 1) / 2 # double: n * (n - 1L) overflows for n >= 46342
 
   if (!is.null(p)) {
     if (length(p) != 1L || !is.finite(p) || p < 0 || p > 1) {
@@ -57,7 +57,7 @@ generate_graph <- function(
   } else {
     m <- as.integer(m)
     if (length(m) != 1L || m < 0L || m > tot) {
-      stop(sprintf("m must be in 0..%d", tot), call. = FALSE)
+      stop(sprintf("m must be in 0..%.0f", tot), call. = FALSE)
     }
   }
 
@@ -69,9 +69,9 @@ generate_graph <- function(
   if (m > 0L) {
     ranks <- sample.int(tot, m) - 1L
     row_len <- (n - 1L):1L
-    cum <- cumsum(row_len)
+    cum <- cumsum(as.numeric(row_len))
     i <- as.integer(findInterval(ranks, cum))
-    cum0 <- c(0L, cum)
+    cum0 <- c(0, cum)
     offset <- ranks - cum0[i + 1L]
     j <- i + 1L + offset
 

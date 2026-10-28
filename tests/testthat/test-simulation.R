@@ -23,6 +23,11 @@ test_that("errors: m invalid", {
   expect_error(generate_graph(n, m = c(1L, 2L)), "m must be in 0..")
 })
 
+test_that("large n does not overflow the pair count", {
+  g <- expect_no_warning(generate_graph(46342L, m = 3L))
+  expect_equal(nrow(edges(g)), 3L)
+})
+
 test_that("DAG class with m = 0 yields 0 edges and correct nodes", {
   n <- 5
   g <- generate_graph(n, m = 0L, class = "DAG")
