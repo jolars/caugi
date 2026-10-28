@@ -16,6 +16,10 @@
 
 ## Bug Fixes
 
+* `plot()` now uses a common coordinate range for both axes, so floating-point
+  noise in nearly horizontal or vertical layouts is no longer stretched to
+  fill the panel (#424).
+  
 - `to_dot()` now quotes node names that are DOT keywords (`node`, `edge`,
   `graph`, `digraph`, `subgraph`, `strict`, in any case), and escapes `"` and
   `\\` in string attribute values.
