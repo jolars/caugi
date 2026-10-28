@@ -623,7 +623,7 @@ S7::method(`/`, list(caugi_plot, caugi_plot)) <- `/.caugi_plot`
 compose_plots <- function(e1, e2, horizontal = TRUE) {
   # Compose using a fixed layout to avoid grob size conversions
   # (which can fail for nested viewports).
-  opts <- get0("options", .caugi_env, ifnotfound = caugi_default_options())
+  opts <- get0("options", .caugi_env, ifnotfound = .caugi_default_options())
   spacing <- opts$plot$spacing
   if (is.null(spacing)) {
     spacing <- grid::unit(1, "lines")

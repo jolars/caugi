@@ -860,12 +860,12 @@ caugi_options(plot = list(spacing = grid::unit(2, "lines")))
 p1 + p2
 ```
 
-To reset the default, you can call `caugi_default_options()`:
+To reset the default, call `caugi_options(reset = TRUE)`:
 
 ```{r}
 #| label: reset-global-options
 
-caugi_options(caugi_default_options())
+caugi_options(reset = TRUE)
 ```
 
 ## Global Plot Options
@@ -907,8 +907,8 @@ plot(cg,
   node_style = list(fill = "pink")
 )
 
-# Reset to defauls
-caugi_options(caugi_default_options())
+# Reset to defaults
+caugi_options(reset = TRUE)
 ```
 
 ### Available Options
