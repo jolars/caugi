@@ -11,6 +11,8 @@
 
 ## Bug Fixes
 
+- `write_caugi()` and `read_caugi()` now expand `~` in `path`.
+
 * `caugi_layout_sugiyama()` now places parents above their children, matching
   the documented top-to-bottom flow. This also fixes automatic layouts and
   plots of DAGs, including graphs with disconnected components (#421).
