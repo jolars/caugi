@@ -66,20 +66,40 @@ d_separated <- function(
 
 #' @title Compute an adjustment set
 #'
-#' @description Computes an adjustment set for `X -> Y` in a DAG.
+#' @description Computes an adjustment set for the effect of `X` on `Y` in a
+#' DAG. `X` and `Y` can each hold one or more nodes.
 #' @details
 #' Types supported:
-#' - `"parents"`: \eqn{\bigcup \mathrm{Pa}(X)} minus \eqn{X \cup Y}
-#' - `"backdoor"`: an inclusion-minimal valid backdoor adjustment set, found in
+#' - `"parents"`: \eqn{\bigcup \mathrm{Pa}(X)} minus \eqn{X \cup Y}. With a
+#'   single treatment this is valid whenever any valid set exists. With several
+#'   treatments it can fail while other sets work, because a parent of one
+#'   treatment can lie on a causal path from another.
+#' - `"backdoor"`: an inclusion-minimal valid adjustment set, found in
 #'   linear time as a minimal d-separator of `X` and `Y` in the proper backdoor
-#'   graph (van der Zander, Liśkiewicz & Textor, 2019). Unlike `"parents"` (which
-#'   always conditions on every parent of `X`), this drops nodes that are not
-#'   needed to block a backdoor path. Note that minimal is not the same as
-#'   statistically optimal; use `"optimal"` for the efficient O-set.
-#' - `"optimal"`: O-set (only for single `x` and single `y`)
+#'   graph (van der Zander, Liśkiewicz & Textor, 2019). It finds a valid set
+#'   whenever one exists. Unlike `"parents"` (which always conditions on every
+#'   parent of `X`), this drops nodes that are not needed to block a backdoor
+#'   path. Note that minimal is not the same as statistically optimal; use
+#'   `"optimal"` for the efficient O-set.
+#' - `"optimal"`: the O-set \eqn{\mathrm{Pa}(\mathrm{cn}(X, Y)) \setminus
+#'   \mathrm{forb}(X, Y)} (Henckel, Perković & Maathuis, 2022). Following
+#'   their Remark 3.14, nodes of `Y` that are not descendants of `X` are
+#'   dropped with a warning, since the total effect on them is zero, and the
+#'   O-set is computed for the rest of `Y`. It is then valid whenever any valid
+#'   set exists. If no node of `Y` is a descendant of `X`, an error is raised.
+#'   A dropped node can itself be in the O-set: for `X --> Y1 <-- Y2` with
+#'   `Y = c("Y1", "Y2")`, `Y2` is dropped from `Y` and returned as the O-set,
+#'   since it is a parent of `Y1`.
+#'
+#' Every result is checked against the generalized adjustment criterion
+#' (Perković et al., 2018). An error is raised when the requested set is not
+#' valid. In particular, a valid set need not exist with several treatments:
+#' in `X1 --> L --> X2`, `L --> Y`, only `L` blocks `X2 <-- L --> Y`, but it
+#' lies on the causal path `X1 --> L --> Y`. With a single treatment, no valid
+#' set exists only when a node of `Y` is a parent of `X`.
 #'
 #' @param cg A `caugi` object.
-#' @param X,Y Node names.
+#' @param X,Y Node names; one or more each, and disjoint.
 #' @param X_index,Y_index Optional numeric 1-based indices.
 #' @param type One of `"parents"`, `"backdoor"`, `"optimal"`.
 #' The `optimal` option computes the O-set.
@@ -104,6 +124,10 @@ d_separated <- function(
 #' adjustment_set(cg, "X", "Y", type = "backdoor") # A
 #' adjustment_set(cg, "X", "Y", type = "optimal") # K
 #'
+#' # Several treatments
+#' cg2 <- caugi(X1 %-->% W, W %-->% X2, X2 %-->% Y, U %-->% W + Y, class = "DAG")
+#' adjustment_set(cg2, c("X1", "X2"), "Y", type = "optimal") # U
+#'
 #' @family adjustment
 #' @concept adjustment
 #'
@@ -117,16 +141,25 @@ adjustment_set <- function(
   type = c("optimal", "parents", "backdoor")
 ) {
   is_caugi(cg, throw_error = TRUE)
-  if (
-    length(X) > 1 || length(Y) > 1 || length(X_index) > 1 || length(Y_index) > 1
-  ) {
-    stop("Provide exactly one X and one Y.", call. = FALSE)
-  }
-
   type <- match.arg(type)
 
-  X_idx0 <- .resolve_idx0_get(cg@session, X, X_index)
-  Y_idx0 <- .resolve_idx0_get(cg@session, Y, Y_index)
+  if (is.null(X) && is.null(X_index)) {
+    stop("X (or X_index) must be provided.", call. = FALSE)
+  }
+  if (is.null(Y) && is.null(Y_index)) {
+    stop("Y (or Y_index) must be provided.", call. = FALSE)
+  }
+  X_idx0 <- unique(.resolve_idx0_mget(cg@session, X, X_index))
+  Y_idx0 <- unique(.resolve_idx0_mget(cg@session, Y, Y_index))
+  if (length(X_idx0) == 0L) {
+    stop("`X` must name at least one node.", call. = FALSE)
+  }
+  if (length(Y_idx0) == 0L) {
+    stop("`Y` must name at least one node.", call. = FALSE)
+  }
+  if (any(X_idx0 %in% Y_idx0)) {
+    stop("X and Y must be disjoint.", call. = FALSE)
+  }
 
   idx0 <- switch(
     type,
@@ -136,7 +169,21 @@ adjustment_set <- function(
       X_idx0,
       Y_idx0
     ),
-    optimal = rs_adjustment_set_optimal(cg@session, X_idx0, Y_idx0)
+    optimal = {
+      # Rust drops the nodes of Y that are not descendants of X (Henckel et
+      # al., 2022, Remark 3.14) and reports them.
+      res <- rs_adjustment_set_optimal(cg@session, X_idx0, Y_idx0, TRUE)
+      if (length(res$dropped) > 0) {
+        warning(
+          "Not a descendant of X, so dropped from Y (the effect on it is ",
+          "zero): ",
+          paste(cg@nodes$name[res$dropped + 1L], collapse = ", "),
+          ". The O-set is for the rest of Y.",
+          call. = FALSE
+        )
+      }
+      res$set
+    }
   )
   cg@nodes$name[idx0 + 1L]
 }
