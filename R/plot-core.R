@@ -215,6 +215,8 @@ plot.caugi <- function(
       )
     }
 
+    layout$name <- as.character(layout$name)
+
     # Check that number of nodes matches
     graph_nodes <- nodes(x)[["name"]]
     if (nrow(layout) != length(graph_nodes)) {

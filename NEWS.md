@@ -11,6 +11,8 @@
 
 ## Bug Fixes
 
+- `plot()` now accepts a precomputed layout whose `name` column is a factor.
+
 - `condition_marginalize()` now errors on unknown nodes in `cond_vars` or
   `marg_vars` instead of silently ignoring them.
 
