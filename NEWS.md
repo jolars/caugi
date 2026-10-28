@@ -11,6 +11,9 @@
 
 ## Bug Fixes
 
+- `as_caugi()` on a matrix now errors when `rownames` and `colnames` are both
+  set and differ, instead of silently using the `colnames`.
+
 * `caugi_layout_sugiyama()` now places parents above their children, matching
   the documented top-to-bottom flow. This also fixes automatic layouts and
   plots of DAGs, including graphs with disconnected components (#421).
