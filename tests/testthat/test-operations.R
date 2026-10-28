@@ -671,6 +671,16 @@ test_that("Marginalization and conditioning work", {
   expect_true(same_graphs(rescu, mgcu))
 
   expect_error(condition_marginalize(mg, cond_vars = NULL, marg_vars = NULL))
+  expect_error(
+    condition_marginalize(mg, marg_vars = c("U", "Q")),
+    "Unknown node(s): Q",
+    fixed = TRUE
+  )
+  expect_error(
+    condition_marginalize(mg, cond_vars = "Q"),
+    "Unknown node(s): Q",
+    fixed = TRUE
+  )
 
   # Figure 11
 
