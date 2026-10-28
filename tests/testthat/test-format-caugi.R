@@ -37,6 +37,16 @@ test_that("write_caugi and read_caugi round-trip correctly", {
   expect_equal(nrow(edges(cg)), nrow(edges(cg2)))
 })
 
+test_that("write_caugi and read_caugi expand `~` in paths", {
+  skip_on_os("windows")
+  withr::local_envvar(HOME = withr::local_tempdir())
+  cg <- caugi(A %-->% B, class = "DAG")
+
+  write_caugi(cg, "~/g.caugi.json")
+  expect_true(file.exists(file.path(Sys.getenv("HOME"), "g.caugi.json")))
+  expect_setequal(read_caugi("~/g.caugi.json")@nodes$name, c("A", "B"))
+})
+
 test_that("serialization preserves different graph classes", {
   graphs <- list(
     caugi(A %-->% B, class = "DAG"),
