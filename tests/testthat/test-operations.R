@@ -636,6 +636,14 @@ test_that("exogenize fails with non-simple graphs", {
 })
 
 
+test_that("condition_marginalize() handles a result with no edges", {
+  cg <- caugi(X %-->% Z, Y %-->% Z, class = "DAG")
+  res <- condition_marginalize(cg, marg_vars = "Z")
+  expect_equal(res@graph_class, "AG")
+  expect_setequal(nodes(res)$name, c("X", "Y"))
+  expect_equal(nrow(edges(res)), 0L)
+})
+
 test_that("Marginalization and conditioning work", {
   ## Examples from Figure 10 of Richardson and Spirtes 2002
 
@@ -663,6 +671,16 @@ test_that("Marginalization and conditioning work", {
   expect_true(same_graphs(rescu, mgcu))
 
   expect_error(condition_marginalize(mg, cond_vars = NULL, marg_vars = NULL))
+  expect_error(
+    condition_marginalize(mg, marg_vars = c("U", "Q")),
+    "Unknown node(s): Q",
+    fixed = TRUE
+  )
+  expect_error(
+    condition_marginalize(mg, cond_vars = "Q"),
+    "Unknown node(s): Q",
+    fixed = TRUE
+  )
 
   # Figure 11
 

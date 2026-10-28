@@ -533,8 +533,9 @@ on every call; it is skipped at $n = 10000$.
 ### D-Separation
 
 For each fixture we pick a random `(X, Y)` pair and compute a **minimal
-d-separator** `Z` with `caugi::minimal_separator()`---that is, a smallest set of
-nodes whose conditioning blocks every path between `X` and `Y` in the DAG. The
+d-separator** `Z` with `caugi::minimal_separator()`---that is, an
+inclusion-minimal set of nodes whose conditioning blocks every path between `X`
+and `Y` in the DAG. The
 same triple `(X, Y, Z)` is then passed to every package's d-separation routine,
 so every package answers "is `X ⫫ Y | Z`?" on identical inputs. Tetrad uses the
 m-separation generalisation (equivalent on DAGs). `pcalg::dsep()` follows

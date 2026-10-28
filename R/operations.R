@@ -487,6 +487,14 @@ condition_marginalize <- function(cg, cond_vars = NULL, marg_vars = NULL) {
 
   # Compute remaining nodes after removing conditioned and marginalized vars
   all_node_names <- nodes(cg)$name
+  unknown <- setdiff(c(cond_vars, marg_vars), all_node_names)
+  if (length(unknown) > 0L) {
+    stop(
+      "Unknown node(s): ",
+      paste(unknown, collapse = ", "),
+      call. = FALSE
+    )
+  }
   removed_vars <- union(cond_vars, marg_vars)
   remaining_nodes <- setdiff(all_node_names, removed_vars)
   n_remaining <- length(remaining_nodes)
@@ -543,6 +551,9 @@ condition_marginalize <- function(cg, cond_vars = NULL, marg_vars = NULL) {
 
   # Combine edges efficiently using data.table
   non_null <- !vapply(edge_list, is.null, logical(1L))
+  if (!any(non_null)) {
+    return(caugi(nodes = remaining_nodes, class = "AG"))
+  }
   edges_df <- data.table::rbindlist(edge_list[non_null])
 
   caugi(edges_df = edges_df, nodes = remaining_nodes, class = "AG")

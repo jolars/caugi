@@ -23,6 +23,11 @@ test_that("errors: m invalid", {
   expect_error(generate_graph(n, m = c(1L, 2L)), "m must be in 0..")
 })
 
+test_that("large n does not overflow the pair count", {
+  g <- expect_no_warning(generate_graph(46342L, m = 3L))
+  expect_equal(nrow(edges(g)), 3L)
+})
+
 test_that("DAG class with m = 0 yields 0 edges and correct nodes", {
   n <- 5
   g <- generate_graph(n, m = 0L, class = "DAG")
@@ -105,6 +110,14 @@ test_that("CPDAG generation preserves sampled skeleton from DAG branch", {
 
   expect_equal(normalized_skeleton(cpdag), normalized_skeleton(dag))
   expect_true(is_cpdag(cpdag))
+})
+
+test_that("seed does not change the caller's RNG state", {
+  set.seed(1)
+  before <- get(".Random.seed", envir = globalenv())
+  generate_graph(5, m = 3, seed = 42)
+  simulate_data(caugi(A %-->% B, class = "DAG"), n = 5, seed = 42)
+  expect_identical(get(".Random.seed", envir = globalenv()), before)
 })
 
 test_that("generate_graph with seed produces reproducible CPDAGs", {

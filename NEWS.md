@@ -2,6 +2,11 @@
 
 ## New Features
 
+* `caugi_options(reset = TRUE)` resets all options to their defaults.
+  `caugi_options(caugi_default_options())` did not, since it only merges into
+  the current options and so keeps keys that are not in the defaults.
+  `caugi_default_options()` is therefore deprecated.
+
 * `adjustment_set()` now accepts several treatments `X` and outcomes `Y` for
   every `type`. `type = "optimal"` returns the O-set of Henckel, Perković &
   Maathuis (2022) for node sets. As in their Remark 3.14 and
@@ -14,6 +19,57 @@
 * `plot()` now uses a common coordinate range for both axes, so floating-point
   noise in nearly horizontal or vertical layouts is no longer stretched to
   fill the panel (#424).
+  
+- `to_dot()` now quotes node names that are DOT keywords (`node`, `edge`,
+  `graph`, `digraph`, `subgraph`, `strict`, in any case), and escapes `"` and
+  `\\` in string attribute values.
+
+- `caugi(..., nodes = )` no longer drops isolated nodes declared in the DSL,
+  e.g. `D` in `caugi(A %-->% B, D, nodes = c("A", "B", "C"))`.
+
+- `as_adjacency()` now errors on `<->` edges, as documented, instead of
+  encoding them the same as `---`.
+
+- `as_caugi(<igraph>, collapse = TRUE)` no longer drops a mutual pair when
+  the reverse edge comes first (e.g. `B -> A` before `A -> B`).
+
+- `--o` edges now round-trip through dagitty: `as_caugi()` reads dagitty's
+  `o--` code (written by `as_dagitty()` for `--o`) instead of erroring.
+
+- `as_dagitty()` now quotes node names, so names with spaces or edge
+  symbols (e.g. `"my var"`, `"x->y"`) no longer turn into extra nodes or
+  edges. It errors on nodes named `node` or `graph`, which dagitty rejects.
+
+- `plot()` now reads a numeric `tier_style` `padding` as mm, like node
+  padding, instead of erroring. The docs now give the correct default (4 mm).
+
+- Numeric node names in the DSL are no longer written in scientific notation:
+  `100000 %-->% B` now creates node `"100000"` instead of `"1e+05"`.
+
+- `plot()` now accepts a precomputed layout whose `name` column is a factor.
+
+- `condition_marginalize()` now errors on unknown nodes in `cond_vars` or
+  `marg_vars` instead of silently ignoring them.
+
+- `condition_marginalize()` no longer errors when the resulting graph has no
+  edges, e.g. for `X --> Z <-- Y` with `Z` marginalized.
+  
+- `generate_graph(seed = )` and `simulate_data(seed = )` no longer reset the
+  global random number state; the caller's state is restored on exit.
+  
+- `generate_graph()` no longer overflows an integer for `n >= 46342`.
+
+- `as_caugi()` on an igraph with no vertices now gives a graph with no nodes
+  instead of a single node `"V"`.
+  
+- `as_caugi()` on a matrix now errors when `rownames` and `colnames` are both
+  set and differ, instead of silently using the `colnames`.
+  
+- `write_caugi()` and `read_caugi()` now expand `~` in `path`.
+
+* `caugi_layout_sugiyama()` now places parents above their children, matching
+  the documented top-to-bottom flow. This also fixes automatic layouts and
+  plots of DAGs, including graphs with disconnected components (#421).
 
 - `is_valid_adjustment_admg()` and `all_adjustment_sets_admg()` no longer
   reject valid adjustment sets that contain a descendant of a treatment. The
