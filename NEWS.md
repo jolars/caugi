@@ -11,6 +11,8 @@
 
 ## Bug Fixes
 
+- `generate_graph()` no longer overflows an integer for `n >= 46342`.
+
 * `caugi_layout_sugiyama()` now places parents above their children, matching
   the documented top-to-bottom flow. This also fixes automatic layouts and
   plots of DAGs, including graphs with disconnected components (#421).
