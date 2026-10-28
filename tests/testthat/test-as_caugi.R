@@ -67,6 +67,10 @@ test_that("matrix validation errors", {
   z <- matrix(0L, 2, 2)
   z[1, 2] <- 4L
   expect_error(as_caugi(z, class = "PAG"), "integer codes 0-3", fixed = TRUE)
+
+  # differing rownames and colnames
+  w <- matrix(0L, 2, 2, dimnames = list(c("A", "B"), c("B", "A")))
+  expect_error(as_caugi(w), "must be identical", fixed = TRUE)
 })
 
 test_that("MPDAG class is accepted for matrix conversion", {
