@@ -146,7 +146,7 @@ S7::method(
   has_names <- !is.null(igraph::V(x)$name)
   nm <- igraph::V(x)$name
   if (is.null(nm)) {
-    nm <- paste0("V", seq_len(igraph::vcount(x)))
+    nm <- sprintf("V%d", seq_len(igraph::vcount(x)))
   }
 
   if (class == "PAG") {
