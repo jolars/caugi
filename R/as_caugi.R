@@ -1,7 +1,7 @@
 #' @title Convert to a `caugi`
 #'
 #' @description Convert an object to a `caugi`. The object can be a
-#' `graphNEL`, `matrix`, `tidygraph`, `daggity`, `bn`, or `igraph`.
+#' `graphNEL`, `matrix`, `tidygraph`, `dagitty`, `bn`, or `igraph`.
 #'
 #' @details
 #' For matrices, `as_caugi` assumes that the rows are the `from` nodes
