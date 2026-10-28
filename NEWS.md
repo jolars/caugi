@@ -11,6 +11,8 @@
 
 ## Bug Fixes
 
+- `generate_graph()` no longer overflows an integer for `n >= 46342`.
+- 
 - `as_caugi()` on an igraph with no vertices now gives a graph with no nodes
   instead of a single node `"V"`.
   
