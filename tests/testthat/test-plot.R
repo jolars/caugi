@@ -935,6 +935,17 @@ test_that("plot routes edges around collinear nodes by default", {
   )
 })
 
+test_that("plot accepts a factor name column in a precomputed layout", {
+  cg <- caugi(A %-->% B, class = "DAG")
+  layout <- caugi_layout(cg)
+  layout$name <- factor(layout$name)
+
+  pdf(NULL)
+  on.exit(dev.off())
+
+  expect_s7_class(plot(cg, layout = layout), caugi_plot)
+})
+
 test_that("plot routing works for partial edge types", {
   cg <- caugi(A %o-o% B + C, B %o-o% C, class = "UNKNOWN")
   layout <- caugi_layout_tiered(
