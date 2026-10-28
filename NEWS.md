@@ -11,6 +11,9 @@
 
 ## Bug Fixes
 
+- `condition_marginalize()` no longer errors when the resulting graph has no
+  edges, e.g. for `X --> Z <-- Y` with `Z` marginalized.
+
 * `caugi_layout_sugiyama()` now places parents above their children, matching
   the documented top-to-bottom flow. This also fixes automatic layouts and
   plots of DAGs, including graphs with disconnected components (#421).

@@ -543,6 +543,9 @@ condition_marginalize <- function(cg, cond_vars = NULL, marg_vars = NULL) {
 
   # Combine edges efficiently using data.table
   non_null <- !vapply(edge_list, is.null, logical(1L))
+  if (!any(non_null)) {
+    return(caugi(nodes = remaining_nodes, class = "AG"))
+  }
   edges_df <- data.table::rbindlist(edge_list[non_null])
 
   caugi(edges_df = edges_df, nodes = remaining_nodes, class = "AG")
