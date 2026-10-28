@@ -11,6 +11,9 @@
 
 ## Bug Fixes
 
+- `condition_marginalize()` now errors on unknown nodes in `cond_vars` or
+  `marg_vars` instead of silently ignoring them.
+
 - `condition_marginalize()` no longer errors when the resulting graph has no
   edges, e.g. for `X --> Z <-- Y` with `Z` marginalized.
   
