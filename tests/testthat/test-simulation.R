@@ -107,6 +107,14 @@ test_that("CPDAG generation preserves sampled skeleton from DAG branch", {
   expect_true(is_cpdag(cpdag))
 })
 
+test_that("seed does not change the caller's RNG state", {
+  set.seed(1)
+  before <- get(".Random.seed", envir = globalenv())
+  generate_graph(5, m = 3, seed = 42)
+  simulate_data(caugi(A %-->% B, class = "DAG"), n = 5, seed = 42)
+  expect_identical(get(".Random.seed", envir = globalenv()), before)
+})
+
 test_that("generate_graph with seed produces reproducible CPDAGs", {
   cpdag1 <- generate_graph(10, m = 14L, class = "CPDAG", seed = 1405)
   cpdag2 <- generate_graph(10, m = 14L, class = "CPDAG", seed = 1405)

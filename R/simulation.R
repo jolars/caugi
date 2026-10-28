@@ -11,7 +11,8 @@
 #' @param class "DAG" or "CPDAG". When `"CPDAG"`, the result is the CPDAG
 #'   (essential graph) of the sampled DAG's Markov equivalence class, returned
 #'   with class `"CPDAG"`.
-#' @param seed Optional integer; random seed for reproducibility.
+#' @param seed Optional integer; random seed for reproducibility. The caller's
+#'   random number state is restored on exit.
 #'
 #' @returns The sampled `caugi` object. `class = "DAG"` returns a `"DAG"`;
 #'   `class = "CPDAG"` returns a `"CPDAG"`.
@@ -43,7 +44,7 @@ generate_graph <- function(
     stop("Supply exactly one of m or p", call. = FALSE)
   }
   if (!is.null(seed)) {
-    set.seed(seed)
+    .local_seed(seed)
   }
 
   tot <- as.integer(n * (n - 1L) / 2L)
@@ -120,7 +121,8 @@ generate_graph <- function(
 #'   coefficients that will be sampled uniformly. Default is `c(0.1, 0.9)`.
 #' @param error_sd Numeric; standard deviation for error terms in
 #'   auto-generated equations. Default is `1`.
-#' @param seed Optional integer; random seed for reproducibility.
+#' @param seed Optional integer; random seed for reproducibility. The caller's
+#'   random number state is restored on exit.
 #'
 #' @returns A `data.frame` with `n` rows and one column per node, ordered
 #'   according to the node order in the graph.
@@ -171,7 +173,7 @@ simulate_data <- function(
   }
 
   if (!is.null(seed)) {
-    set.seed(seed)
+    .local_seed(seed)
   }
 
   n <- as.integer(n)
@@ -268,4 +270,27 @@ simulate_data <- function(
   }
 
   out
+}
+
+#' Set the RNG seed until the calling function exits, then restore the
+#' caller's RNG state (like `withr::local_seed()`).
+#' @keywords internal
+#' @noRd
+.local_seed <- function(seed, envir = parent.frame()) {
+  old <- get0(".Random.seed", envir = globalenv(), inherits = FALSE)
+  do.call(
+    on.exit,
+    list(
+      substitute(
+        if (is.null(old)) {
+          rm(".Random.seed", envir = globalenv())
+        } else {
+          assign(".Random.seed", old, envir = globalenv())
+        }
+      ),
+      add = TRUE
+    ),
+    envir = envir
+  )
+  set.seed(seed)
 }
