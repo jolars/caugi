@@ -11,6 +11,9 @@
 
 ## Bug Fixes
 
+- `condition_marginalize()` no longer errors when the resulting graph has no
+  edges, e.g. for `X --> Z <-- Y` with `Z` marginalized.
+  
 - `generate_graph(seed = )` and `simulate_data(seed = )` no longer reset the
   global random number state; the caller's state is restored on exit.
   
