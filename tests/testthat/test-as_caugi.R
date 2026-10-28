@@ -217,6 +217,7 @@ test_that("empty igraph yield empty caugi graphs", {
   g0 <- igraph::make_empty_graph(n = 0, directed = TRUE)
   cg0 <- as_caugi(g0, class = "DAG")
   expect_equal(nrow(as.data.frame(edges(cg0))), 0L)
+  expect_equal(nrow(nodes(cg0)), 0L)
 })
 
 test_that("igraph with no edges, but with nodes, works", {

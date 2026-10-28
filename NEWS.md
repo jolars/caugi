@@ -11,6 +11,9 @@
 
 ## Bug Fixes
 
+- `as_caugi()` on an igraph with no vertices now gives a graph with no nodes
+  instead of a single node `"V"`.
+
 * `caugi_layout_sugiyama()` now places parents above their children, matching
   the documented top-to-bottom flow. This also fixes automatic layouts and
   plots of DAGs, including graphs with disconnected components (#421).
