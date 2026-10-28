@@ -367,6 +367,9 @@ S7::method(
 
   # handle naming
   nm <- colnames(x)
+  if (!is.null(nm) && !is.null(rownames(x)) && !identical(nm, rownames(x))) {
+    stop("`rownames(x)` and `colnames(x)` must be identical.", call. = FALSE)
+  }
   if (is.null(nm)) {
     nm <- rownames(x)
   }
