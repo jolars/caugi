@@ -11,6 +11,10 @@
 
 ## Bug Fixes
 
+* `plot()` now uses a common coordinate range for both axes, so floating-point
+  noise in nearly horizontal or vertical layouts is no longer stretched to
+  fill the panel (#424).
+
 - `is_valid_adjustment_admg()` and `all_adjustment_sets_admg()` no longer
   reject valid adjustment sets that contain a descendant of a treatment. The
   forbidden set counted every treatment that is an ancestor of `Y` as a node

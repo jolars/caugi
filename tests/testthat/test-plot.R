@@ -969,3 +969,42 @@ test_that("plot routing can be disabled per edge type", {
     caugi_plot
   )
 })
+
+test_that("plot does not amplify tiny coordinate differences", {
+  cg <- caugi(A %---% B)
+  pdf(NULL)
+  on.exit(dev.off())
+
+  layouts <- list(
+    caugi_layout(cg),
+    data.frame(name = c("A", "B"), x = c(0, 1), y = c(0, 1e-17)),
+    data.frame(name = c("A", "B"), x = c(0, 1e-17), y = c(0, 1)),
+    data.frame(name = c("A", "B"), x = c(0, 1), y = c(4, 4)),
+    data.frame(name = c("A", "B"), x = c(4, 4), y = c(0, 1))
+  )
+  for (coords in layouts) {
+    for (asp in list(NA, NULL, 1)) {
+      p <- plot(cg, layout = coords, asp = asp)
+      vp <- p@grob$children[["caugi.graph"]]$vp[[3]]
+      scaled_dx <- diff(coords$x) / diff(vp$xscale)
+      scaled_dy <- diff(coords$y) / diff(vp$yscale)
+      expect_equal(scaled_dx, diff(coords$x))
+      expect_equal(scaled_dy, diff(coords$y))
+      expect_no_error(grid::grid.draw(p@grob))
+    }
+  }
+})
+
+test_that("plot handles coincident coordinates and a single node", {
+  pdf(NULL)
+  on.exit(dev.off())
+
+  for (cg in list(caugi(A %---% B), caugi(nodes = "A"))) {
+    coords <- data.frame(name = nodes(cg)$name, x = 3, y = 7)
+    p <- plot(cg, layout = coords)
+    vp <- p@grob$children[["caugi.graph"]]$vp[[3]]
+    expect_equal(vp$xscale, c(2, 4))
+    expect_equal(vp$yscale, c(6, 8))
+    expect_no_error(grid::grid.draw(p@grob))
+  }
+})
