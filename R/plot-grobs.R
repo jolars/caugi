@@ -242,7 +242,7 @@ make_styles <- function(
   tier_style
 ) {
   # Get global options
-  opts <- get0("options", .caugi_env, ifnotfound = caugi_default_options())
+  opts <- get0("options", .caugi_env, ifnotfound = .caugi_default_options())
   plot_opts <- opts$plot %||% list()
 
   # Default styles from options (with fallbacks)

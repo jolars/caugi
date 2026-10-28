@@ -88,8 +88,15 @@ test_that("caugi_options preserves other nested values when setting", {
   caugi_options(plot = original)
 })
 
-test_that("caugi_default_options returns expected structure", {
-  defaults <- caugi_default_options()
+test_that("caugi_default_options is deprecated", {
+  expect_warning(
+    expect_identical(caugi_default_options(), .caugi_default_options()),
+    "deprecated"
+  )
+})
+
+test_that(".caugi_default_options returns expected structure", {
+  defaults <- .caugi_default_options()
   expect_type(defaults, "list")
   expect_true("plot" %in% names(defaults))
   expect_true("tier_style" %in% names(defaults$plot))
@@ -121,7 +128,7 @@ test_that("caugi_options resets to defaults", {
   # Reset to defaults; returns the previous options invisibly
   prev <- caugi_options(reset = TRUE)
   expect_equal(prev$plot$newkey, 1)
-  expect_identical(caugi_options(), caugi_default_options())
+  expect_identical(caugi_options(), .caugi_default_options())
   expect_error(caugi_options(plot = list(), reset = TRUE), "cannot be combined")
 })
 

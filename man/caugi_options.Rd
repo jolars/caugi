@@ -12,7 +12,7 @@ retrieve. Multiple unnamed arguments drill down through nested options.
 To query all options, call without arguments. Attempting to access a
 non-existent option will raise an error.}
 
-\item{reset}{If \code{TRUE}, reset all options to \code{\link[=caugi_default_options]{caugi_default_options()}}.
+\item{reset}{If \code{TRUE}, reset all options to their defaults.
 Cannot be combined with \code{...}.}
 }
 \value{

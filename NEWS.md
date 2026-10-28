@@ -5,6 +5,7 @@
 * `caugi_options(reset = TRUE)` resets all options to their defaults.
   `caugi_options(caugi_default_options())` did not, since it only merges into
   the current options and so keeps keys that are not in the defaults.
+  `caugi_default_options()` is therefore deprecated.
 
 * `adjustment_set()` now accepts several treatments `X` and outcomes `Y` for
   every `type`. `type = "optimal"` returns the O-set of Henckel, Perković &
