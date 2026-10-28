@@ -1,7 +1,7 @@
 #' @title Convert to a `caugi`
 #'
 #' @description Convert an object to a `caugi`. The object can be a
-#' `graphNEL`, `matrix`, `tidygraph`, `daggity`, `bn`, or `igraph`.
+#' `graphNEL`, `matrix`, `tidygraph`, `dagitty`, `bn`, or `igraph`.
 #'
 #' @details
 #' For matrices, `as_caugi` assumes that the rows are the `from` nodes
@@ -146,7 +146,7 @@ S7::method(
   has_names <- !is.null(igraph::V(x)$name)
   nm <- igraph::V(x)$name
   if (is.null(nm)) {
-    nm <- paste0("V", seq_len(igraph::vcount(x)))
+    nm <- sprintf("V%d", seq_len(igraph::vcount(x)))
   }
 
   if (class == "PAG") {
@@ -367,6 +367,9 @@ S7::method(
 
   # handle naming
   nm <- colnames(x)
+  if (!is.null(nm) && !is.null(rownames(x)) && !identical(nm, rownames(x))) {
+    stop("`rownames(x)` and `colnames(x)` must be identical.", call. = FALSE)
+  }
   if (is.null(nm)) {
     nm <- rownames(x)
   }

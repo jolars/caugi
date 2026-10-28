@@ -11,7 +11,8 @@
 #' @param class "DAG" or "CPDAG". When `"CPDAG"`, the result is the CPDAG
 #'   (essential graph) of the sampled DAG's Markov equivalence class, returned
 #'   with class `"CPDAG"`.
-#' @param seed Optional integer; random seed for reproducibility.
+#' @param seed Optional integer; random seed for reproducibility. The caller's
+#'   random number state is restored on exit.
 #'
 #' @returns The sampled `caugi` object. `class = "DAG"` returns a `"DAG"`;
 #'   `class = "CPDAG"` returns a `"CPDAG"`.
@@ -43,10 +44,10 @@ generate_graph <- function(
     stop("Supply exactly one of m or p", call. = FALSE)
   }
   if (!is.null(seed)) {
-    set.seed(seed)
+    .local_seed(seed)
   }
 
-  tot <- as.integer(n * (n - 1L) / 2L)
+  tot <- n * (n - 1) / 2 # double: n * (n - 1L) overflows for n >= 46342
 
   if (!is.null(p)) {
     if (length(p) != 1L || !is.finite(p) || p < 0 || p > 1) {
@@ -56,7 +57,7 @@ generate_graph <- function(
   } else {
     m <- as.integer(m)
     if (length(m) != 1L || m < 0L || m > tot) {
-      stop(sprintf("m must be in 0..%d", tot), call. = FALSE)
+      stop(sprintf("m must be in 0..%.0f", tot), call. = FALSE)
     }
   }
 
@@ -68,9 +69,9 @@ generate_graph <- function(
   if (m > 0L) {
     ranks <- sample.int(tot, m) - 1L
     row_len <- (n - 1L):1L
-    cum <- cumsum(row_len)
+    cum <- cumsum(as.numeric(row_len))
     i <- as.integer(findInterval(ranks, cum))
-    cum0 <- c(0L, cum)
+    cum0 <- c(0, cum)
     offset <- ranks - cum0[i + 1L]
     j <- i + 1L + offset
 
@@ -120,7 +121,8 @@ generate_graph <- function(
 #'   coefficients that will be sampled uniformly. Default is `c(0.1, 0.9)`.
 #' @param error_sd Numeric; standard deviation for error terms in
 #'   auto-generated equations. Default is `1`.
-#' @param seed Optional integer; random seed for reproducibility.
+#' @param seed Optional integer; random seed for reproducibility. The caller's
+#'   random number state is restored on exit.
 #'
 #' @returns A `data.frame` with `n` rows and one column per node, ordered
 #'   according to the node order in the graph.
@@ -171,7 +173,7 @@ simulate_data <- function(
   }
 
   if (!is.null(seed)) {
-    set.seed(seed)
+    .local_seed(seed)
   }
 
   n <- as.integer(n)
@@ -268,4 +270,27 @@ simulate_data <- function(
   }
 
   out
+}
+
+#' Set the RNG seed until the calling function exits, then restore the
+#' caller's RNG state (like `withr::local_seed()`).
+#' @keywords internal
+#' @noRd
+.local_seed <- function(seed, envir = parent.frame()) {
+  old <- get0(".Random.seed", envir = globalenv(), inherits = FALSE)
+  do.call(
+    on.exit,
+    list(
+      substitute(
+        if (is.null(old)) {
+          rm(".Random.seed", envir = globalenv())
+        } else {
+          assign(".Random.seed", old, envir = globalenv())
+        }
+      ),
+      add = TRUE
+    ),
+    envir = envir
+  )
+  set.seed(seed)
 }
