@@ -10,15 +10,15 @@ caugi_default_options()
 A list of default options for caugi.
 }
 \description{
-Returns the default options for the caugi package. Useful for resetting
-options to their original state.
+Returns the default options for the caugi package. To reset the options to
+these defaults, use \code{caugi_options(reset = TRUE)}.
 }
 \examples{
 # Get defaults
 caugi_default_options()
 
 # Reset to defaults
-caugi_options(caugi_default_options())
+caugi_options(reset = TRUE)
 }
 \seealso{
 \code{\link[=caugi_options]{caugi_options()}} for setting and getting options

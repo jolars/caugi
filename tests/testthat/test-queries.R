@@ -1489,7 +1489,7 @@ test_that("Setting use_open_graph_definition via caugi_options works", {
   expect_equal(posteriors(cg, "A", open = TRUE), c("B", "C", "D"))
 
   # Reset to defaults
-  caugi_options(caugi_default_options())
+  caugi_options(reset = TRUE)
 })
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1501,39 +1501,39 @@ test_that("open_graph_def is TRUE by default", {
 })
 
 test_that("open_graph_def syncs to FALSE when use_open_graph_definition is set FALSE", {
-  on.exit(caugi_options(caugi_default_options()), add = TRUE)
+  on.exit(caugi_options(reset = TRUE), add = TRUE)
 
   caugi_options(use_open_graph_definition = FALSE)
   expect_false(.caugi_env$open_graph_def)
 })
 
 test_that("open_graph_def syncs back to TRUE when use_open_graph_definition is set TRUE", {
-  on.exit(caugi_options(caugi_default_options()), add = TRUE)
+  on.exit(caugi_options(reset = TRUE), add = TRUE)
 
   caugi_options(use_open_graph_definition = FALSE)
   caugi_options(use_open_graph_definition = TRUE)
   expect_true(.caugi_env$open_graph_def)
 })
 
-test_that("open_graph_def is restored to TRUE by caugi_default_options()", {
-  on.exit(caugi_options(caugi_default_options()), add = TRUE)
+test_that("open_graph_def is restored to TRUE by caugi_options(reset = TRUE)", {
+  on.exit(caugi_options(reset = TRUE), add = TRUE)
 
   caugi_options(use_open_graph_definition = FALSE)
   expect_false(.caugi_env$open_graph_def)
 
-  caugi_options(caugi_default_options())
+  caugi_options(reset = TRUE)
   expect_true(.caugi_env$open_graph_def)
 })
 
 test_that("open_graph_def is unaffected by unrelated option updates", {
-  on.exit(caugi_options(caugi_default_options()), add = TRUE)
+  on.exit(caugi_options(reset = TRUE), add = TRUE)
 
   caugi_options(plot = list(spacing = grid::unit(2, "lines")))
   expect_true(.caugi_env$open_graph_def)
 })
 
 test_that("missing(open) uses global option; explicit open overrides it", {
-  on.exit(caugi_options(caugi_default_options()), add = TRUE)
+  on.exit(caugi_options(reset = TRUE), add = TRUE)
 
   cg <- caugi(A %-->% B %-->% C, class = "DAG")
 

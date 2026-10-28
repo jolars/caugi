@@ -2,6 +2,10 @@
 
 ## New Features
 
+* `caugi_options(reset = TRUE)` resets all options to their defaults.
+  `caugi_options(caugi_default_options())` did not, since it only merges into
+  the current options and so keeps keys that are not in the defaults.
+
 * `adjustment_set()` now accepts several treatments `X` and outcomes `Y` for
   every `type`. `type = "optimal"` returns the O-set of Henckel, Perković &
   Maathuis (2022) for node sets. As in their Remark 3.14 and
