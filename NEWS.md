@@ -16,6 +16,10 @@
 
 ## Bug Fixes
 
+- `is_cpdag()` and `class = "CPDAG"` no longer accept undirected components
+  that are not chordal. The perfect-elimination check pivoted on the farthest
+  instead of the nearest later neighbour (#378).
+
 - Passing an empty character vector to Rust no longer aborts the R session,
   e.g. `subgraph(cg, character(0))` or
   `caugi_serialize(cg, tags = character(0))` (#396).

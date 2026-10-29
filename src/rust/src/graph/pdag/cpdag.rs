@@ -195,9 +195,12 @@ impl Pdag {
                     continue;
                 }
 
+                // Perfect elimination check (Tarjan & Yannakakis 1984): the
+                // pivot must be the *nearest* later neighbour; checking the
+                // others against it covers the whole clique by induction.
                 higher.sort_unstable_by_key(|&w| pos[w]);
-                let pvt = *higher.last().unwrap();
-                for &w in &higher[..higher.len() - 1] {
+                let pvt = higher[0];
+                for &w in &higher[1..] {
                     if !self
                         .undirected_of(w as u32)
                         .binary_search(&(pvt as u32))
