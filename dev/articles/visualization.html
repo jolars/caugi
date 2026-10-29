@@ -102,6 +102,10 @@ customize their appearance.</p>
 algorithm based on your graph type. For graphs with only directed edges,
 it uses the Sugiyama hierarchical layout. For graphs with other edge
 types, it uses the Fruchterman-Reingold force-directed layout.</p>
+<p>Both axes use a common coordinate range, so nearly horizontal or
+vertical layouts retain their shape without amplifying floating-point
+noise. Narrow layouts can therefore leave empty space in the panel. Use
+<code>asp = 1</code> for equal axis scaling.</p>
 </div>
 <div class="section level2">
 <h2 id="layout-algorithms">Layout Algorithms<a class="anchor" aria-label="anchor" href="#layout-algorithms"></a>
@@ -320,12 +324,12 @@ or denser graphs</p>
 <span><span class="co"># Examine coordinates</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">layout_sug</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   name    x   y</span></span>
-<span><span class="co">#&gt; 1   X1 0.25 0.0</span></span>
-<span><span class="co">#&gt; 2   X2 0.75 0.0</span></span>
+<span><span class="co">#&gt; 1   X1 0.25 1.0</span></span>
+<span><span class="co">#&gt; 2   X2 0.75 1.0</span></span>
 <span><span class="co">#&gt; 3   M1 0.00 0.5</span></span>
 <span><span class="co">#&gt; 4   M2 0.50 0.5</span></span>
 <span><span class="co">#&gt; 5   M3 1.00 0.5</span></span>
-<span><span class="co">#&gt; 6    Y 0.50 1.0</span></span></code></pre></div>
+<span><span class="co">#&gt; 6    Y 0.50 0.0</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -823,10 +827,10 @@ and vertical arrangements:</p>
 <span></span>
 <span><span class="va">p1</span> <span class="op">+</span> <span class="va">p2</span></span></code></pre></div>
 <p><img src="visualization_files/figure-html/composition-spacing-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
-<p>To reset the default, you can call
-<code><a href="../reference/caugi_default_options.html">caugi_default_options()</a></code>:</p>
+<p>To reset the default, call
+<code>caugi_options(reset = TRUE)</code>:</p>
 <div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/caugi_options.html">caugi_options</a></span><span class="op">(</span><span class="fu"><a href="../reference/caugi_default_options.html">caugi_default_options</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/caugi_options.html">caugi_options</a></span><span class="op">(</span>reset <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -868,8 +872,8 @@ basis.</p>
 <p><img src="visualization_files/figure-html/override-options-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
-<span><span class="co"># Reset to defauls</span></span>
-<span><span class="fu"><a href="../reference/caugi_options.html">caugi_options</a></span><span class="op">(</span><span class="fu"><a href="../reference/caugi_default_options.html">caugi_default_options</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># Reset to defaults</span></span>
+<span><span class="fu"><a href="../reference/caugi_options.html">caugi_options</a></span><span class="op">(</span>reset <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="available-options">Available Options<a class="anchor" aria-label="anchor" href="#available-options"></a>
@@ -1054,12 +1058,12 @@ layout coordinates:</p>
 <span><span class="co"># The layout can be used for analysis or custom plotting</span></span>
 <span><span class="fu"><a href="../reference/print.caugi.html">print</a></span><span class="op">(</span><span class="va">coords</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   name    x   y</span></span>
-<span><span class="co">#&gt; 1   X1 0.25 0.0</span></span>
-<span><span class="co">#&gt; 2   X2 0.75 0.0</span></span>
+<span><span class="co">#&gt; 1   X1 0.25 1.0</span></span>
+<span><span class="co">#&gt; 2   X2 0.75 1.0</span></span>
 <span><span class="co">#&gt; 3   M1 0.00 0.5</span></span>
 <span><span class="co">#&gt; 4   M2 0.50 0.5</span></span>
 <span><span class="co">#&gt; 5   M3 1.00 0.5</span></span>
-<span><span class="co">#&gt; 6    Y 0.50 1.0</span></span>
+<span><span class="co">#&gt; 6    Y 0.50 0.0</span></span>
 <span></span>
 <span><span class="co"># Plot uses the same layout, calling caugi_layout internally</span></span>
 <span><span class="fu"><a href="../reference/plot.caugi.html">plot</a></span><span class="op">(</span><span class="va">dag</span>, layout <span class="op">=</span> <span class="st">"sugiyama"</span><span class="op">)</span></span></code></pre></div>

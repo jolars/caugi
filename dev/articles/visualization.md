@@ -37,6 +37,11 @@ type. For graphs with only directed edges, it uses the Sugiyama
 hierarchical layout. For graphs with other edge types, it uses the
 Fruchterman-Reingold force-directed layout.
 
+Both axes use a common coordinate range, so nearly horizontal or
+vertical layouts retain their shape without amplifying floating-point
+noise. Narrow layouts can therefore leave empty space in the panel. Use
+`asp = 1` for equal axis scaling.
+
 ## Layout Algorithms
 
 The `caugi` package provides several layout algorithms, each optimized
@@ -308,12 +313,12 @@ layout_kk <- caugi_layout(dag, method = "kamada-kawai")
 # Examine coordinates
 head(layout_sug)
 #>   name    x   y
-#> 1   X1 0.25 0.0
-#> 2   X2 0.75 0.0
+#> 1   X1 0.25 1.0
+#> 2   X2 0.75 1.0
 #> 3   M1 0.00 0.5
 #> 4   M2 0.50 0.5
 #> 5   M3 1.00 0.5
-#> 6    Y 0.50 1.0
+#> 6    Y 0.50 0.0
 ```
 
 ## Customizing Plots
@@ -895,12 +900,11 @@ p1 + p2
 
 ![](visualization_files/figure-html/composition-spacing-1.png)
 
-To reset the default, you can call
-[`caugi_default_options()`](https://caugi.org/dev/reference/caugi_default_options.md):
+To reset the default, call `caugi_options(reset = TRUE)`:
 
 ``` r
 
-caugi_options(caugi_default_options())
+caugi_options(reset = TRUE)
 ```
 
 ## Global Plot Options
@@ -950,8 +954,8 @@ plot(cg,
 ``` r
 
 
-# Reset to defauls
-caugi_options(caugi_default_options())
+# Reset to defaults
+caugi_options(reset = TRUE)
 ```
 
 ### Available Options
@@ -1126,12 +1130,12 @@ coords <- caugi_layout(dag, method = "sugiyama")
 # The layout can be used for analysis or custom plotting
 print(coords)
 #>   name    x   y
-#> 1   X1 0.25 0.0
-#> 2   X2 0.75 0.0
+#> 1   X1 0.25 1.0
+#> 2   X2 0.75 1.0
 #> 3   M1 0.00 0.5
 #> 4   M2 0.50 0.5
 #> 5   M3 1.00 0.5
-#> 6    Y 0.50 1.0
+#> 6    Y 0.50 0.0
 
 # Plot uses the same layout, calling caugi_layout internally
 plot(dag, layout = "sugiyama")

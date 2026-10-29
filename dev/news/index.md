@@ -4,6 +4,13 @@
 
 ### New Features
 
+- `caugi_options(reset = TRUE)` resets all options to their defaults.
+  `caugi_options(caugi_default_options())` did not, since it only merges
+  into the current options and so keeps keys that are not in the
+  defaults.
+  [`caugi_default_options()`](https://caugi.org/dev/reference/caugi_default_options.md)
+  is therefore deprecated.
+
 - [`adjustment_set()`](https://caugi.org/dev/reference/adjustment_set.md)
   now accepts several treatments `X` and outcomes `Y` for every `type`.
   `type = "optimal"` returns the O-set of Henckel, Perković &
@@ -14,6 +21,126 @@
   itself be in the returned set, e.g. `Y2` for `X --> Y1 <-- Y2`.
 
 ### Bug Fixes
+
+- [`subgraph()`](https://caugi.org/dev/reference/subgraph.md) now
+  re-checks the class of a CPDAG or MPDAG and downgrades it to the
+  strongest class the subgraph still satisfies, instead of copying the
+  label and failing on every later query
+  ([\#382](https://github.com/frederikfabriciusbjerre/caugi/issues/382)).
+
+- [`count_dags()`](https://caugi.org/dev/reference/count_dags.md) and
+  [`enumerate_dags()`](https://caugi.org/dev/reference/enumerate_dags.md)
+  now return 0 and an empty list for PDAGs with no consistent DAG
+  extension, instead of DAGs with new v-structures
+  ([\#381](https://github.com/frederikfabriciusbjerre/caugi/issues/381)).
+
+- [`is_mpdag()`](https://caugi.org/dev/reference/is_mpdag.md),
+  [`is_cpdag()`](https://caugi.org/dev/reference/is_cpdag.md),
+  `class = "MPDAG"`/`"CPDAG"` and AUTO no longer accept PDAGs with no
+  consistent DAG extension, such as `G --> K --- X <-- Z`.
+  [`is_mpdag()`](https://caugi.org/dev/reference/is_mpdag.md) and
+  `class = "MPDAG"` also reject an undirected chordless 4-cycle, and
+  AUTO labels a mixed graph containing one `"PDAG"` rather than
+  `"MPDAG"`.
+  [`meek_closure()`](https://caugi.org/dev/reference/meek_closure.md)
+  now errors on such PDAGs instead of returning a graph with a new
+  v-structure
+  ([\#380](https://github.com/frederikfabriciusbjerre/caugi/issues/380)).
+
+- [`meek_closure()`](https://caugi.org/dev/reference/meek_closure.md)
+  now applies Meek’s rule R4, and
+  [`is_mpdag()`](https://caugi.org/dev/reference/is_mpdag.md),
+  `class = "MPDAG"` and AUTO no longer accept graphs where R4 still
+  orients an edge. The rule labelled R4 before was a different (sound)
+  rule that orients along an existing directed path; it is kept
+  ([\#379](https://github.com/frederikfabriciusbjerre/caugi/issues/379)).
+
+- [`is_cpdag()`](https://caugi.org/dev/reference/is_cpdag.md) and
+  `class = "CPDAG"` no longer accept undirected components that are not
+  chordal. The perfect-elimination check pivoted on the farthest instead
+  of the nearest later neighbour
+  ([\#378](https://github.com/frederikfabriciusbjerre/caugi/issues/378)).
+
+- Passing an empty character vector to Rust no longer aborts the R
+  session, e.g. `subgraph(cg, character(0))` or
+  `caugi_serialize(cg, tags = character(0))`
+  ([\#396](https://github.com/frederikfabriciusbjerre/caugi/issues/396)).
+
+- [`plot()`](https://caugi.org/dev/reference/plot.caugi.md) now uses a
+  common coordinate range for both axes, so floating-point noise in
+  nearly horizontal or vertical layouts is no longer stretched to fill
+  the panel
+  ([\#424](https://github.com/frederikfabriciusbjerre/caugi/issues/424)).
+
+- [`to_dot()`](https://caugi.org/dev/reference/to_dot.md) now quotes
+  node names that are DOT keywords (`node`, `edge`, `graph`, `digraph`,
+  `subgraph`, `strict`, in any case), and escapes `"` and `\\` in string
+  attribute values.
+
+- `caugi(..., nodes = )` no longer drops isolated nodes declared in the
+  DSL, e.g. `D` in `caugi(A %-->% B, D, nodes = c("A", "B", "C"))`.
+
+- [`as_adjacency()`](https://caugi.org/dev/reference/as_adjacency.md)
+  now errors on `<->` edges, as documented, instead of encoding them the
+  same as `---`.
+
+- `as_caugi(<igraph>, collapse = TRUE)` no longer drops a mutual pair
+  when the reverse edge comes first (e.g. `B -> A` before `A -> B`).
+
+- `--o` edges now round-trip through dagitty:
+  [`as_caugi()`](https://caugi.org/dev/reference/as_caugi.md) reads
+  dagitty’s `o--` code (written by
+  [`as_dagitty()`](https://caugi.org/dev/reference/as_dagitty.md) for
+  `--o`) instead of erroring.
+
+- [`as_dagitty()`](https://caugi.org/dev/reference/as_dagitty.md) now
+  quotes node names, so names with spaces or edge symbols
+  (e.g. `"my var"`, `"x->y"`) no longer turn into extra nodes or edges.
+  It errors on nodes named `node` or `graph`, which dagitty rejects.
+
+- [`plot()`](https://caugi.org/dev/reference/plot.caugi.md) now reads a
+  numeric `tier_style` `padding` as mm, like node padding, instead of
+  erroring. The docs now give the correct default (4 mm).
+
+- Numeric node names in the DSL are no longer written in scientific
+  notation: `100000 %-->% B` now creates node `"100000"` instead of
+  `"1e+05"`.
+
+- [`plot()`](https://caugi.org/dev/reference/plot.caugi.md) now accepts
+  a precomputed layout whose `name` column is a factor.
+
+- [`condition_marginalize()`](https://caugi.org/dev/reference/condition_marginalize.md)
+  now errors on unknown nodes in `cond_vars` or `marg_vars` instead of
+  silently ignoring them.
+
+- [`condition_marginalize()`](https://caugi.org/dev/reference/condition_marginalize.md)
+  no longer errors when the resulting graph has no edges, e.g. for
+  `X --> Z <-- Y` with `Z` marginalized.
+
+- `generate_graph(seed = )` and `simulate_data(seed = )` no longer reset
+  the global random number state; the caller’s state is restored on
+  exit.
+
+- [`generate_graph()`](https://caugi.org/dev/reference/generate_graph.md)
+  no longer overflows an integer for `n >= 46342`.
+
+- [`as_caugi()`](https://caugi.org/dev/reference/as_caugi.md) on an
+  igraph with no vertices now gives a graph with no nodes instead of a
+  single node `"V"`.
+
+- [`as_caugi()`](https://caugi.org/dev/reference/as_caugi.md) on a
+  matrix now errors when `rownames` and `colnames` are both set and
+  differ, instead of silently using the `colnames`.
+
+- [`write_caugi()`](https://caugi.org/dev/reference/write_caugi.md) and
+  [`read_caugi()`](https://caugi.org/dev/reference/read_caugi.md) now
+  expand `~` in `path`.
+
+- [`caugi_layout_sugiyama()`](https://caugi.org/dev/reference/caugi_layout_sugiyama.md)
+  now places parents above their children, matching the documented
+  top-to-bottom flow. This also fixes automatic layouts and plots of
+  DAGs, including graphs with disconnected components
+  ([\#421](https://github.com/frederikfabriciusbjerre/caugi/issues/421)).
 
 - [`is_valid_adjustment_admg()`](https://caugi.org/dev/reference/is_valid_adjustment_admg.md)
   and

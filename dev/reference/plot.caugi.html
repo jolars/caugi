@@ -122,8 +122,8 @@ settings.</p></li>
 <dd><p>List of tier box styling parameters. Tier boxes are shown
 when <code>boxes = TRUE</code> is set within this list. Supports:</p><ul><li><p>Appearance (passed to <code>gpar()</code>): <code>fill</code>, <code>col</code> (border color), <code>lwd</code>,
 <code>lty</code>, <code>alpha</code></p></li>
-<li><p>Geometry: <code>padding</code> (padding around tier nodes as proportion of plot range,
-default 0.05)</p></li>
+<li><p>Geometry: <code>padding</code> (padding around tier nodes, a <code><a href="https://rdrr.io/r/grid/unit.html" class="external-link">grid::unit()</a></code> or a
+number in mm like node padding, default 4 mm)</p></li>
 <li><p>Labels: <code>labels</code> (logical or character vector). If <code>TRUE</code>, uses tier names
 from <code>tiers</code> argument. If a character vector, uses custom labels (one per
 tier). If <code>FALSE</code> or <code>NULL</code> (default), no labels are shown.</p></li>
@@ -150,7 +150,7 @@ no title is displayed.</p></dd>
 
 <dt id="arg-asp">asp<a class="anchor" aria-label="anchor" href="#arg-asp"></a></dt>
 <dd><p>Numeric value for the y/x aspect ratio. If <code>NA</code> or <code>NULL</code> (default),
-the aspect ratio is automatically determined to fill the available space.
+both axes use a common coordinate range within the available space.
 Use <code>asp = 1</code> to ensure that one unit on the x-axis equals one unit on
 the y-axis, which respects the layout coordinates. Values other than 1
 will stretch the plot accordingly (e.g., <code>asp = 2</code> makes the y-axis
