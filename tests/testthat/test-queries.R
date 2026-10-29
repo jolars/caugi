@@ -1251,15 +1251,37 @@ test_that("anteriors and posteriors on an ADMG skip <-> (#383)", {
   expect_length(anteriors(cg, "D"), 0L)
 })
 
-test_that("ancestral queries on UNKNOWN work from the edge marks (#383)", {
+test_that("ancestral queries on UNKNOWN work from the edge classes (#383)", {
   cg <- caugi(A %-->% B, B %---% C, C %<->% D, class = "UNKNOWN")
   expect_equal(ancestors(cg, "B"), "A")
   expect_setequal(anteriors(cg, "C"), c("A", "B"))
   expect_setequal(posteriors(cg, "A"), c("B", "C"))
   expect_error(
     ancestors(caugi(A %o->% B, class = "UNKNOWN"), "B"),
-    "circle marks"
+    "partially directed"
   )
+})
+
+test_that("anteriors and posteriors follow custom undirected edges (#383)", {
+  reset_caugi_registry()
+  on.exit(reset_caugi_registry())
+  register_caugi_edge("x-x", "other", "other", "undirected", TRUE)
+
+  ug <- caugi(A %---% B, B %x-x% C, D, class = "UG")
+  expect_setequal(anteriors(ug, "A"), c("B", "C"))
+  expect_setequal(posteriors(ug, "C"), c("A", "B"))
+  expect_length(anteriors(ug, "D"), 0L)
+
+  raw <- caugi(A %-->% B, B %x-x% C, class = "UNKNOWN")
+  expect_setequal(anteriors(raw, "C"), c("A", "B"))
+  expect_setequal(posteriors(raw, "A"), c("B", "C"))
+})
+
+test_that("m_separated on a UG is graph separation", {
+  ug <- caugi(A %---% B, B %---% C, D, class = "UG")
+  expect_false(m_separated(ug, "A", "C"))
+  expect_true(m_separated(ug, "A", "C", "B"))
+  expect_true(m_separated(ug, "A", "D"))
 })
 
 test_that("condition_marginalize works on ADMG and UG input (#383)", {

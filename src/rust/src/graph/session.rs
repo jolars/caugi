@@ -1888,8 +1888,8 @@ mod tests {
         assert!(ug.parents_of(0).is_err());
         assert!(ug.children_of(0).is_err());
 
-        // m_separated on UG errors
-        assert!(ug.m_separated(&[0], &[2], &[1]).is_err());
+        // m_separated on a UG is graph separation
+        assert!(ug.m_separated(&[0], &[2], &[1]).is_ok());
 
         // is_valid_adjustment_set_admg on UG errors
         assert!(ug.is_valid_adjustment_set_admg(&[0], &[2], &[1]).is_err());

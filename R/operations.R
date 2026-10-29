@@ -472,9 +472,10 @@ condition_marginalize <- function(cg, cond_vars = NULL, marg_vars = NULL) {
       call. = FALSE
     )
   }
-  # A DAG, ADMG or UG that passes is_ag() is an AG; label it so the
-  # m-separation and anterior queries below accept it.
-  if (!identical(cg@graph_class, "AG")) {
+  # m_separated() handles DAG, ADMG, AG and UG directly; relabel any other
+  # graph that passes is_ag() (e.g. UNKNOWN) as AG. Relabelling a DAG would
+  # swap d-separation for the AG m-separation, which needs O(n^2) memory.
+  if (!cg@graph_class %in% c("DAG", "ADMG", "AG", "UG")) {
     cg <- mutate_caugi(cg, "AG")
   }
 

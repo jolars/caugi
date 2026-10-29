@@ -227,12 +227,13 @@ impl GraphView {
         }
     }
 
-    /// Nodes reachable from `i` by following `-->` backwards (`back`) or
-    /// forwards, plus `---` either way when `undirected`; `<->` is never
-    /// followed. Works from the edge marks, so it needs no typed class.
-    /// Excludes `i` itself.
-    fn reach_by_marks(&self, i: u32, back: bool, undirected: bool) -> Result<Vec<u32>, String> {
-        use crate::edges::Mark;
+    /// Nodes reachable from `i` in an UNKNOWN graph by following directed
+    /// edges backwards (`back`) or forwards, plus undirected edges either way
+    /// when `undirected`; bidirected edges are never followed. Reads each
+    /// edge's class, as the typed classes do, so custom registry edges behave
+    /// like their built-in counterparts. Excludes `i` itself.
+    fn reach_raw(&self, i: u32, back: bool, undirected: bool) -> Result<Vec<u32>, String> {
+        use crate::edges::EdgeClass;
 
         let core = self.core();
         let mut seen = vec![false; core.n() as usize];
@@ -240,22 +241,15 @@ impl GraphView {
         let mut stack = vec![i];
         while let Some(u) = stack.pop() {
             for k in core.row_range(u) {
-                let spec = &core.registry.specs[core.etype[k] as usize];
-                let (mine, theirs) = if core.side[k] == 0 {
-                    (spec.tail, spec.head)
-                } else {
-                    (spec.head, spec.tail)
-                };
-                let step = match (mine, theirs) {
-                    (Mark::Tail, Mark::Tail) => undirected,
-                    (Mark::Arrow, Mark::Tail) => back,
-                    (Mark::Tail, Mark::Arrow) => !back,
-                    (Mark::Arrow, Mark::Arrow) => false,
+                let step = match core.spec(k).class {
+                    // An incoming arrow means the neighbour is a parent.
+                    EdgeClass::Directed => core.is_incoming_arrow(k) == back,
+                    EdgeClass::Undirected => undirected,
+                    EdgeClass::Bidirected => false,
                     _ => {
-                        return Err(
-                            "ancestral relations are not defined for edges with circle marks"
-                                .into(),
-                        )
+                        return Err("ancestral relations are not defined for partially \
+                                    directed edges (o-o, o->, --o)"
+                            .into())
                     }
                 };
                 let v = core.col_index[k];
@@ -338,7 +332,7 @@ impl GraphView {
             GraphView::Admg(g) => Ok(g.ancestors_of(i)),
             GraphView::Ag(g) => Ok(g.ancestors_of(i)),
             GraphView::Ug(_) => Ok(Vec::new()),
-            GraphView::Raw(_) => self.reach_by_marks(i, true, false),
+            GraphView::Raw(_) => self.reach_raw(i, true, false),
         }
     }
     pub fn descendants_of(&self, i: u32) -> Result<Vec<u32>, String> {
@@ -350,7 +344,7 @@ impl GraphView {
             GraphView::Admg(g) => Ok(g.descendants_of(i)),
             GraphView::Ag(g) => Ok(g.descendants_of(i)),
             GraphView::Ug(_) => Ok(Vec::new()),
-            GraphView::Raw(_) => self.reach_by_marks(i, false, false),
+            GraphView::Raw(_) => self.reach_raw(i, false, false),
         }
     }
     pub fn anteriors_of(&self, i: u32) -> Result<Vec<u32>, String> {
@@ -361,7 +355,8 @@ impl GraphView {
             GraphView::Cpdag(c) => Ok(c.as_pdag().anteriors_of(i)),
             GraphView::Admg(g) => Ok(g.ancestors_of(i)),
             GraphView::Ag(g) => Ok(g.anteriors_of(i)),
-            GraphView::Ug(_) | GraphView::Raw(_) => self.reach_by_marks(i, true, true),
+            GraphView::Ug(g) => Ok(g.component_of(i)),
+            GraphView::Raw(_) => self.reach_raw(i, true, true),
         }
     }
     pub fn posteriors_of(&self, i: u32) -> Result<Vec<u32>, String> {
@@ -372,7 +367,8 @@ impl GraphView {
             GraphView::Cpdag(c) => Ok(c.as_pdag().posteriors_of(i)),
             GraphView::Admg(g) => Ok(g.descendants_of(i)),
             GraphView::Ag(g) => Ok(g.posteriors_of(i)),
-            GraphView::Ug(_) | GraphView::Raw(_) => self.reach_by_marks(i, false, true),
+            GraphView::Ug(g) => Ok(g.component_of(i)),
+            GraphView::Raw(_) => self.reach_raw(i, false, true),
         }
     }
     pub fn markov_blanket_of(&self, i: u32) -> Result<Vec<u32>, String> {
@@ -456,7 +452,8 @@ impl GraphView {
             GraphView::Admg(g) => Ok(g.m_separated(xs, ys, z)),
             GraphView::Dag(d) => Ok(d.d_separated(xs, ys, z)), // d-sep is m-sep for DAGs
             GraphView::Ag(g) => Ok(g.m_separated(xs, ys, z)),
-            _ => Err("m_separated is only defined for ADMGs, AGs, and DAGs".into()),
+            GraphView::Ug(g) => Ok(g.separated(xs, ys, z)),
+            _ => Err("m_separated is only defined for ADMGs, AGs, DAGs, and UGs".into()),
         }
     }
 
@@ -1130,13 +1127,15 @@ mod tests {
         assert_eq!(v_raw.descendants_of(0).unwrap(), vec![1, 2]);
 
         // anteriors/posteriors dispatch: ADMG gives ancestors/descendants,
-        // UG the connected component, Raw works from the edge marks.
+        // UG the connected component, Raw reads the edge classes.
         assert!(v_admg.anteriors_of(0).unwrap().is_empty());
         assert_eq!(v_admg.posteriors_of(0).unwrap(), vec![1, 2]);
         assert_eq!(v_ag.anteriors_of(2).unwrap(), vec![0, 1]);
         assert_eq!(v_ag.posteriors_of(0).unwrap(), vec![1, 2]);
         assert_eq!(v_ug.anteriors_of(0).unwrap(), vec![1, 2]);
         assert_eq!(v_ug.posteriors_of(2).unwrap(), vec![0, 1]);
+        assert!(!v_ug.m_separated(&[0], &[2], &[]).unwrap());
+        assert!(v_ug.m_separated(&[0], &[2], &[1]).unwrap());
         assert_eq!(v_raw.anteriors_of(4).unwrap(), vec![3]);
         assert_eq!(v_raw.posteriors_of(0).unwrap(), vec![1, 2]);
 
@@ -1242,7 +1241,7 @@ mod tests {
         assert_eq!(v_ag.m_separated(&[0], &[1], &[]).unwrap(), false);
         assert_eq!(
             v_pdag.m_separated(&[0], &[2], &[]).unwrap_err(),
-            "m_separated is only defined for ADMGs, AGs, and DAGs"
+            "m_separated is only defined for ADMGs, AGs, DAGs, and UGs"
         );
         assert_eq!(v_pdag.anteriors_of(1).unwrap(), vec![0, 2]);
         assert_eq!(v_pdag.posteriors_of(1).unwrap(), vec![2]);
