@@ -16,6 +16,10 @@
 
 ## Bug Fixes
 
+- Passing an empty character vector to Rust no longer aborts the R session,
+  e.g. `subgraph(cg, character(0))` or
+  `caugi_serialize(cg, tags = character(0))` (#396).
+
 * `plot()` now uses a common coordinate range for both axes, so floating-point
   noise in nearly horizontal or vertical layouts is no longer stretched to
   fill the panel (#424).

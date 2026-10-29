@@ -726,6 +726,11 @@ test_that("subgraph selects nodes and errors with none", {
   )
 })
 
+test_that("subgraph with an empty character vector gives an empty graph", {
+  sg <- subgraph(caugi(A %-->% B, class = "DAG"), character(0))
+  expect_equal(length(sg), 0L)
+})
+
 test_that("subgraph errors on invalid arg combos", {
   g <- caugi(
     from = character(),

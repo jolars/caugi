@@ -125,6 +125,11 @@ test_that("serialization with comments and tags", {
   expect_equal(parsed$meta$tags, c("test", "example"))
 })
 
+test_that("serialization with empty tags does not crash", {
+  json <- caugi_serialize(caugi(A %-->% B, class = "DAG"), tags = character(0))
+  expect_type(json, "character")
+})
+
 test_that("write_caugi with comments and tags", {
   cg <- caugi(A %-->% B, class = "DAG")
 
