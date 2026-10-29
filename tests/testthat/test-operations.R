@@ -889,7 +889,7 @@ test_that("meek_closure orients compelled edges and returns an MPDAG", {
   check_oriented(c_r3, "A", "B")
   expect_true(is_mpdag(c_r3))
 
-  # R4: A -- B and A => B through A -> C -> D -> B  =>  A -> B
+  # Directed path: A -- B and A => B through A -> C -> D -> B  =>  A -> B
   g_r4 <- caugi(
     A %---% B,
     A %-->% C,
@@ -901,6 +901,31 @@ test_that("meek_closure orients compelled edges and returns an MPDAG", {
   c_r4 <- meek_closure(g_r4)
   check_oriented(c_r4, "A", "B")
   expect_true(is_mpdag(c_r4))
+})
+
+test_that("meek_closure applies Meek's rule R4 (#379)", {
+  # pgmpy case 11: chain B -> D -> A, C -- B, B !~ A  =>  C -> A.
+  # All three DAGs in the class have C -> A.
+  g <- caugi(
+    B %-->% D,
+    D %-->% A,
+    A %---% C,
+    B %---% C,
+    D %---% C,
+    class = "PDAG"
+  )
+  expect_false(is_mpdag(g))
+  closed <- meek_closure(g)
+  expect_true("C" %in% parents(closed, "A"))
+  expect_true(all(vapply(
+    enumerate_dags(g),
+    function(d) "C" %in% parents(d, "A"),
+    logical(1)
+  )))
+  expect_equal(
+    caugi(B %-->% D, D %-->% A, A %---% C, B %---% C, D %---% C)@graph_class,
+    "PDAG"
+  )
 })
 
 test_that("meek_closure is idempotent and preserves node names", {

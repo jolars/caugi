@@ -16,6 +16,11 @@
 
 ## Bug Fixes
 
+- `meek_closure()` now applies Meek's rule R4, and `is_mpdag()`,
+  `class = "MPDAG"` and AUTO no longer accept graphs where R4 still orients an
+  edge. The rule labelled R4 before was a different (sound) rule that orients
+  along an existing directed path; it is kept (#379).
+
 - `is_cpdag()` and `class = "CPDAG"` no longer accept undirected components
   that are not chordal. The perfect-elimination check pivoted on the farthest
   instead of the nearest later neighbour (#378).

@@ -283,7 +283,22 @@ impl Pdag {
             }
         }
 
-        // R4: u--v and (u ⇒ v or v ⇒ u)
+        // R4 (Meek 1995): u--v and ∃ c,d: u--c, c->d, d->v, c !~ v
+        for v in 0..self.n() {
+            let pa_v = self.parents_of(v);
+            for &u in self.undirected_of(v) {
+                for &c in self.undirected_of(u) {
+                    if c != v
+                        && !self.adjacent(c, v)
+                        && Self::intersects_sorted(self.children_of(c), pa_v)
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        // Cycle avoidance: u--v and (u ⇒ v or v ⇒ u)
         for v in 0..self.n() {
             for &u in self.undirected_of(v) {
                 if self.has_dir_path(u, v) || self.has_dir_path(v, u) {
