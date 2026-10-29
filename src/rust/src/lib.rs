@@ -71,6 +71,12 @@ fn named_list(values: Vec<Robj>, names: Vec<String>) -> Robj {
     out.into_robj()
 }
 
+/// Iterate a `Strings` by index. `Strings::iter()` builds a slice from the
+/// data pointer, which is not valid for a zero-length vector and aborts R.
+fn rstrs(s: &Strings) -> impl Iterator<Item = Rstr> + '_ {
+    (0..s.len()).map(move |i| s.elt(i))
+}
+
 fn session_ptr_from_cg(cg: &Robj) -> ExternalPtr<GraphSession> {
     let session = cg
         .get_attrib(sym!(session))
@@ -489,7 +495,7 @@ fn edge_registry_register(
 #[extendr]
 fn edge_registry_code_of(reg: ExternalPtr<EdgeRegistry>, glyphs: Strings) -> Robj {
     let mut out: Vec<i32> = Vec::with_capacity(glyphs.len());
-    for g in glyphs.iter() {
+    for g in rstrs(&glyphs) {
         let code = reg
             .as_ref()
             .code_of(g.as_ref())
@@ -789,7 +795,7 @@ fn rs_write_caugi_file(
     };
     let tags_opt = tags
         .into_option()
-        .map(|strs| strs.iter().map(|s| s.to_string()).collect::<Vec<_>>());
+        .map(|strs| rstrs(&strs).map(|s| s.to_string()).collect::<Vec<_>>());
 
     let view = session.as_mut().view().unwrap_or_else(|e| throw_r_error(e));
 
@@ -818,7 +824,7 @@ fn rs_serialize_caugi(
     };
     let tags_opt = tags
         .into_option()
-        .map(|strs| strs.iter().map(|s| s.to_string()).collect::<Vec<_>>());
+        .map(|strs| rstrs(&strs).map(|s| s.to_string()).collect::<Vec<_>>());
 
     let view = session.as_mut().view().unwrap_or_else(|e| throw_r_error(e));
 
@@ -1041,12 +1047,7 @@ fn rs_resolve_class(mut session: ExternalPtr<GraphSession>, class: &str) -> Stri
 
 #[extendr]
 fn rs_set_names(mut session: ExternalPtr<GraphSession>, names: Strings) {
-    // Handle empty names vector safely - extendr can have issues with empty Strings
-    let name_vec: Vec<String> = if names.len() == 0 {
-        Vec::new()
-    } else {
-        names.iter().map(|s| s.to_string()).collect()
-    };
+    let name_vec: Vec<String> = rstrs(&names).map(|s| s.to_string()).collect();
     session.as_mut().set_names(name_vec);
 }
 
@@ -1237,8 +1238,7 @@ fn rs_edges_df(session: ExternalPtr<GraphSession>) -> Robj {
 #[extendr]
 fn rs_codes_of(session: ExternalPtr<GraphSession>, glyphs: Strings) -> Vec<i32> {
     let specs = &session.as_ref().registry().specs;
-    glyphs
-        .iter()
+    rstrs(&glyphs)
         .map(|g| {
             specs
                 .iter()
@@ -1952,7 +1952,7 @@ fn subgraph(cg: Robj, nodes: Robj, index: Robj) -> Robj {
         let mut has_duplicate = false;
         let mut first_missing: Option<String> = None;
 
-        for s in node_strings.iter() {
+        for s in rstrs(&node_strings) {
             if s.is_na() {
                 throw_r_error("`nodes` cannot contain NA values.");
             }
@@ -1980,7 +1980,7 @@ fn subgraph(cg: Robj, nodes: Robj, index: Robj) -> Robj {
             let mut miss: Vec<String> = Vec::new();
             miss_seen.insert(first.clone());
             miss.push(first);
-            for s in node_strings.iter() {
+            for s in rstrs(&node_strings) {
                 if s.is_na() {
                     continue;
                 }

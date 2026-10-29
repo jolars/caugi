@@ -155,6 +155,39 @@ test_that("is_pdag works", {
   expect_false(is_pdag(cg))
 })
 
+test_that("is_cpdag rejects non-chordal undirected components (#378)", {
+  # B - D - C - E - B is a chordless 4-cycle; A is joined to all of them.
+  cg <- caugi(
+    A %---% B + C + D + E,
+    B %---% D + E,
+    C %---% D + E,
+    class = "PDAG"
+  )
+  expect_false(is_cpdag(cg))
+  expect_error(
+    caugi(A %---% B + C + D + E, B %---% D + E, C %---% D + E, class = "CPDAG"),
+    "not a CPDAG"
+  )
+})
+
+test_that("is_cpdag agrees with igraph::is_chordal on undirected graphs (#378)", {
+  skip_if_not_installed("igraph")
+  nm <- LETTERS[1:5]
+  pairs <- utils::combn(nm, 2)
+  for (code in 0:(2^ncol(pairs) - 1)) {
+    keep <- as.logical(intToBits(code))[seq_len(ncol(pairs))]
+    cg <- caugi(
+      from = pairs[1, keep],
+      edge = rep("---", sum(keep)),
+      to = pairs[2, keep],
+      nodes = nm,
+      class = "PDAG"
+    )
+    chordal <- igraph::is_chordal(as_igraph(cg))$chordal
+    expect_identical(is_cpdag(cg), chordal, info = paste("code", code))
+  }
+})
+
 test_that("is_cpdag works", {
   # Triangle with A--B undirected and A->C, B->C directed.
   # Since A and B are adjacent, there's NO v-structure at C.
@@ -724,6 +757,11 @@ test_that("subgraph selects nodes and errors with none", {
     sg@edges,
     data.table::data.table(from = "A", edge = "-->", to = "B")
   )
+})
+
+test_that("subgraph with an empty character vector gives an empty graph", {
+  sg <- subgraph(caugi(A %-->% B, class = "DAG"), character(0))
+  expect_equal(length(sg), 0L)
 })
 
 test_that("subgraph errors on invalid arg combos", {

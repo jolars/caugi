@@ -403,41 +403,30 @@ mod tests {
 
     #[test]
     fn meek_closure_pgmpy_case11_r4() {
-        // pgmpy case 11 (R4 test): directed=[B->D, D->A], undirected=[A--C, B--C, D--C]
-        // Directed path B->D->A exists.
-        // R4: B--C... no, let's trace through.
-        // R1: B->D, D--C, B adj C? Yes (B--C). So no R1 for D--C from B.
-        //     D->A, A--C, D adj C? Yes (D--C). So no R1 for A--C from D.
-        // R2: A--C: A->w->C? A has no children initially. No.
-        //     B--C: B->w->C? B->D, D->C? D--C undirected, not D->C. No.
-        //     D--C: D->w->C? D->A, A->C? A--C undirected. No.
-        // R3: check each undirected edge for two non-adj parents of the target.
-        //     For C: parents_of(C) = {} initially. No R3.
-        // R4: A--C: directed path A=>C? A has no children. No.
-        //     B--C: directed path B=>C? B->D->...->C? D--C undirected. No.
-        //     D--C: directed path D=>C? D->A, A->C? A--C undirected. No.
-        //           directed path C=>D? C has no children. No.
-        //
-        // Hmm, no rule fires at all. Let me re-read the pgmpy test...
-        // pgmpy says with apply_r4=True the expected is:
-        //   {C->A, C--B (both dirs), B->D, D->A, D--C (both dirs)}
-        // So C->A is oriented. How?
-        //
-        // Actually in pgmpy case 11 with R4: B->D, D->A with A--C, B--C, D--C.
-        // R4: A--C, directed path from C to A: C has no directed children. No.
-        //     A--C, directed path from A to C: A has no directed children. No.
-        // Wait, maybe I misread. Let me re-check pgmpy's R4 definition.
-        // pgmpy R4: if a--b and ∃ c: c--a and c->b, then orient a->b.
-        // That's actually a different R4 than the standard Meek R4!
-        //
-        // Standard Meek R4: a--b, ∃c: c->b, c--a, and ∃ directed path a->...->c.
-        // Let me use the standard definition.
-        //
-        // For A--C: ∃ d: d->C and d--A? No directed parents of C.
-        // No R4 fires.
-        //
-        // Let's skip this ambiguous case and test R4 with a clear example instead.
-        // R4: a--b with directed path a->c->d->b, and a--d.
+        // pgmpy case 11: B->D, D->A, A--C, B--C, D--C.
+        // R4 on C--A with chain B->D->A, C--B and B !~ A orients C->A,
+        // which every DAG in the class has.
+        let (reg, d, u) = setup();
+        // 0:A, 1:B, 2:C, 3:D
+        let mut b = GraphBuilder::new_with_registry(4, true, &reg);
+        b.add_edge(1, 3, d).unwrap(); // B->D
+        b.add_edge(3, 0, d).unwrap(); // D->A
+        b.add_edge(0, 2, u).unwrap(); // A--C
+        b.add_edge(1, 2, u).unwrap(); // B--C
+        b.add_edge(3, 2, u).unwrap(); // D--C
+        let p = Pdag::new(Arc::new(b.finalize().unwrap())).unwrap();
+        assert!(!p.is_meek_closed());
+
+        let m = p.meek_closure().unwrap();
+        assert!(m.children_of(2).contains(&0)); // C->A
+        assert!(m.undirected_of(2).contains(&1)); // C--B stays
+        assert!(m.undirected_of(2).contains(&3)); // C--D stays
+        assert!(m.is_meek_closed());
+    }
+
+    #[test]
+    fn meek_closure_orients_along_directed_path() {
+        // A--B with directed path A->C->D->B, and A--D.
         let (reg, d, u) = setup();
         // 0:A, 1:B, 2:C, 3:D
         // A--B, A->C, C->D, D->B, A--D
@@ -450,7 +439,7 @@ mod tests {
         let p = Pdag::new(Arc::new(b.finalize().unwrap())).unwrap();
 
         let m = p.meek_closure().unwrap();
-        // R4: A--B, directed path A->C->D->B => A->B
+        // Directed path A->C->D->B => A->B
         assert!(m.children_of(0).contains(&1));
         assert!(m.is_meek_closed());
     }
