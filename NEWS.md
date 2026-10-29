@@ -16,6 +16,15 @@
 
 ## Bug Fixes
 
+- `anteriors()` and `posteriors()` now work on ADMGs (where they equal
+  ancestors and descendants) and UGs (the connected component), and
+  `ancestors()`/`descendants()` return nothing on a UG instead of erroring. On
+  UNKNOWN graphs all four follow directed and undirected edges by edge class,
+  so custom registry edges work, and only error on partially directed edges.
+  `m_separated()` now also accepts UGs (plain graph separation). Together
+  these let `condition_marginalize()` run on ADMG and UG input; DAG input
+  keeps using d-separation (#383).
+
 - `subgraph()` now re-checks the class of a CPDAG or MPDAG and downgrades it
   to the strongest class the subgraph still satisfies, instead of copying the
   label and failing on every later query (#382).

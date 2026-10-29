@@ -1268,8 +1268,10 @@ districts <- function(cg, nodes = NULL, index = NULL, all = NULL) {
 #' conditioning set in an ancestral graph (AG) or an ADMG.
 #'
 #' M-separation generalizes d-separation to AGs/ADMGs and applies to DAGs.
+#' On a UG it reduces to plain graph separation: every path from `X` to `Y`
+#' passes through `Z`.
 #'
-#' @param cg A `caugi` object of class AG, ADMG, or DAG.
+#' @param cg A `caugi` object of class AG, ADMG, DAG, or UG.
 #' @param X,Y,Z Character vectors of node names, or `NULL`. Use `*_index` to
 #'   pass 1-based indices. If `Z` is `NULL` or missing, no nodes are conditioned
 #'   on.

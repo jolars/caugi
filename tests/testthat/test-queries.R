@@ -1237,22 +1237,64 @@ test_that("anteriors works for PDAG with undirected cycle", {
   expect_equal(sort(anteriors(cg, "C")), c("A", "B"))
 })
 
-test_that("anteriors not defined for UG", {
-  cg <- caugi(
-    A %---% B,
-    B %---% C,
-    class = "UG"
-  )
-  expect_error(anteriors(cg, "B"), "not defined for UG")
+test_that("anteriors and posteriors on a UG are the connected component (#383)", {
+  cg <- caugi(A %---% B, B %---% C, D, class = "UG")
+  expect_setequal(anteriors(cg, "B"), c("A", "C"))
+  expect_setequal(posteriors(cg, "A"), c("B", "C"))
+  expect_length(anteriors(cg, "D"), 0L)
 })
 
-test_that("anteriors not defined for ADMG", {
-  cg <- caugi(
-    A %-->% B,
-    A %<->% C,
-    class = "ADMG"
+test_that("anteriors and posteriors on an ADMG skip <-> (#383)", {
+  cg <- caugi(A %-->% B, B %-->% C, A %<->% D, class = "ADMG")
+  expect_setequal(anteriors(cg, "C"), c("A", "B"))
+  expect_setequal(posteriors(cg, "A"), c("B", "C"))
+  expect_length(anteriors(cg, "D"), 0L)
+})
+
+test_that("ancestral queries on UNKNOWN work from the edge classes (#383)", {
+  cg <- caugi(A %-->% B, B %---% C, C %<->% D, class = "UNKNOWN")
+  expect_equal(ancestors(cg, "B"), "A")
+  expect_setequal(anteriors(cg, "C"), c("A", "B"))
+  expect_setequal(posteriors(cg, "A"), c("B", "C"))
+  expect_error(
+    ancestors(caugi(A %o->% B, class = "UNKNOWN"), "B"),
+    "partially directed"
   )
-  expect_error(anteriors(cg, "B"), "not defined for ADMG")
+})
+
+test_that("anteriors and posteriors follow custom undirected edges (#383)", {
+  reset_caugi_registry()
+  on.exit(reset_caugi_registry())
+  register_caugi_edge("x-x", "other", "other", "undirected", TRUE)
+
+  ug <- caugi(A %---% B, B %x-x% C, D, class = "UG")
+  expect_setequal(anteriors(ug, "A"), c("B", "C"))
+  expect_setequal(posteriors(ug, "C"), c("A", "B"))
+  expect_length(anteriors(ug, "D"), 0L)
+
+  raw <- caugi(A %-->% B, B %x-x% C, class = "UNKNOWN")
+  expect_setequal(anteriors(raw, "C"), c("A", "B"))
+  expect_setequal(posteriors(raw, "A"), c("B", "C"))
+})
+
+test_that("m_separated on a UG is graph separation", {
+  ug <- caugi(A %---% B, B %---% C, D, class = "UG")
+  expect_false(m_separated(ug, "A", "C"))
+  expect_true(m_separated(ug, "A", "C", "B"))
+  expect_true(m_separated(ug, "A", "D"))
+})
+
+test_that("condition_marginalize works on ADMG and UG input (#383)", {
+  adm <- caugi(A %-->% B, B %-->% C, class = "ADMG")
+  expect_equal(
+    edges(condition_marginalize(adm, marg_vars = "B")),
+    edges(caugi(A %-->% C))
+  )
+  ug <- caugi(A %---% B, B %---% C, class = "UG")
+  expect_equal(
+    edges(condition_marginalize(ug, marg_vars = "B")),
+    edges(caugi(A %---% C))
+  )
 })
 
 test_that("anteriors returns list for multiple nodes", {
@@ -1312,24 +1354,6 @@ test_that("posteriors works for PDAG with undirected cycle", {
   expect_equal(sort(posteriors(cg, "A")), c("B", "C"))
   expect_equal(sort(posteriors(cg, "B")), c("A", "C"))
   expect_equal(sort(posteriors(cg, "C")), c("A", "B"))
-})
-
-test_that("posteriors not defined for UG", {
-  cg <- caugi(
-    A %---% B,
-    B %---% C,
-    class = "UG"
-  )
-  expect_error(posteriors(cg, "B"), "not defined for UG")
-})
-
-test_that("posteriors not defined for ADMG", {
-  cg <- caugi(
-    A %-->% B,
-    A %<->% C,
-    class = "ADMG"
-  )
-  expect_error(posteriors(cg, "B"), "not defined for ADMG")
 })
 
 test_that("posteriors returns list for multiple nodes", {
