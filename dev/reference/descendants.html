@@ -73,9 +73,10 @@
 
 
 <dt id="arg-open">open<a class="anchor" aria-label="anchor" href="#arg-open"></a></dt>
-<dd><p>Boolean. Determines how the graph is interpreted when retrieving descendants.
-Default is taken from <code>caugi_options("use_open_graph_definition")</code>,
-which by default is TRUE.</p></dd>
+<dd><p>Logical; if <code>TRUE</code> (default), each queried node is left out
+of its own descendants; if <code>FALSE</code>, it is included. The default comes
+from the deprecated <code>use_open_graph_definition</code> option of
+<code><a href="caugi_options.html">caugi_options()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -103,9 +104,11 @@ requested) or a list of character vectors (if multiple nodes are requested).</p>
 <code><a href="is_empty_caugi.html">is_empty_caugi()</a></code>,
 <code><a href="is_mag.html">is_mag()</a></code>,
 <code><a href="is_mpdag.html">is_mpdag()</a></code>,
+<code><a href="is_pag.html">is_pag()</a></code>,
 <code><a href="is_pdag.html">is_pdag()</a></code>,
 <code><a href="is_simple.html">is_simple()</a></code>,
 <code><a href="is_ug.html">is_ug()</a></code>,
+<code><a href="is_visible_edge.html">is_visible_edge()</a></code>,
 <code><a href="m_separated.html">m_separated()</a></code>,
 <code><a href="markov_blanket.html">markov_blanket()</a></code>,
 <code><a href="neighbors.html">neighbors()</a></code>,

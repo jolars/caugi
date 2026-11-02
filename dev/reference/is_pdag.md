@@ -17,9 +17,9 @@ is_pdag(cg, force_check = FALSE)
 
 - force_check:
 
-  Logical; if `TRUE`, the function will test if the graph is a PDAG, if
-  `FALSE` (default), it will look at the graph class and match it, if
-  possible.
+  Deprecated and will be removed in caugi 2.0.0. A graph's class is
+  validated when the graph is built, so the class is trusted and there
+  is nothing to force.
 
 ## Value
 
@@ -46,8 +46,10 @@ Other queries:
 [`is_empty_caugi()`](https://caugi.org/dev/reference/is_empty_caugi.md),
 [`is_mag()`](https://caugi.org/dev/reference/is_mag.md),
 [`is_mpdag()`](https://caugi.org/dev/reference/is_mpdag.md),
+[`is_pag()`](https://caugi.org/dev/reference/is_pag.md),
 [`is_simple()`](https://caugi.org/dev/reference/is_simple.md),
 [`is_ug()`](https://caugi.org/dev/reference/is_ug.md),
+[`is_visible_edge()`](https://caugi.org/dev/reference/is_visible_edge.md),
 [`m_separated()`](https://caugi.org/dev/reference/m_separated.md),
 [`markov_blanket()`](https://caugi.org/dev/reference/markov_blanket.md),
 [`neighbors()`](https://caugi.org/dev/reference/neighbors.md),
@@ -79,8 +81,7 @@ cg_cyclic <- caugi(
   B %-->% C,
   C %-->% A,
   D %---% A,
-  class = "UNKNOWN",
-  simple = FALSE
+  class = "UNKNOWN"
 )
 is_pdag(cg_cyclic) # FALSE
 #> [1] FALSE

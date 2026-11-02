@@ -17,9 +17,9 @@ is_simple(cg, force_check = FALSE)
 
 - force_check:
 
-  Logical; if `TRUE`, force a check against the compiled graph
-  representation. If `FALSE` (default), return the declared `simple`
-  property.
+  Deprecated and will be removed in caugi 2.0.0. A graph's class is
+  validated when the graph is built, so the class is trusted and there
+  is nothing to force.
 
 ## Value
 
@@ -46,8 +46,10 @@ Other queries:
 [`is_empty_caugi()`](https://caugi.org/dev/reference/is_empty_caugi.md),
 [`is_mag()`](https://caugi.org/dev/reference/is_mag.md),
 [`is_mpdag()`](https://caugi.org/dev/reference/is_mpdag.md),
+[`is_pag()`](https://caugi.org/dev/reference/is_pag.md),
 [`is_pdag()`](https://caugi.org/dev/reference/is_pdag.md),
 [`is_ug()`](https://caugi.org/dev/reference/is_ug.md),
+[`is_visible_edge()`](https://caugi.org/dev/reference/is_visible_edge.md),
 [`m_separated()`](https://caugi.org/dev/reference/m_separated.md),
 [`markov_blanket()`](https://caugi.org/dev/reference/markov_blanket.md),
 [`neighbors()`](https://caugi.org/dev/reference/neighbors.md),
@@ -72,8 +74,7 @@ is_simple(cg_simple) # TRUE
 cg_nonsimple <- caugi(
   A %-->% B,
   A %<->% B,
-  class = "UNKNOWN",
-  simple = FALSE
+  class = "UNKNOWN"
 )
 is_simple(cg_nonsimple) # FALSE
 #> [1] FALSE

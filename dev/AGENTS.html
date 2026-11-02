@@ -144,7 +144,7 @@
 <strong>Build documentation site</strong>: <code><a href="https://pkgdown.r-lib.org/reference/build_site.html" class="external-link">pkgdown::build_site()</a></code> builds the package website configured in <code>_pkgdown.yml</code>
 </li>
 <li>
-<strong>Re-vendor Rust deps</strong>: Whenever <code>src/rust/Cargo.lock</code> changes (added, removed, or bumped Rust dependency), regenerate the offline-build cache by running <code>rextendr::vendor_pkgs(overwrite = TRUE)</code> from the package root. This refreshes <code>src/rust/vendor.tar.xz</code> and <code>src/rust/vendor-config.toml</code>. Then run <code>Rscript tools/prune-vendor.R</code> to strip non-build files (<code>tests/</code>, <code>examples/</code>, trybuild fixtures) from the vendored crates, which keeps vendored paths short enough to avoid pak’s “very long paths” warning on Windows (see issue #319). Commit the pruned <code>src/rust/vendor.tar.xz</code> and <code>vendor-config.toml</code> alongside the <code>Cargo.toml</code>/<code>Cargo.lock</code> change.</li>
+<strong>Re-vendor Rust deps</strong>: Whenever <code>src/rust/Cargo.lock</code> changes (added, removed, or bumped Rust dependency), regenerate the offline-build cache by running <code>rextendr::vendor_crates(overwrite = TRUE)</code> from the package root. This refreshes <code>src/rust/vendor.tar.xz</code> and <code>src/rust/vendor-config.toml</code>. Then run <code>Rscript tools/prune-vendor.R</code> to strip non-build files (<code>tests/</code>, <code>examples/</code>, trybuild fixtures) from the vendored crates, which keeps vendored paths short enough to avoid pak’s “very long paths” warning on Windows (see issue #319). Commit the pruned <code>src/rust/vendor.tar.xz</code> and <code>vendor-config.toml</code> alongside the <code>Cargo.toml</code>/<code>Cargo.lock</code> change.</li>
 </ol></div>
 <div class="section level3">
 <h3 id="testing-requirements">Testing Requirements<a class="anchor" aria-label="anchor" href="#testing-requirements"></a></h3>
@@ -197,9 +197,9 @@
 </ul></div>
 <div class="section level3">
 <h3 id="graph-classes">Graph Classes<a class="anchor" aria-label="anchor" href="#graph-classes"></a></h3>
-<ul><li>Supported: <code>"UNKNOWN"</code>, <code>"DAG"</code>, <code>"PDAG"</code>, <code>"ADMG"</code>, <code>"UG"</code>
+<ul><li>Supported: <code>"UNKNOWN"</code>, <code>"DAG"</code>, <code>"PDAG"</code>, <code>"MPDAG"</code>, <code>"CPDAG"</code>, <code>"ADMG"</code>, <code>"AG"</code>, <code>"PAG"</code>, <code>"UG"</code>
 </li>
-<li>Planned: <code>"PAG"</code>, <code>"MAG"</code>, <code>"SWIG"</code>
+<li>Planned: <code>"MAG"</code> (as a class of its own; MAGs are <code>"AG"</code> checked with <code><a href="reference/is_mag.html">is_mag()</a></code>), <code>"SWIG"</code>
 </li>
 <li>Always validate graph class invariants when adding new graph types</li>
 </ul></div>

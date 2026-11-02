@@ -1,11 +1,14 @@
-# M-separation test for AGs and ADMGs
+# M-separation test for AGs, PAGs and ADMGs
 
 Test whether two sets of nodes are m-separated given a conditioning set
-in an ancestral graph (AG) or an ADMG.
+in an ancestral graph (AG), a PAG, or an ADMG.
 
 M-separation generalizes d-separation to AGs/ADMGs and applies to DAGs.
-On a UG it reduces to plain graph separation: every path from `X` to `Y`
-passes through `Z`.
+In a PAG it is decided on a member MAG from
+[`pag_to_mag()`](https://caugi.org/dev/reference/pag_to_mag.md), which
+is exact since every member encodes the same m-separations. On a UG it
+reduces to plain graph separation: every path from `X` to `Y` passes
+through `Z`.
 
 ## Usage
 
@@ -25,18 +28,16 @@ m_separated(
 
 - cg:
 
-  A `caugi` object of class AG, ADMG, DAG, or UG.
+  A `caugi` object of class AG, PAG, ADMG, DAG, or UG.
 
 - X, Y, Z:
 
-  Character vectors of node names, or `NULL`. Use `*_index` to pass
-  1-based indices. If `Z` is `NULL` or missing, no nodes are conditioned
-  on.
+  Character vectors of node names, or `NULL`. If `Z` is `NULL` or
+  missing, no nodes are conditioned on.
 
 - X_index, Y_index, Z_index:
 
-  Optional numeric 1-based indices (exclusive with `X`,`Y`,`Z`
-  respectively).
+  Deprecated; pass node names instead.
 
 ## Value
 
@@ -63,9 +64,11 @@ Other queries:
 [`is_empty_caugi()`](https://caugi.org/dev/reference/is_empty_caugi.md),
 [`is_mag()`](https://caugi.org/dev/reference/is_mag.md),
 [`is_mpdag()`](https://caugi.org/dev/reference/is_mpdag.md),
+[`is_pag()`](https://caugi.org/dev/reference/is_pag.md),
 [`is_pdag()`](https://caugi.org/dev/reference/is_pdag.md),
 [`is_simple()`](https://caugi.org/dev/reference/is_simple.md),
 [`is_ug()`](https://caugi.org/dev/reference/is_ug.md),
+[`is_visible_edge()`](https://caugi.org/dev/reference/is_visible_edge.md),
 [`markov_blanket()`](https://caugi.org/dev/reference/markov_blanket.md),
 [`neighbors()`](https://caugi.org/dev/reference/neighbors.md),
 [`nodes()`](https://caugi.org/dev/reference/nodes.md),

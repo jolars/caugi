@@ -2,8 +2,8 @@
 
 Computes a minimal separator Z for sets X and Y, optionally with
 mandatory inclusions and restrictions on the separator. Supports DAGs
-(where the result is a d-separator), ADMGs, and ancestral graphs (where
-the result is an m-separator).
+(where the result is a d-separator), ADMGs, ancestral graphs and PAGs
+(where the result is an m-separator).
 
 ## Usage
 
@@ -45,12 +45,11 @@ Research 115:637-647 Available from
 
 - cg:
 
-  A `caugi` object (DAG, ADMG, or AG).
+  A `caugi` object (DAG, ADMG, AG, or PAG).
 
 - X, Y:
 
-  Character vectors of node names. Use `*_index` to pass 1-based
-  indices.
+  Character vectors of node names.
 
 - I:
 
@@ -63,8 +62,7 @@ Research 115:637-647 Available from
 
 - X_index, Y_index, I_index, R_index:
 
-  Optional numeric 1-based indices (exclusive with corresponding name
-  parameters).
+  Deprecated; pass node names instead.
 
 ## Value
 
@@ -80,8 +78,10 @@ separator: no proper subset of Z (excluding I) still separates X and Y.
 The algorithm runs in linear time O(n + m) and is unified across graph
 classes via the Bayes-ball reachability of van der Zander & Liśkiewicz
 (2020). For DAGs the algorithm specializes to FINDMINSEPINDAG; for ADMGs
-and AGs (and their subclasses CPDAG, RCG, MAG) it uses the general
-FINDMINSEP over mixed graphs.
+and AGs (including MAGs) it uses the general FINDMINSEP over mixed
+graphs. For a PAG it runs on a member MAG from
+[`pag_to_mag()`](https://caugi.org/dev/reference/pag_to_mag.md), which
+is exact since every member encodes the same m-separations.
 
 ## References
 
@@ -125,11 +125,14 @@ minimal_separator(cg, "X", "Y", R = c("A", "M"))
 
 # Works on ADMGs (returns a minimal m-separator)
 admg <- caugi(
-  X %-->% Y,
   L %-->% X,
   L %-->% Y,
   class = "ADMG"
 )
-minimal_separator(admg, "X", "Y")
+minimal_separator(admg, "X", "Y") # "L"
+#> [1] "L"
+
+# Adjacent nodes cannot be separated
+minimal_separator(add_edges(admg, X %-->% Y), "X", "Y") # NULL
 #> NULL
 ```

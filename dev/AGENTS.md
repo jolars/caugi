@@ -103,7 +103,7 @@ the user-facing API.
 7.  **Re-vendor Rust deps**: Whenever `src/rust/Cargo.lock` changes
     (added, removed, or bumped Rust dependency), regenerate the
     offline-build cache by running
-    `rextendr::vendor_pkgs(overwrite = TRUE)` from the package root.
+    `rextendr::vendor_crates(overwrite = TRUE)` from the package root.
     This refreshes `src/rust/vendor.tar.xz` and
     `src/rust/vendor-config.toml`. Then run
     `Rscript tools/prune-vendor.R` to strip non-build files (`tests/`,
@@ -160,8 +160,10 @@ the user-facing API.
 
 ### Graph Classes
 
-- Supported: `"UNKNOWN"`, `"DAG"`, `"PDAG"`, `"ADMG"`, `"UG"`
-- Planned: `"PAG"`, `"MAG"`, `"SWIG"`
+- Supported: `"UNKNOWN"`, `"DAG"`, `"PDAG"`, `"MPDAG"`, `"CPDAG"`,
+  `"ADMG"`, `"AG"`, `"PAG"`, `"UG"`
+- Planned: `"MAG"` (as a class of its own; MAGs are `"AG"` checked with
+  [`is_mag()`](https://caugi.org/dev/reference/is_mag.md)), `"SWIG"`
 - Always validate graph class invariants when adding new graph types
 
 ### Performance

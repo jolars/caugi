@@ -23,6 +23,7 @@
 <url><loc>https://caugi.org/dev/reference/all_backdoor_sets.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/ancestors.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/anteriors.html</loc></url>
+<url><loc>https://caugi.org/dev/reference/as.data.frame.caugi.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/as_adjacency.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/as_bnlearn.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/as_caugi.html</loc></url>
@@ -56,6 +57,7 @@
 <url><loc>https://caugi.org/dev/reference/count_dags.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/d_separated.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/dag_from_pdag.html</loc></url>
+<url><loc>https://caugi.org/dev/reference/dag_to_pag.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/descendants.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/districts.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/divide-caugi_plot-caugi_plot.html</loc></url>
@@ -64,6 +66,7 @@
 <url><loc>https://caugi.org/dev/reference/dot-collect_edges_nodes.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/dot-combine_plus.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/dot-contains_edge.html</loc></url>
+<url><loc>https://caugi.org/dev/reference/dot-default_simple.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/dot-dsl_number.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/dot-edge_constructor.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/dot-edge_constructor_idx.html</loc></url>
@@ -85,7 +88,7 @@
 <url><loc>https://caugi.org/dev/reference/dot-not_m_separated_for_all_subsets.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/dot-parse_edge_arg.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/dot-register_edge.html</loc></url>
-<url><loc>https://caugi.org/dev/reference/dot-resolve_idx0_get.html</loc></url>
+<url><loc>https://caugi.org/dev/reference/dot-resolve_idx0_mget.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/dot-segment_units.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/dot-session_to_caugi.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/dot-set_names.html</loc></url>
@@ -93,6 +96,7 @@
 <url><loc>https://caugi.org/dev/reference/dot-sync_session_inplace.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/dot-update_caugi.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/dot-validate_nodes_and_index.html</loc></url>
+<url><loc>https://caugi.org/dev/reference/dot-warn_simple_deprecated.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/edge_operators.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/edge_types.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/edges.html</loc></url>
@@ -117,15 +121,18 @@
 <url><loc>https://caugi.org/dev/reference/is_empty_caugi.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/is_mag.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/is_mpdag.html</loc></url>
+<url><loc>https://caugi.org/dev/reference/is_pag.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/is_pdag.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/is_simple.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/is_ug.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/is_valid_adjustment_admg.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/is_valid_backdoor.html</loc></url>
+<url><loc>https://caugi.org/dev/reference/is_visible_edge.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/knit_print.caugi_export.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/latent_project.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/length.caugi.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/m_separated.html</loc></url>
+<url><loc>https://caugi.org/dev/reference/mag_to_pag.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/makeContent.caugi_edge_grob.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/markov_blanket.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/meek_closure.html</loc></url>
@@ -135,6 +142,7 @@
 <url><loc>https://caugi.org/dev/reference/neighbors.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/nodes.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/normalize_latent_structure.html</loc></url>
+<url><loc>https://caugi.org/dev/reference/pag_to_mag.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/parents.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/plot.caugi.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/posteriors.html</loc></url>
@@ -149,6 +157,7 @@
 <url><loc>https://caugi.org/dev/reference/skeleton.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/spouses.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/subgraph.html</loc></url>
+<url><loc>https://caugi.org/dev/reference/summary.caugi.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/to_dot.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/to_graphml.html</loc></url>
 <url><loc>https://caugi.org/dev/reference/to_mermaid.html</loc></url>

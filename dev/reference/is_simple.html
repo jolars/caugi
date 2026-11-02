@@ -63,9 +63,9 @@ no parallel edges).</p>
 
 
 <dt id="arg-force-check">force_check<a class="anchor" aria-label="anchor" href="#arg-force-check"></a></dt>
-<dd><p>Logical; if <code>TRUE</code>, force a check against the compiled
-graph representation. If <code>FALSE</code> (default), return the declared <code>simple</code>
-property.</p></dd>
+<dd><p>Deprecated and will be removed in caugi 2.0.0. A
+graph's class is validated when the graph is built, so the class is
+trusted and there is nothing to force.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -93,8 +93,10 @@ property.</p></dd>
 <code><a href="is_empty_caugi.html">is_empty_caugi()</a></code>,
 <code><a href="is_mag.html">is_mag()</a></code>,
 <code><a href="is_mpdag.html">is_mpdag()</a></code>,
+<code><a href="is_pag.html">is_pag()</a></code>,
 <code><a href="is_pdag.html">is_pdag()</a></code>,
 <code><a href="is_ug.html">is_ug()</a></code>,
+<code><a href="is_visible_edge.html">is_visible_edge()</a></code>,
 <code><a href="m_separated.html">m_separated()</a></code>,
 <code><a href="markov_blanket.html">markov_blanket()</a></code>,
 <code><a href="neighbors.html">neighbors()</a></code>,
@@ -119,8 +121,7 @@ property.</p></dd>
 <span class="r-in"><span><span class="va">cg_nonsimple</span> <span class="op">&lt;-</span> <span class="fu"><a href="caugi.html">caugi</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="va">A</span> <span class="op"><a href="edge_operators.html">%--&gt;%</a></span> <span class="va">B</span>,</span></span>
 <span class="r-in"><span>  <span class="va">A</span> <span class="op"><a href="edge_operators.html">%&lt;-&gt;%</a></span> <span class="va">B</span>,</span></span>
-<span class="r-in"><span>  class <span class="op">=</span> <span class="st">"UNKNOWN"</span>,</span></span>
-<span class="r-in"><span>  simple <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span>  class <span class="op">=</span> <span class="st">"UNKNOWN"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">is_simple</span><span class="op">(</span><span class="va">cg_nonsimple</span><span class="op">)</span> <span class="co"># FALSE</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>

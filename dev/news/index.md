@@ -4,6 +4,95 @@
 
 ### New Features
 
+- [`as_caugi()`](https://caugi.org/dev/reference/as_caugi.md) now reads
+  a data.frame or data.table edge list with columns `from`, `edge` and
+  `to`, such as the output of
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) or
+  [`edges()`](https://caugi.org/dev/reference/edges.md). Rows with an
+  `NA` edge are read as isolated nodes.
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) records
+  the graph class in a `"graph_class"` attribute, which
+  [`as_caugi()`](https://caugi.org/dev/reference/as_caugi.md) uses when
+  `class` is not given, so `as_caugi(as.data.frame(cg)) == cg`
+  ([\#529](https://github.com/frederikfabriciusbjerre/caugi/issues/529),
+  [\#530](https://github.com/frederikfabriciusbjerre/caugi/issues/530)).
+
+- [`as_caugi()`](https://caugi.org/dev/reference/as_caugi.md) keeps
+  `class = "PAG"` for mark-coded matrices and dagitty objects instead of
+  returning `"UNKNOWN"`, and reads PAGs from data.frames. PAGs
+  round-trip through
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html),
+  [`write_caugi()`](https://caugi.org/dev/reference/write_caugi.md),
+  [`write_graphml()`](https://caugi.org/dev/reference/write_graphml.md)
+  and their readers. The JSON schema lists the `"PAG"` class.
+
+- [`dag_to_pag()`](https://caugi.org/dev/reference/dag_to_pag.md)
+  returns the PAG a DAG induces over its observed nodes after
+  marginalizing `latents` and conditioning on `selection`.
+
+- [`m_separated()`](https://caugi.org/dev/reference/m_separated.md) and
+  [`minimal_separator()`](https://caugi.org/dev/reference/minimal_separator.md)
+  accept PAGs. Both run on a member MAG from
+  [`pag_to_mag()`](https://caugi.org/dev/reference/pag_to_mag.md), which
+  is exact since every member encodes the same m-separations.
+
+- Queries work on `"PAG"` graphs:
+  [`parents()`](https://caugi.org/dev/reference/parents.md),
+  [`children()`](https://caugi.org/dev/reference/children.md),
+  [`neighbors()`](https://caugi.org/dev/reference/neighbors.md) (every
+  mode), [`ancestors()`](https://caugi.org/dev/reference/ancestors.md),
+  [`descendants()`](https://caugi.org/dev/reference/descendants.md),
+  [`anteriors()`](https://caugi.org/dev/reference/anteriors.md),
+  [`posteriors()`](https://caugi.org/dev/reference/posteriors.md) and
+  [`exogenous()`](https://caugi.org/dev/reference/exogenous.md) follow
+  definite marks, so edges with a circle endpoint only count for
+  `mode = "partial"`.
+
+- [`pag_to_mag()`](https://caugi.org/dev/reference/pag_to_mag.md)
+  returns a MAG from the Markov equivalence class a PAG represents
+  (Zhang 2008, Theorem 2).
+
+- New `"PAG"` (Partial Ancestral Graph) class, with selection bias in
+  scope, so all six edge types `-->`, `---`, `<->`, `o-o`, `--o` and
+  `o->` are allowed. The class is validated completely: a graph carries
+  it only if its marks are exactly the invariant marks of some MAG’s
+  Markov equivalence class, which
+  [`is_pag()`](https://caugi.org/dev/reference/is_pag.md) checks.
+  [`mag_to_pag()`](https://caugi.org/dev/reference/mag_to_pag.md)
+  returns this class, and
+  [`subgraph()`](https://caugi.org/dev/reference/subgraph.md) drops it
+  to `"UNKNOWN"` when the induced subgraph is no longer a PAG.
+
+- [`mag_to_pag()`](https://caugi.org/dev/reference/mag_to_pag.md)
+  returns the PAG of a MAG’s Markov equivalence class, using Zhang’s
+  complete orientation rules R1-R10.
+
+- [`is_visible_edge()`](https://caugi.org/dev/reference/is_visible_edge.md)
+  checks whether a directed edge in a MAG is visible (Zhang 2008,
+  Definition 8), which rules out latent confounding of its two ends. On
+  a PAG it checks definite visibility, i.e. visibility in every member
+  MAG.
+
+- [`as_adjacency()`](https://caugi.org/dev/reference/as_adjacency.md)
+  gains `coding = "marks"`, which writes the `amat.pag` mark coding that
+  [`as_caugi()`](https://caugi.org/dev/reference/as_caugi.md) reads
+  back, so graphs with `<->`, `o->`, `--o` and `o-o` edges can go
+  through a matrix. Self-loops and parallel edges, which one matrix
+  entry cannot hold, are an error.
+
+- [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html) method
+  for `caugi` objects, returning the edge list as a plain data.frame
+  with one extra row per isolated node (`edge` and `to` are `NA`).
+  [`caugi()`](https://caugi.org/dev/reference/caugi.md) reads such rows
+  back as isolated nodes, so `caugi(edges_df = as.data.frame(cg))` keeps
+  every node
+  ([\#446](https://github.com/frederikfabriciusbjerre/caugi/issues/446)).
+
+- [`summary()`](https://rdrr.io/r/base/summary.html) method for `caugi`
+  objects, giving the class, the number of nodes and edges, and edge
+  counts by type
+  ([\#445](https://github.com/frederikfabriciusbjerre/caugi/issues/445)).
+
 - `caugi_options(reset = TRUE)` resets all options to their defaults.
   `caugi_options(caugi_default_options())` did not, since it only merges
   into the current options and so keeps keys that are not in the
@@ -20,7 +109,188 @@
   warning, since the total effect on them is zero. A dropped node can
   itself be in the returned set, e.g. `Y2` for `X --> Y1 <-- Y2`.
 
+- [`is_valid_backdoor()`](https://caugi.org/dev/reference/is_valid_backdoor.md),
+  [`all_backdoor_sets()`](https://caugi.org/dev/reference/all_backdoor_sets.md)
+  and [`d_separated()`](https://caugi.org/dev/reference/d_separated.md)
+  now accept several treatments `X` and outcomes `Y` on DAGs. The
+  back-door functions use the generalized back-door criterion of
+  Maathuis & Colombo (2015, Def. 3.7): `Z` contains no descendant of
+  `X`, and for each treatment `Xi`, `Z` together with the other
+  treatments blocks every back-door path from `Xi` to `Y`. With one
+  treatment and one outcome this is Pearl’s back-door criterion, so
+  single-pair results are unchanged.
+  [`is_valid_backdoor()`](https://caugi.org/dev/reference/is_valid_backdoor.md)
+  is now linear in the graph size; it was cubic in the number of parents
+  of `X`.
+
+### Performance Improvements
+
+- [`is_mag()`](https://caugi.org/dev/reference/is_mag.md) is now
+  polynomial instead of exponential. It tried every subset of the other
+  nodes as a separating set for each non-adjacent pair. A pair has no
+  separating set exactly when a collider path joins it inside its
+  anterior set (Richardson and Spirtes 2002, Theorem 4.2), and a search
+  along `<->` edges finds that path. A 20-node graph could take seconds;
+  a 5,000-node one now takes a fraction of a second
+  ([\#398](https://github.com/frederikfabriciusbjerre/caugi/issues/398)).
+
+- A graph is validated against its class once, not twice. Building a
+  `caugi` validated the class by constructing its typed view, then threw
+  the view away, so the first query built and validated it again. The
+  view is now kept. This halves the cost of graphs whose check is
+  expensive, such as CPDAGs and MPDAGs.
+
 ### Bug Fixes
+
+- [`write_graphml()`](https://caugi.org/dev/reference/write_graphml.md)
+  and
+  [`read_graphml()`](https://caugi.org/dev/reference/read_graphml.md)
+  now write and read UTF-8, as the file declares. In a non-UTF-8 locale
+  a node name such as `"æø"` came back as `"<U+00E6><U+00F8>"`.
+
+- [`to_dot()`](https://caugi.org/dev/reference/to_dot.md) now writes a
+  directed graph class with no edges (e.g. a DAG of isolated nodes) as
+  `digraph`, not `graph`.
+
+- [`read_caugi()`](https://caugi.org/dev/reference/read_caugi.md) and
+  [`caugi_deserialize()`](https://caugi.org/dev/reference/caugi_deserialize.md)
+  now say the input is not a valid caugi JSON document, and
+  [`read_caugi()`](https://caugi.org/dev/reference/read_caugi.md) names
+  the file, instead of only passing on the JSON parser’s message.
+
+- Queries given an empty node vector,
+  e.g. `descendants(cg, character(0))`, now say which argument is empty
+  instead of “Expected non zero length”.
+
+- [`all_backdoor_sets()`](https://caugi.org/dev/reference/all_backdoor_sets.md)
+  and
+  [`all_adjustment_sets_admg()`](https://caugi.org/dev/reference/all_adjustment_sets_admg.md)
+  now validate `max_size` in R, with a plain error instead of a message
+  about the input having “been subtracted with 1”.
+
+- [`remove_nodes()`](https://caugi.org/dev/reference/caugi_verbs.md) and
+  [`remove_edges()`](https://caugi.org/dev/reference/caugi_verbs.md) now
+  error on nodes that are not in the graph, as
+  [`subgraph()`](https://caugi.org/dev/reference/subgraph.md) does,
+  instead of silently ignoring them.
+
+- [`generate_graph()`](https://caugi.org/dev/reference/generate_graph.md)
+  now errors on a non-whole or non-numeric `n` or `m` instead of
+  silently truncating it (e.g. `m = 2.7` gave 2 edges).
+
+- Edge operators used on their own no longer keep the quotes on a string
+  `from` node: `"my var" %-->% B` now has `from` `"my var"`, not
+  `"\"my var\""`.
+
+- `as_caugi(collapse = TRUE)` no longer mixes up node names that contain
+  `.` (e.g. `"A.B"`+`"C"` and `"A"`+`"B.C"`), which dropped edges.
+
+- [`as_caugi()`](https://caugi.org/dev/reference/as_caugi.md) reads a
+  matrix containing the mark codes `2` or `3` in the `amat.pag` coding
+  for every `class`, not only `"PAG"`. A MAG passed with `class = "AG"`
+  used to come back as `-->` edges in both directions. A matrix with
+  circle marks can now be read with `class = "UNKNOWN"`.
+
+- [`is_valid_backdoor()`](https://caugi.org/dev/reference/is_valid_backdoor.md)
+  now rejects a `Z` that contains a node of `Y`. It accepted, for
+  example, `Z = "Y"` for `X <-- U --> Y`.
+
+- caugi’s JSON output now validates against its published schema: the
+  schema allows the top-level `$schema` key that every file has, and its
+  class list includes MPDAG, CPDAG and AG
+  ([\#419](https://github.com/frederikfabriciusbjerre/caugi/issues/419)).
+
+- Removed doc claims of support that does not exist:
+  [`minimal_separator()`](https://caugi.org/dev/reference/minimal_separator.md)
+  no longer lists CPDAG and RCG,
+  [`write_caugi()`](https://caugi.org/dev/reference/write_caugi.md)/[`caugi_serialize()`](https://caugi.org/dev/reference/caugi_serialize.md)
+  take a `caugi` object (not anything coercible to one), and the
+  serialization vignette no longer lists circle edges as valid in a PDAG
+  ([\#457](https://github.com/frederikfabriciusbjerre/caugi/issues/457)).
+
+- Fixed wrong defaults in the docs: the
+  [`plot()`](https://caugi.org/dev/reference/plot.caugi.md) layout list
+  now includes `"tiered"` and `"circle"`, `tier_style` documents that
+  boxes and labels are shown by default, and
+  [`generate_graph()`](https://caugi.org/dev/reference/generate_graph.md)
+  documents `n >= 1`
+  ([\#454](https://github.com/frederikfabriciusbjerre/caugi/issues/454)).
+
+- Fixed doc examples whose stated output was wrong:
+  [`is_cpdag()`](https://caugi.org/dev/reference/is_cpdag.md) (the
+  triangle is not a CPDAG),
+  [`aid()`](https://caugi.org/dev/reference/aid.md) and the
+  [`minimal_separator()`](https://caugi.org/dev/reference/minimal_separator.md)
+  ADMG example
+  ([\#456](https://github.com/frederikfabriciusbjerre/caugi/issues/456)).
+
+- The tiered layout and `plot(tiers = )` now error on nodes without a
+  tier instead of silently putting them in tier 0. Unknown nodes, nodes
+  in more than one tier, `NA` and non-whole tiers are checked the same
+  way for every `tiers` format
+  ([\#428](https://github.com/frederikfabriciusbjerre/caugi/issues/428)).
+
+- [`plot()`](https://caugi.org/dev/reference/plot.caugi.md) now matches
+  the output of a custom layout function to the nodes by name, so a
+  function that returns rows in a different order no longer mislabels
+  the nodes (and reverses arrows). Its output gets the same checks as a
+  precomputed layout
+  ([\#427](https://github.com/frederikfabriciusbjerre/caugi/issues/427)).
+
+- The Sugiyama layout, and so the default
+  [`plot()`](https://caugi.org/dev/reference/plot.caugi.md), no longer
+  panics on graphs with self-loops; self-loops are left out of the
+  layering
+  ([\#422](https://github.com/frederikfabriciusbjerre/caugi/issues/422)).
+
+- The Kamada-Kawai layout now uses correct graph distances for symmetric
+  edges (`---`, `<->`, `o-o`). Its distance search skipped symmetric
+  edges from a higher- to a lower-index node, which distorted every
+  layout of a UG, CPDAG or ADMG
+  ([\#420](https://github.com/frederikfabriciusbjerre/caugi/issues/420)).
+
+- [`register_caugi_edge()`](https://caugi.org/dev/reference/register_caugi_edge.md)
+  now rejects glyphs that contain whitespace.
+  [`read_graphml()`](https://caugi.org/dev/reference/read_graphml.md)
+  trims `<data>` text, so a glyph such as `" ~ "` could be registered
+  and written but not read back
+  ([\#416](https://github.com/frederikfabriciusbjerre/caugi/issues/416)).
+
+- [`read_graphml()`](https://caugi.org/dev/reference/read_graphml.md)
+  now reads edges without an `edge_type` as `---` when the graph
+  declares `edgedefault="undirected"`, as documented, instead of always
+  as `-->`
+  ([\#415](https://github.com/frederikfabriciusbjerre/caugi/issues/415)).
+
+- [`read_graphml()`](https://caugi.org/dev/reference/read_graphml.md)
+  now reads self-closing `<edge .../>` elements, the usual way other
+  tools write edges without data, instead of silently dropping them
+  ([\#414](https://github.com/frederikfabriciusbjerre/caugi/issues/414)).
+
+- [`simulate_data()`](https://caugi.org/dev/reference/simulate_data.md)
+  now errors when a custom equation references a graph node that is not
+  a parent of the node, instead of silently reading a variable of that
+  name from the calling environment
+  ([\#403](https://github.com/frederikfabriciusbjerre/caugi/issues/403)).
+
+- [`simulate_data()`](https://caugi.org/dev/reference/simulate_data.md)
+  now keeps non-syntactic node names such as `"my var"` in the output
+  instead of failing with “undefined columns selected”
+  ([\#402](https://github.com/frederikfabriciusbjerre/caugi/issues/402)).
+
+- [`exogenous()`](https://caugi.org/dev/reference/exogenous.md) on a UG
+  now honours `undirected_as_parents`: by default undirected edges are
+  ignored, so every node is exogenous, as for PDAGs. Query `index`
+  arguments now reject `NaN` and non-whole values instead of silently
+  using node 1, and out-of-range errors report the 1-based index
+  ([\#386](https://github.com/frederikfabriciusbjerre/caugi/issues/386)).
+
+- [`markov_blanket()`](https://caugi.org/dev/reference/markov_blanket.md)
+  on ADMGs and AGs now returns every node joined by a collider path.
+  ADMGs missed children and AGs missed the districts of children, so the
+  same graph had a different blanket depending on its class. DAGs, ADMGs
+  and AGs now share one implementation
+  ([\#384](https://github.com/frederikfabriciusbjerre/caugi/issues/384)).
 
 - [`anteriors()`](https://caugi.org/dev/reference/anteriors.md) and
   [`posteriors()`](https://caugi.org/dev/reference/posteriors.md) now
@@ -178,6 +448,49 @@
   because the effect is zero, pointing to `type = "backdoor"`, which
   returns `U`.
 
+### Deprecations
+
+- The `force_check` argument of
+  [`is_acyclic()`](https://caugi.org/dev/reference/is_acyclic.md),
+  [`is_simple()`](https://caugi.org/dev/reference/is_simple.md),
+  [`is_dag()`](https://caugi.org/dev/reference/is_dag.md),
+  [`is_pdag()`](https://caugi.org/dev/reference/is_pdag.md),
+  [`is_ug()`](https://caugi.org/dev/reference/is_ug.md),
+  [`is_admg()`](https://caugi.org/dev/reference/is_admg.md),
+  [`is_ag()`](https://caugi.org/dev/reference/is_ag.md) and
+  [`is_mag()`](https://caugi.org/dev/reference/is_mag.md) is deprecated
+  and will be removed in caugi 2.0.0. A graph’s class is validated when
+  the graph is built, so there is nothing to force. Supplying it still
+  works but warns.
+
+- The `*_index` twin arguments of
+  [`d_separated()`](https://caugi.org/dev/reference/d_separated.md),
+  [`m_separated()`](https://caugi.org/dev/reference/m_separated.md),
+  [`adjustment_set()`](https://caugi.org/dev/reference/adjustment_set.md),
+  [`is_valid_backdoor()`](https://caugi.org/dev/reference/is_valid_backdoor.md),
+  [`all_backdoor_sets()`](https://caugi.org/dev/reference/all_backdoor_sets.md),
+  [`minimal_separator()`](https://caugi.org/dev/reference/minimal_separator.md),
+  [`is_valid_adjustment_admg()`](https://caugi.org/dev/reference/is_valid_adjustment_admg.md),
+  [`all_adjustment_sets_admg()`](https://caugi.org/dev/reference/all_adjustment_sets_admg.md)
+  and
+  [`is_visible_edge()`](https://caugi.org/dev/reference/is_visible_edge.md)
+  (`X_index`, `Y_index`, `Z_index`, `I_index`, `R_index`, `from_index`,
+  `to_index`) are deprecated and will be removed in caugi 2.0.0. Pass
+  node names instead, e.g. `X = nodes(cg)$name[i]`. Supplying them still
+  works but warns
+  ([\#360](https://github.com/frederikfabriciusbjerre/caugi/issues/360)).
+
+- The `use_open_graph_definition` option of
+  [`caugi_options()`](https://caugi.org/dev/reference/caugi_options.md)
+  is deprecated and will be removed in caugi 2.0.0. Pass the `open`
+  argument to
+  [`ancestors()`](https://caugi.org/dev/reference/ancestors.md),
+  [`descendants()`](https://caugi.org/dev/reference/descendants.md),
+  [`anteriors()`](https://caugi.org/dev/reference/anteriors.md) and
+  [`posteriors()`](https://caugi.org/dev/reference/posteriors.md)
+  instead. Setting it to `FALSE` still works but warns
+  ([\#364](https://github.com/frederikfabriciusbjerre/caugi/issues/364)).
+
 ## caugi 1.4.0
 
 CRAN release: 2026-10-27
@@ -201,14 +514,34 @@ CRAN release: 2026-10-27
   [`nodes()`](https://caugi.org/dev/reference/nodes.md) and
   [`edges()`](https://caugi.org/dev/reference/edges.md).
 
+### Improvements
+
+- [`is_simple()`](https://caugi.org/dev/reference/is_simple.md) now
+  always checks the graph itself instead of returning the declared
+  `simple` flag; `force_check` is ignored.
+- [`remove_edges()`](https://caugi.org/dev/reference/caugi_verbs.md)
+  without `edge` now only errors when the given pair actually holds
+  several edges, instead of whenever the graph allows multi-edges.
+
 ### Bug Fixes
 
-- [`mutate_caugi()`](https://caugi.org/dev/reference/mutate_caugi.md) no
-  longer forces `simple = TRUE` on every target class. A non-simple
-  graph converted to `"UNKNOWN"`, `"ADMG"` or `"AG"` keeps
-  `simple = FALSE`, so e.g. a bow (`A %-->% B`, `A %<->% B`) converts to
-  a valid ADMG instead of a simple graph with parallel edges that failed
-  on [`build()`](https://caugi.org/dev/reference/build.md) or any query.
+- `"ADMG"` graphs now reject self-loops; previously
+  `caugi(A %<->% A, class = "ADMG", simple = FALSE)` was accepted.
+
+- [`is_dag()`](https://caugi.org/dev/reference/is_dag.md),
+  [`is_pdag()`](https://caugi.org/dev/reference/is_pdag.md),
+  [`is_ug()`](https://caugi.org/dev/reference/is_ug.md),
+  [`is_ag()`](https://caugi.org/dev/reference/is_ag.md),
+  [`is_cpdag()`](https://caugi.org/dev/reference/is_cpdag.md),
+  [`is_mpdag()`](https://caugi.org/dev/reference/is_mpdag.md) and
+  [`is_mag()`](https://caugi.org/dev/reference/is_mag.md) now return
+  `FALSE` for graphs with parallel edges or self-loops.
+
+- [`mutate_caugi()`](https://caugi.org/dev/reference/mutate_caugi.md)
+  now gives the converted graph the target class’s multi-edge rule, so
+  e.g. a bow (`A %-->% B`, `A %<->% B`) converts to a valid ADMG instead
+  of a simple graph with parallel edges that failed on
+  [`build()`](https://caugi.org/dev/reference/build.md) or any query.
   The converted graph is now built eagerly, so invalid conversions fail
   immediately.
 
@@ -250,6 +583,22 @@ CRAN release: 2026-10-27
   used the current global registry instead, so they could compare edges
   wrongly, fail with `Invalid edge code`, or write the wrong glyphs.
   Adding an edge type the graph was not built with is now an error.
+
+### Deprecations
+
+- The `simple` argument of
+  [`caugi()`](https://caugi.org/dev/reference/caugi.md) and
+  [`as_caugi()`](https://caugi.org/dev/reference/as_caugi.md), and the
+  `@simple` property, are deprecated and will be removed in caugi 2.0.0.
+  The graph class now determines whether multiple edges are allowed:
+  when `simple` is omitted it is `FALSE` for `"UNKNOWN"` and `"ADMG"`
+  and `TRUE` for every other class. Bows (`A %-->% B`, `A %<->% B`)
+  therefore build as an ADMG, and parallel edges or self-loops build as
+  `"UNKNOWN"`, without `simple = FALSE`. With the default
+  `class = "AUTO"`, such graphs now resolve to `"ADMG"` (if valid) or
+  `"UNKNOWN"` instead of erroring, and a graph that resolves to a simple
+  class gets that class’s rule. Supplying `simple` still works but
+  warns.
 
 ## caugi 1.3.0
 

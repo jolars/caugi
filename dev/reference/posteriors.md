@@ -36,10 +36,10 @@ posteriors(
 
 - open:
 
-  Boolean. Determines how the graph is interpreted when retrieving
-  posteriors. Default is taken from
-  `caugi_options("use_open_graph_definition")`, which by default is
-  TRUE.
+  Logical; if `TRUE` (default), each queried node is left out of its own
+  posteriors; if `FALSE`, it is included. The default comes from the
+  deprecated `use_open_graph_definition` option of
+  [`caugi_options()`](https://caugi.org/dev/reference/caugi_options.md).
 
 ## Value
 
@@ -67,9 +67,11 @@ Other queries:
 [`is_empty_caugi()`](https://caugi.org/dev/reference/is_empty_caugi.md),
 [`is_mag()`](https://caugi.org/dev/reference/is_mag.md),
 [`is_mpdag()`](https://caugi.org/dev/reference/is_mpdag.md),
+[`is_pag()`](https://caugi.org/dev/reference/is_pag.md),
 [`is_pdag()`](https://caugi.org/dev/reference/is_pdag.md),
 [`is_simple()`](https://caugi.org/dev/reference/is_simple.md),
 [`is_ug()`](https://caugi.org/dev/reference/is_ug.md),
+[`is_visible_edge()`](https://caugi.org/dev/reference/is_visible_edge.md),
 [`m_separated()`](https://caugi.org/dev/reference/m_separated.md),
 [`markov_blanket()`](https://caugi.org/dev/reference/markov_blanket.md),
 [`neighbors()`](https://caugi.org/dev/reference/neighbors.md),

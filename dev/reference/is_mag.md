@@ -20,13 +20,21 @@ is_mag(cg, force_check = FALSE)
 
 - force_check:
 
-  Logical; if `TRUE`, the function will test if the graph is a MAG, if
-  `FALSE` (default), it will look at the graph class and match it, if
-  possible.
+  Deprecated and will be removed in caugi 2.0.0. A graph's class is
+  validated when the graph is built, so the class is trusted and there
+  is nothing to force.
 
 ## Value
 
 A logical value indicating whether the graph is a MAG.
+
+## Details
+
+A non-adjacent pair has no separating set exactly when a collider path
+joins the two inside their anterior set (Richardson and Spirtes 2002,
+Theorem 4.2). Only pairs that both point into one district can be joined
+this way, and each is checked with one search along `<->` edges, so the
+check is polynomial in the size of the graph.
 
 ## See also
 
@@ -48,9 +56,11 @@ Other queries:
 [`is_dag()`](https://caugi.org/dev/reference/is_dag.md),
 [`is_empty_caugi()`](https://caugi.org/dev/reference/is_empty_caugi.md),
 [`is_mpdag()`](https://caugi.org/dev/reference/is_mpdag.md),
+[`is_pag()`](https://caugi.org/dev/reference/is_pag.md),
 [`is_pdag()`](https://caugi.org/dev/reference/is_pdag.md),
 [`is_simple()`](https://caugi.org/dev/reference/is_simple.md),
 [`is_ug()`](https://caugi.org/dev/reference/is_ug.md),
+[`is_visible_edge()`](https://caugi.org/dev/reference/is_visible_edge.md),
 [`m_separated()`](https://caugi.org/dev/reference/m_separated.md),
 [`markov_blanket()`](https://caugi.org/dev/reference/markov_blanket.md),
 [`neighbors()`](https://caugi.org/dev/reference/neighbors.md),

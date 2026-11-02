@@ -25,14 +25,12 @@ d_separated(
 
 - X, Y, Z:
 
-  Character vectors of node names, or `NULL`. Use `*_index` to pass
-  1-based indices. If `Z` is `NULL` or missing, no nodes are conditioned
-  on.
+  Character vectors of node names, or `NULL`. If `Z` is `NULL` or
+  missing, no nodes are conditioned on.
 
 - X_index, Y_index, Z_index:
 
-  Optional numeric 1-based indices (exclusive with `X`,`Y`,`Z`
-  respectively).
+  Deprecated; pass node names instead.
 
 ## Value
 
@@ -68,4 +66,6 @@ d_separated(cg, "X", "Y", Z = c("A", "D")) # TRUE
 #> [1] TRUE
 d_separated(cg, "X", "Y", Z = NULL) # FALSE
 #> [1] FALSE
+d_separated(cg, c("C", "X"), c("K", "Y"), Z = c("A", "D")) # TRUE
+#> [1] TRUE
 ```
